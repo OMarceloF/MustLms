@@ -1,0 +1,147 @@
+  
+  .react-calendar {
+    border: none !important;
+    font-family: inherit;
+    width: 100%;
+    background-color: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    font-family: 'Poppins', sans-serif !important;
+    padding: 16px !important;
+    transition: all 0.3s ease-in-out !important;
+  }
+  
+  .custom-calendar .react-calendar {
+  border: none !important; /* Garante que a borda seja removida */
+  box-shadow: none !important; /* Remove a sombra do calendário */
+}
+  .react-calendar__tile--now {
+    background: #303030 !important;
+    border-radius: 8px;
+  }
+  
+  .react-calendar__tile--active {
+    background: #303030 !important;
+    color: white;
+    border-radius: 8px;
+  }
+  
+  .highlight {
+    background: #303030 !important;
+    color: white;
+    border-radius: 8px;
+  }
+
+  /* Destaca dias com eventos no calendário */
+.react-calendar__tile.highlight {
+  position: relative;
+}
+
+.react-calendar__tile.highlight::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background-color: #303030 !important;
+  border-radius: 50%;
+}
+
+/* Container geral */
+.mini-calendar-container {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Lista de eventos */
+.events-list {
+  margin-top: 1rem;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.events-list h3 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: #333;
+}
+
+/* Cartão de evento */
+.event-card {
+  border-left: 4px solid #000000;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  background-color: #303030;
+  border-radius: 8px;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.event-time {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.event-description {
+  font-size: 0.9rem;
+  color: #444;
+  margin-top: 0.25rem;
+}
+
+.react-calendar__tile--feriado {
+  background-color: #303030 !important;
+  border-radius: 8px;
+  color: #444;
+}
+
+.react-calendar__tile--letivo {
+  background-color: #c8e6c9 !important;
+  border-radius: 8px;
+  color: #1b5e20;
+}
+
+.react-calendar__tile--evento {
+  background-color: #303030 !important;
+  border-radius: 8px;
+  color: #e65100;
+}
+
+.meu-calendar .react-calendar__tile:enabled:hover {
+  background-color: #303030 !important;
+  color: #007bff !important;
+  cursor: pointer !important;
+}
+.meu-calendar .react-calendar__tile--active {
+  background-color: #ffffff !important;
+  color: white !important;
+  font-weight: bold !important;
+  box-shadow: 0 0 0 2px #ff0505 inset !important;
+}
+/* Feriado - destaque vermelho claro */
+.meu-calendar .feriado {
+  background-color: #303030 !important;
+  color: #d60000 !important;
+  font-weight: bold;
+  border-radius: 50%;
+}
+
+/* Domingo - apenas cor do texto */
+.meu-calendar .domingo-vermelho {
+  color: #d60000 !important;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  color: #303030 !important;
+  font-weight: bold !important;
+  text-transform: uppercase !important;
+  font-size: 0.8rem !important;
+}
+

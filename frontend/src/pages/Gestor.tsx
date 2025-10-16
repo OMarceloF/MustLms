@@ -1,0 +1,149 @@
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import HomeGestor from './gestor/HomeGestor';
+import ProfessoresPage from './gestor/ProfessoresPage';
+import AlunosPage from './gestor/AlunosPage';
+import RelatoriosPage from './gestor/RelatoriosPage';
+import PlanoPage from './gestor/PlanoPage';
+import CalendarioPage from './gestor/CalendarioPage';
+import FinanceiroPage from './gestor/FinanceiroPage';
+import HelpModal from '../components/AjudaModal';
+import TurmasPage from './gestor/TurmasPage';
+import HorariosPage from './gestor/HorariosPage';
+import GestaoEscolarPage from './gestor/GestaoEscolarPage';
+import SidebarGestor from './gestor/components/Sidebar';
+import TopbarGestorAuto from './gestor/components/TopbarGestorAuto';
+import SocialMediaPage from './gestor/SocialMediaPage';
+import { VscRobot } from 'react-icons/vsc';
+import IaPage from './gestor/IaPage';
+import EventosPageMenu from './gestor/EventosPageMenu';
+import FeedsPageMenu from './gestor/FeedsPageMenu';
+import ComunidadesPageMenu from './gestor/ComunidadesPageMenu';
+import NoticiasPageMenu from './gestor/NoticiasPageMenu';
+import PostPageMenu from './gestor/PostPageMenu';
+import FeedPrincipalMenuPage from './gestor/FeedPrincipalMenuPage';
+import RelatorioProfessorPage from "./gestor/RelatorioProfessorPage";
+import RelatorioAlunoPage from "./gestor/RelatorioAlunoPage";
+import Gamification from './gestor/Gamification';
+import MeetPage from './gestor/MeetPage';
+
+// Chat, Socket e componentes relacionados foram removidos.
+
+export default function GestorDashboard() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activePage, setActivePage] = useState('home');
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const helpModalRef = useRef<HTMLDivElement>(null);
+  const notificationsMenuRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseEnter = () => setIsMenuOpen(true);
+  const handleMouseLeave = () => setIsMenuOpen(false);
+
+  // Lógica para lidar com cliques fora dos menus (mantida)
+  useEffect(() => {
+    const handleClickOutsideProfileMenu = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    const handleClickOutsideHelpModal = (event: MouseEvent) => {
+      if (helpModalRef.current && !helpModalRef.current.contains(event.target as Node)) {
+        setIsHelpModalOpen(false);
+      }
+    };
+    const handleClickOutsideNotificationsMenu = (event: MouseEvent) => {
+      if (notificationsMenuRef.current && !notificationsMenuRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutsideProfileMenu);
+    document.addEventListener('mousedown', handleClickOutsideHelpModal);
+    document.addEventListener('mousedown', handleClickOutsideNotificationsMenu);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutsideProfileMenu);
+      document.removeEventListener('mousedown', handleClickOutsideHelpModal);
+      document.removeEventListener('mousedown', handleClickOutsideNotificationsMenu);
+    };
+  }, []);
+
+  // Lógica para definir a página ativa (mantida)
+  useEffect(() => {
+    const forcedIa = localStorage.getItem('forceIaPage');
+    if (forcedIa === 'true') {
+      setActivePage('ia');
+      localStorage.removeItem('forceIaPage');
+    } else if (location.state && location.state.activePage) {
+      setActivePage(location.state.activePage);
+    } else {
+      setActivePage('home');
+    }
+  }, [location.state]);
+
+  if (loading) return <p>Carregando...</p>;
+
+  return (
+    <div className="flex h-screen overflow-x-auto max-w-full">
+      {/* Sidebar */}
+      <SidebarGestor
+        isMenuOpen={isMenuOpen}
+        setActivePage={setActivePage}
+        handleMouseEnter={handleMouseEnter}
+        handleMouseLeave={handleMouseLeave}
+      />
+
+      {/* Main Content */}
+      <div className="flex flex-col flex-1 bg-gray-100 pt-[10px] pl-0 pr-2 md:pl-[60px] transition-all duration-500 overflow-x-auto px-2 md:px-0">
+        {/* Top Bar */}
+        <TopbarGestorAuto activePage={activePage} setActivePage={setActivePage} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+
+        {/* Dynamic Content Area */}
+        <main className="p-5 bg-gray-100 flex-1 mt-[80px]">
+          {activePage === 'home' && <HomeGestor />}
+          {activePage === 'ia' && <IaPage />}
+          {activePage === 'gestao' && <GestaoEscolarPage />}
+          {activePage === 'turmas' && <TurmasPage />}
+          {activePage === 'professores' && <ProfessoresPage />}
+          {activePage === 'alunos' && <AlunosPage />}
+          {activePage === 'relatorios' && <RelatoriosPage />}
+          {activePage === 'plano' && <PlanoPage />}
+          {activePage === 'calendario' && <CalendarioPage />}
+          {activePage === 'financeiro' && <FinanceiroPage />}
+          {activePage === 'horarios' && <HorariosPage />}
+          {activePage === 'social' && <SocialMediaPage />}
+          {activePage === 'eventos' && <EventosPageMenu />}
+          {activePage === 'feeds' && <FeedsPageMenu />}
+          {activePage === 'comunidades' && <ComunidadesPageMenu />}
+          {activePage === 'feedNoticias' && <NoticiasPageMenu />}
+          {activePage === 'post' && <PostPageMenu />}
+          {activePage === 'feedPrincipal' && <FeedPrincipalMenuPage />}
+          {activePage === 'RelatorioProfessorPage' && <RelatorioProfessorPage />}
+          {activePage === 'RelatorioAlunoPage' && <RelatorioAlunoPage />}
+          {activePage === 'gamification' && <Gamification />}
+          {activePage === 'meet' && <MeetPage />}
+        </main>
+      </div>
+
+      <HelpModal
+        isOpen={isHelpModalOpen}
+        onClose={() => setIsHelpModalOpen(false)}
+        ref={helpModalRef}
+      />
+
+          {/* Floating Robot Button */}
+      <div
+        className="fixed bottom-5 right-7 bg-indigo-900 text-white rounded-full p-3 cursor-pointer shadow-lg hover:scale-110 transition-transform duration-200"
+        onClick={() => setActivePage('ia')}
+        title="Assistente Virtual"
+      >
+        <VscRobot size={32} />
+      </div>
+    </div>
+  );
+}

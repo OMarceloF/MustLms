@@ -1,0 +1,468 @@
+Nome Completo,matricula,email,senha,foto,valor_mensalidade,data_primeira_mensalidade,possui_desconto,porcentagem_desconto,descricao_desconto,data_inicio_desconto,data_fim_desconto
+Paulo Silva,MAT1001,Paulo_Silva32@escola.com.br,senha1,,1404.00,2025-09-05,não,,,,
+Sílvia Melo,MAT1002,Silvia.Melo97@escola.com.br,senha2,,843.00,2025-09-05,não,,,,
+Sr. Calebe Nogueira,MAT1003,Sr.Calebe11@escola.com.br,senha3,,1585.00,2025-09-05,não,,,,
+Yago Santos,MAT1004,Yago.Santos@escola.com.br,senha4,/uploads/aluno4.jpg,1463.00,2025-09-05,não,,,,
+Lavínia Oliveira Filho,MAT1005,Lavinia.Oliveira91@escola.com.br,senha5,,1394.00,2025-09-05,sim,10,amet rem,2025-07-01,2025-12-15
+Warley Moreira,MAT1006,Warley.Moreira@escola.com.br,senha6,,1987.00,2025-09-05,não,,,,
+Hélio Xavier,MAT1007,Helio_Xavier73@escola.com.br,senha7,,1934.00,2025-09-05,não,,,,
+César Braga,MAT1008,Cesar_Braga@escola.com.br,senha8,/uploads/aluno8.jpg,1063.00,2025-09-05,não,,,,
+Eloá Oliveira,MAT1009,Eloa.Oliveira39@escola.com.br,senha9,,1254.00,2025-09-05,não,,,,
+Enzo Santos Jr.,MAT1010,Enzo.Santos21@escola.com.br,senha10,,1964.00,2025-09-05,sim,25,occaecati sunt,2025-07-01,2025-12-15
+Arthur Moreira,MAT1011,Arthur.Moreira@escola.com.br,senha11,,1167.00,2025-09-05,não,,,,
+Eduarda Santos,MAT1012,Eduarda_Santos70@escola.com.br,senha12,/uploads/aluno12.jpg,1546.00,2025-09-05,não,,,,
+Célia Carvalho,MAT1013,Celia_Carvalho@escola.com.br,senha13,,1413.00,2025-09-05,não,,,,
+Ana Laura Costa,MAT1014,Ana.Laura84@escola.com.br,senha14,,887.00,2025-09-05,não,,,,
+Sra. Vitória Albuquerque,MAT1015,Sra._Vitoria@escola.com.br,senha15,,721.00,2025-09-05,sim,15,vel explicabo,2025-07-01,2025-12-15
+Mariana Saraiva,MAT1016,Mariana.Saraiva@escola.com.br,senha16,/uploads/aluno16.jpg,1685.00,2025-09-05,não,,,,
+Heitor Moreira,MAT1017,Heitor.Moreira@escola.com.br,senha17,,1559.00,2025-09-05,não,,,,
+Laura Xavier,MAT1018,Laura.Xavier@escola.com.br,senha18,,1432.00,2025-09-05,não,,,,
+Marli Batista,MAT1019,Marli_Batista@escola.com.br,senha19,,1508.00,2025-09-05,não,,,,
+Ana Júlia Albuquerque,MAT1020,Ana.Julia@escola.com.br,senha20,/uploads/aluno20.jpg,1545.00,2025-09-05,sim,10,ducimus rerum,2025-07-01,2025-12-15
+Heloísa Xavier,MAT1021,Heloisa.Xavier86@escola.com.br,senha21,,715.00,2025-09-05,não,,,,
+Alexandre Melo Jr.,MAT1022,Alexandre.Melo84@escola.com.br,senha22,,1641.00,2025-09-05,não,,,,
+Pedro Macedo,MAT1023,Pedro_Macedo72@escola.com.br,senha23,,755.00,2025-09-05,não,,,,
+Felícia Silva,MAT1024,Felicia.Silva@escola.com.br,senha24,/uploads/aluno24.jpg,1024.00,2025-09-05,não,,,,
+Leonardo Carvalho,MAT1025,Leonardo_Carvalho33@escola.com.br,senha25,,1554.00,2025-09-05,sim,20,assumenda in,2025-07-01,2025-12-15
+Alice Moraes,MAT1026,Alice_Moraes77@escola.com.br,senha26,,1046.00,2025-09-05,não,,,,
+Gabriel Carvalho,MAT1027,Gabriel_Carvalho@escola.com.br,senha27,,1902.00,2025-09-05,não,,,,
+Salvador Costa,MAT1028,Salvador_Costa@escola.com.br,senha28,/uploads/aluno28.jpg,1035.00,2025-09-05,não,,,,
+João Costa,MAT1029,Joao.Costa62@escola.com.br,senha29,,1404.00,2025-09-05,não,,,,
+Maria Cecília Martins,MAT1030,Maria_Cecilia85@escola.com.br,senha30,,1688.00,2025-09-05,sim,20,asperiores mollitia,2025-07-01,2025-12-15
+Dra. Sílvia Silva,MAT1031,Dra.Silvia@escola.com.br,senha31,,1059.00,2025-09-05,não,,,,
+João Lucas Macedo,MAT1032,Joao.Lucas91@escola.com.br,senha32,/uploads/aluno32.jpg,973.00,2025-09-05,não,,,,
+Rafael Souza,MAT1033,Rafael.Souza@escola.com.br,senha33,,986.00,2025-09-05,não,,,,
+Antonella Santos,MAT1034,Antonella.Santos@escola.com.br,senha34,,1856.00,2025-09-05,não,,,,
+Gúbio Saraiva,MAT1035,Gubio.Saraiva96@escola.com.br,senha35,,834.00,2025-09-05,sim,20,laboriosam cumque,2025-07-01,2025-12-15
+Benício Melo,MAT1036,Benicio.Melo@escola.com.br,senha36,/uploads/aluno36.jpg,1326.00,2025-09-05,não,,,,
+Ana Laura Moreira,MAT1037,Ana_Laura@escola.com.br,senha37,,1202.00,2025-09-05,não,,,,
+Cecília Franco,MAT1038,Cecilia.Franco@escola.com.br,senha38,,1247.00,2025-09-05,não,,,,
+Isadora Albuquerque Jr.,MAT1039,Isadora.Albuquerque@escola.com.br,senha39,,1703.00,2025-09-05,não,,,,
+Lara Xavier,MAT1040,Lara.Xavier@escola.com.br,senha40,/uploads/aluno40.jpg,1686.00,2025-09-05,sim,15,magni natus,2025-07-01,2025-12-15
+Guilherme Silva,MAT1041,Guilherme_Silva@escola.com.br,senha41,,1103.00,2025-09-05,não,,,,
+Isabel Costa,MAT1042,Isabel.Costa76@escola.com.br,senha42,,1210.00,2025-09-05,não,,,,
+Natália Batista,MAT1043,Natalia_Batista55@escola.com.br,senha43,,918.00,2025-09-05,não,,,,
+Célia Moreira,MAT1044,Celia_Moreira29@escola.com.br,senha44,/uploads/aluno44.jpg,895.00,2025-09-05,não,,,,
+Célia Melo,MAT1045,Celia_Melo@escola.com.br,senha45,,1534.00,2025-09-05,sim,25,nisi dolor,2025-07-01,2025-12-15
+Sr. Marcos Barros,MAT1046,Sr._Marcos0@escola.com.br,senha46,,1186.00,2025-09-05,não,,,,
+Leonardo Albuquerque,MAT1047,Leonardo.Albuquerque66@escola.com.br,senha47,,1205.00,2025-09-05,não,,,,
+Enzo Gabriel Carvalho,MAT1048,Enzo_Gabriel59@escola.com.br,senha48,/uploads/aluno48.jpg,1210.00,2025-09-05,não,,,,
+Davi Carvalho,MAT1049,Davi_Carvalho84@escola.com.br,senha49,,1306.00,2025-09-05,não,,,,
+Ana Laura Franco,MAT1050,Ana.Laura87@escola.com.br,senha50,,978.00,2025-09-05,sim,20,hic quasi,2025-07-01,2025-12-15
+Marcela Braga,MAT1051,Marcela_Braga85@escola.com.br,senha51,,839.00,2025-09-05,não,,,,
+Felícia Albuquerque,MAT1052,Felicia_Albuquerque23@escola.com.br,senha52,/uploads/aluno52.jpg,1674.00,2025-09-05,não,,,,
+Mércia Batista,MAT1053,Mercia.Batista@escola.com.br,senha53,,1493.00,2025-09-05,não,,,,
+Calebe Moraes,MAT1054,Calebe.Moraes@escola.com.br,senha54,,1868.00,2025-09-05,não,,,,
+Alícia Batista,MAT1055,Alicia_Batista@escola.com.br,senha55,,979.00,2025-09-05,sim,20,dolorum voluptas,2025-07-01,2025-12-15
+César Macedo,MAT1056,Cesar.Macedo10@escola.com.br,senha56,/uploads/aluno56.jpg,1938.00,2025-09-05,não,,,,
+Yuri Souza Filho,MAT1057,Yuri_Souza@escola.com.br,senha57,,704.00,2025-09-05,não,,,,
+Henrique Batista,MAT1058,Henrique.Batista60@escola.com.br,senha58,,1936.00,2025-09-05,não,,,,
+Mariana Carvalho Jr.,MAT1059,Mariana_Carvalho@escola.com.br,senha59,,1425.00,2025-09-05,não,,,,
+Sr. João Silva,MAT1060,Sr.Joao@escola.com.br,senha60,/uploads/aluno60.jpg,1126.00,2025-09-05,sim,10,pariatur accusamus,2025-07-01,2025-12-15
+Sr. Vitor Pereira,MAT1061,Sr.Vitor@escola.com.br,senha61,,1610.00,2025-09-05,não,,,,
+Marina Santos,MAT1062,Marina_Santos@escola.com.br,senha62,,853.00,2025-09-05,não,,,,
+Isaac Xavier,MAT1063,Isaac.Xavier50@escola.com.br,senha63,,770.00,2025-09-05,não,,,,
+Joaquim Nogueira,MAT1064,Joaquim.Nogueira39@escola.com.br,senha64,/uploads/aluno64.jpg,1015.00,2025-09-05,não,,,,
+Sr. Enzo Batista,MAT1065,Sr.Enzo82@escola.com.br,senha65,,1773.00,2025-09-05,sim,15,dolorum consectetur,2025-07-01,2025-12-15
+Roberto Saraiva,MAT1066,Roberto.Saraiva91@escola.com.br,senha66,,1834.00,2025-09-05,não,,,,
+Srta. Sílvia Saraiva,MAT1067,Srta.Silvia17@escola.com.br,senha67,,1388.00,2025-09-05,não,,,,
+Sra. Cecília Moreira,MAT1068,Sra.Cecilia@escola.com.br,senha68,/uploads/aluno68.jpg,1993.00,2025-09-05,não,,,,
+Meire Xavier,MAT1069,Meire_Xavier37@escola.com.br,senha69,,1499.00,2025-09-05,não,,,,
+Frederico Souza,MAT1070,Frederico_Souza36@escola.com.br,senha70,,1329.00,2025-09-05,sim,25,assumenda error,2025-07-01,2025-12-15
+Maria Clara Souza,MAT1071,Maria_Clara98@escola.com.br,senha71,,1861.00,2025-09-05,não,,,,
+Pedro Carvalho,MAT1072,Pedro.Carvalho@escola.com.br,senha72,/uploads/aluno72.jpg,1673.00,2025-09-05,não,,,,
+Rebeca Albuquerque,MAT1073,Rebeca_Albuquerque3@escola.com.br,senha73,,865.00,2025-09-05,não,,,,
+Dra. Maria Carvalho,MAT1074,Dra.Maria33@escola.com.br,senha74,,892.00,2025-09-05,não,,,,
+Ana Laura Xavier Jr.,MAT1075,Ana_Laura@escola.com.br,senha75,,1729.00,2025-09-05,sim,25,corrupti placeat,2025-07-01,2025-12-15
+Maria Clara Souza,MAT1076,Maria_Clara@escola.com.br,senha76,/uploads/aluno76.jpg,879.00,2025-09-05,não,,,,
+Isabelly Barros,MAT1077,Isabelly_Barros12@escola.com.br,senha77,,1637.00,2025-09-05,não,,,,
+Yasmin Albuquerque Jr.,MAT1078,Yasmin_Albuquerque0@escola.com.br,senha78,,1146.00,2025-09-05,não,,,,
+Benício Braga Neto,MAT1079,Benicio.Braga@escola.com.br,senha79,,890.00,2025-09-05,não,,,,
+Lavínia Xavier,MAT1080,Lavinia_Xavier@escola.com.br,senha80,/uploads/aluno80.jpg,1823.00,2025-09-05,sim,15,aliquam maiores,2025-07-01,2025-12-15
+Hugo Pereira Filho,MAT1081,Hugo_Pereira@escola.com.br,senha81,,994.00,2025-09-05,não,,,,
+Dr. Tertuliano Moraes,MAT1082,Dr.Tertuliano81@escola.com.br,senha82,,1122.00,2025-09-05,não,,,,
+Fabiano Albuquerque,MAT1083,Fabiano_Albuquerque12@escola.com.br,senha83,,775.00,2025-09-05,não,,,,
+Guilherme Reis,MAT1084,Guilherme_Reis@escola.com.br,senha84,/uploads/aluno84.jpg,1372.00,2025-09-05,não,,,,
+Carla Carvalho,MAT1085,Carla_Carvalho@escola.com.br,senha85,,1149.00,2025-09-05,sim,15,dicta ab,2025-07-01,2025-12-15
+Sr. Júlio Costa,MAT1086,Sr._Julio@escola.com.br,senha86,,1064.00,2025-09-05,não,,,,
+Célia Melo,MAT1087,Celia_Melo@escola.com.br,senha87,,1932.00,2025-09-05,não,,,,
+Maria Eduarda Saraiva,MAT1088,Maria_Eduarda64@escola.com.br,senha88,/uploads/aluno88.jpg,1147.00,2025-09-05,não,,,,
+Matheus Moraes Jr.,MAT1089,Matheus.Moraes39@escola.com.br,senha89,,1959.00,2025-09-05,não,,,,
+Anthony Batista,MAT1090,Anthony.Batista84@escola.com.br,senha90,,820.00,2025-09-05,sim,25,quas doloremque,2025-07-01,2025-12-15
+Sara Nogueira,MAT1091,Sara.Nogueira@escola.com.br,senha91,,1811.00,2025-09-05,não,,,,
+Vicente Barros,MAT1092,Vicente_Barros@escola.com.br,senha92,/uploads/aluno92.jpg,962.00,2025-09-05,não,,,,
+Fábio Moraes,MAT1093,Fabio_Moraes19@escola.com.br,senha93,,1624.00,2025-09-05,não,,,,
+Sophia Moraes,MAT1094,Sophia.Moraes37@escola.com.br,senha94,,709.00,2025-09-05,não,,,,
+Joaquim Silva,MAT1095,Joaquim_Silva@escola.com.br,senha95,,1366.00,2025-09-05,sim,25,provident vitae,2025-07-01,2025-12-15
+Sophia Costa,MAT1096,Sophia.Costa20@escola.com.br,senha96,/uploads/aluno96.jpg,1257.00,2025-09-05,não,,,,
+Davi Lucca Nogueira,MAT1097,Davi.Lucca74@escola.com.br,senha97,,1320.00,2025-09-05,não,,,,
+Clara Martins,MAT1098,Clara.Martins59@escola.com.br,senha98,,910.00,2025-09-05,não,,,,
+Félix Franco Jr.,MAT1099,Felix.Franco35@escola.com.br,senha99,,1336.00,2025-09-05,não,,,,
+Rafaela Batista,MAT1100,Rafaela.Batista@escola.com.br,senha100,/uploads/aluno100.jpg,1233.00,2025-09-05,sim,20,velit inventore,2025-07-01,2025-12-15
+Júlio César Moreira,MAT1101,Julio_Cesar@escola.com.br,senha101,,1580.00,2025-09-05,não,,,,
+Dalila Nogueira,MAT1102,Dalila.Nogueira45@escola.com.br,senha102,,1995.00,2025-09-05,não,,,,
+Davi Lucca Martins,MAT1103,Davi.Lucca@escola.com.br,senha103,,1637.00,2025-09-05,não,,,,
+Luiza Santos,MAT1104,Luiza.Santos36@escola.com.br,senha104,/uploads/aluno104.jpg,1603.00,2025-09-05,não,,,,
+Janaína Pereira,MAT1105,Janaina_Pereira59@escola.com.br,senha105,,944.00,2025-09-05,sim,15,rem eveniet,2025-07-01,2025-12-15
+Alexandre Franco Neto,MAT1106,Alexandre_Franco22@escola.com.br,senha106,,1942.00,2025-09-05,não,,,,
+Benício Albuquerque,MAT1107,Benicio_Albuquerque93@escola.com.br,senha107,,1230.00,2025-09-05,não,,,,
+Sr. Calebe Moreira,MAT1108,Sr._Calebe48@escola.com.br,senha108,/uploads/aluno108.jpg,1345.00,2025-09-05,não,,,,
+Nicolas Santos Neto,MAT1109,Nicolas.Santos@escola.com.br,senha109,,1642.00,2025-09-05,não,,,,
+Marcelo Xavier,MAT1110,Marcelo_Xavier@escola.com.br,senha110,,1658.00,2025-09-05,sim,10,distinctio cupiditate,2025-07-01,2025-12-15
+Isaac Albuquerque Jr.,MAT1111,Isaac_Albuquerque80@escola.com.br,senha111,,1106.00,2025-09-05,não,,,,
+Júlia Melo,MAT1112,Julia.Melo@escola.com.br,senha112,/uploads/aluno112.jpg,1997.00,2025-09-05,não,,,,
+Lorenzo Pereira,MAT1113,Lorenzo_Pereira8@escola.com.br,senha113,,919.00,2025-09-05,não,,,,
+Gael Carvalho,MAT1114,Gael_Carvalho@escola.com.br,senha114,,1699.00,2025-09-05,não,,,,
+Felícia Macedo,MAT1115,Felicia_Macedo@escola.com.br,senha115,,1456.00,2025-09-05,sim,15,dolorem iure,2025-07-01,2025-12-15
+Yango Albuquerque,MAT1116,Yango.Albuquerque55@escola.com.br,senha116,/uploads/aluno116.jpg,1843.00,2025-09-05,não,,,,
+Joana Albuquerque,MAT1117,Joana.Albuquerque@escola.com.br,senha117,,1113.00,2025-09-05,não,,,,
+Eduardo Reis,MAT1118,Eduardo.Reis15@escola.com.br,senha118,,983.00,2025-09-05,não,,,,
+Sr. Breno Macedo,MAT1119,Sr._Breno64@escola.com.br,senha119,,723.00,2025-09-05,não,,,,
+Fabrícia Melo,MAT1120,Fabricia_Melo90@escola.com.br,senha120,/uploads/aluno120.jpg,1938.00,2025-09-05,sim,15,possimus quasi,2025-07-01,2025-12-15
+Yuri Oliveira,MAT1121,Yuri.Oliveira@escola.com.br,senha121,,1746.00,2025-09-05,não,,,,
+Felícia Macedo,MAT1122,Felicia.Macedo53@escola.com.br,senha122,,1359.00,2025-09-05,não,,,,
+Breno Moreira,MAT1123,Breno_Moreira@escola.com.br,senha123,,1362.00,2025-09-05,não,,,,
+Ígor Barros,MAT1124,Igor_Barros92@escola.com.br,senha124,/uploads/aluno124.jpg,969.00,2025-09-05,não,,,,
+Vitor Pereira,MAT1125,Vitor.Pereira@escola.com.br,senha125,,1171.00,2025-09-05,sim,15,culpa ab,2025-07-01,2025-12-15
+Alice Martins,MAT1126,Alice.Martins12@escola.com.br,senha126,,1984.00,2025-09-05,não,,,,
+Morgana Barros,MAT1127,Morgana_Barros@escola.com.br,senha127,,1898.00,2025-09-05,não,,,,
+Eduarda Carvalho,MAT1128,Eduarda.Carvalho@escola.com.br,senha128,/uploads/aluno128.jpg,1395.00,2025-09-05,não,,,,
+Elísio Macedo,MAT1129,Elisio.Macedo99@escola.com.br,senha129,,1804.00,2025-09-05,não,,,,
+Elísio Albuquerque Filho,MAT1130,Elisio_Albuquerque@escola.com.br,senha130,,1383.00,2025-09-05,sim,25,nemo quaerat,2025-07-01,2025-12-15
+Dr. Danilo Moreira,MAT1131,Dr._Danilo3@escola.com.br,senha131,,1119.00,2025-09-05,não,,,,
+Talita Saraiva,MAT1132,Talita_Saraiva@escola.com.br,senha132,/uploads/aluno132.jpg,1594.00,2025-09-05,não,,,,
+Larissa Reis Neto,MAT1133,Larissa_Reis@escola.com.br,senha133,,1215.00,2025-09-05,não,,,,
+Théo Nogueira,MAT1134,Theo_Nogueira@escola.com.br,senha134,,1111.00,2025-09-05,não,,,,
+Sarah Melo Filho,MAT1135,Sarah_Melo@escola.com.br,senha135,,1157.00,2025-09-05,sim,10,fugiat modi,2025-07-01,2025-12-15
+Lara Moreira,MAT1136,Lara.Moreira@escola.com.br,senha136,/uploads/aluno136.jpg,1177.00,2025-09-05,não,,,,
+Antônio Franco,MAT1137,Antonio_Franco@escola.com.br,senha137,,1289.00,2025-09-05,não,,,,
+Feliciano Barros,MAT1138,Feliciano.Barros@escola.com.br,senha138,,1307.00,2025-09-05,não,,,,
+Breno Saraiva Filho,MAT1139,Breno.Saraiva53@escola.com.br,senha139,,907.00,2025-09-05,não,,,,
+Vitor Oliveira,MAT1140,Vitor_Oliveira@escola.com.br,senha140,/uploads/aluno140.jpg,1694.00,2025-09-05,sim,10,voluptatibus ratione,2025-07-01,2025-12-15
+Helena Braga,MAT1141,Helena.Braga77@escola.com.br,senha141,,1413.00,2025-09-05,não,,,,
+Warley Saraiva,MAT1142,Warley.Saraiva@escola.com.br,senha142,,936.00,2025-09-05,não,,,,
+Elisa Carvalho,MAT1143,Elisa.Carvalho99@escola.com.br,senha143,,1540.00,2025-09-05,não,,,,
+Ana Luiza Santos,MAT1144,Ana_Luiza@escola.com.br,senha144,/uploads/aluno144.jpg,1503.00,2025-09-05,não,,,,
+Karla Santos,MAT1145,Karla_Santos@escola.com.br,senha145,,1843.00,2025-09-05,sim,25,commodi voluptatem,2025-07-01,2025-12-15
+Benício Pereira,MAT1146,Benicio_Pereira64@escola.com.br,senha146,,922.00,2025-09-05,não,,,,
+Esther Moreira,MAT1147,Esther_Moreira22@escola.com.br,senha147,,750.00,2025-09-05,não,,,,
+Enzo Carvalho Filho,MAT1148,Enzo.Carvalho60@escola.com.br,senha148,/uploads/aluno148.jpg,1770.00,2025-09-05,não,,,,
+Lucca Nogueira,MAT1149,Lucca_Nogueira@escola.com.br,senha149,,1966.00,2025-09-05,não,,,,
+Ana Luiza Pereira,MAT1150,Ana_Luiza88@escola.com.br,senha150,,1337.00,2025-09-05,sim,15,ab dolorem,2025-07-01,2025-12-15
+Hugo Reis,MAT1151,Hugo.Reis45@escola.com.br,senha151,,801.00,2025-09-05,não,,,,
+Ofélia Saraiva,MAT1152,Ofelia_Saraiva83@escola.com.br,senha152,/uploads/aluno152.jpg,1611.00,2025-09-05,não,,,,
+Noah Moraes,MAT1153,Noah_Moraes63@escola.com.br,senha153,,1638.00,2025-09-05,não,,,,
+Davi Macedo,MAT1154,Davi_Macedo74@escola.com.br,senha154,,1837.00,2025-09-05,não,,,,
+Carla Oliveira,MAT1155,Carla_Oliveira3@escola.com.br,senha155,,1768.00,2025-09-05,sim,20,eos sapiente,2025-07-01,2025-12-15
+Liz Reis,MAT1156,Liz.Reis24@escola.com.br,senha156,/uploads/aluno156.jpg,1820.00,2025-09-05,não,,,,
+Alícia Melo,MAT1157,Alicia_Melo@escola.com.br,senha157,,1447.00,2025-09-05,não,,,,
+Antonella Batista,MAT1158,Antonella_Batista81@escola.com.br,senha158,,1089.00,2025-09-05,não,,,,
+Dr. Henrique Xavier,MAT1159,Dr.Henrique@escola.com.br,senha159,,1727.00,2025-09-05,não,,,,
+Melissa Oliveira,MAT1160,Melissa.Oliveira@escola.com.br,senha160,/uploads/aluno160.jpg,889.00,2025-09-05,sim,10,itaque molestiae,2025-07-01,2025-12-15
+Sr. Ígor Santos,MAT1161,Sr.Igor12@escola.com.br,senha161,,1870.00,2025-09-05,não,,,,
+João Lucas Albuquerque Jr.,MAT1162,Joao.Lucas25@escola.com.br,senha162,,975.00,2025-09-05,não,,,,
+Pablo Silva,MAT1163,Pablo.Silva91@escola.com.br,senha163,,1172.00,2025-09-05,não,,,,
+Rafael Silva,MAT1164,Rafael_Silva@escola.com.br,senha164,/uploads/aluno164.jpg,719.00,2025-09-05,não,,,,
+Roberto Xavier,MAT1165,Roberto.Xavier@escola.com.br,senha165,,862.00,2025-09-05,sim,25,architecto earum,2025-07-01,2025-12-15
+Karla Carvalho,MAT1166,Karla.Carvalho@escola.com.br,senha166,,1316.00,2025-09-05,não,,,,
+Maria Cecília Oliveira Filho,MAT1167,Maria_Cecilia93@escola.com.br,senha167,,852.00,2025-09-05,não,,,,
+Isabel Reis,MAT1168,Isabel_Reis@escola.com.br,senha168,/uploads/aluno168.jpg,721.00,2025-09-05,não,,,,
+Marli Saraiva,MAT1169,Marli.Saraiva45@escola.com.br,senha169,,1205.00,2025-09-05,não,,,,
+Isis Albuquerque,MAT1170,Isis_Albuquerque91@escola.com.br,senha170,,1482.00,2025-09-05,sim,10,numquam eligendi,2025-07-01,2025-12-15
+Célia Albuquerque Jr.,MAT1171,Celia.Albuquerque22@escola.com.br,senha171,,1736.00,2025-09-05,não,,,,
+Helena Carvalho,MAT1172,Helena_Carvalho@escola.com.br,senha172,/uploads/aluno172.jpg,858.00,2025-09-05,não,,,,
+Rebeca Xavier,MAT1173,Rebeca.Xavier@escola.com.br,senha173,,1824.00,2025-09-05,não,,,,
+Marcos Braga,MAT1174,Marcos.Braga@escola.com.br,senha174,,1545.00,2025-09-05,não,,,,
+Salvador Pereira,MAT1175,Salvador_Pereira@escola.com.br,senha175,,910.00,2025-09-05,sim,25,quaerat dolores,2025-07-01,2025-12-15
+Henrique Martins,MAT1176,Henrique.Martins@escola.com.br,senha176,/uploads/aluno176.jpg,717.00,2025-09-05,não,,,,
+Liz Martins,MAT1177,Liz_Martins@escola.com.br,senha177,,897.00,2025-09-05,não,,,,
+Sirineu Costa,MAT1178,Sirineu.Costa61@escola.com.br,senha178,,1378.00,2025-09-05,não,,,,
+Sirineu Barros,MAT1179,Sirineu.Barros7@escola.com.br,senha179,,750.00,2025-09-05,não,,,,
+Maria Júlia Nogueira,MAT1180,Maria.Julia@escola.com.br,senha180,/uploads/aluno180.jpg,1917.00,2025-09-05,sim,15,aperiam voluptatibus,2025-07-01,2025-12-15
+Dr. Paulo Silva,MAT1181,Dr.Paulo@escola.com.br,senha181,,1176.00,2025-09-05,não,,,,
+Ana Laura Franco Jr.,MAT1182,Ana_Laura77@escola.com.br,senha182,,1772.00,2025-09-05,não,,,,
+Maria Alice Martins,MAT1183,Maria_Alice@escola.com.br,senha183,,1245.00,2025-09-05,não,,,,
+Frederico Costa,MAT1184,Frederico.Costa@escola.com.br,senha184,/uploads/aluno184.jpg,1990.00,2025-09-05,não,,,,
+Maria Alice Xavier,MAT1185,Maria_Alice@escola.com.br,senha185,,1067.00,2025-09-05,sim,15,nulla rem,2025-07-01,2025-12-15
+Melissa Saraiva Jr.,MAT1186,Melissa_Saraiva81@escola.com.br,senha186,,741.00,2025-09-05,não,,,,
+Yago Oliveira,MAT1187,Yago_Oliveira@escola.com.br,senha187,,1043.00,2025-09-05,não,,,,
+Isis Costa,MAT1188,Isis.Costa@escola.com.br,senha188,/uploads/aluno188.jpg,809.00,2025-09-05,não,,,,
+Sr. Enzo Silva,MAT1189,Sr.Enzo@escola.com.br,senha189,,822.00,2025-09-05,não,,,,
+Hugo Barros Filho,MAT1190,Hugo.Barros22@escola.com.br,senha190,,975.00,2025-09-05,sim,10,veniam delectus,2025-07-01,2025-12-15
+Helena Franco,MAT1191,Helena_Franco@escola.com.br,senha191,,1810.00,2025-09-05,não,,,,
+Fabrício Macedo,MAT1192,Fabricio_Macedo@escola.com.br,senha192,/uploads/aluno192.jpg,1663.00,2025-09-05,não,,,,
+Miguel Batista,MAT1193,Miguel_Batista@escola.com.br,senha193,,773.00,2025-09-05,não,,,,
+Lívia Albuquerque,MAT1194,Livia_Albuquerque@escola.com.br,senha194,,1188.00,2025-09-05,não,,,,
+Raul Santos,MAT1195,Raul.Santos@escola.com.br,senha195,,1460.00,2025-09-05,sim,15,architecto harum,2025-07-01,2025-12-15
+Hélio Braga,MAT1196,Helio_Braga@escola.com.br,senha196,/uploads/aluno196.jpg,1317.00,2025-09-05,não,,,,
+Gabriel Carvalho Jr.,MAT1197,Gabriel_Carvalho@escola.com.br,senha197,,1926.00,2025-09-05,não,,,,
+Sr. Enzo Braga,MAT1198,Sr._Enzo@escola.com.br,senha198,,743.00,2025-09-05,não,,,,
+Bruna Santos,MAT1199,Bruna.Santos14@escola.com.br,senha199,,1457.00,2025-09-05,não,,,,
+Srta. Maitê Melo,MAT1200,Srta._Maite@escola.com.br,senha200,/uploads/aluno200.jpg,1606.00,2025-09-05,sim,10,quasi nemo,2025-07-01,2025-12-15
+Lavínia Moreira,MAT1201,Lavinia_Moreira@escola.com.br,senha201,,881.00,2025-09-05,não,,,,
+Arthur Martins,MAT1202,Arthur_Martins@escola.com.br,senha202,,1170.00,2025-09-05,não,,,,
+Vitória Silva Filho,MAT1203,Vitoria.Silva37@escola.com.br,senha203,,1646.00,2025-09-05,não,,,,
+Benjamin Albuquerque,MAT1204,Benjamin.Albuquerque72@escola.com.br,senha204,/uploads/aluno204.jpg,1930.00,2025-09-05,não,,,,
+Noah Macedo,MAT1205,Noah.Macedo@escola.com.br,senha205,,1709.00,2025-09-05,sim,25,praesentium minima,2025-07-01,2025-12-15
+Alexandre Franco,MAT1206,Alexandre.Franco55@escola.com.br,senha206,,890.00,2025-09-05,não,,,,
+Júlio César Melo,MAT1207,Julio.Cesar@escola.com.br,senha207,,1108.00,2025-09-05,não,,,,
+Lavínia Melo,MAT1208,Lavinia_Melo@escola.com.br,senha208,/uploads/aluno208.jpg,1424.00,2025-09-05,não,,,,
+Júlio Carvalho,MAT1209,Julio.Carvalho53@escola.com.br,senha209,,1193.00,2025-09-05,não,,,,
+Roberto Melo,MAT1210,Roberto_Melo@escola.com.br,senha210,,1386.00,2025-09-05,sim,10,ipsum eaque,2025-07-01,2025-12-15
+Feliciano Franco Neto,MAT1211,Feliciano_Franco@escola.com.br,senha211,,1234.00,2025-09-05,não,,,,
+Sarah Moreira,MAT1212,Sarah.Moreira14@escola.com.br,senha212,/uploads/aluno212.jpg,1212.00,2025-09-05,não,,,,
+Maitê Oliveira,MAT1213,Maite_Oliveira@escola.com.br,senha213,,1596.00,2025-09-05,não,,,,
+Fabrício Nogueira,MAT1214,Fabricio_Nogueira44@escola.com.br,senha214,,1445.00,2025-09-05,não,,,,
+Larissa Souza Jr.,MAT1215,Larissa_Souza@escola.com.br,senha215,,1288.00,2025-09-05,sim,10,atque quasi,2025-07-01,2025-12-15
+Leonardo Santos,MAT1216,Leonardo.Santos55@escola.com.br,senha216,/uploads/aluno216.jpg,1134.00,2025-09-05,não,,,,
+Antonella Xavier,MAT1217,Antonella.Xavier@escola.com.br,senha217,,1823.00,2025-09-05,não,,,,
+Antônio Batista,MAT1218,Antonio_Batista@escola.com.br,senha218,,1024.00,2025-09-05,não,,,,
+Yuri Melo,MAT1219,Yuri.Melo@escola.com.br,senha219,,1080.00,2025-09-05,não,,,,
+Enzo Gabriel Souza,MAT1220,Enzo_Gabriel@escola.com.br,senha220,/uploads/aluno220.jpg,1597.00,2025-09-05,sim,15,distinctio nostrum,2025-07-01,2025-12-15
+Marina Silva,MAT1221,Marina.Silva@escola.com.br,senha221,,1323.00,2025-09-05,não,,,,
+Pedro Henrique Barros,MAT1222,Pedro.Henrique@escola.com.br,senha222,,1307.00,2025-09-05,não,,,,
+Noah Moraes,MAT1223,Noah_Moraes69@escola.com.br,senha223,,765.00,2025-09-05,não,,,,
+Isabela Silva,MAT1224,Isabela.Silva@escola.com.br,senha224,/uploads/aluno224.jpg,854.00,2025-09-05,não,,,,
+Miguel Xavier,MAT1225,Miguel.Xavier65@escola.com.br,senha225,,1517.00,2025-09-05,sim,10,commodi commodi,2025-07-01,2025-12-15
+Carlos Franco,MAT1226,Carlos.Franco90@escola.com.br,senha226,,1379.00,2025-09-05,não,,,,
+Cecília Batista,MAT1227,Cecilia_Batista@escola.com.br,senha227,,1836.00,2025-09-05,não,,,,
+Sra. Márcia Pereira,MAT1228,Sra.Marcia@escola.com.br,senha228,/uploads/aluno228.jpg,1725.00,2025-09-05,não,,,,
+Srta. Dalila Albuquerque,MAT1229,Srta._Dalila@escola.com.br,senha229,,1501.00,2025-09-05,não,,,,
+Eloá Reis,MAT1230,Eloa.Reis78@escola.com.br,senha230,,1641.00,2025-09-05,sim,25,quas libero,2025-07-01,2025-12-15
+Fabrício Melo,MAT1231,Fabricio.Melo36@escola.com.br,senha231,,1027.00,2025-09-05,não,,,,
+Maria Braga,MAT1232,Maria_Braga@escola.com.br,senha232,/uploads/aluno232.jpg,1233.00,2025-09-05,não,,,,
+Davi Lucca Xavier,MAT1233,Davi_Lucca8@escola.com.br,senha233,,1170.00,2025-09-05,não,,,,
+Sílvia Carvalho,MAT1234,Silvia.Carvalho12@escola.com.br,senha234,,834.00,2025-09-05,não,,,,
+Maria Barros,MAT1235,Maria.Barros@escola.com.br,senha235,,1481.00,2025-09-05,sim,20,delectus perferendis,2025-07-01,2025-12-15
+Dr. Cauã Braga,MAT1236,Dr.Caua@escola.com.br,senha236,/uploads/aluno236.jpg,1784.00,2025-09-05,não,,,,
+Morgana Pereira,MAT1237,Morgana_Pereira@escola.com.br,senha237,,1870.00,2025-09-05,não,,,,
+Maria Helena Barros Jr.,MAT1238,Maria.Helena93@escola.com.br,senha238,,1351.00,2025-09-05,não,,,,
+Davi Souza Jr.,MAT1239,Davi.Souza@escola.com.br,senha239,,1100.00,2025-09-05,não,,,,
+Maria Júlia Braga,MAT1240,Maria.Julia28@escola.com.br,senha240,/uploads/aluno240.jpg,1994.00,2025-09-05,sim,20,asperiores fuga,2025-07-01,2025-12-15
+Roberto Silva,MAT1241,Roberto.Silva@escola.com.br,senha241,,1494.00,2025-09-05,não,,,,
+Isabela Franco Jr.,MAT1242,Isabela_Franco@escola.com.br,senha242,,975.00,2025-09-05,não,,,,
+Heitor Silva,MAT1243,Heitor_Silva28@escola.com.br,senha243,,979.00,2025-09-05,não,,,,
+Paulo Saraiva,MAT1244,Paulo.Saraiva55@escola.com.br,senha244,/uploads/aluno244.jpg,919.00,2025-09-05,não,,,,
+Enzo Barros,MAT1245,Enzo.Barros24@escola.com.br,senha245,,1043.00,2025-09-05,sim,15,veritatis placeat,2025-07-01,2025-12-15
+Anthony Silva Neto,MAT1246,Anthony_Silva42@escola.com.br,senha246,,1683.00,2025-09-05,não,,,,
+Emanuelly Moreira,MAT1247,Emanuelly_Moreira@escola.com.br,senha247,,1150.00,2025-09-05,não,,,,
+Norberto Costa,MAT1248,Norberto_Costa@escola.com.br,senha248,/uploads/aluno248.jpg,1423.00,2025-09-05,não,,,,
+João Miguel Xavier,MAT1249,Joao.Miguel@escola.com.br,senha249,,1943.00,2025-09-05,não,,,,
+Dr. Deneval Santos,MAT1250,Dr._Deneval81@escola.com.br,senha250,,1637.00,2025-09-05,sim,25,dignissimos eius,2025-07-01,2025-12-15
+Maria Clara Franco,MAT1251,Maria.Clara73@escola.com.br,senha251,,1956.00,2025-09-05,não,,,,
+Melissa Moreira,MAT1252,Melissa.Moreira@escola.com.br,senha252,/uploads/aluno252.jpg,1440.00,2025-09-05,não,,,,
+Dr. João Moraes,MAT1253,Dr._Joao18@escola.com.br,senha253,,1251.00,2025-09-05,não,,,,
+Marcelo Braga,MAT1254,Marcelo_Braga@escola.com.br,senha254,,1333.00,2025-09-05,não,,,,
+Isabella Souza,MAT1255,Isabella.Souza35@escola.com.br,senha255,,758.00,2025-09-05,sim,15,non rem,2025-07-01,2025-12-15
+Júlia Santos Jr.,MAT1256,Julia.Santos@escola.com.br,senha256,/uploads/aluno256.jpg,937.00,2025-09-05,não,,,,
+Laura Nogueira,MAT1257,Laura_Nogueira@escola.com.br,senha257,,953.00,2025-09-05,não,,,,
+João Miguel Carvalho,MAT1258,Joao.Miguel@escola.com.br,senha258,,1021.00,2025-09-05,não,,,,
+César Xavier,MAT1259,Cesar.Xavier14@escola.com.br,senha259,,852.00,2025-09-05,não,,,,
+Marcelo Melo,MAT1260,Marcelo.Melo@escola.com.br,senha260,/uploads/aluno260.jpg,1851.00,2025-09-05,sim,25,deleniti quis,2025-07-01,2025-12-15
+Rafaela Reis,MAT1261,Rafaela_Reis39@escola.com.br,senha261,,776.00,2025-09-05,não,,,,
+Isaac Melo,MAT1262,Isaac_Melo@escola.com.br,senha262,,935.00,2025-09-05,não,,,,
+Sr. Raul Costa,MAT1263,Sr.Raul@escola.com.br,senha263,,1001.00,2025-09-05,não,,,,
+Alícia Nogueira,MAT1264,Alicia_Nogueira@escola.com.br,senha264,/uploads/aluno264.jpg,778.00,2025-09-05,não,,,,
+Célia Silva,MAT1265,Celia_Silva64@escola.com.br,senha265,,1357.00,2025-09-05,sim,15,aliquam nemo,2025-07-01,2025-12-15
+Silas Martins,MAT1266,Silas.Martins@escola.com.br,senha266,,777.00,2025-09-05,não,,,,
+Sophia Nogueira,MAT1267,Sophia.Nogueira34@escola.com.br,senha267,,1134.00,2025-09-05,não,,,,
+Maria Luiza Souza,MAT1268,Maria.Luiza@escola.com.br,senha268,/uploads/aluno268.jpg,1583.00,2025-09-05,não,,,,
+Antonella Braga,MAT1269,Antonella_Braga@escola.com.br,senha269,,875.00,2025-09-05,não,,,,
+Srta. Júlia Saraiva,MAT1270,Srta.Julia@escola.com.br,senha270,,998.00,2025-09-05,sim,10,quia minus,2025-07-01,2025-12-15
+João Pedro Oliveira,MAT1271,Joao.Pedro@escola.com.br,senha271,,1051.00,2025-09-05,não,,,,
+Guilherme Moraes,MAT1272,Guilherme_Moraes62@escola.com.br,senha272,/uploads/aluno272.jpg,1351.00,2025-09-05,não,,,,
+Esther Albuquerque,MAT1273,Esther_Albuquerque85@escola.com.br,senha273,,1098.00,2025-09-05,não,,,,
+Félix Batista,MAT1274,Felix_Batista71@escola.com.br,senha274,,828.00,2025-09-05,não,,,,
+Maria Cecília Batista Filho,MAT1275,Maria.Cecilia19@escola.com.br,senha275,,1221.00,2025-09-05,sim,15,voluptatibus modi,2025-07-01,2025-12-15
+Sr. Paulo Pereira,MAT1276,Sr.Paulo@escola.com.br,senha276,/uploads/aluno276.jpg,997.00,2025-09-05,não,,,,
+Lorenzo Costa,MAT1277,Lorenzo.Costa7@escola.com.br,senha277,,868.00,2025-09-05,não,,,,
+Maria Cecília Moraes Jr.,MAT1278,Maria_Cecilia27@escola.com.br,senha278,,1593.00,2025-09-05,não,,,,
+Natália Oliveira,MAT1279,Natalia.Oliveira@escola.com.br,senha279,,1760.00,2025-09-05,não,,,,
+Morgana Silva Neto,MAT1280,Morgana.Silva@escola.com.br,senha280,/uploads/aluno280.jpg,1701.00,2025-09-05,sim,10,delectus quod,2025-07-01,2025-12-15
+Washington Reis,MAT1281,Washington_Reis@escola.com.br,senha281,,790.00,2025-09-05,não,,,,
+Janaína Xavier,MAT1282,Janaina_Xavier38@escola.com.br,senha282,,1081.00,2025-09-05,não,,,,
+Danilo Costa,MAT1283,Danilo_Costa@escola.com.br,senha283,,1478.00,2025-09-05,não,,,,
+Danilo Martins Jr.,MAT1284,Danilo.Martins69@escola.com.br,senha284,/uploads/aluno284.jpg,786.00,2025-09-05,não,,,,
+Gustavo Moreira,MAT1285,Gustavo.Moreira@escola.com.br,senha285,,1758.00,2025-09-05,sim,10,rerum est,2025-07-01,2025-12-15
+Manuela Nogueira,MAT1286,Manuela.Nogueira@escola.com.br,senha286,,796.00,2025-09-05,não,,,,
+Gabriel Santos,MAT1287,Gabriel_Santos19@escola.com.br,senha287,,829.00,2025-09-05,não,,,,
+Sarah Moreira,MAT1288,Sarah.Moreira@escola.com.br,senha288,/uploads/aluno288.jpg,1468.00,2025-09-05,não,,,,
+Felipe Franco,MAT1289,Felipe.Franco@escola.com.br,senha289,,1123.00,2025-09-05,não,,,,
+Sr. Davi Lucca Santos,MAT1290,Sr._Davi31@escola.com.br,senha290,,1519.00,2025-09-05,sim,20,quam eos,2025-07-01,2025-12-15
+Sr. Gabriel Batista,MAT1291,Sr._Gabriel@escola.com.br,senha291,,966.00,2025-09-05,não,,,,
+Davi Silva,MAT1292,Davi.Silva@escola.com.br,senha292,/uploads/aluno292.jpg,836.00,2025-09-05,não,,,,
+Cauã Macedo,MAT1293,Caua_Macedo87@escola.com.br,senha293,,1400.00,2025-09-05,não,,,,
+Maria Júlia Melo,MAT1294,Maria_Julia@escola.com.br,senha294,,831.00,2025-09-05,não,,,,
+Noah Pereira,MAT1295,Noah_Pereira63@escola.com.br,senha295,,880.00,2025-09-05,sim,15,vitae pariatur,2025-07-01,2025-12-15
+Alessandra Xavier,MAT1296,Alessandra.Xavier@escola.com.br,senha296,/uploads/aluno296.jpg,1890.00,2025-09-05,não,,,,
+Pablo Reis,MAT1297,Pablo_Reis57@escola.com.br,senha297,,1337.00,2025-09-05,não,,,,
+Alessandra Moreira,MAT1298,Alessandra.Moreira@escola.com.br,senha298,,739.00,2025-09-05,não,,,,
+Esther Martins,MAT1299,Esther_Martins@escola.com.br,senha299,,1826.00,2025-09-05,não,,,,
+Warley Moraes,MAT1300,Warley.Moraes@escola.com.br,senha300,/uploads/aluno300.jpg,1477.00,2025-09-05,sim,25,maxime omnis,2025-07-01,2025-12-15
+Sílvia Franco,MAT1301,Silvia_Franco10@escola.com.br,senha301,,1531.00,2025-09-05,não,,,,
+Eloá Reis,MAT1302,Eloa.Reis@escola.com.br,senha302,,771.00,2025-09-05,não,,,,
+Isabela Nogueira,MAT1303,Isabela_Nogueira99@escola.com.br,senha303,,1112.00,2025-09-05,não,,,,
+Isabella Costa Jr.,MAT1304,Isabella_Costa51@escola.com.br,senha304,/uploads/aluno304.jpg,858.00,2025-09-05,não,,,,
+Carla Nogueira,MAT1305,Carla.Nogueira95@escola.com.br,senha305,,1353.00,2025-09-05,sim,10,fuga blanditiis,2025-07-01,2025-12-15
+Breno Batista,MAT1306,Breno.Batista@escola.com.br,senha306,,756.00,2025-09-05,não,,,,
+Paulo Oliveira,MAT1307,Paulo.Oliveira@escola.com.br,senha307,,979.00,2025-09-05,não,,,,
+Morgana Reis,MAT1308,Morgana.Reis@escola.com.br,senha308,/uploads/aluno308.jpg,1865.00,2025-09-05,não,,,,
+Elisa Barros,MAT1309,Elisa_Barros@escola.com.br,senha309,,715.00,2025-09-05,não,,,,
+Sr. Davi Lucca Oliveira,MAT1310,Sr._Davi31@escola.com.br,senha310,,1949.00,2025-09-05,sim,15,necessitatibus a,2025-07-01,2025-12-15
+Danilo Franco Neto,MAT1311,Danilo.Franco98@escola.com.br,senha311,,1421.00,2025-09-05,não,,,,
+Leonardo Costa,MAT1312,Leonardo.Costa@escola.com.br,senha312,/uploads/aluno312.jpg,1755.00,2025-09-05,não,,,,
+Suélen Moraes,MAT1313,Suelen.Moraes16@escola.com.br,senha313,,1563.00,2025-09-05,não,,,,
+Frederico Melo,MAT1314,Frederico.Melo77@escola.com.br,senha314,,1611.00,2025-09-05,não,,,,
+Ana Clara Oliveira,MAT1315,Ana_Clara@escola.com.br,senha315,,1528.00,2025-09-05,sim,25,blanditiis maiores,2025-07-01,2025-12-15
+Carla Saraiva,MAT1316,Carla.Saraiva@escola.com.br,senha316,/uploads/aluno316.jpg,971.00,2025-09-05,não,,,,
+Raul Oliveira,MAT1317,Raul.Oliveira@escola.com.br,senha317,,1284.00,2025-09-05,não,,,,
+Maria Alice Barros,MAT1318,Maria.Alice@escola.com.br,senha318,,1428.00,2025-09-05,não,,,,
+Vicente Barros,MAT1319,Vicente_Barros@escola.com.br,senha319,,1721.00,2025-09-05,não,,,,
+Dra. Bruna Reis,MAT1320,Dra.Bruna71@escola.com.br,senha320,/uploads/aluno320.jpg,1588.00,2025-09-05,sim,25,suscipit sunt,2025-07-01,2025-12-15
+Henrique Franco,MAT1321,Henrique.Franco@escola.com.br,senha321,,1322.00,2025-09-05,não,,,,
+Pedro Xavier,MAT1322,Pedro_Xavier15@escola.com.br,senha322,,751.00,2025-09-05,não,,,,
+Esther Moreira,MAT1323,Esther_Moreira@escola.com.br,senha323,,1635.00,2025-09-05,não,,,,
+Alessandra Franco,MAT1324,Alessandra.Franco@escola.com.br,senha324,/uploads/aluno324.jpg,1392.00,2025-09-05,não,,,,
+Cauã Costa,MAT1325,Caua_Costa68@escola.com.br,senha325,,1663.00,2025-09-05,sim,20,vero provident,2025-07-01,2025-12-15
+Aline Souza,MAT1326,Aline_Souza@escola.com.br,senha326,,1529.00,2025-09-05,não,,,,
+Isaac Melo,MAT1327,Isaac_Melo6@escola.com.br,senha327,,1693.00,2025-09-05,não,,,,
+Joaquim Batista,MAT1328,Joaquim_Batista17@escola.com.br,senha328,/uploads/aluno328.jpg,1669.00,2025-09-05,não,,,,
+Silas Nogueira,MAT1329,Silas.Nogueira@escola.com.br,senha329,,1844.00,2025-09-05,não,,,,
+Talita Xavier,MAT1330,Talita_Xavier@escola.com.br,senha330,,1260.00,2025-09-05,sim,20,officia magnam,2025-07-01,2025-12-15
+Théo Franco,MAT1331,Theo_Franco@escola.com.br,senha331,,749.00,2025-09-05,não,,,,
+Marli Melo,MAT1332,Marli.Melo56@escola.com.br,senha332,/uploads/aluno332.jpg,1183.00,2025-09-05,não,,,,
+Yango Macedo,MAT1333,Yango.Macedo68@escola.com.br,senha333,,1663.00,2025-09-05,não,,,,
+Antonella Costa,MAT1334,Antonella.Costa82@escola.com.br,senha334,,1277.00,2025-09-05,não,,,,
+Felipe Saraiva,MAT1335,Felipe_Saraiva@escola.com.br,senha335,,1181.00,2025-09-05,sim,20,facere corrupti,2025-07-01,2025-12-15
+Salvador Moraes,MAT1336,Salvador_Moraes17@escola.com.br,senha336,/uploads/aluno336.jpg,1367.00,2025-09-05,não,,,,
+Heloísa Martins,MAT1337,Heloisa_Martins69@escola.com.br,senha337,,1221.00,2025-09-05,não,,,,
+Warley Melo,MAT1338,Warley_Melo62@escola.com.br,senha338,,1638.00,2025-09-05,não,,,,
+Yango Nogueira,MAT1339,Yango_Nogueira@escola.com.br,senha339,,1076.00,2025-09-05,não,,,,
+Srta. Márcia Moraes,MAT1340,Srta.Marcia28@escola.com.br,senha340,/uploads/aluno340.jpg,1627.00,2025-09-05,sim,20,quasi sint,2025-07-01,2025-12-15
+Luiza Carvalho,MAT1341,Luiza_Carvalho83@escola.com.br,senha341,,1713.00,2025-09-05,não,,,,
+Nataniel Xavier,MAT1342,Nataniel_Xavier@escola.com.br,senha342,,824.00,2025-09-05,não,,,,
+Sílvia Melo,MAT1343,Silvia.Melo@escola.com.br,senha343,,1757.00,2025-09-05,não,,,,
+Washington Martins,MAT1344,Washington_Martins@escola.com.br,senha344,/uploads/aluno344.jpg,877.00,2025-09-05,não,,,,
+Felícia Souza,MAT1345,Felicia_Souza@escola.com.br,senha345,,1422.00,2025-09-05,sim,15,exercitationem animi,2025-07-01,2025-12-15
+Dr. Eduardo Albuquerque,MAT1346,Dr.Eduardo@escola.com.br,senha346,,1023.00,2025-09-05,não,,,,
+Rebeca Moraes,MAT1347,Rebeca.Moraes11@escola.com.br,senha347,,890.00,2025-09-05,não,,,,
+Maria Cecília Albuquerque,MAT1348,Maria_Cecilia@escola.com.br,senha348,/uploads/aluno348.jpg,1648.00,2025-09-05,não,,,,
+Isabela Batista Filho,MAT1349,Isabela_Batista@escola.com.br,senha349,,1120.00,2025-09-05,não,,,,
+Davi Lucca Franco,MAT1350,Davi.Lucca@escola.com.br,senha350,,709.00,2025-09-05,sim,20,aliquid itaque,2025-07-01,2025-12-15
+Pedro Henrique Braga,MAT1351,Pedro_Henrique@escola.com.br,senha351,,896.00,2025-09-05,não,,,,
+Paulo Macedo,MAT1352,Paulo.Macedo@escola.com.br,senha352,/uploads/aluno352.jpg,1607.00,2025-09-05,não,,,,
+Marli Moraes,MAT1353,Marli.Moraes60@escola.com.br,senha353,,955.00,2025-09-05,não,,,,
+Ladislau Oliveira,MAT1354,Ladislau_Oliveira@escola.com.br,senha354,,1334.00,2025-09-05,não,,,,
+Bryan Reis,MAT1355,Bryan_Reis@escola.com.br,senha355,,921.00,2025-09-05,sim,25,odio sapiente,2025-07-01,2025-12-15
+Bernardo Costa,MAT1356,Bernardo.Costa@escola.com.br,senha356,/uploads/aluno356.jpg,1223.00,2025-09-05,não,,,,
+Esther Macedo,MAT1357,Esther_Macedo@escola.com.br,senha357,,1938.00,2025-09-05,não,,,,
+Ígor Franco,MAT1358,Igor_Franco@escola.com.br,senha358,,945.00,2025-09-05,não,,,,
+Isadora Silva,MAT1359,Isadora.Silva@escola.com.br,senha359,,1023.00,2025-09-05,não,,,,
+Ígor Moreira,MAT1360,Igor.Moreira91@escola.com.br,senha360,/uploads/aluno360.jpg,998.00,2025-09-05,sim,25,eius totam,2025-07-01,2025-12-15
+Isabelly Reis Jr.,MAT1361,Isabelly_Reis@escola.com.br,senha361,,1236.00,2025-09-05,não,,,,
+Sr. Felipe Barros,MAT1362,Sr._Felipe13@escola.com.br,senha362,,887.00,2025-09-05,não,,,,
+Norberto Martins,MAT1363,Norberto.Martins56@escola.com.br,senha363,,1758.00,2025-09-05,não,,,,
+Valentina Braga,MAT1364,Valentina_Braga43@escola.com.br,senha364,/uploads/aluno364.jpg,1978.00,2025-09-05,não,,,,
+Margarida Moraes,MAT1365,Margarida.Moraes@escola.com.br,senha365,,1731.00,2025-09-05,sim,25,neque esse,2025-07-01,2025-12-15
+Alessandro Batista,MAT1366,Alessandro_Batista61@escola.com.br,senha366,,828.00,2025-09-05,não,,,,
+Daniel Carvalho,MAT1367,Daniel.Carvalho31@escola.com.br,senha367,,1631.00,2025-09-05,não,,,,
+Lucas Melo Jr.,MAT1368,Lucas.Melo@escola.com.br,senha368,/uploads/aluno368.jpg,1019.00,2025-09-05,não,,,,
+Sr. César Moraes,MAT1369,Sr._Cesar@escola.com.br,senha369,,1553.00,2025-09-05,não,,,,
+Lara Carvalho,MAT1370,Lara.Carvalho43@escola.com.br,senha370,,917.00,2025-09-05,sim,25,hic dolore,2025-07-01,2025-12-15
+Fabrício Martins,MAT1371,Fabricio.Martins27@escola.com.br,senha371,,1945.00,2025-09-05,não,,,,
+Srta. Isabela Reis,MAT1372,Srta.Isabela69@escola.com.br,senha372,/uploads/aluno372.jpg,930.00,2025-09-05,não,,,,
+Gabriel Moraes,MAT1373,Gabriel.Moraes@escola.com.br,senha373,,1405.00,2025-09-05,não,,,,
+Lorena Melo,MAT1374,Lorena.Melo@escola.com.br,senha374,,1760.00,2025-09-05,não,,,,
+Fábio Saraiva,MAT1375,Fabio_Saraiva@escola.com.br,senha375,,1102.00,2025-09-05,sim,15,qui quaerat,2025-07-01,2025-12-15
+Ana Luiza Braga,MAT1376,Ana.Luiza@escola.com.br,senha376,/uploads/aluno376.jpg,1231.00,2025-09-05,não,,,,
+Marli Nogueira,MAT1377,Marli_Nogueira@escola.com.br,senha377,,963.00,2025-09-05,não,,,,
+Maitê Barros,MAT1378,Maite_Barros@escola.com.br,senha378,,1029.00,2025-09-05,não,,,,
+Víctor Melo,MAT1379,Victor.Melo@escola.com.br,senha379,,1211.00,2025-09-05,não,,,,
+Théo Moreira,MAT1380,Theo.Moreira@escola.com.br,senha380,/uploads/aluno380.jpg,1536.00,2025-09-05,sim,10,aut error,2025-07-01,2025-12-15
+Dra. Lavínia Barros,MAT1381,Dra._Lavinia32@escola.com.br,senha381,,1082.00,2025-09-05,não,,,,
+Manuela Souza,MAT1382,Manuela.Souza@escola.com.br,senha382,,1272.00,2025-09-05,não,,,,
+Elisa Barros,MAT1383,Elisa.Barros@escola.com.br,senha383,,1398.00,2025-09-05,não,,,,
+Félix Saraiva,MAT1384,Felix_Saraiva94@escola.com.br,senha384,/uploads/aluno384.jpg,1831.00,2025-09-05,não,,,,
+Célia Albuquerque,MAT1385,Celia_Albuquerque58@escola.com.br,senha385,,851.00,2025-09-05,sim,25,fugit eius,2025-07-01,2025-12-15
+Silas Costa Jr.,MAT1386,Silas_Costa@escola.com.br,senha386,,762.00,2025-09-05,não,,,,
+Rebeca Nogueira,MAT1387,Rebeca.Nogueira@escola.com.br,senha387,,759.00,2025-09-05,não,,,,
+Isis Barros,MAT1388,Isis_Barros@escola.com.br,senha388,/uploads/aluno388.jpg,1997.00,2025-09-05,não,,,,
+Fabiano Franco,MAT1389,Fabiano.Franco@escola.com.br,senha389,,1474.00,2025-09-05,não,,,,
+Alice Santos,MAT1390,Alice_Santos94@escola.com.br,senha390,,1340.00,2025-09-05,sim,10,rerum saepe,2025-07-01,2025-12-15
+Eduarda Albuquerque,MAT1391,Eduarda.Albuquerque@escola.com.br,senha391,,1707.00,2025-09-05,não,,,,
+Antônio Macedo,MAT1392,Antonio.Macedo88@escola.com.br,senha392,/uploads/aluno392.jpg,1056.00,2025-09-05,não,,,,
+Fábio Costa,MAT1393,Fabio_Costa36@escola.com.br,senha393,,1451.00,2025-09-05,não,,,,
+Paulo Martins,MAT1394,Paulo_Martins@escola.com.br,senha394,,1135.00,2025-09-05,não,,,,
+Fabiano Saraiva,MAT1395,Fabiano_Saraiva@escola.com.br,senha395,,1170.00,2025-09-05,sim,15,a ipsa,2025-07-01,2025-12-15
+Joana Saraiva,MAT1396,Joana.Saraiva41@escola.com.br,senha396,/uploads/aluno396.jpg,1163.00,2025-09-05,não,,,,
+Dra. Sophia Santos,MAT1397,Dra.Sophia@escola.com.br,senha397,,1304.00,2025-09-05,não,,,,
+Norberto Pereira,MAT1398,Norberto.Pereira39@escola.com.br,senha398,,1222.00,2025-09-05,não,,,,
+Lavínia Costa,MAT1399,Lavinia.Costa@escola.com.br,senha399,,1440.00,2025-09-05,não,,,,
+Suélen Moreira,MAT1400,Suelen.Moreira@escola.com.br,senha400,/uploads/aluno400.jpg,1242.00,2025-09-05,sim,10,numquam veniam,2025-07-01,2025-12-15
+Fabrícia Costa,MAT1401,Fabricia_Costa66@escola.com.br,senha401,,1655.00,2025-09-05,não,,,,
+Morgana Albuquerque Neto,MAT1402,Morgana.Albuquerque12@escola.com.br,senha402,,1193.00,2025-09-05,não,,,,
+Nataniel Macedo,MAT1403,Nataniel.Macedo@escola.com.br,senha403,,1534.00,2025-09-05,não,,,,
+João Lucas Costa Filho,MAT1404,Joao.Lucas@escola.com.br,senha404,/uploads/aluno404.jpg,1953.00,2025-09-05,não,,,,
+Ana Luiza Pereira,MAT1405,Ana_Luiza@escola.com.br,senha405,,1860.00,2025-09-05,sim,25,quam et,2025-07-01,2025-12-15
+Isis Melo,MAT1406,Isis.Melo@escola.com.br,senha406,,1020.00,2025-09-05,não,,,,
+Sr. Rafael Reis,MAT1407,Sr.Rafael@escola.com.br,senha407,,810.00,2025-09-05,não,,,,
+Lorenzo Melo,MAT1408,Lorenzo_Melo@escola.com.br,senha408,/uploads/aluno408.jpg,832.00,2025-09-05,não,,,,
+Bryan Carvalho,MAT1409,Bryan.Carvalho77@escola.com.br,senha409,,946.00,2025-09-05,não,,,,
+Giovanna Barros,MAT1410,Giovanna_Barros0@escola.com.br,senha410,,1982.00,2025-09-05,sim,20,maiores impedit,2025-07-01,2025-12-15
+Marli Macedo,MAT1411,Marli_Macedo26@escola.com.br,senha411,,1582.00,2025-09-05,não,,,,
+Ana Clara Costa,MAT1412,Ana.Clara@escola.com.br,senha412,/uploads/aluno412.jpg,1348.00,2025-09-05,não,,,,
+Davi Barros,MAT1413,Davi.Barros85@escola.com.br,senha413,,1527.00,2025-09-05,não,,,,
+Carla Albuquerque,MAT1414,Carla.Albuquerque28@escola.com.br,senha414,,1505.00,2025-09-05,não,,,,
+Natália Costa,MAT1415,Natalia_Costa@escola.com.br,senha415,,1533.00,2025-09-05,sim,20,ipsam quidem,2025-07-01,2025-12-15
+Deneval Souza,MAT1416,Deneval_Souza83@escola.com.br,senha416,/uploads/aluno416.jpg,1133.00,2025-09-05,não,,,,
+Lucca Reis,MAT1417,Lucca.Reis@escola.com.br,senha417,,1296.00,2025-09-05,não,,,,
+Talita Oliveira,MAT1418,Talita.Oliveira26@escola.com.br,senha418,,746.00,2025-09-05,não,,,,
+Esther Oliveira Jr.,MAT1419,Esther_Oliveira@escola.com.br,senha419,,954.00,2025-09-05,não,,,,
+Márcia Costa,MAT1420,Marcia.Costa76@escola.com.br,senha420,/uploads/aluno420.jpg,1448.00,2025-09-05,sim,20,numquam consectetur,2025-07-01,2025-12-15
+Esther Carvalho,MAT1421,Esther.Carvalho@escola.com.br,senha421,,708.00,2025-09-05,não,,,,
+Maria Alice Reis,MAT1422,Maria.Alice40@escola.com.br,senha422,,1260.00,2025-09-05,não,,,,
+Emanuel Martins,MAT1423,Emanuel_Martins@escola.com.br,senha423,,1984.00,2025-09-05,não,,,,
+Ana Clara Reis,MAT1424,Ana_Clara70@escola.com.br,senha424,/uploads/aluno424.jpg,1753.00,2025-09-05,não,,,,
+Márcia Macedo,MAT1425,Marcia.Macedo@escola.com.br,senha425,,1558.00,2025-09-05,sim,20,natus libero,2025-07-01,2025-12-15
+João Pedro Xavier,MAT1426,Joao.Pedro@escola.com.br,senha426,,949.00,2025-09-05,não,,,,
+Alessandra Santos,MAT1427,Alessandra.Santos12@escola.com.br,senha427,,1307.00,2025-09-05,não,,,,
+Maitê Batista,MAT1428,Maite_Batista29@escola.com.br,senha428,/uploads/aluno428.jpg,749.00,2025-09-05,não,,,,
+Maria Helena Oliveira Jr.,MAT1429,Maria.Helena44@escola.com.br,senha429,,1045.00,2025-09-05,não,,,,
+Mércia Oliveira Neto,MAT1430,Mercia.Oliveira34@escola.com.br,senha430,,1309.00,2025-09-05,sim,15,dicta eum,2025-07-01,2025-12-15
+Srta. Morgana Melo,MAT1431,Srta.Morgana@escola.com.br,senha431,,864.00,2025-09-05,não,,,,
+Hélio Barros,MAT1432,Helio.Barros13@escola.com.br,senha432,/uploads/aluno432.jpg,1321.00,2025-09-05,não,,,,
+Felícia Souza,MAT1433,Felicia_Souza75@escola.com.br,senha433,,1310.00,2025-09-05,não,,,,
+Vitor Moraes,MAT1434,Vitor.Moraes92@escola.com.br,senha434,,1312.00,2025-09-05,não,,,,
+Maria Luiza Batista,MAT1435,Maria_Luiza43@escola.com.br,senha435,,834.00,2025-09-05,sim,20,aspernatur esse,2025-07-01,2025-12-15
+Alessandra Moreira,MAT1436,Alessandra.Moreira@escola.com.br,senha436,/uploads/aluno436.jpg,1064.00,2025-09-05,não,,,,
+Margarida Nogueira,MAT1437,Margarida_Nogueira@escola.com.br,senha437,,723.00,2025-09-05,não,,,,
+Emanuelly Moreira,MAT1438,Emanuelly.Moreira@escola.com.br,senha438,,1798.00,2025-09-05,não,,,,
+Sílvia Macedo,MAT1439,Silvia.Macedo@escola.com.br,senha439,,1848.00,2025-09-05,não,,,,
+Vicente Reis Neto,MAT1440,Vicente_Reis@escola.com.br,senha440,/uploads/aluno440.jpg,1377.00,2025-09-05,sim,10,nam provident,2025-07-01,2025-12-15
+Dr. Isaac Batista,MAT1441,Dr.Isaac72@escola.com.br,senha441,,1074.00,2025-09-05,não,,,,
+Emanuel Barros,MAT1442,Emanuel_Barros65@escola.com.br,senha442,,1163.00,2025-09-05,não,,,,
+Matheus Pereira,MAT1443,Matheus.Pereira70@escola.com.br,senha443,,1774.00,2025-09-05,não,,,,
+Nataniel Pereira,MAT1444,Nataniel.Pereira96@escola.com.br,senha444,/uploads/aluno444.jpg,1444.00,2025-09-05,não,,,,
+Sílvia Moraes,MAT1445,Silvia.Moraes78@escola.com.br,senha445,,1989.00,2025-09-05,sim,10,ipsam beatae,2025-07-01,2025-12-15
+Marcos Oliveira,MAT1446,Marcos_Oliveira96@escola.com.br,senha446,,1961.00,2025-09-05,não,,,,
+Giovanna Melo,MAT1447,Giovanna_Melo@escola.com.br,senha447,,1572.00,2025-09-05,não,,,,
+Samuel Moreira,MAT1448,Samuel_Moreira@escola.com.br,senha448,/uploads/aluno448.jpg,923.00,2025-09-05,não,,,,
+Fábio Nogueira,MAT1449,Fabio.Nogueira@escola.com.br,senha449,,1200.00,2025-09-05,não,,,,
+Nataniel Martins,MAT1450,Nataniel_Martins86@escola.com.br,senha450,,1633.00,2025-09-05,sim,20,atque tempora,2025-07-01,2025-12-15
+Lorena Macedo Jr.,MAT1451,Lorena_Macedo@escola.com.br,senha451,,1019.00,2025-09-05,não,,,,
+Elisa Franco Neto,MAT1452,Elisa_Franco@escola.com.br,senha452,/uploads/aluno452.jpg,1226.00,2025-09-05,não,,,,
+Mariana Barros,MAT1453,Mariana.Barros@escola.com.br,senha453,,819.00,2025-09-05,não,,,,
+Liz Carvalho,MAT1454,Liz_Carvalho@escola.com.br,senha454,,1855.00,2025-09-05,não,,,,
+Emanuelly Moreira,MAT1455,Emanuelly.Moreira@escola.com.br,senha455,,963.00,2025-09-05,sim,25,perferendis quae,2025-07-01,2025-12-15
+Isabela Moreira Jr.,MAT1456,Isabela_Moreira@escola.com.br,senha456,/uploads/aluno456.jpg,1313.00,2025-09-05,não,,,,
+Enzo Gabriel Moreira,MAT1457,Enzo.Gabriel@escola.com.br,senha457,,1753.00,2025-09-05,não,,,,
+Maria Júlia Santos,MAT1458,Maria.Julia@escola.com.br,senha458,,1299.00,2025-09-05,não,,,,
+Gúbio Moreira,MAT1459,Gubio_Moreira17@escola.com.br,senha459,,1973.00,2025-09-05,não,,,,
+Bernardo Barros Filho,MAT1460,Bernardo.Barros34@escola.com.br,senha460,/uploads/aluno460.jpg,1396.00,2025-09-05,sim,10,incidunt dolores,2025-07-01,2025-12-15
+Srta. Célia Silva,MAT1461,Srta._Celia95@escola.com.br,senha461,,910.00,2025-09-05,não,,,,
+Suélen Oliveira,MAT1462,Suelen.Oliveira21@escola.com.br,senha462,,1885.00,2025-09-05,não,,,,
+Salvador Nogueira,MAT1463,Salvador.Nogueira@escola.com.br,senha463,,1303.00,2025-09-05,não,,,,
+Júlia Costa,MAT1464,Julia_Costa@escola.com.br,senha464,/uploads/aluno464.jpg,794.00,2025-09-05,não,,,,
+Rebeca Macedo Neto,MAT1465,Rebeca_Macedo53@escola.com.br,senha465,,750.00,2025-09-05,sim,10,voluptatum voluptatem,2025-07-01,2025-12-15
+Danilo Oliveira,MAT1466,Danilo_Oliveira60@escola.com.br,senha466,,1805.00,2025-09-05,não,,,,
+Manuela Albuquerque,MAT1467,Manuela_Albuquerque@escola.com.br,senha467,,1487.00,2025-09-05,não,,,,

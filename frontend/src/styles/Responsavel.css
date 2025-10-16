@@ -1,0 +1,161 @@
+/* Reset básico */
+* {
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
+  }
+  
+  /* Dashboard container */
+  .dashboard-container {
+    display: flex;
+    height: 100vh;
+  }
+  
+  
+  .nav-item svg {
+    width: 40px;
+    height: 40px;
+    transition: width 0.3s ease, height 0.3s ease;
+  }
+  
+  .sidebar.expanded .nav-item svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .nav-item span {
+    display: none;
+  }
+  
+  .sidebar.expanded .nav-item span {
+    display: inline;
+  }
+  
+  .sidebar.expanded .nav-item:hover svg {
+    color: #df8e4c;
+  }
+  
+  /* Main Content */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-top: 60px;
+    background-color: #f1f1f1;
+    margin-left: 60px;
+    transition: margin-left 0.3s ease;
+  }
+  
+  .top-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .top-right {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+  }
+  
+  /* Content Area */
+  .content-area {
+    padding: 20px;
+    background-color: #f1f1f1;
+    flex: 1;
+  }
+  
+  /* Cards Container */
+  .cards-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  
+  /* Card Styling */
+  .card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 220px;
+    height: 190px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .card svg {
+    color: #C95830;
+    margin-bottom: 10px;
+  }
+  
+  .card span {
+    font-size: 16px;
+    color: #555;
+    font-weight: bold;
+  }
+  
+  /* Perfil Menu Dropdown */
+  .profile-menu {
+    position: absolute;
+    top: 60px;
+    right: 10px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 220px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1001;
+  }
+  
+  .profile-menu .profile-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    background-color: #ddd;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .profile-menu h1 {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: #333;
+    text-align: center;
+  }
+  
+  .profile-menu-item {
+    display: flex;
+    align-items: left;
+    justify-content: left;
+    gap: 10px;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #555;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .profile-menu-item svg {
+    color: #df8e4c !important;
+  }
+  
+  .profile-menu-item:hover {
+    background-color: #f0f0f0;
+  }
