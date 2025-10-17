@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import SidebarFinanceiro from './financeiro/SidebarFinanceiro';
 import TopBarGestor from './gestor/components/Navbar';
 import HelpModal from '../components/AjudaModal';
-import NotificationsMenu from '../components/NotificationsMenu';
 import { useAuth } from '../hooks/useAuth';
 import IaPage from './gestor/IaPage';
 import DespesasPage from './financeiro/DespesasPage';
