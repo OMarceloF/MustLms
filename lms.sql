@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 17/10/2025 às 14:07
+-- Tempo de geração: 17/10/2025 às 19:07
 -- Versão do servidor: 10.4.32-MariaDB
--- Versão do PHP: 8.0.30
+-- Versão do PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -257,6 +257,95 @@ CREATE TABLE `calendario_letivo` (
 
 INSERT INTO `calendario_letivo` (`id`, `escola_id`, `ano_letivo`, `inicio`, `fim`, `tipo`) VALUES
 (4, 1, 2025, '2025-01-01', '2025-12-31', 'Bimestral');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `configuracoes_calendario`
+--
+
+CREATE TABLE `configuracoes_calendario` (
+  `id` int(11) NOT NULL,
+  `fuso_horario` varchar(50) NOT NULL DEFAULT 'America/Sao_Paulo',
+  `primeiro_dia_semana` varchar(20) NOT NULL DEFAULT 'domingo',
+  `feriados` text DEFAULT NULL COMMENT 'Datas de feriados, separadas por vírgula',
+  `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Armazena as configurações gerais do calendário acadêmico.';
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `configuracoes_cores`
+--
+
+CREATE TABLE `configuracoes_cores` (
+  `id` int(11) NOT NULL,
+  `cor_primaria` varchar(7) NOT NULL DEFAULT '#3b82f6',
+  `cor_secundaria` varchar(7) NOT NULL DEFAULT '#8b5cf6',
+  `cor_sucesso` varchar(7) NOT NULL DEFAULT '#10b981',
+  `cor_erro` varchar(7) NOT NULL DEFAULT '#ef4444',
+  `cor_fundo` varchar(7) NOT NULL DEFAULT '#0a0a0a',
+  `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Armazena as configurações de cores para o tema do sistema.';
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `configuracoes_escola`
+--
+
+CREATE TABLE `configuracoes_escola` (
+  `id` int(11) NOT NULL,
+  `nome_completo` varchar(255) DEFAULT NULL,
+  `razao_social` varchar(255) DEFAULT NULL,
+  `cnpj` varchar(18) DEFAULT NULL,
+  `endereco` varchar(255) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `telefone` varchar(20) DEFAULT NULL,
+  `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Armazena as informações institucionais da escola.';
+
+--
+-- Despejando dados para a tabela `configuracoes_escola`
+--
+
+INSERT INTO `configuracoes_escola` (`id`, `nome_completo`, `razao_social`, `cnpj`, `endereco`, `email`, `telefone`, `atualizado_em`) VALUES
+(1, 'Must University', 'Must', '12405288000163', 'Rua do Rosario', 'must@gmail.com', '31982471144', '2025-10-17 16:54:16');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `configuracoes_periodos_letivos`
+--
+
+CREATE TABLE `configuracoes_periodos_letivos` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(100) NOT NULL,
+  `data_inicio` date NOT NULL,
+  `data_fim` date NOT NULL,
+  `config_calendario_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Armazena os períodos letivos configurados.';
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `configuracoes_sistema`
+--
+
+CREATE TABLE `configuracoes_sistema` (
+  `id` int(11) NOT NULL,
+  `escola_status` varchar(3) NOT NULL DEFAULT 'Não' COMMENT 'Status de preenchimento da aba Escola',
+  `cores_status` varchar(3) NOT NULL DEFAULT 'Não' COMMENT 'Status de preenchimento da aba Cores',
+  `calendario_status` varchar(3) NOT NULL DEFAULT 'Não' COMMENT 'Status de preenchimento da aba Calendário',
+  `data_ultima_atualizacao` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Rastreia o status de preenchimento das configurações do sistema.';
+
+--
+-- Despejando dados para a tabela `configuracoes_sistema`
+--
+
+INSERT INTO `configuracoes_sistema` (`id`, `escola_status`, `cores_status`, `calendario_status`, `data_ultima_atualizacao`) VALUES
+(1, 'Sim', 'Não', 'Não', '2025-10-17 16:54:16');
 
 -- --------------------------------------------------------
 
@@ -1537,7 +1626,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-17 12:05:32'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-17 14:16:36'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-01 14:21:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1646,6 +1735,37 @@ ALTER TABLE `calendario_gestor`
 ALTER TABLE `calendario_letivo`
   ADD PRIMARY KEY (`id`),
   ADD KEY `calendario_letivo_ibfk_1` (`escola_id`);
+
+--
+-- Índices de tabela `configuracoes_calendario`
+--
+ALTER TABLE `configuracoes_calendario`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `configuracoes_cores`
+--
+ALTER TABLE `configuracoes_cores`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `configuracoes_escola`
+--
+ALTER TABLE `configuracoes_escola`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `configuracoes_periodos_letivos`
+--
+ALTER TABLE `configuracoes_periodos_letivos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `config_calendario_id` (`config_calendario_id`);
+
+--
+-- Índices de tabela `configuracoes_sistema`
+--
+ALTER TABLE `configuracoes_sistema`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Índices de tabela `conteudos`
@@ -1977,6 +2097,36 @@ ALTER TABLE `calendario_letivo`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT de tabela `configuracoes_calendario`
+--
+ALTER TABLE `configuracoes_calendario`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `configuracoes_cores`
+--
+ALTER TABLE `configuracoes_cores`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `configuracoes_escola`
+--
+ALTER TABLE `configuracoes_escola`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `configuracoes_periodos_letivos`
+--
+ALTER TABLE `configuracoes_periodos_letivos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `configuracoes_sistema`
+--
+ALTER TABLE `configuracoes_sistema`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT de tabela `conteudos`
 --
 ALTER TABLE `conteudos`
@@ -2226,6 +2376,12 @@ ALTER TABLE `avaliacoes`
 --
 ALTER TABLE `calendario_letivo`
   ADD CONSTRAINT `calendario_letivo_ibfk_1` FOREIGN KEY (`escola_id`) REFERENCES `escolas` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `configuracoes_periodos_letivos`
+--
+ALTER TABLE `configuracoes_periodos_letivos`
+  ADD CONSTRAINT `fk_periodo_config_calendario` FOREIGN KEY (`config_calendario_id`) REFERENCES `configuracoes_calendario` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `conteudos`
