@@ -282,6 +282,8 @@ import { getFeriados } from '../controllers/externoController';
 
 import { uploadSingleImage, uploadSingleDoc, uploadFields, uploadAny } from '../lib/upload';
 
+import { getSchoolConfig, saveSchoolConfig } from '../controllers/ConfiguracaoEscolaController';
+
 const router = Router();
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -571,6 +573,10 @@ router.delete(
   "/api/notificacoes/conversa/:conversaId/usuario/:usuarioId",
   deletarNotificacoesPorConversaEUsuario
 );
+
+// --- Rotas para Configurações da Escola ---
+router.get('/api/configuracoes-escola', getSchoolConfig);
+router.post('/api/configuracoes-escola', saveSchoolConfig);
 
 // 🔹 GET - Listar notificações de mensagens de um usuário (por destinatário_id)
 router.get('/api/notificacoes/:id', getNotificacoesPorUsuario);

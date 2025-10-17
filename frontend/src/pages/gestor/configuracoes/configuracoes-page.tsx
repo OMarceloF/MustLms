@@ -3,12 +3,12 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
-import AbaFinanceiro from "../configuracoes/aba-financeiro"
+// import AbaFinanceiro from "../configuracoes/aba-financeiro"
 import AbaEscola from "../configuracoes/aba-escola"
 import AbaCores from "../configuracoes/aba-cores"
-import AbaInterface from "../configuracoes/aba-interface"
+// import AbaInterface from "../configuracoes/aba-interface"
 import AbaCalendario from "../configuracoes/aba-calendario"
-import AbaAdicionais from "../configuracoes/aba-adicionais"
+// import AbaAdicionais from "../configuracoes/aba-adicionais"
 
 export default function ConfiguracoesPage() {
     return (
@@ -21,17 +21,17 @@ export default function ConfiguracoesPage() {
 
                 <Tabs defaultValue="financeiro" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 mb-8">
-                        <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+                        {/* <TabsTrigger value="financeiro">Financeiro</TabsTrigger> */}
                         <TabsTrigger value="escola">Escola</TabsTrigger>
                         <TabsTrigger value="cores">Cores</TabsTrigger>
-                        <TabsTrigger value="interface">Interface</TabsTrigger>
+                        {/* <TabsTrigger value="interface">Interface</TabsTrigger> */}
                         <TabsTrigger value="calendario">Calendário</TabsTrigger>
-                        <TabsTrigger value="adicionais">Adicionais</TabsTrigger>
+                        {/* <TabsTrigger value="adicionais">Adicionais</TabsTrigger> */}
                     </TabsList>
-
+{/* 
                     <TabsContent value="financeiro">
                         <AbaFinanceiro />
-                    </TabsContent>
+                    </TabsContent> */}
 
                     <TabsContent value="escola">
                         <AbaEscola />
@@ -40,18 +40,18 @@ export default function ConfiguracoesPage() {
                     <TabsContent value="cores">
                         <AbaCores />
                     </TabsContent>
-
+{/* 
                     <TabsContent value="interface">
                         <AbaInterface />
-                    </TabsContent>
+                    </TabsContent> */}
 
                     <TabsContent value="calendario">
                         <AbaCalendario />
                     </TabsContent>
-
+{/* 
                     <TabsContent value="adicionais">
                         <AbaAdicionais />
-                    </TabsContent>
+                    </TabsContent> */}
                 </Tabs>
             </div>
         </div>
