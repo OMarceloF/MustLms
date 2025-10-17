@@ -283,6 +283,7 @@ import { getFeriados } from '../controllers/externoController';
 import { uploadSingleImage, uploadSingleDoc, uploadFields, uploadAny } from '../lib/upload';
 
 import { getSchoolConfig, saveSchoolConfig } from '../controllers/ConfiguracaoEscolaController';
+import { getSystemConfigStatus } from '../controllers/configuracoesSistemaController';
 
 const router = Router();
 
@@ -577,6 +578,9 @@ router.delete(
 // --- Rotas para Configurações da Escola ---
 router.get('/api/configuracoes-escola', getSchoolConfig);
 router.post('/api/configuracoes-escola', saveSchoolConfig);
+
+// --- Rota para Status Geral do Sistema ---
+router.get('/api/configuracoes-sistema/status', getSystemConfigStatus);
 
 // 🔹 GET - Listar notificações de mensagens de um usuário (por destinatário_id)
 router.get('/api/notificacoes/:id', getNotificacoesPorUsuario);
