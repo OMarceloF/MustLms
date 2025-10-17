@@ -8,6 +8,7 @@ import {
   BarChart2,
   Calendar,
   Home,
+  Settings,
 } from 'lucide-react';
 import { VscRobot } from "react-icons/vsc";
 import { FaRegPenToSquare } from "react-icons/fa6";
@@ -95,6 +96,12 @@ export default function SidebarGestor({
               isExpanded={isMenuOpen}
               onClick={() => setActivePage('calendario')}
             />
+            <NavItem
+              icon={<Settings size={28} />}
+              text="Configurações"
+              isExpanded={isMenuOpen}
+              onClick={() => setActivePage('configuracoesSistema')}
+            />
           </>
         )}
 
@@ -110,6 +117,6 @@ export default function SidebarGestor({
           />
         )}
       </div>
-    </aside>
+    </aside >
   );
 }

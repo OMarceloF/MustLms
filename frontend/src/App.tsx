@@ -89,6 +89,7 @@ import TurmasPage from './pages/gestor/TurmasPage';
 import AlunosPage from './pages/gestor/AlunosPage';
 import IaPage from './pages/gestor/IaPage';
 import ProfessorLayout from './pages/professor/ProfessorLayout';
+import ConfiguracoesPage from './pages/gestor/configuracoes/configuracoes-page';
 
 
 const queryClient = new QueryClient();
@@ -120,6 +121,7 @@ const App: React.FC = () => {
               <Route path="/gestor/calendarios" element={<CalendarioPage />} />
               <Route path="/gestor/calendario/:id" element={<CalendarioDetalhePage />} />
               <Route path="/gestor/configuracoes" element={<ConfiguracoesGestorPage />} />
+              <Route path="/gestor/configuracoes-sistema" element={<ConfiguracoesPage />} />
               <Route path="/gestor/professores/:id/editar" element={<EditarProfessorPage />} />
               <Route path="/gestor/turmas/:turmaId/materias/:materiaId/avaliacoes-notas" element={<AvaliacoesNotasPage />} />
               <Route path="/gestor/turmas/:turmaId/materias/:materiaId/diario" element={<DiarioPage />} />

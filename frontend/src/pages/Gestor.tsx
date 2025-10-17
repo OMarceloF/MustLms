@@ -27,6 +27,8 @@ import RelatorioProfessorPage from "./gestor/RelatorioProfessorPage";
 import RelatorioAlunoPage from "./gestor/RelatorioAlunoPage";
 import Gamification from './gestor/Gamification';
 import MeetPage from './gestor/MeetPage';
+import ConfiguracoesPage from './gestor/configuracoes/configuracoes-page';
+
 
 // Chat, Socket e componentes relacionados foram removidos.
 
@@ -127,6 +129,8 @@ export default function GestorDashboard() {
           {activePage === 'RelatorioAlunoPage' && <RelatorioAlunoPage />}
           {activePage === 'gamification' && <Gamification />}
           {activePage === 'meet' && <MeetPage />}
+          {activePage === 'configuracoesSistema' && <ConfiguracoesPage />}
+
         </main>
       </div>
 
@@ -136,7 +140,7 @@ export default function GestorDashboard() {
         ref={helpModalRef}
       />
 
-          {/* Floating Robot Button */}
+      {/* Floating Robot Button */}
       <div
         className="fixed bottom-5 right-7 bg-indigo-900 text-white rounded-full p-3 cursor-pointer shadow-lg hover:scale-110 transition-transform duration-200"
         onClick={() => setActivePage('ia')}
