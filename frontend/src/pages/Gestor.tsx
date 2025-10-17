@@ -28,6 +28,8 @@ import RelatorioAlunoPage from "./gestor/RelatorioAlunoPage";
 import Gamification from './gestor/Gamification';
 import MeetPage from './gestor/MeetPage';
 import ConfiguracoesPage from './gestor/configuracoes/configuracoes-page';
+import CursosPage from '../pages/gestor/Cursos';
+
 
 
 // Chat, Socket e componentes relacionados foram removidos.
@@ -130,6 +132,8 @@ export default function GestorDashboard() {
           {activePage === 'gamification' && <Gamification />}
           {activePage === 'meet' && <MeetPage />}
           {activePage === 'configuracoesSistema' && <ConfiguracoesPage />}
+          {activePage === 'cursos' && <CursosPage />}
+
 
         </main>
       </div>
