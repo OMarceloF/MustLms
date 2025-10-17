@@ -9,6 +9,7 @@ import {
   Calendar,
   Home,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 import { VscRobot } from "react-icons/vsc";
 import { FaRegPenToSquare } from "react-icons/fa6";
@@ -56,6 +57,14 @@ export default function SidebarGestor({
           isExpanded={isMenuOpen}
           onClick={() => setActivePage('ia')}
         />
+
+        <NavItem
+          icon={<BookOpen size={28} />} // Usando o ícone BookOpen
+          text="Cursos"
+          isExpanded={isMenuOpen}
+          onClick={() => setActivePage('cursos')} // 3. Define a página ativa como 'cursos'
+        />
+
         <NavItem
           icon={<MdComputer size={28} />}
           text="Matérias"
