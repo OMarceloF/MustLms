@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/configuracoes/aba-financeiro.tsx
+
 "use client"
 
 import { useState } from "react"

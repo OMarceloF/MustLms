@@ -1,3 +1,6 @@
+// frontend/src/pages/gestor/cursos/vinculados-tab.tsx
+
+
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"

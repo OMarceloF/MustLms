@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/cursos/matriz-curricular-tab.tsx
+
 "use client"
 
 import { useState } from "react"
