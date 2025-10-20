@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/cursos/ppc-tab.tsx
+
 "use client"
 
 import { useState } from "react"

@@ -1,6 +1,9 @@
+// frontend/src/pages/gestor/configuracoes/aba-cores.tsx
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Label } from "../components/ui/label"
 import { Input } from "../components/ui/input"
@@ -14,19 +17,61 @@ export default function AbaCores() {
   const [corSucesso, setCorSucesso] = useState("#10b981")
   const [corErro, setCorErro] = useState("#ef4444")
   const [corFundo, setCorFundo] = useState("#0a0a0a")
+  const [initialLoad, setInitialLoad] = useState(true);
   const [carregando, setCarregando] = useState(false)
   const { toast } = useToast()
 
-  const handleAplicarTema = () => {
+  useEffect(() => {
+    const fetchColors = async () => {
+      try {
+        const response = await axios.get("/api/colors");
+        const colors = response.data;
+        if (colors) {
+          setCorPrimaria(colors.cor_primaria || "#3b82f6");
+          setCorSecundaria(colors.cor_secundaria || "#8b5cf6");
+          setCorSucesso(colors.cor_sucesso || "#10b981");
+          setCorErro(colors.cor_erro || "#ef4444");
+          setCorFundo(colors.cor_fundo || "#0a0a0a");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar cores do backend:", error);
+        toast({
+          title: "Erro ao carregar cores",
+          description: "Não foi possível carregar as configurações de cores do servidor.",
+          variant: "destructive",
+        });
+      } finally {
+        setInitialLoad(false);
+      }
+    };
+    fetchColors();
+  }, []);
+
+  const handleAplicarTema = async () => {
     setCarregando(true)
-    setTimeout(() => {
-      setCarregando(false)
+    try {
+      await axios.post("/api/colors", {
+        cor_primaria: corPrimaria,
+        cor_secundaria: corSecundaria,
+        cor_sucesso: corSucesso,
+        cor_erro: corErro,
+        cor_fundo: corFundo,
+      });
       toast({
         title: "Tema aplicado!",
         description: "As cores do sistema foram atualizadas.",
-      })
-    }, 800)
-  }
+      });
+    } catch (error) {
+      console.error("Erro ao aplicar tema:", error);
+      toast({
+        title: "Erro ao aplicar tema",
+        description: "Não foi possível salvar as configurações de cores no servidor.",
+        variant: "destructive",
+      });
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   const handleReporPadrao = () => {
     setCorPrimaria("#3b82f6")
@@ -38,6 +83,10 @@ export default function AbaCores() {
       title: "Tema restaurado",
       description: "As cores padrão foram restauradas.",
     })
+  }
+
+  if (initialLoad) {
+    return <div>Carregando configurações de cores...</div>; // Ou um spinner/skeleton loader
   }
 
   return (

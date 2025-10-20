@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/configuracoes/aba-escola.tsx
+
 "use client"
 
 import { useState, useEffect } from "react"

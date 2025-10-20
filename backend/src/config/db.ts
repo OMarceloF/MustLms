@@ -18,13 +18,21 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 15000,     // ⏱️ aumenta tolerância
+  connectTimeout: 15000, // ⏱️ aumenta tolerância
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
   // optional: dateStrings: true, timezone: 'Z'
 });
 
 export default pool;
+
+export async function executeQuery<T = any>(
+  query: string,
+  params?: any[]
+): Promise<T> {
+  const [rows] = await pool.query(query, params);
+  return rows as T;
+}
 
 /** Ping simples para checar disponibilidade do DB antes de operações pesadas */
 export async function pingDB(): Promise<boolean> {

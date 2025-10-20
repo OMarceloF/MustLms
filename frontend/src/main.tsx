@@ -1,3 +1,5 @@
+// frontend/src/main.tsx
+
 import './axios-shim';
 import './fetch-shim';
 import React from 'react';

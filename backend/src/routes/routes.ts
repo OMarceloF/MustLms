@@ -1,3 +1,5 @@
+// backend/src/routes/routes.ts
+
 import { Router } from 'express';
 import path from 'path';
 import {
@@ -29,8 +31,8 @@ import {
   importarUsersLote,
   updateAluno,
   getAlunoDashboardData,
-  getPerfilUsuario
-} from "../controllers/alunosController";
+  getPerfilUsuario,
+} from '../controllers/alunosController';
 import { criarAluno } from '../controllers/criarAlunoController';
 import { criarResponsavel } from '../controllers/criarResponsavelController';
 import {
@@ -97,7 +99,6 @@ import {
   getProfessorStats,
   getNotasByProfessor,
   getFaltasMensaisByProfessor,
-
 } from '../controllers/professoresController';
 import { responderPerguntaIA } from '../controllers/ia';
 import {
@@ -108,7 +109,12 @@ import {
 import { buscarAlunosPorTermo } from '../models/alunos';
 import multer from 'multer';
 import { getFollowStatus, toggleFollow } from '../controllers/followController';
-import { getTotalUsuarios, getFuncionarioEditData, updateFuncionario, desativarFuncionario } from '../controllers/usuariosController';
+import {
+  getTotalUsuarios,
+  getFuncionarioEditData,
+  updateFuncionario,
+  desativarFuncionario,
+} from '../controllers/usuariosController';
 import {
   getUserBasic,
   getUserProfile,
@@ -144,7 +150,14 @@ import {
 
 // import { listarConversasRecentes } from '../controllers/chatController';
 // import { toggleFavorito, listarFavoritos } from '../controllers/chatController';
-import { obterFrequenciaMensal, getNotasPorAluno, getNotasByCalendario, salvarNotasBatch, getFaltasPorEtapa, getFrequenciaPorMateria } from '../controllers/notaController';
+import {
+  obterFrequenciaMensal,
+  getNotasPorAluno,
+  getNotasByCalendario,
+  salvarNotasBatch,
+  getFaltasPorEtapa,
+  getFrequenciaPorMateria,
+} from '../controllers/notaController';
 import {
   getPresencasByMateriaTurma,
   getNotasByMateriaTurma,
@@ -161,11 +174,17 @@ import {
 } from '../controllers/anunciosController';
 import { getNomeEscola } from '../controllers/escolaController';
 import { getTipoAvaliacao } from '../controllers/calendarioController';
-import { getEstatisticasAlunos, getRelatorioAlunos, getTaxaPresencaPorTurma, exportarRelatorioPDF, getCalendarioGestor } from '../controllers/relatoriosController';
+import {
+  getEstatisticasAlunos,
+  getRelatorioAlunos,
+  getTaxaPresencaPorTurma,
+  exportarRelatorioPDF,
+  getCalendarioGestor,
+} from '../controllers/relatoriosController';
 import fs from 'fs';
 
 import {
-  getAvaliacoesByTurmaMateria,  // <- importe
+  getAvaliacoesByTurmaMateria, // <- importe
   createAvaliacao,
   updateAvaliacao,
   deleteAvaliacao,
@@ -185,22 +204,25 @@ import {
   getFaltasPorPeriodo,
 } from './../controllers/diarioController';
 
-
-
-
-import { getAlunosDoResponsavel, getResponsavelById, updateResponsavel, buscarResponsavelPorCPF, listarResponsaveisPorAluno, vincularResponsavel, desvincularResponsavel } from '../controllers/responsaveisController';
+import {
+  getAlunosDoResponsavel,
+  getResponsavelById,
+  updateResponsavel,
+  buscarResponsavelPorCPF,
+  listarResponsaveisPorAluno,
+  vincularResponsavel,
+  desvincularResponsavel,
+} from '../controllers/responsaveisController';
 import {
   criarEnvio,
   listarEnviosPorProfessor,
   excluirEnvio,
   editarEnvio,
   listarQuestoesAbertas,
-  corrigirQuestaoAberta
+  corrigirQuestaoAberta,
 } from '../controllers/criarEnvio';
 
-
 // import { listarUsuariosOnline } from '../controllers/socketController';
-
 
 import {
   getEnviosPorAluno,
@@ -212,7 +234,7 @@ import {
   salvarRespostasExercicioOnline,
   getNumeroTentativas,
   getMelhorNotaExercicio,
-  getUltimoArquivoEnviado
+  getUltimoArquivoEnviado,
 } from '../controllers/enviosDeProfessorAlunoController';
 
 // import {
@@ -223,7 +245,6 @@ import {
 //   aceitarConviteGrupo,
 //   recusarConviteGrupo
 // } from '../controllers/chatController';
-
 
 // import {
 //   enviarMensagemGrupo,
@@ -237,8 +258,6 @@ import {
 
 //   // ... outros
 // } from '../controllers/chatController';
-
-
 
 import {
   apagarNotificacaoEvento,
@@ -256,9 +275,8 @@ import {
   marcarMensagensComoLidas,
   deletarNotificacoesPorConversaEUsuario,
   listarNaoVisualizadas,
-  marcarComoVisualizadas
+  marcarComoVisualizadas,
 } from '../controllers/notificacoesController';
-
 
 import { loginLimiter } from '../middlewares/rateLimiter';
 
@@ -273,17 +291,29 @@ import {
   deleteContratoPreenchido,
   previewContratoPreenchido,
   getTransacoesPorAluno,
-  enviarArquivoContratoPreenchido
+  enviarArquivoContratoPreenchido,
 } from '../controllers/contratosController';
 
 import { consultarCep } from '../controllers/cepController';
 
 import { getFeriados } from '../controllers/externoController';
 
-import { uploadSingleImage, uploadSingleDoc, uploadFields, uploadAny } from '../lib/upload';
+import {
+  uploadSingleImage,
+  uploadSingleDoc,
+  uploadFields,
+  uploadAny,
+} from '../lib/upload';
 
-import { getSchoolConfig, saveSchoolConfig } from '../controllers/ConfiguracaoEscolaController';
+import {
+  getSchoolConfig,
+  saveSchoolConfig,
+} from '../controllers/ConfiguracaoEscolaController';
 import { getSystemConfigStatus } from '../controllers/configuracoesSistemaController';
+import {
+  getColorsController,
+  updateColorsController,
+} from '../controllers/colorsController';
 
 const router = Router();
 
@@ -291,13 +321,25 @@ const router = Router();
 // ENVIAR COMPROVANTES MULTER
 // ──────────────────────────────────────────────────────────────────────────────
 
-const comprovantesDir = path.resolve(__dirname, '..', '..', 'uploads', 'comprovantes');
+const comprovantesDir = path.resolve(
+  __dirname,
+  '..',
+  '..',
+  'uploads',
+  'comprovantes'
+);
 if (!fs.existsSync(comprovantesDir)) {
   fs.mkdirSync(comprovantesDir, { recursive: true });
 }
 
 // Define pasta de armazenamento para contratos assinados
-const contratosDir = path.resolve(__dirname, '..', '..', 'uploads', 'contratos');
+const contratosDir = path.resolve(
+  __dirname,
+  '..',
+  '..',
+  'uploads',
+  'contratos'
+);
 if (!fs.existsSync(contratosDir)) {
   fs.mkdirSync(contratosDir, { recursive: true });
 }
@@ -325,16 +367,35 @@ router.post(
 );
 router.get('/api/alunos/:alunoId/exercicios-enviados', getExerciciosEnviados);
 router.get('/api/exercicios/envios/:enviosId/questoes', getQuestoesPorEnvioId);
-router.get('/api/alunos/:alunoId/exercicios-online', getExerciciosOnlinePorAluno);
+router.get(
+  '/api/alunos/:alunoId/exercicios-online',
+  getExerciciosOnlinePorAluno
+);
 router.get('/api/exercicios/envio/:enviosId/detalhes', getDetalhesExercicio);
-router.post('/api/exercicios/:envioId/aluno/:alunoId/salvar-respostas', salvarRespostasExercicioOnline);
-router.get('/api/exercicios/:envioId/aluno/:alunoId/tentativas', getNumeroTentativas);
-router.get('/api/exercicios/:envioId/aluno/:alunoId/melhor-nota', getMelhorNotaExercicio);
-router.get('/api/envios/:envioId/aluno/:alunoId/ultimo-arquivo', getUltimoArquivoEnviado);
+router.post(
+  '/api/exercicios/:envioId/aluno/:alunoId/salvar-respostas',
+  salvarRespostasExercicioOnline
+);
+router.get(
+  '/api/exercicios/:envioId/aluno/:alunoId/tentativas',
+  getNumeroTentativas
+);
+router.get(
+  '/api/exercicios/:envioId/aluno/:alunoId/melhor-nota',
+  getMelhorNotaExercicio
+);
+router.get(
+  '/api/envios/:envioId/aluno/:alunoId/ultimo-arquivo',
+  getUltimoArquivoEnviado
+);
 router.get('/api/questoes-abertas/professor/:id', listarQuestoesAbertas);
 router.put('/api/questoes-abertas/:respostaId', corrigirQuestaoAberta);
-router.post('/api/alunos/adicionar-lote', uploadAny.single('arquivo'), importarUsersLote);
-router.get('/api/alunos/:id/dados-academicos',);
+router.post(
+  '/api/alunos/adicionar-lote',
+  uploadAny.single('arquivo'),
+  importarUsersLote
+);
+router.get('/api/alunos/:id/dados-academicos');
 router.put('/api/responsaveis/:id', updateResponsavel);
 router.get('/api/responsaveis/:id', getResponsavelById);
 router.get('/alunos/:id/responsaveis', getResponsaveisByAluno);
@@ -485,17 +546,26 @@ router.get(
 );
 router.get('/api/escola/nome', getNomeEscola);
 router.get('/api/professores', getProfessores);
-router.post('/api/funcionarios', uploadFuncionarioFoto.single('foto'), criarFuncionario);
+router.post(
+  '/api/funcionarios',
+  uploadFuncionarioFoto.single('foto'),
+  criarFuncionario
+);
 router.get('/api/professores/:id', getProfessorById);
 router.get('/api/professores/:id/stats', getProfessorStats);
 router.delete('/api/professores/:id', excluirProfessor);
 router.get('/api/listar_funcionarios', listarFuncionarios);
 router.get('/api/calendario/tipo-avaliacao', getTipoAvaliacao);
-router.get("/api/boletim/:alunoId", getNotasPorAluno);
-router.get('/api/turmas/:turmaId/materias/:materiaId/calendario_gestor', getPeriodosCalendarioGestor);
-router.get('/api/turmas/:turmaId/materias/:materiaId/avaliacoes', getAvaliacoesByTurmaMateria);
-router.post('/api/avaliacoes',
-  createAvaliacao);
+router.get('/api/boletim/:alunoId', getNotasPorAluno);
+router.get(
+  '/api/turmas/:turmaId/materias/:materiaId/calendario_gestor',
+  getPeriodosCalendarioGestor
+);
+router.get(
+  '/api/turmas/:turmaId/materias/:materiaId/avaliacoes',
+  getAvaliacoesByTurmaMateria
+);
+router.post('/api/avaliacoes', createAvaliacao);
 router.put('/api/avaliacoes/:id', updateAvaliacao);
 router.delete('/api/avaliacoes/:id', deleteAvaliacao);
 router.post('/api/notas/batch', upsertNotas);
@@ -527,19 +597,26 @@ router.get('/api/calendario_gestor', getPeriodosCalendarioGestor);
 router.get('/api/financeiro/exportar/csv', exportarCSV);
 router.get('/api/financeiro/responsaveis', getResponsaveis);
 router.get('/api/financeiro/turmas', getTurmasFinanceiro);
-router.get("/api/alunos/:id/mensalidade", getMensalidadeByAluno);
-router.get("/api/alunos/:id/desconto", getDescontoByAluno);
+router.get('/api/alunos/:id/mensalidade', getMensalidadeByAluno);
+router.get('/api/alunos/:id/desconto', getDescontoByAluno);
 router.get('/api/professores/:id/pagamento', getPagamentoByProfessor);
 router.post('/api/financeiro/atualizar-lancamentos', atualizarLancamentos);
-router.put('/api/financeiro/transacoes/:id/pagar', uploadAny.single('comprovante'), pagarTransacao);
-router.post('/api/financeiro/transacoes', uploadAny.single('comprovante'), criarTransacao);
+router.put(
+  '/api/financeiro/transacoes/:id/pagar',
+  uploadAny.single('comprovante'),
+  pagarTransacao
+);
+router.post(
+  '/api/financeiro/transacoes',
+  uploadAny.single('comprovante'),
+  criarTransacao
+);
 router.get('/api/aulas', listarAulas);
 router.post('/api/aulas', criarAula);
 router.post('/api/presencas/batch', salvarPresencasBatch);
 router.get('/api/presencas/:materiaId/:turmaId', listarPresencas);
 router.put('/api/aulas/:id/status', atualizarStatusAula);
 router.delete('/api/aulas/:id', excluirAula);
-
 
 router.get('/api/responsaveis/:id/alunos', getAlunosDoResponsavel);
 router.get('/api/notas', getNotasByCalendario);
@@ -559,7 +636,6 @@ router.put('/api/envios/:id', uploadAny.single('arquivo'), editarEnvio);
 // router.put('/mensagens/:conversaId/:usuarioId/vistas', marcarMensagensComoVistas);
 // router.get('/usuarios/online', listarUsuariosOnline);
 
-
 // // ✅ Adicione essas rotas REST de digitação:
 // router.post('/digitando', setDigitando);
 // router.get('/digitando/:conversaId', getDigitando);
@@ -571,7 +647,7 @@ router.put('/api/envios/:id', uploadAny.single('arquivo'), editarEnvio);
 
 // 🔹 Rota DELETE para limpar notificações recebidas de uma conversa específica
 router.delete(
-  "/api/notificacoes/conversa/:conversaId/usuario/:usuarioId",
+  '/api/notificacoes/conversa/:conversaId/usuario/:usuarioId',
   deletarNotificacoesPorConversaEUsuario
 );
 
@@ -595,11 +671,16 @@ router.put('/api/notificacoes/:id/mensagens-lidas', marcarMensagensComoLidas);
 router.put('/api/notificacoes/:usuarioId/visualizadas', marcarComoVisualizadas);
 
 // 🔹 GET - Listar notificações não visualizadas
-router.get('/api/notificacoes/:usuarioId/nao-visualizadas', listarNaoVisualizadas);
+router.get(
+  '/api/notificacoes/:usuarioId/nao-visualizadas',
+  listarNaoVisualizadas
+);
 
 // 🔹 DELETE - Apagar notificações de uma conversa específica para um destinatário
-router.delete('/api/notificacoes/conversa/:conversaId/usuario/:usuarioId', deletarNotificacoesPorConversaEUsuario);
-
+router.delete(
+  '/api/notificacoes/conversa/:conversaId/usuario/:usuarioId',
+  deletarNotificacoesPorConversaEUsuario
+);
 
 // Criar notificação de evento
 router.post('/api/notificacoes-eventos', criarNotificacaoEvento);
@@ -608,25 +689,52 @@ router.post('/api/notificacoes-eventos', criarNotificacaoEvento);
 router.get('/api/notificacoes-eventos/:usuarioId', listarNotificacoesEventos);
 
 // Marcar notificação de evento como lida
-router.put('/api/notificacoes-eventos/:notificacaoId/lida', marcarNotificacaoEventoComoLida);
+router.put(
+  '/api/notificacoes-eventos/:notificacaoId/lida',
+  marcarNotificacaoEventoComoLida
+);
 
 // Marcar notificação de evento como visualizada
-router.put('/api/notificacoes-eventos/:notificacaoId/visualizada', marcarNotificacaoEventoComoVisualizada);
+router.put(
+  '/api/notificacoes-eventos/:notificacaoId/visualizada',
+  marcarNotificacaoEventoComoVisualizada
+);
 
-router.put('/api/notificacoes/:usuarioId/mensagens-lidas', marcarMensagensComoLidas);
+router.put(
+  '/api/notificacoes/:usuarioId/mensagens-lidas',
+  marcarMensagensComoLidas
+);
 
-router.put('/api/notificacoes/:usuarioId/conversa/:conversaId/lidas', marcarMensagensComoLidas);
+router.put(
+  '/api/notificacoes/:usuarioId/conversa/:conversaId/lidas',
+  marcarMensagensComoLidas
+);
 
-router.get("/api/notificacoes/:usuarioId/nao-visualizadas", listarNaoVisualizadas);
-router.put("/api/notificacoes/:usuarioId/visualizadas", marcarComoVisualizadas);
+router.get(
+  '/api/notificacoes/:usuarioId/nao-visualizadas',
+  listarNaoVisualizadas
+);
+router.put('/api/notificacoes/:usuarioId/visualizadas', marcarComoVisualizadas);
 
-router.delete('/api/notificacoes-eventos/:notificacaoId', apagarNotificacaoEvento);
+router.delete(
+  '/api/notificacoes-eventos/:notificacaoId',
+  apagarNotificacaoEvento
+);
 router.post('/api/notificacoes-eventos', criarNotificacaoEvento);
 router.get('/api/notificacoes-eventos/:usuarioId', listarNotificacoesEventos);
-router.put('/api/notificacoes-eventos/:notificacaoId/lida', marcarNotificacaoEventoComoLida);
-router.put('/api/notificacoes-eventos/:notificacaoId/visualizada', marcarNotificacaoEventoComoVisualizada);
+router.put(
+  '/api/notificacoes-eventos/:notificacaoId/lida',
+  marcarNotificacaoEventoComoLida
+);
+router.put(
+  '/api/notificacoes-eventos/:notificacaoId/visualizada',
+  marcarNotificacaoEventoComoVisualizada
+);
 router.get('/api/verificacoes', executarVerificacoes);
-router.get('/api/notificacoes-eventos/:usuarioId/nao-visualizadas-contagem', contarNaoVisualizadasEventos);
+router.get(
+  '/api/notificacoes-eventos/:usuarioId/nao-visualizadas-contagem',
+  contarNaoVisualizadasEventos
+);
 router.get('/api/faltas/:turmaId/:materiaId', getFaltasPorPeriodo);
 router.get('/api/faltas-por-etapa/:alunoId', getFaltasPorEtapa);
 router.get('/api/frequencia/:alunoId', getFrequenciaPorMateria);
@@ -641,7 +749,11 @@ router.put('/api/contratos_preenchidos/:id', updateContratoPreenchido);
 router.delete('/api/contratos_preenchidos/:id', deleteContratoPreenchido);
 router.get('/api/contratos_preenchidos/:id/preview', previewContratoPreenchido);
 router.get('/financeiro/transacoes_aluno/:alunoId', getTransacoesPorAluno);
-router.put('/api/contratos_preenchidos/:id/upload-contrato', uploadAny.single('contrato'), enviarArquivoContratoPreenchido);
+router.put(
+  '/api/contratos_preenchidos/:id/upload-contrato',
+  uploadAny.single('contrato'),
+  enviarArquivoContratoPreenchido
+);
 router.get('/api/consulta-cep/:cep', consultarCep);
 router.get('/api/alunos/:alunoId/responsaveis', listarResponsaveisPorAluno);
 router.post('/api/alunos/vincular-responsavel', vincularResponsavel);
@@ -649,15 +761,20 @@ router.delete('/api/alunos-responsaveis/:vinculoId', desvincularResponsavel);
 router.get('/api/alunos/:id/edit-data', getAlunoEditData);
 router.put('/api/alunos/:id', uploadSingleImage('foto'), updateAluno);
 router.get('/api/alunos/:id/dashboard', getAlunoDashboardData);
-router.get('/api/responsaveis/cpf/:cpf', buscarResponsavelPorCPF)
+router.get('/api/responsaveis/cpf/:cpf', buscarResponsavelPorCPF);
 router.get('/api/usuarios/:id/perfil', getPerfilUsuario);
 router.get('/api/funcionarios/:id/edit-data', getFuncionarioEditData);
 router.post('/api/funcionarios', uploadSingleImage('foto'), criarFuncionario);
-router.put('/api/funcionarios/:id', uploadSingleImage('foto'), updateFuncionario);
+router.put(
+  '/api/funcionarios/:id',
+  uploadSingleImage('foto'),
+  updateFuncionario
+);
 router.delete('/api/funcionarios/:id', desativarFuncionario);
 router.get('/api/ext/feriados', getFeriados);
-router.get('/api/ext/feriados/:ano', getFeriados)
-
-
+router.get('/api/ext/feriados/:ano', getFeriados);
+// Rotas de configuração de cores
+router.get('/api/colors', getColorsController);
+router.post('/api/colors', updateColorsController);
 
 export default router;

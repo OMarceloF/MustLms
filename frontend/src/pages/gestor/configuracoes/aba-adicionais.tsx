@@ -1,3 +1,4 @@
+// frontend/src/pages/gestor/configuracoes/aba-adicionais.tsx
 "use client"
 
 import { useState } from "react"

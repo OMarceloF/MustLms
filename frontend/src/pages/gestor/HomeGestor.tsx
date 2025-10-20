@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/HomeGestor.tsx
+
 import SmallChart from './components/SmallChart';
 import LargeChart from './components/LargeChart';
 import BottomChart from './components/BottomChart';
