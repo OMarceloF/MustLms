@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home } from 'lucide-react';
+import { Home, BookOpen } from 'lucide-react';
 import { VscRobot } from 'react-icons/vsc';
 import { FaRegPenToSquare } from 'react-icons/fa6';
 import NavItem from '../../../components/NavItem';
@@ -60,6 +60,14 @@ export default function SidebarGestor({
                     isExpanded={isMenuOpen}
                     onClick={() => navigate(`/aluno/ia`)}
                     active={isActive(`/aluno/ia`)}
+                />
+
+                <NavItem
+                    icon={<BookOpen size={28} />}
+                    text="Curso"
+                    isExpanded={isMenuOpen}
+                    onClick={() => navigate('/aluno/curso')}
+                    active={isActive('/aluno/curso')}
                 />
 
                 <NavItem

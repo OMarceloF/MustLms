@@ -60,6 +60,8 @@ import ConfiguracoesAlunoPage from './pages/aluno/ConfiguracoesAlunoPage';
 import Simulados from './pages/aluno/Simulados';
 import ExercicioOnlinePage from './pages/aluno/ExercicioOnlinePage';
 import IaAlunoPage from './pages/aluno/IaAlunoPage';
+import { GraduateCoursePage } from './pages/aluno/curso/cursoPage';
+
 
 // Páginas do Responsável
 import EscolhaAlunoResponsavelPage from './pages/gestor/EscolhaAlunoResponsavelPage';
@@ -185,6 +187,7 @@ const App: React.FC = () => {
               <Route path="/aluno/configuracoes" element={<ConfiguracoesAlunoPage />} />
               <Route path="/aluno/simulados" element={<Simulados />} />
               <Route path="/aluno/ia" element={<IaAlunoPage />} />
+              <Route path="/aluno/curso" element={<GraduateCoursePage />} />
             </Route>
 
             {/* Rotas do Financeiro (Gestor e Financeiro) */}
