@@ -205,6 +205,11 @@ import {
 } from './../controllers/diarioController';
 
 import {
+  getCalendarConfig,
+  updateCalendarConfig,
+} from '../controllers/configuracoesCalendarioController';
+
+import {
   getAlunosDoResponsavel,
   getResponsavelById,
   updateResponsavel,
@@ -279,6 +284,8 @@ import {
 } from '../controllers/notificacoesController';
 
 import { loginLimiter } from '../middlewares/rateLimiter';
+
+import { getPeriodosLetivos, syncPeriodosLetivos } from '../controllers/periodosLetivosController';
 
 import {
   createContrato,
@@ -572,6 +579,14 @@ router.post('/api/notas/batch', upsertNotas);
 router.put('/api/avaliacoes/:id/status', updateStatusAvaliacao);
 router.put('/api/avaliacoes/status/batch', concluirAvaliacoes);
 router.get('/api/calendario_gestor', getPeriodosCalendarioGestor);
+
+// Rotas para a configuração do calendário da aba "Calendário"
+router.get('/api/configuracoes/calendario', getCalendarConfig);
+router.put('/api/configuracoes/calendario', updateCalendarConfig);
+
+// ROTAS PARA A GESTÃO DE PERÍODOS LETIVOS (TABELA: configuracoes_periodos_letivos)
+router.get('/api/periodos-letivos', getPeriodosLetivos);
+router.post('/api/periodos-letivos', syncPeriodosLetivos);
 
 // // 🔹 Criação de grupo
 // router.post('/api/grupos', criarGrupo);
