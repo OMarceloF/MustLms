@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 20/10/2025 às 18:00
+-- Tempo de geração: 21/10/2025 às 16:16
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -215,10 +215,8 @@ CREATE TABLE `calendario_gestor` (
 --
 
 INSERT INTO `calendario_gestor` (`id`, `periodo`, `data_inicial`, `data_final`, `ano_letivo`, `tipo`, `valor`) VALUES
-(13, 1, '2025-02-03', '2025-04-18', 2025, 'Bimestral', 25),
-(14, 2, '2025-04-21', '2025-07-18', 2025, 'Bimestral', 25),
-(15, 3, '2025-08-04', '2025-10-17', 2025, 'Bimestral', 25),
-(16, 4, '2025-10-20', '2025-12-19', 2025, 'Bimestral', 25);
+(13, 1, '2025-10-01', '2025-10-15', 2025, '1º Semestre', 25),
+(17, 2, '2025-10-23', '2025-10-31', 2025, '2º Semestre', 10);
 
 --
 -- Acionadores `calendario_gestor`
@@ -266,11 +264,19 @@ INSERT INTO `calendario_letivo` (`id`, `escola_id`, `ano_letivo`, `inicio`, `fim
 
 CREATE TABLE `configuracoes_calendario` (
   `id` int(11) NOT NULL,
-  `fuso_horario` varchar(50) NOT NULL DEFAULT 'America/Sao_Paulo',
-  `primeiro_dia_semana` varchar(20) NOT NULL DEFAULT 'domingo',
-  `feriados` text DEFAULT NULL COMMENT 'Datas de feriados, separadas por vírgula',
+  `ano_letivo` int(11) NOT NULL,
+  `fuso_horario` varchar(50) DEFAULT 'America/Sao_Paulo',
+  `primeiro_dia_semana` varchar(20) DEFAULT 'domingo',
+  `feriados_personalizados` text DEFAULT NULL,
   `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Armazena as configurações gerais do calendário acadêmico.';
+
+--
+-- Despejando dados para a tabela `configuracoes_calendario`
+--
+
+INSERT INTO `configuracoes_calendario` (`id`, `ano_letivo`, `fuso_horario`, `primeiro_dia_semana`, `feriados_personalizados`, `atualizado_em`) VALUES
+(1, 2025, 'America/Sao_Paulo', 'domingo', '2025-10-23,2025-10-24', '2025-10-21 13:28:37');
 
 -- --------------------------------------------------------
 
@@ -325,6 +331,14 @@ CREATE TABLE `configuracoes_periodos_letivos` (
   `data_fim` date NOT NULL,
   `config_calendario_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Armazena os períodos letivos configurados.';
+
+--
+-- Despejando dados para a tabela `configuracoes_periodos_letivos`
+--
+
+INSERT INTO `configuracoes_periodos_letivos` (`id`, `nome`, `data_inicio`, `data_fim`, `config_calendario_id`) VALUES
+(1, '1º Semestre', '2025-02-01', '2025-06-30', 1),
+(2, '2º Semestre', '2025-07-01', '2025-12-21', 1);
 
 -- --------------------------------------------------------
 
@@ -1626,7 +1640,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-17 17:19:05'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-20 21:19:15'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-01 14:21:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1727,7 +1741,8 @@ ALTER TABLE `avaliacoes`
 -- Índices de tabela `calendario_gestor`
 --
 ALTER TABLE `calendario_gestor`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_ano_periodo` (`ano_letivo`,`periodo`);
 
 --
 -- Índices de tabela `calendario_letivo`
@@ -1740,7 +1755,8 @@ ALTER TABLE `calendario_letivo`
 -- Índices de tabela `configuracoes_calendario`
 --
 ALTER TABLE `configuracoes_calendario`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `ano_letivo` (`ano_letivo`);
 
 --
 -- Índices de tabela `configuracoes_cores`
@@ -2088,7 +2104,7 @@ ALTER TABLE `avaliacoes`
 -- AUTO_INCREMENT de tabela `calendario_gestor`
 --
 ALTER TABLE `calendario_gestor`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de tabela `calendario_letivo`
@@ -2100,7 +2116,7 @@ ALTER TABLE `calendario_letivo`
 -- AUTO_INCREMENT de tabela `configuracoes_calendario`
 --
 ALTER TABLE `configuracoes_calendario`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de tabela `configuracoes_cores`
@@ -2118,7 +2134,7 @@ ALTER TABLE `configuracoes_escola`
 -- AUTO_INCREMENT de tabela `configuracoes_periodos_letivos`
 --
 ALTER TABLE `configuracoes_periodos_letivos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de tabela `configuracoes_sistema`
