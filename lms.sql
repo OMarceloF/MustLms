@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 21/10/2025 às 17:29
+-- Tempo de geração: 22/10/2025 às 16:12
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -276,7 +276,7 @@ CREATE TABLE `configuracoes_calendario` (
 --
 
 INSERT INTO `configuracoes_calendario` (`id`, `ano_letivo`, `fuso_horario`, `primeiro_dia_semana`, `feriados_personalizados`, `atualizado_em`) VALUES
-(1, 2025, 'America/Sao_Paulo', 'domingo', '2025-10-23,2025-10-24', '2025-10-21 13:28:37');
+(1, 2025, 'America/Sao_Paulo', 'segunda', '2025-10-23,2025-10-24', '2025-10-21 20:28:19');
 
 -- --------------------------------------------------------
 
@@ -337,8 +337,8 @@ CREATE TABLE `configuracoes_periodos_letivos` (
 --
 
 INSERT INTO `configuracoes_periodos_letivos` (`id`, `nome`, `data_inicio`, `data_fim`, `config_calendario_id`) VALUES
-(1, '1º Semestre', '2025-02-01', '2025-06-30', 1),
-(2, '2º Semestre', '2025-07-01', '2025-12-21', 1);
+(15, '1º Semestre', '2025-02-01', '2025-06-30', 1),
+(16, '2º Semestre', '2025-07-01', '2025-12-21', 1);
 
 -- --------------------------------------------------------
 
@@ -449,6 +449,87 @@ INSERT INTO `conversas` (`id`, `usuario1_id`, `usuario2_id`, `criado_em`) VALUES
 (16, 1, 3, '2025-08-26 13:39:19'),
 (19, 1, 5, '2025-08-27 14:32:18'),
 (20, 1, 4, '2025-08-27 14:32:27');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `cursos`
+--
+
+CREATE TABLE `cursos` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(255) NOT NULL,
+  `coordenador` varchar(255) DEFAULT NULL,
+  `descricao` text DEFAULT NULL,
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `cursos`
+--
+
+INSERT INTO `cursos` (`id`, `nome`, `coordenador`, `descricao`, `criado_em`) VALUES
+(1, 'Mestrado em Engenharia de Software', 'Dr. Alan Turing', 'Um programa focado em formar pesquisadores e profissionais de ponta em engenharia de software.', '2025-10-21 21:10:56');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `cursos_disciplinas`
+--
+
+CREATE TABLE `cursos_disciplinas` (
+  `id` int(11) NOT NULL,
+  `curso_id` int(11) NOT NULL,
+  `nome` varchar(255) NOT NULL,
+  `carga_horaria` int(11) NOT NULL,
+  `creditos` int(11) NOT NULL,
+  `semestre` int(11) NOT NULL,
+  `professor` varchar(255) DEFAULT NULL,
+  `ementa` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `cursos_disciplinas`
+--
+
+INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `carga_horaria`, `creditos`, `semestre`, `professor`, `ementa`) VALUES
+(1, 1, 'Metodologia de Pesquisa Científica', 60, 4, 1, 'Dr. João Silva', 'Introdução aos métodos de pesquisa científica.');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `cursos_eventos`
+--
+
+CREATE TABLE `cursos_eventos` (
+  `id` int(11) NOT NULL,
+  `curso_id` int(11) NOT NULL,
+  `titulo` varchar(255) NOT NULL,
+  `descricao` text DEFAULT NULL,
+  `data_inicio` date NOT NULL,
+  `data_fim` date NOT NULL,
+  `tipo` enum('prazo','evento','defesa') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `cursos_eventos`
+--
+
+INSERT INTO `cursos_eventos` (`id`, `curso_id`, `titulo`, `descricao`, `data_inicio`, `data_fim`, `tipo`) VALUES
+(1, 1, 'Início do Semestre 2024.1', 'Início das aulas do primeiro semestre de 2024', '2024-03-01', '2024-03-01', 'evento');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `cursos_ppc`
+--
+
+CREATE TABLE `cursos_ppc` (
+  `id` int(11) NOT NULL,
+  `curso_id` int(11) NOT NULL,
+  `conteudo` longtext DEFAULT NULL,
+  `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1640,7 +1721,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-20 21:19:15'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-22 14:07:41'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-01 14:21:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1812,6 +1893,33 @@ ALTER TABLE `conversas`
   ADD UNIQUE KEY `chave_unica_conversa` (`chave_unica_conversa`),
   ADD KEY `usuario1_id` (`usuario1_id`),
   ADD KEY `usuario2_id` (`usuario2_id`);
+
+--
+-- Índices de tabela `cursos`
+--
+ALTER TABLE `cursos`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `cursos_disciplinas`
+--
+ALTER TABLE `cursos_disciplinas`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `curso_id` (`curso_id`);
+
+--
+-- Índices de tabela `cursos_eventos`
+--
+ALTER TABLE `cursos_eventos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `curso_id` (`curso_id`);
+
+--
+-- Índices de tabela `cursos_ppc`
+--
+ALTER TABLE `cursos_ppc`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `curso_id` (`curso_id`);
 
 --
 -- Índices de tabela `descontos`
@@ -2134,7 +2242,7 @@ ALTER TABLE `configuracoes_escola`
 -- AUTO_INCREMENT de tabela `configuracoes_periodos_letivos`
 --
 ALTER TABLE `configuracoes_periodos_letivos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de tabela `configuracoes_sistema`
@@ -2167,6 +2275,30 @@ ALTER TABLE `conversas`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
+-- AUTO_INCREMENT de tabela `cursos`
+--
+ALTER TABLE `cursos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `cursos_disciplinas`
+--
+ALTER TABLE `cursos_disciplinas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `cursos_eventos`
+--
+ALTER TABLE `cursos_eventos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `cursos_ppc`
+--
+ALTER TABLE `cursos_ppc`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `descontos`
 --
 ALTER TABLE `descontos`
@@ -2194,7 +2326,7 @@ ALTER TABLE `escolas`
 -- AUTO_INCREMENT de tabela `eventos_calendario`
 --
 ALTER TABLE `eventos_calendario`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de tabela `eventos_roles`
@@ -2417,6 +2549,24 @@ ALTER TABLE `contratos_preenchidos`
 ALTER TABLE `conversas`
   ADD CONSTRAINT `conversas_ibfk_1` FOREIGN KEY (`usuario1_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `conversas_ibfk_2` FOREIGN KEY (`usuario2_id`) REFERENCES `users` (`id`);
+
+--
+-- Restrições para tabelas `cursos_disciplinas`
+--
+ALTER TABLE `cursos_disciplinas`
+  ADD CONSTRAINT `cursos_disciplinas_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `cursos_eventos`
+--
+ALTER TABLE `cursos_eventos`
+  ADD CONSTRAINT `cursos_eventos_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `cursos_ppc`
+--
+ALTER TABLE `cursos_ppc`
+  ADD CONSTRAINT `cursos_ppc_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `descontos`
