@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 23/10/2025 às 15:47
+-- Tempo de geração: 23/10/2025 às 19:15
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -276,7 +276,7 @@ CREATE TABLE `configuracoes_calendario` (
 --
 
 INSERT INTO `configuracoes_calendario` (`id`, `ano_letivo`, `fuso_horario`, `primeiro_dia_semana`, `feriados_personalizados`, `atualizado_em`) VALUES
-(1, 2025, 'America/Sao_Paulo', 'segunda', '2025-10-23,2025-10-24', '2025-10-22 14:29:53');
+(1, 2025, 'America/Sao_Paulo', 'segunda', '2025-10-23,2025-10-24', '2025-10-23 17:10:11');
 
 -- --------------------------------------------------------
 
@@ -337,8 +337,8 @@ CREATE TABLE `configuracoes_periodos_letivos` (
 --
 
 INSERT INTO `configuracoes_periodos_letivos` (`id`, `nome`, `data_inicio`, `data_fim`, `config_calendario_id`) VALUES
-(5, '1º Semestre', '2025-02-01', '2025-06-30', 1),
-(6, '2º Periodo', '2025-07-01', '2025-12-30', 1);
+(9, '1º Semestre', '2025-02-01', '2025-06-30', 1),
+(10, '2º Periodo', '2025-07-01', '2025-12-30', 1);
 
 -- --------------------------------------------------------
 
@@ -495,6 +495,7 @@ CREATE TABLE `cursos_disciplinas` (
   `id` int(11) NOT NULL,
   `curso_id` int(11) NOT NULL,
   `nome` varchar(255) NOT NULL,
+  `codigo` varchar(50) DEFAULT NULL,
   `carga_horaria` int(11) NOT NULL,
   `creditos` int(11) NOT NULL,
   `semestre` int(11) NOT NULL,
@@ -506,8 +507,11 @@ CREATE TABLE `cursos_disciplinas` (
 -- Despejando dados para a tabela `cursos_disciplinas`
 --
 
-INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `carga_horaria`, `creditos`, `semestre`, `professor`, `ementa`) VALUES
-(1, 1, 'Metodologia de Pesquisa Científica', 60, 4, 1, 'Dr. João Silva', 'Introdução aos métodos de pesquisa científica.');
+INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `codigo`, `carga_horaria`, `creditos`, `semestre`, `professor`, `ementa`) VALUES
+(1, 1, 'Metodologia de Pesquisa Científica', NULL, 60, 4, 1, 'Dr. João Silva', 'Introdução aos métodos de pesquisa científica.'),
+(13, 3, 'Estatística Aplicada', 'POS-002', 64, 4, 1, NULL, 'kkkkkkkkkkkkkkkkkk'),
+(14, 3, 'Cálculo II', 'CALC-02', 64, 4, 2, NULL, 'kkkkkkkkkkkkk'),
+(16, 3, 'Cálculo I', 'CALC-01', 64, 4, 1, NULL, 'kkkkkkkkkkkkkkkkkk');
 
 -- --------------------------------------------------------
 
@@ -564,7 +568,8 @@ CREATE TABLE `cursos_posgraduacao` (
 --
 
 INSERT INTO `cursos_posgraduacao` (`id`, `nome`, `tipo`, `area_conhecimento`, `carga_horaria`, `duracao_semestres`, `modalidade`, `coordenador_id`, `vice_coordenador_id`, `unidade_id`, `objetivos`, `perfil_egresso`, `justificativa`, `ano_inicio`, `status`, `link_divulgacao`, `criado_em`, `atualizado_em`) VALUES
-(1, 'Mestrado em Ciências da Computação', 'mestrado', 'ciencias-exatas', 240, 1, 'presencial', 1, 2, 2, 'oooooooooooooooo', 'ooooopppppppppppppp', 'lllllllllllllllllllllllllllllllllllllll', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 12:42:14', '2025-10-23 12:42:14');
+(1, 'Mestrado em Ciências da Computação', 'mestrado', 'ciencias-exatas', 240, 1, 'presencial', 1, 2, 2, 'oooooooooooooooo', 'ooooopppppppppppppp', 'lllllllllllllllllllllllllllllllllllllll', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 12:42:14', '2025-10-23 12:42:14'),
+(3, 'Engenharia Civil', 'doutorado', 'engenharias', 4000, 10, 'presencial', 1, 3, 1, 'kkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkk', '2025', 'planejamento', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 14:24:08', '2025-10-23 14:58:57');
 
 -- --------------------------------------------------------
 
@@ -1781,7 +1786,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-23 13:45:40'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-23 14:49:39'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1972,7 +1977,7 @@ ALTER TABLE `cursos_alunos`
 --
 ALTER TABLE `cursos_disciplinas`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `curso_id` (`curso_id`);
+  ADD KEY `fk_disciplina_para_posgraduacao` (`curso_id`);
 
 --
 -- Índices de tabela `cursos_eventos`
@@ -2324,7 +2329,7 @@ ALTER TABLE `configuracoes_escola`
 -- AUTO_INCREMENT de tabela `configuracoes_periodos_letivos`
 --
 ALTER TABLE `configuracoes_periodos_letivos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de tabela `configuracoes_sistema`
@@ -2366,7 +2371,7 @@ ALTER TABLE `cursos`
 -- AUTO_INCREMENT de tabela `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_eventos`
@@ -2378,7 +2383,7 @@ ALTER TABLE `cursos_eventos`
 -- AUTO_INCREMENT de tabela `cursos_posgraduacao`
 --
 ALTER TABLE `cursos_posgraduacao`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_ppc`
@@ -2649,7 +2654,7 @@ ALTER TABLE `cursos_alunos`
 -- Restrições para tabelas `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
-  ADD CONSTRAINT `cursos_disciplinas_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_disciplina_para_posgraduacao` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `cursos_eventos`
