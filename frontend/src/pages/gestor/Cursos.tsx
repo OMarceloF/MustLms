@@ -71,7 +71,7 @@ const CursosPage: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
           <button
-            onClick={() => navigate('/cursos/criar')} // Rota hipotética
+            onClick={() => navigate('/gestor/curso/criar')}
             className="flex items-center gap-2 bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg shadow-lg transition-all"
           >
             <Book size={20} />
