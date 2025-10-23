@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, BookOpen } from 'lucide-react';
+import { Home, BookOpen, BookMarked } from 'lucide-react';
 import { VscRobot } from 'react-icons/vsc';
 import { FaRegPenToSquare } from 'react-icons/fa6';
 import NavItem from '../../../components/NavItem';
@@ -68,6 +68,15 @@ export default function SidebarGestor({
                     isExpanded={isMenuOpen}
                     onClick={() => navigate('/aluno/curso')}
                     active={isActive('/aluno/curso')}
+                />
+
+                <NavItem
+                    icon={<BookMarked size={28} />}
+                    text="Matérias"
+                    isExpanded={isMenuOpen}
+                    // Exemplo de navegação para a primeira matéria (id=1)
+                    onClick={() => navigate('/aluno/materias/1')}
+                    active={isActive('/aluno/materias')}
                 />
 
                 <NavItem
