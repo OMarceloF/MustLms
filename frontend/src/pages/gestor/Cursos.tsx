@@ -1,29 +1,18 @@
 // frontend/src/pages/gestor/Cursos.tsx
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Book, MoreVertical } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Book, MoreVertical, Loader2, AlertTriangle, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import axios, { isAxiosError } from 'axios';
 
-// Interface para definir a estrutura de um Curso
 interface Curso {
   id: number;
   nome: string;
-  breve_descricao: string;
-  duracao: string; // Ex: "8 semestres"
+  objetivos: string;
+  duracao_semestres: number;
 }
 
-// Mock de dados dos cursos
-const mockCursos: Curso[] = [
-  { id: 1, nome: 'Análise e Desenvolvimento de Sistemas', breve_descricao: 'Formação de profissionais para o mercado de tecnologia, com foco em software.', duracao: '5 semestres' },
-  { id: 2, nome: 'Engenharia de Software', breve_descricao: 'Curso aprofundado sobre o ciclo de vida do desenvolvimento de software.', duracao: '10 semestres' },
-  { id: 3, nome: 'Ciência da Computação', breve_descricao: 'Base teórica e prática sólida para resolver problemas computacionais complexos.', duracao: '8 semestres' },
-  { id: 4, nome: 'Design Gráfico', breve_descricao: 'Explore a criatividade e as ferramentas visuais para comunicação e marketing.', duracao: '6 semestres' },
-  { id: 5, nome: 'Administração', breve_descricao: 'Desenvolva habilidades de gestão para liderar organizações e negócios.', duracao: '8 semestres' },
-  { id: 6, nome: 'Direito', breve_descricao: 'Formação completa para atuar nas diversas áreas jurídicas do mercado.', duracao: '10 semestres' },
-];
-
-// Componente de Layout (mantido como no original)
 const Layout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-gray-50 flex flex-col">
     <main className="flex-1 container mx-auto py-6 px-4">
@@ -32,14 +21,30 @@ const Layout = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-// Página principal de Cursos
 const CursosPage: React.FC = () => {
   const navigate = useNavigate();
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-  const [cursos, setCursos] = useState<Curso[]>(mockCursos);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [cursos, setCursos] = useState<Curso[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Efeito para fechar o menu de opções ao clicar fora dele
+  useEffect(() => {
+    const fetchCursos = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axios.get<Curso[]>('/api/cursos-posgraduacao');
+        setCursos(response.data);
+      } catch (err) {
+        setError("Não foi possível carregar os cursos.");
+        toast.error("Falha ao carregar cursos.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCursos();
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -50,13 +55,67 @@ const CursosPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Função para lidar com a exclusão de um curso (apenas no estado local)
-  const handleExcluirCurso = (cursoId: number) => {
-    if (window.confirm('Tem certeza que deseja excluir este curso?')) {
-      setCursos((prevCursos) => prevCursos.filter((curso) => curso.id !== cursoId));
-      setOpenMenuId(null);
-      toast.success('Curso excluído com sucesso!');
+  const handleExcluirCurso = async (cursoId: number) => {
+    const cursoParaExcluir = cursos.find(c => c.id === cursoId);
+    const nomeCurso = cursoParaExcluir ? cursoParaExcluir.nome : 'O curso';
+
+    if (window.confirm(`Tem certeza que deseja excluir o curso "${nomeCurso}"?`)) {
+      try {
+        await axios.delete(`/api/cursos/${cursoId}`);
+        setCursos((prevCursos) => prevCursos.filter((curso) => curso.id !== cursoId));
+        setOpenMenuId(null);
+        toast.success(`"${nomeCurso}" foi excluído com sucesso!`);
+      } catch (err) {
+        if (isAxiosError(err)) {
+          const errorMessage = err.response?.data?.message || "Não foi possível excluir o curso.";
+          toast.error(errorMessage);
+        } else {
+          toast.error("Ocorreu um erro inesperado.");
+        }
+      }
     }
+  };
+
+  const renderContent = () => {
+    if (isLoading) return <div className="flex justify-center items-center py-20"><Loader2 className="h-12 w-12 animate-spin text-indigo-800" /></div>;
+    if (error) return <div className="text-center py-20 bg-red-50 p-6 rounded-lg"><AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" /><h3 className="text-xl font-semibold text-red-700">Ocorreu um Erro</h3><p className="text-gray-600 mt-2">{error}</p></div>;
+    if (cursos.length === 0) return <div className="text-center py-20 bg-white p-6 rounded-lg shadow-sm"><h3 className="text-2xl font-semibold text-gray-800">Nenhum curso encontrado</h3><p className="text-gray-500 mt-2">Clique em "Adicionar Curso" para começar.</p></div>;
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {cursos.map((curso) => (
+          <div key={curso.id} className="relative group">
+            <div 
+              onClick={() => navigate(`/gestaocurso/${curso.id}/matriz-curricular`)} // Redireciona para a matriz curricular
+              className="cursor-pointer transform transition-transform group-hover:scale-105 border-2 border-transparent group-hover:border-blue-600 rounded-lg shadow-sm bg-white flex flex-col h-full"
+            >
+              <div className="bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white flex justify-center items-center rounded-t-lg h-32">
+                <Book className="w-12 h-12" />
+              </div>
+              <div className="p-4 flex-grow flex flex-col">
+                <h3 className="font-bold text-lg mb-2 truncate" title={curso.nome}>{curso.nome}</h3>
+                <p className="text-gray-600 text-sm line-clamp-3 flex-grow">{curso.objetivos}</p>
+                <p className="text-gray-800 text-sm mt-4 font-semibold">Duração: {curso.duracao_semestres} semestres</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200 z-20"
+              aria-label="Mais opções"
+              onClick={(e) => { e.stopPropagation(); setOpenMenuId(prev => prev === curso.id ? null : curso.id); }}
+            >
+              <MoreVertical className="w-5 h-5 text-gray-600" />
+            </button>
+            {openMenuId === curso.id && (
+              <div ref={menuRef} className="absolute top-10 right-2 bg-white border rounded-md shadow-lg w-32 z-30 overflow-hidden">
+                <button className="w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => navigate(`/gestaocurso/${curso.id}/configuracoes`)}>Editar</button>
+                <button className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50" onClick={() => handleExcluirCurso(curso.id)}>Excluir</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -64,75 +123,17 @@ const CursosPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-black">Cursos Disponíveis</h1>
-          <p className="text-gray-600 text-sm sm:text-base">
-            Explore nossa lista de cursos. Clique em um para ver mais detalhes.
-          </p>
+          <p className="text-gray-600 text-sm sm:text-base">Explore nossa lista de cursos. Clique em um para ver mais detalhes.</p>
         </div>
-
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-          <button
-            onClick={() => navigate('/gestor/curso/criar')}
-            className="flex items-center gap-2 bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg shadow-lg transition-all"
-          >
-            <Book size={20} />
-            <span>Adicionar Curso</span>
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/adicionar-curso')}
+          className="flex items-center justify-center gap-2 bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg shadow-lg transition-all"
+        >
+          <PlusCircle size={20} />
+          <span>Adicionar Curso</span>
+        </button>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {cursos.map((curso) => (
-          <div
-            key={curso.id}
-            className="relative transform transition-transform hover:scale-105 border-2 border-transparent hover:border-blue-600 rounded-lg shadow-sm bg-white"
-          >
-            <Link to={`/gestaocurso`}> {/* Rota hipotética */}
-              <div className="bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white flex justify-center items-center rounded-t-lg">
-                <Book className="w-12 h-12" />
-              </div>
-              <div className="p-4">
-                <h3 className="font-bold text-lg mb-2">{curso.nome}</h3>
-                <p className="text-gray-600 text-sm">{curso.breve_descricao}</p>
-                <p className="text-gray-800 text-sm mt-2 font-semibold">Duração: {curso.duracao}</p>
-              </div>
-            </Link>
-
-            <button
-              type="button"
-              className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200 z-20"
-              aria-label="Mais opções"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setOpenMenuId((prev) => (prev === curso.id ? null : curso.id));
-              }}
-            >
-              <MoreVertical className="w-5 h-5 text-gray-600" />
-            </button>
-
-            {openMenuId === curso.id && (
-              <div
-                className="absolute top-10 right-2 bg-white border rounded-md shadow-lg w-32 z-30 overflow-hidden"
-                ref={menuRef}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-md"
-                  onClick={() => navigate(`/cursos/editar/${curso.id}`)} // Rota hipotética
-                >
-                  Editar
-                </button>
-                <button
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-md"
-                  onClick={() => handleExcluirCurso(curso.id)}
-                >
-                  Excluir
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      {renderContent()}
     </Layout>
   );
 };

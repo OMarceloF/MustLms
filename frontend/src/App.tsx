@@ -132,8 +132,8 @@ const App: React.FC = () => {
               <Route path="/gestor/calendario/:id" element={<CalendarioDetalhePage />} />
               <Route path="/gestor/configuracoes" element={<ConfiguracoesGestorPage />} />
               <Route path="/gestor/configuracoes-sistema" element={<ConfiguracoesPage />} />
-              <Route path="/cursos" element={<CursosPage />} />
-              <Route path="/gestaocurso/" element={<GestaoCursoPage />} />
+              <Route path="/gestaocurso" element={<CursosPage />} />
+              <Route path="/gestaocurso/:id/matriz-curricular" element={<GestaoCursoPage />} />
               <Route path="/gestor/professores/:id/editar" element={<EditarProfessorPage />} />
               <Route path="/gestor/turmas/:turmaId/materias/:materiaId/avaliacoes-notas" element={<AvaliacoesNotasPage />} />
               <Route path="/gestor/turmas/:turmaId/materias/:materiaId/diario" element={<DiarioPage />} />
@@ -154,7 +154,7 @@ const App: React.FC = () => {
               <Route path="/gestor/financeiro/lancamento" element={<LancamentosPage />} />
               <Route path="/gestor/financeiro/ficha-aluno" element={<FichaFinanceiraAluno />} />
               <Route path="/gestor/financeiro/contratos" element={<Contratos />} />
-              <Route path="/gestor/curso/criar" element={<AdicionarCursoPage />} />
+              <Route path="/adicionar-curso" element={<AdicionarCursoPage />} />
 
             </Route>
 

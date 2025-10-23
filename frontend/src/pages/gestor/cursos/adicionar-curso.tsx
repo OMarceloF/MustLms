@@ -12,6 +12,7 @@ import { Textarea } from "../components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { useToast } from "../hooks/use-toast"
 import { ArrowLeft } from "lucide-react"
+import axios from 'axios';
 
 // Importações para o Layout (Sidebar e TopBar)
 import TopBarGestor from "../components/Navbar";
@@ -116,30 +117,37 @@ export default function AdicionarCursoPage() {
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+        e.preventDefault();
         if (!validateForm()) {
             toast({
                 title: "Erro de validação",
                 description: "Por favor, preencha todos os campos obrigatórios.",
                 variant: "destructive",
-            })
-            return
+            });
+            return;
         }
+
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+            // A chamada agora é para a sua API real
+            const response = await axios.post('/api/cursos/adicionar', formData);
+
             toast({
                 title: "Curso cadastrado com sucesso!",
                 description: `O curso "${formData.nome}" foi adicionado ao sistema.`,
-            })
-            navigate("/gestaocurso") // Redireciona para a página de gestão de cursos
+            });
+            
+            // Redireciona para a página de gestão de cursos após o sucesso
+            navigate("/gestaocurso"); 
+
         } catch (error) {
+            console.error("Erro ao salvar curso:", error);
             toast({
                 title: "Erro ao salvar curso",
-                description: "Ocorreu um erro ao cadastrar o curso. Tente novamente.",
+                description: "Ocorreu um erro ao cadastrar o curso. Verifique o console para mais detalhes.",
                 variant: "destructive",
-            })
+            });
         }
-    }
+    };
 
     const handleCancel = () => {
         navigate("/gestaocurso") // Redireciona para a página de gestão de cursos
@@ -152,7 +160,7 @@ export default function AdicionarCursoPage() {
     };
 
     if (!user) {
-        return <div>Carregando...</div>; // Ou um spinner de carregamento
+        return <div>Carregando...</div>;
     }
     
     return (
@@ -178,7 +186,7 @@ export default function AdicionarCursoPage() {
                 setActivePage={setActivePage}
                 activePage={activePage}
                 usuarioId={user.id}
-                notifications={[]} // Passe as notificações reais se disponíveis
+                notifications={[]}
             />
 
             <div className="flex flex-1">
