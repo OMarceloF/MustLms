@@ -1,3 +1,5 @@
+// frontend/src/pages/aluno/materias/notas-avaliacoes-tab.tsx
+
 "use client"
 
 import { useState } from "react"
@@ -6,6 +8,7 @@ import { Badge } from "../components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../../gestor/components/ui/collapsible"
 import { ChevronDown, FileText } from "lucide-react"
 import { Progress } from "../components/ui/progress"
+import { cn } from "../../lib/utils"
 
 interface Avaliacao {
   id: string
@@ -93,7 +96,6 @@ export function NotasAvaliacoesTab() {
 
   return (
     <div className="space-y-6">
-      {/* Summary Card */}
       <Card>
         <CardHeader>
           <CardTitle>Resumo de Avaliações</CardTitle>
@@ -105,52 +107,47 @@ export function NotasAvaliacoesTab() {
             <span className="text-2xl font-bold">{notaFinal.toFixed(2)}</span>
           </div>
           <Progress value={(notaFinal / 10) * 100} className="h-2" />
-          <p className="text-xs text-muted-foreground">
-            {pesoTotal}% do total avaliado • {100 - pesoTotal}% restante
-          </p>
+          <p className="text-xs text-muted-foreground">{pesoTotal}% do total avaliado • {100 - pesoTotal}% restante</p>
         </CardContent>
       </Card>
 
-      {/* Evaluations List */}
       <div className="space-y-3">
         {avaliacoes.map((avaliacao) => (
-          <Collapsible
-            key={avaliacao.id}
-            open={openItems.includes(avaliacao.id)}
-            onOpenChange={() => toggleItem(avaliacao.id)}
-          >
+          <Collapsible key={avaliacao.id} open={openItems.includes(avaliacao.id)} onOpenChange={() => toggleItem(avaliacao.id)}>
             <Card>
               <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <CardTitle className="text-base">{avaliacao.nome}</CardTitle>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <Badge variant="outline">{avaliacao.tipo}</Badge>
-                        <span>•</span>
-                        <span>Peso: {avaliacao.peso}%</span>
-                        <span>•</span>
-                        <span>{avaliacao.data}</span>
-                      </div>
+                <CardHeader
+                  className={cn(
+                    "w-full cursor-pointer transition-colors hover:bg-muted/50",
+                    "flex-row items-center justify-between space-y-0"
+                  )}
+                >
+                  {/* Bloco da Esquerda */}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      <p className="font-semibold text-left">{avaliacao.nome}</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      {avaliacao.notaObtida > 0 ? (
-                        <div className="text-right">
-                          <div className="text-2xl font-bold">{avaliacao.notaObtida.toFixed(1)}</div>
-                          <div className="text-xs text-muted-foreground">Média: {avaliacao.mediaTurma.toFixed(1)}</div>
-                        </div>
-                      ) : (
-                        <Badge variant="secondary">Pendente</Badge>
-                      )}
-                      <ChevronDown
-                        className={`h-5 w-5 text-muted-foreground transition-transform ${
-                          openItems.includes(avaliacao.id) ? "rotate-180" : ""
-                        }`}
-                      />
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <Badge variant="outline">{avaliacao.tipo}</Badge>
+                      <span>•</span>
+                      <span>Peso: {avaliacao.peso}%</span>
+                      <span>•</span>
+                      <span>{avaliacao.data}</span>
                     </div>
+                  </div>
+
+                  {/* Bloco da Direita */}
+                  <div className="flex items-center gap-4 pl-4">
+                    {avaliacao.notaObtida > 0 ? (
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">{avaliacao.notaObtida.toFixed(1)}</div>
+                        <div className="text-xs text-muted-foreground">Média: {avaliacao.mediaTurma.toFixed(1)}</div>
+                      </div>
+                    ) : (
+                      <Badge variant="secondary">Pendente</Badge>
+                    )}
+                    <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${openItems.includes(avaliacao.id) ? "rotate-180" : ""}`} />
                   </div>
                 </CardHeader>
               </CollapsibleTrigger>
