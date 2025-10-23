@@ -112,7 +112,7 @@ export function GraduateCoursePage() {
                     <div className="mx-auto max-w-7xl">
                         {/* Header */}
                         <div className="mb-8 text-center">
-                            <h1 className="mb-2 text-4xl font-bold tracking-tight text-foreground">Meu Curso de Pós-Graduação</h1>
+                            <h1 className="mb-2 text-4xl font-bold tracking-tight text-foreground">Meu Curso</h1>
                             <p className="text-lg text-muted-foreground">
                                 Acompanhe seu desempenho, disciplinas e informações acadêmicas
                             </p>
