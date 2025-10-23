@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 22/10/2025 às 16:12
+-- Tempo de geração: 23/10/2025 às 15:47
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -276,7 +276,7 @@ CREATE TABLE `configuracoes_calendario` (
 --
 
 INSERT INTO `configuracoes_calendario` (`id`, `ano_letivo`, `fuso_horario`, `primeiro_dia_semana`, `feriados_personalizados`, `atualizado_em`) VALUES
-(1, 2025, 'America/Sao_Paulo', 'segunda', '2025-10-23,2025-10-24', '2025-10-21 20:28:19');
+(1, 2025, 'America/Sao_Paulo', 'segunda', '2025-10-23,2025-10-24', '2025-10-22 14:29:53');
 
 -- --------------------------------------------------------
 
@@ -337,8 +337,8 @@ CREATE TABLE `configuracoes_periodos_letivos` (
 --
 
 INSERT INTO `configuracoes_periodos_letivos` (`id`, `nome`, `data_inicio`, `data_fim`, `config_calendario_id`) VALUES
-(15, '1º Semestre', '2025-02-01', '2025-06-30', 1),
-(16, '2º Semestre', '2025-07-01', '2025-12-21', 1);
+(5, '1º Semestre', '2025-02-01', '2025-06-30', 1),
+(6, '2º Periodo', '2025-07-01', '2025-12-30', 1);
 
 -- --------------------------------------------------------
 
@@ -461,6 +461,7 @@ CREATE TABLE `cursos` (
   `nome` varchar(255) NOT NULL,
   `coordenador` varchar(255) DEFAULT NULL,
   `descricao` text DEFAULT NULL,
+  `duracao_semestres` int(11) DEFAULT 8,
   `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -468,8 +469,21 @@ CREATE TABLE `cursos` (
 -- Despejando dados para a tabela `cursos`
 --
 
-INSERT INTO `cursos` (`id`, `nome`, `coordenador`, `descricao`, `criado_em`) VALUES
-(1, 'Mestrado em Engenharia de Software', 'Dr. Alan Turing', 'Um programa focado em formar pesquisadores e profissionais de ponta em engenharia de software.', '2025-10-21 21:10:56');
+INSERT INTO `cursos` (`id`, `nome`, `coordenador`, `descricao`, `duracao_semestres`, `criado_em`) VALUES
+(1, 'Mestrado em Engenharia de Software', 'Dr. Alan Turing', 'Um programa focado em formar pesquisadores e profissionais de ponta em engenharia de software.', 8, '2025-10-21 21:10:56');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `cursos_alunos`
+--
+
+CREATE TABLE `cursos_alunos` (
+  `curso_id` int(11) NOT NULL,
+  `aluno_id` int(11) NOT NULL,
+  `status_vinculo` enum('Ativo','Concluído','Desistente','Transferido') NOT NULL DEFAULT 'Ativo',
+  `data_vinculo` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -521,6 +535,40 @@ INSERT INTO `cursos_eventos` (`id`, `curso_id`, `titulo`, `descricao`, `data_ini
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `cursos_posgraduacao`
+--
+
+CREATE TABLE `cursos_posgraduacao` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(255) NOT NULL,
+  `tipo` varchar(50) NOT NULL COMMENT 'Ex: mestrado, doutorado',
+  `area_conhecimento` varchar(100) NOT NULL,
+  `carga_horaria` int(11) NOT NULL,
+  `duracao_semestres` int(11) NOT NULL,
+  `modalidade` varchar(50) NOT NULL COMMENT 'Ex: presencial, hibrido, ead',
+  `coordenador_id` int(11) NOT NULL,
+  `vice_coordenador_id` int(11) DEFAULT NULL,
+  `unidade_id` int(11) NOT NULL,
+  `objetivos` text NOT NULL,
+  `perfil_egresso` text NOT NULL,
+  `justificativa` text NOT NULL,
+  `ano_inicio` year(4) NOT NULL,
+  `status` varchar(50) NOT NULL COMMENT 'Ex: ativo, planejamento',
+  `link_divulgacao` varchar(500) DEFAULT NULL,
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp(),
+  `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='Armazena informações detalhadas dos cursos de pós-graduação.';
+
+--
+-- Despejando dados para a tabela `cursos_posgraduacao`
+--
+
+INSERT INTO `cursos_posgraduacao` (`id`, `nome`, `tipo`, `area_conhecimento`, `carga_horaria`, `duracao_semestres`, `modalidade`, `coordenador_id`, `vice_coordenador_id`, `unidade_id`, `objetivos`, `perfil_egresso`, `justificativa`, `ano_inicio`, `status`, `link_divulgacao`, `criado_em`, `atualizado_em`) VALUES
+(1, 'Mestrado em Ciências da Computação', 'mestrado', 'ciencias-exatas', 240, 1, 'presencial', 1, 2, 2, 'oooooooooooooooo', 'ooooopppppppppppppp', 'lllllllllllllllllllllllllllllllllllllll', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 12:42:14', '2025-10-23 12:42:14');
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `cursos_ppc`
 --
 
@@ -529,6 +577,18 @@ CREATE TABLE `cursos_ppc` (
   `curso_id` int(11) NOT NULL,
   `conteudo` longtext DEFAULT NULL,
   `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `cursos_professores`
+--
+
+CREATE TABLE `cursos_professores` (
+  `curso_id` int(11) NOT NULL,
+  `professor_id` int(11) NOT NULL,
+  `tipo_vinculo` enum('Permanente','Colaborador','Visitante') NOT NULL DEFAULT 'Permanente'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -1721,8 +1781,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-22 14:07:41'),
-(2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-01 14:21:26'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-23 13:45:40'),
+(2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
 (5, 'raissab', '$2b$10$wVhJ.IPozJLJDNgyc6O4GOOCAiTaQEuj87ALJjP1Mf8urwfoiMzgu', 'raissa@gmail.com', 'aluno', 'ativo', 'Raissa', NULL, NULL, '2025-07-17 14:02:56', '', NULL),
@@ -1901,6 +1961,13 @@ ALTER TABLE `cursos`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `cursos_alunos`
+--
+ALTER TABLE `cursos_alunos`
+  ADD PRIMARY KEY (`curso_id`,`aluno_id`),
+  ADD KEY `aluno_id` (`aluno_id`);
+
+--
 -- Índices de tabela `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
@@ -1915,11 +1982,26 @@ ALTER TABLE `cursos_eventos`
   ADD KEY `curso_id` (`curso_id`);
 
 --
+-- Índices de tabela `cursos_posgraduacao`
+--
+ALTER TABLE `cursos_posgraduacao`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_curso_coordenador` (`coordenador_id`),
+  ADD KEY `fk_curso_vice_coordenador` (`vice_coordenador_id`);
+
+--
 -- Índices de tabela `cursos_ppc`
 --
 ALTER TABLE `cursos_ppc`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `curso_id` (`curso_id`);
+
+--
+-- Índices de tabela `cursos_professores`
+--
+ALTER TABLE `cursos_professores`
+  ADD PRIMARY KEY (`curso_id`,`professor_id`),
+  ADD KEY `professor_id` (`professor_id`);
 
 --
 -- Índices de tabela `descontos`
@@ -2242,7 +2324,7 @@ ALTER TABLE `configuracoes_escola`
 -- AUTO_INCREMENT de tabela `configuracoes_periodos_letivos`
 --
 ALTER TABLE `configuracoes_periodos_letivos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `configuracoes_sistema`
@@ -2290,6 +2372,12 @@ ALTER TABLE `cursos_disciplinas`
 -- AUTO_INCREMENT de tabela `cursos_eventos`
 --
 ALTER TABLE `cursos_eventos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `cursos_posgraduacao`
+--
+ALTER TABLE `cursos_posgraduacao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
@@ -2551,6 +2639,13 @@ ALTER TABLE `conversas`
   ADD CONSTRAINT `conversas_ibfk_2` FOREIGN KEY (`usuario2_id`) REFERENCES `users` (`id`);
 
 --
+-- Restrições para tabelas `cursos_alunos`
+--
+ALTER TABLE `cursos_alunos`
+  ADD CONSTRAINT `cursos_alunos_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `cursos_alunos_ibfk_2` FOREIGN KEY (`aluno_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Restrições para tabelas `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
@@ -2563,10 +2658,24 @@ ALTER TABLE `cursos_eventos`
   ADD CONSTRAINT `cursos_eventos_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE;
 
 --
+-- Restrições para tabelas `cursos_posgraduacao`
+--
+ALTER TABLE `cursos_posgraduacao`
+  ADD CONSTRAINT `fk_curso_coordenador` FOREIGN KEY (`coordenador_id`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_curso_vice_coordenador` FOREIGN KEY (`vice_coordenador_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
 -- Restrições para tabelas `cursos_ppc`
 --
 ALTER TABLE `cursos_ppc`
   ADD CONSTRAINT `cursos_ppc_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `cursos_professores`
+--
+ALTER TABLE `cursos_professores`
+  ADD CONSTRAINT `cursos_professores_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `cursos_professores_ibfk_2` FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `descontos`

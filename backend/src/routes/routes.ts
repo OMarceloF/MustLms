@@ -326,6 +326,7 @@ import {
   adicionarCurso,
   listarCursosPosGraduacao,
   excluirCurso,
+  atualizarCurso,
   obterDetalhesCurso,
   listarDisciplinasCurso,
   adicionarDisciplinaCurso,
@@ -820,6 +821,9 @@ router.post('/api/cursos/adicionar', adicionarCurso);
 
 // --- ROTA CORRIGIDA PARA EXCLUIR ---
 router.delete('/api/cursos/:id', excluirCurso);
+
+// --- Rota para ATUALIZAR um curso existente (página editar-curso.tsx) ---
+router.put('/api/cursos/:id', atualizarCurso);
 
 // --- Rotas para a página "Configurações do Curso" (Abas internas) ---
 router.get('/api/cursos/:id', obterDetalhesCurso);

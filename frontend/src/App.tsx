@@ -1,5 +1,3 @@
-//frontend/src/App.tsx
-
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -63,8 +61,6 @@ import IaAlunoPage from './pages/aluno/IaAlunoPage';
 import { GraduateCoursePage } from './pages/aluno/curso/cursoPage';
 import MateriaVisualizacaoPage from './pages/aluno/materias/materias';
 
-
-
 // Páginas do Responsável
 import EscolhaAlunoResponsavelPage from './pages/gestor/EscolhaAlunoResponsavelPage';
 import ConfiguracoesResponsavelPage from './pages/responsavel/ConfiguracoesResponsavelPage';
@@ -99,8 +95,6 @@ import ConfiguracoesPage from './pages/gestor/configuracoes/configuracoes-page';
 import CursosPage from './pages/gestor/Cursos';
 import GestaoCursoPage from './pages/gestor/cursos/CursosPage';
 import AdicionarCursoPage from './pages/gestor/cursos/adicionar-curso';
-
-
 
 const queryClient = new QueryClient();
 
@@ -154,7 +148,10 @@ const App: React.FC = () => {
               <Route path="/gestor/financeiro/lancamento" element={<LancamentosPage />} />
               <Route path="/gestor/financeiro/ficha-aluno" element={<FichaFinanceiraAluno />} />
               <Route path="/gestor/financeiro/contratos" element={<Contratos />} />
-              <Route path="/adicionar-curso" element={<AdicionarCursoPage />} />
+              
+              {/* *** ALTERAÇÃO PRINCIPAL AQUI *** */}
+              {/* Esta rota agora lida com /adicionar-curso e /adicionar-curso/:id */}
+              <Route path="/adicionar-curso/:id?" element={<AdicionarCursoPage />} />
 
             </Route>
 
@@ -195,8 +192,6 @@ const App: React.FC = () => {
               <Route path="/aluno/ia" element={<IaAlunoPage />} />
               <Route path="/aluno/curso" element={<GraduateCoursePage />} />
               <Route path="/aluno/materias/:id" element={<MateriaVisualizacaoPage />} />
-
-
             </Route>
 
             {/* Rotas do Financeiro (Gestor e Financeiro) */}
@@ -215,8 +210,6 @@ const App: React.FC = () => {
               <Route path="/responsavel" element={<Responsavel />} />
               <Route path="/gestor/alunos/:id/visualizaraluno" element={<VisualizarAlunoPage />} />
               <Route path="/professor/alunos/:id/visualizaraluno" element={<VisualizarAlunoPage />} />
-
-
               <Route path="/responsavel/:id/escolheraluno" element={<EscolhaAlunoResponsavelPage />} />
               <Route path="/gestor/feedprincipal" element={<FeedPrincipalMenuPage />} />
               <Route path="/gestor/post" element={<PostPageMenu />} />

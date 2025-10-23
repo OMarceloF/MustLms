@@ -6,6 +6,7 @@ import { Book, MoreVertical, Loader2, AlertTriangle, PlusCircle } from 'lucide-r
 import { toast } from 'sonner';
 import axios, { isAxiosError } from 'axios';
 
+// Interface para definir a estrutura dos dados do curso
 interface Curso {
   id: number;
   nome: string;
@@ -13,6 +14,7 @@ interface Curso {
   duracao_semestres: number;
 }
 
+// Componente de Layout simples para envolver a página
 const Layout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-gray-50 flex flex-col">
     <main className="flex-1 container mx-auto py-6 px-4">
@@ -29,6 +31,7 @@ const CursosPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Efeito para buscar os cursos da API quando o componente é montado
   useEffect(() => {
     const fetchCursos = async () => {
       setIsLoading(true);
@@ -45,6 +48,7 @@ const CursosPage: React.FC = () => {
     fetchCursos();
   }, []);
 
+  // Efeito para fechar o menu de opções ao clicar fora dele
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -55,6 +59,7 @@ const CursosPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Função para lidar com a exclusão de um curso
   const handleExcluirCurso = async (cursoId: number) => {
     const cursoParaExcluir = cursos.find(c => c.id === cursoId);
     const nomeCurso = cursoParaExcluir ? cursoParaExcluir.nome : 'O curso';
@@ -66,27 +71,50 @@ const CursosPage: React.FC = () => {
         setOpenMenuId(null);
         toast.success(`"${nomeCurso}" foi excluído com sucesso!`);
       } catch (err) {
-        if (isAxiosError(err)) {
-          const errorMessage = err.response?.data?.message || "Não foi possível excluir o curso.";
-          toast.error(errorMessage);
-        } else {
-          toast.error("Ocorreu um erro inesperado.");
-        }
+        const errorMessage = isAxiosError(err)
+          ? err.response?.data?.message || "Não foi possível excluir o curso."
+          : "Ocorreu um erro inesperado.";
+        toast.error(errorMessage);
       }
     }
   };
+  
+  // *** ALTERAÇÃO PRINCIPAL AQUI ***
+  // A função agora navega para a rota do formulário unificado, passando o ID do curso.
+  const handleEditarCurso = (cursoId: number) => {
+    navigate(`/adicionar-curso/${cursoId}`);
+    setOpenMenuId(null); // Fecha o menu após o clique
+  };
 
+  // Função para renderizar o conteúdo principal da página
   const renderContent = () => {
-    if (isLoading) return <div className="flex justify-center items-center py-20"><Loader2 className="h-12 w-12 animate-spin text-indigo-800" /></div>;
-    if (error) return <div className="text-center py-20 bg-red-50 p-6 rounded-lg"><AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" /><h3 className="text-xl font-semibold text-red-700">Ocorreu um Erro</h3><p className="text-gray-600 mt-2">{error}</p></div>;
-    if (cursos.length === 0) return <div className="text-center py-20 bg-white p-6 rounded-lg shadow-sm"><h3 className="text-2xl font-semibold text-gray-800">Nenhum curso encontrado</h3><p className="text-gray-500 mt-2">Clique em "Adicionar Curso" para começar.</p></div>;
+    if (isLoading) {
+      return <div className="flex justify-center items-center py-20"><Loader2 className="h-12 w-12 animate-spin text-indigo-800" /></div>;
+    }
+    if (error) {
+      return (
+        <div className="text-center py-20 bg-red-50 p-6 rounded-lg">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-red-700">Ocorreu um Erro</h3>
+          <p className="text-gray-600 mt-2">{error}</p>
+        </div>
+      );
+    }
+    if (cursos.length === 0) {
+      return (
+        <div className="text-center py-20 bg-white p-6 rounded-lg shadow-sm">
+          <h3 className="text-2xl font-semibold text-gray-800">Nenhum curso encontrado</h3>
+          <p className="text-gray-500 mt-2">Clique em "Adicionar Curso" para começar.</p>
+        </div>
+      );
+    }
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {cursos.map((curso) => (
           <div key={curso.id} className="relative group">
             <div 
-              onClick={() => navigate(`/gestaocurso/${curso.id}/matriz-curricular`)} // Redireciona para a matriz curricular
+              onClick={() => navigate(`/gestaocurso/${curso.id}/matriz-curricular`)}
               className="cursor-pointer transform transition-transform group-hover:scale-105 border-2 border-transparent group-hover:border-blue-600 rounded-lg shadow-sm bg-white flex flex-col h-full"
             >
               <div className="bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white flex justify-center items-center rounded-t-lg h-32">
@@ -108,8 +136,19 @@ const CursosPage: React.FC = () => {
             </button>
             {openMenuId === curso.id && (
               <div ref={menuRef} className="absolute top-10 right-2 bg-white border rounded-md shadow-lg w-32 z-30 overflow-hidden">
-                <button className="w-full text-left px-4 py-2 hover:bg-gray-100" onClick={() => navigate(`/gestaocurso/${curso.id}/configuracoes`)}>Editar</button>
-                <button className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50" onClick={() => handleExcluirCurso(curso.id)}>Excluir</button>
+                {/* O onClick agora chama a função handleEditarCurso atualizada */}
+                <button 
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100" 
+                  onClick={() => handleEditarCurso(curso.id)}
+                >
+                  Editar
+                </button>
+                <button 
+                  className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50" 
+                  onClick={() => handleExcluirCurso(curso.id)}
+                >
+                  Excluir
+                </button>
               </div>
             )}
           </div>
