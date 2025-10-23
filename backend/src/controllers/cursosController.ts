@@ -17,7 +17,6 @@ export const adicionarCurso = async (req: Request, res: Response) => {
     anoInicio, status, linkDivulgacao,
   } = req.body;
 
-  // Validação de campos obrigatórios
   if (!nome || !tipo || !area || !cargaHoraria || !duracao || !modalidade || !coordenador || !unidade || !objetivos || !perfilEgresso || !justificativa || !anoInicio || !status) {
     return res.status(400).json({ message: "Erro de validação: Todos os campos obrigatórios devem ser preenchidos." });
   }
@@ -66,7 +65,6 @@ export const atualizarCurso = async (req: Request, res: Response) => {
         return res.status(400).json({ message: "ID do curso não fornecido." });
     }
 
-    // Validação de campos obrigatórios
     if (!nome || !tipo || !area || !cargaHoraria || !duracao || !modalidade || !coordenador || !unidade || !objetivos || !perfilEgresso || !justificativa || !anoInicio || !status) {
         return res.status(400).json({ message: "Erro de validação: Todos os campos obrigatórios devem ser preenchidos." });
     }
@@ -102,7 +100,7 @@ export const atualizarCurso = async (req: Request, res: Response) => {
 };
 
 /**
- * @description Lista todos os cursos de pós-graduação cadastrados para a página principal.
+ * @description Lista todos os cursos de pós-graduação cadastrados.
  * @route GET /api/cursos-posgraduacao
  */
 export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
@@ -122,7 +120,7 @@ export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
 };
 
 /**
- * @description Exclui um curso de pós-graduação do banco de dados.
+ * @description Exclui um curso de pós-graduação.
  * @route DELETE /api/cursos/:id
  */
 export const excluirCurso = async (req: Request, res: Response) => {
@@ -133,16 +131,14 @@ export const excluirCurso = async (req: Request, res: Response) => {
   }
 
   try {
-    const [result] = await pool.query<ResultSetHeader>(
-      'DELETE FROM cursos_posgraduacao WHERE id = ?',
-      [id]
-    );
+    await pool.query('DELETE FROM cursos_disciplinas WHERE curso_id = ?', [id]);
+    const [result] = await pool.query<ResultSetHeader>('DELETE FROM cursos_posgraduacao WHERE id = ?', [id]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Curso não encontrado." });
     }
 
-    res.status(200).json({ message: "Curso excluído com sucesso." });
+    res.status(200).json({ message: "Curso e suas disciplinas foram excluídos com sucesso." });
 
   } catch (error) {
     console.error("Erro ao excluir curso:", error);
@@ -150,7 +146,7 @@ export const excluirCurso = async (req: Request, res: Response) => {
     if (error && typeof error === 'object' && 'code' in error) {
       const mysqlError = error as { code: string };
       if (mysqlError.code === 'ER_ROW_IS_REFERENCED_2') {
-        return res.status(409).json({ message: "Não é possível excluir este curso, pois ele possui dados vinculados (disciplinas, alunos, etc.)." });
+        return res.status(409).json({ message: "Não é possível excluir este curso, pois ele possui outros dados vinculados." });
       }
     }
     
@@ -158,46 +154,8 @@ export const excluirCurso = async (req: Request, res: Response) => {
   }
 };
 
-
-//==============================================================================
-// Funções Relacionadas à Estrutura Antiga/Simplificada (Tabela: cursos)
-//==============================================================================
-
 /**
- * @description Lista todos os cursos da tabela `cursos`.
- * @route GET /api/cursos
- */
-export const listarCursos = async (req: Request, res: Response) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM cursos ORDER BY nome ASC");
-    res.json(rows);
-  } catch (error) {
-    console.error("Erro ao listar cursos:", error);
-    res.status(500).json({ message: "Erro interno ao buscar os cursos." });
-  }
-};
-
-/**
- * @description Cria um novo curso na tabela `cursos`.
- * @route POST /api/cursos
- */
-export const criarCurso = async (req: Request, res: Response) => {
-  const { nome, coordenador, descricao } = req.body;
-  if (!nome) {
-    return res.status(400).json({ message: "O nome do curso é obrigatório." });
-  }
-  try {
-    const query = "INSERT INTO cursos (nome, coordenador, descricao) VALUES (?, ?, ?)";
-    const [result] = await pool.query<ResultSetHeader>(query, [nome, coordenador, descricao]);
-    res.status(201).json({ id: result.insertId, nome, coordenador, descricao });
-  } catch (error) {
-    console.error("Erro ao criar curso:", error);
-    res.status(500).json({ message: "Erro interno ao criar o curso." });
-  }
-};
-
-/**
- * @description Obtém os detalhes de um curso específico da tabela `cursos_posgraduacao`.
+ * @description Obtém os detalhes de um curso específico.
  * @route GET /api/cursos/:id
  */
 export const obterDetalhesCurso = async (req: Request, res: Response) => {
@@ -214,9 +172,8 @@ export const obterDetalhesCurso = async (req: Request, res: Response) => {
   }
 };
 
-
 //==============================================================================
-// Funções para Sub-recursos de Cursos (Disciplinas, Calendário, PPC, etc.)
+// CRUD para Matriz Curricular (Tabela: cursos_disciplinas)
 //==============================================================================
 
 /**
@@ -224,7 +181,12 @@ export const obterDetalhesCurso = async (req: Request, res: Response) => {
  * @route GET /api/cursos/:cursoId/disciplinas
  */
 export const listarDisciplinasCurso = async (req: Request, res: Response) => {
-  const { cursoId } = req.params;
+  const { cursoId } = req.params; 
+
+  if (!cursoId) {
+    return res.status(400).json({ message: "ID do curso não fornecido na URL." });
+  }
+
   try {
     const [rows] = await pool.query("SELECT * FROM cursos_disciplinas WHERE curso_id = ? ORDER BY semestre, nome", [cursoId]);
     res.json(rows);
@@ -239,16 +201,33 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
  * @route POST /api/cursos/:cursoId/disciplinas
  */
 export const adicionarDisciplinaCurso = async (req: Request, res: Response) => {
+      // --- INÍCIO DA DEPURAÇÃO ---
+  console.log('Recebido em adicionarDisciplinaCurso:');
+  console.log('req.params:', req.params); // VAMOS VER O QUE REALMENTE CHEGA AQUI
+  console.log('req.body:', req.body);
+  // --- FIM DA DEPURAÇÃO ---
+  
   const { cursoId } = req.params;
-  const { nome, carga_horaria, creditos, semestre, professor, ementa } = req.body;
+  const { nome, codigo, carga_horaria, creditos, semestre, ementa } = req.body;
 
-  if (!nome || !carga_horaria || !creditos || !semestre) {
-      return res.status(400).json({ message: "Campos obrigatórios não foram preenchidos." });
+  if (!cursoId) {
+    return res.status(400).json({ message: "ID do curso não foi encontrado na requisição." });
+  }
+
+  if (!nome || carga_horaria === undefined || creditos === undefined || semestre === undefined) {
+      return res.status(400).json({ message: "Campos obrigatórios (nome, carga horária, créditos, semestre) não foram preenchidos." });
   }
 
   try {
-      const query = `INSERT INTO cursos_disciplinas (curso_id, nome, carga_horaria, creditos, semestre, professor, ementa) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-      const [result] = await pool.query<ResultSetHeader>(query, [cursoId, nome, carga_horaria, creditos, semestre, professor, ementa]);
+      const query = `
+        INSERT INTO cursos_disciplinas 
+          (curso_id, nome, codigo, carga_horaria, creditos, semestre, ementa) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+      const values = [cursoId, nome, codigo, carga_horaria, creditos, semestre, ementa];
+      
+      const [result] = await pool.query<ResultSetHeader>(query, values);
+      
       res.status(201).json({ id: result.insertId, ...req.body });
   } catch (error) {
       console.error("Erro ao adicionar disciplina:", error);
@@ -262,15 +241,24 @@ export const adicionarDisciplinaCurso = async (req: Request, res: Response) => {
  */
 export const atualizarDisciplinaCurso = async (req: Request, res: Response) => {
   const { disciplinaId } = req.params;
-  const { nome, carga_horaria, creditos, semestre, professor, ementa } = req.body;
+  const { nome, codigo, carga_horaria, creditos, semestre, ementa } = req.body;
 
-  if (!nome || !carga_horaria || !creditos || !semestre) {
+  if (!disciplinaId) {
+    return res.status(400).json({ message: "ID da disciplina não fornecido." });
+  }
+  if (!nome || carga_horaria === undefined || creditos === undefined || semestre === undefined) {
       return res.status(400).json({ message: "Campos obrigatórios não foram preenchidos." });
   }
 
   try {
-      const query = `UPDATE cursos_disciplinas SET nome = ?, carga_horaria = ?, creditos = ?, semestre = ?, professor = ?, ementa = ? WHERE id = ?`;
-      const [result] = await pool.query<ResultSetHeader>(query, [nome, carga_horaria, creditos, semestre, professor, ementa, disciplinaId]);
+      const query = `
+        UPDATE cursos_disciplinas SET 
+          nome = ?, codigo = ?, carga_horaria = ?, creditos = ?, semestre = ?, ementa = ? 
+        WHERE id = ?
+      `;
+      const values = [nome, codigo, carga_horaria, creditos, semestre, ementa, disciplinaId];
+      
+      const [result] = await pool.query<ResultSetHeader>(query, values);
 
       if (result.affectedRows === 0) {
           return res.status(404).json({ message: "Disciplina não encontrada." });
@@ -288,6 +276,11 @@ export const atualizarDisciplinaCurso = async (req: Request, res: Response) => {
  */
 export const deletarDisciplinaCurso = async (req: Request, res: Response) => {
   const { disciplinaId } = req.params;
+
+  if (!disciplinaId) {
+    return res.status(400).json({ message: "ID da disciplina não fornecido." });
+  }
+
   try {
       const [result] = await pool.query<ResultSetHeader>("DELETE FROM cursos_disciplinas WHERE id = ?", [disciplinaId]);
       if (result.affectedRows === 0) {
@@ -299,6 +292,10 @@ export const deletarDisciplinaCurso = async (req: Request, res: Response) => {
       res.status(500).json({ message: "Erro interno ao deletar a disciplina." });
   }
 };
+
+//==============================================================================
+// Funções para Outras Abas (Calendário, PPC, etc.)
+//==============================================================================
 
 /**
  * @description Lista os eventos do calendário de um curso.
@@ -382,5 +379,30 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
   } catch (error) {
       console.error("Erro ao obter vinculados do curso:", error);
       res.status(500).json({ message: "Erro interno ao buscar os vinculados." });
+  }
+};
+
+// Funções antigas não relacionadas diretamente ao novo fluxo.
+export const listarCursos = async (req: Request, res: Response) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM cursos ORDER BY nome ASC");
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao listar cursos:", error);
+    res.status(500).json({ message: "Erro interno ao buscar os cursos." });
+  }
+};
+export const criarCurso = async (req: Request, res: Response) => {
+  const { nome, coordenador, descricao } = req.body;
+  if (!nome) {
+    return res.status(400).json({ message: "O nome do curso é obrigatório." });
+  }
+  try {
+    const query = "INSERT INTO cursos (nome, coordenador, descricao) VALUES (?, ?, ?)";
+    const [result] = await pool.query<ResultSetHeader>(query, [nome, coordenador, descricao]);
+    res.status(201).json({ id: result.insertId, nome, coordenador, descricao });
+  } catch (error) {
+    console.error("Erro ao criar curso:", error);
+    res.status(500).json({ message: "Erro interno ao criar o curso." });
   }
 };
