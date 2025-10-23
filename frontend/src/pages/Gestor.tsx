@@ -31,7 +31,9 @@ import Gamification from './gestor/Gamification';
 import MeetPage from './gestor/MeetPage';
 import ConfiguracoesPage from './gestor/configuracoes/configuracoes-page';
 import CursosPage from '../pages/gestor/Cursos';
-
+import ChatBox from '../components/ChatBox';
+import { BsChatDots } from 'react-icons/bs';
+import ChatSidebar from '../components/ChatSidebar';
 
 
 // Chat, Socket e componentes relacionados foram removidos.
@@ -39,6 +41,8 @@ import CursosPage from '../pages/gestor/Cursos';
 export default function GestorDashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activePage, setActivePage] = useState('home');
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -94,6 +98,11 @@ export default function GestorDashboard() {
 
   if (loading) return <p>Carregando...</p>;
 
+  const handleSelectFriend = (userId: string) => {
+    setActiveChatId(userId); // Define quem é o alvo
+    setIsChatOpen(true);    // Abre a janela de chat
+  };
+
   return (
     <div className="flex h-screen overflow-x-auto max-w-full">
       {/* Sidebar */}
@@ -146,6 +155,15 @@ export default function GestorDashboard() {
         ref={helpModalRef}
       />
 
+      {/* Floating Chat Button */}
+      <div
+        className="fixed bottom-5 right-[90px] bg-indigo-600 text-white rounded-full p-3 cursor-pointer shadow-lg hover:scale-110 transition-transform duration-200 z-50"
+        onClick={() => setIsChatOpen(!isChatOpen)} // Altera o estado do chat
+        title="Abrir Chat"
+      >
+        <BsChatDots size={32} />
+      </div>
+
       {/* Floating Robot Button */}
       <div
         className="fixed bottom-5 right-7 bg-indigo-900 text-white rounded-full p-3 cursor-pointer shadow-lg hover:scale-110 transition-transform duration-200"
@@ -154,6 +172,19 @@ export default function GestorDashboard() {
       >
         <VscRobot size={32} />
       </div>
+      {/* Renderizar o ChatBox (Adicionar antes da div que fecha o componente) */}
+      <ChatSidebar
+        isOpen={isChatOpen}
+        onSelectFriend={handleSelectFriend}
+      />
+      <ChatBox
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        myUserId={String(user?.id ?? 'TESTE')} // Renomeado para myUserId
+        activeChatId={activeChatId} // Novo prop
+      />
+
+      {/* Fechamento da div principal */}
     </div>
   );
 }
