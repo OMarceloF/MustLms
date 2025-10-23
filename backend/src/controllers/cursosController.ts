@@ -1,5 +1,3 @@
-// src/controllers/cursosController.ts
-
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
@@ -53,6 +51,57 @@ export const adicionarCurso = async (req: Request, res: Response) => {
 };
 
 /**
+ * @description Atualiza um curso de pós-graduação existente.
+ * @route PUT /api/cursos/:id
+ */
+export const atualizarCurso = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const {
+        nome, tipo, area, cargaHoraria, duracao, modalidade, coordenador,
+        viceCoordenador, unidade, objetivos, perfilEgresso, justificativa,
+        anoInicio, status, linkDivulgacao,
+    } = req.body;
+
+    if (!id) {
+        return res.status(400).json({ message: "ID do curso não fornecido." });
+    }
+
+    // Validação de campos obrigatórios
+    if (!nome || !tipo || !area || !cargaHoraria || !duracao || !modalidade || !coordenador || !unidade || !objetivos || !perfilEgresso || !justificativa || !anoInicio || !status) {
+        return res.status(400).json({ message: "Erro de validação: Todos os campos obrigatórios devem ser preenchidos." });
+    }
+
+    try {
+        const query = `
+            UPDATE cursos_posgraduacao SET
+                nome = ?, tipo = ?, area_conhecimento = ?, carga_horaria = ?, duracao_semestres = ?,
+                modalidade = ?, coordenador_id = ?, vice_coordenador_id = ?, unidade_id = ?,
+                objetivos = ?, perfil_egresso = ?, justificativa = ?, ano_inicio = ?,
+                status = ?, link_divulgacao = ?
+            WHERE id = ?;
+        `;
+        const values = [
+            nome, tipo, area, parseInt(cargaHoraria, 10), parseInt(duracao, 10),
+            modalidade, parseInt(coordenador, 10), viceCoordenador ? parseInt(viceCoordenador, 10) : null,
+            parseInt(unidade, 10), objetivos, perfilEgresso, justificativa, anoInicio,
+            status, linkDivulgacao || null, id
+        ];
+
+        const [result] = await pool.query<ResultSetHeader>(query, values);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Curso não encontrado para atualização." });
+        }
+
+        res.status(200).json({ message: "Curso atualizado com sucesso!" });
+
+    } catch (error) {
+        console.error("Erro ao atualizar curso no banco de dados:", error);
+        res.status(500).json({ message: "Erro interno do servidor ao tentar atualizar o curso." });
+    }
+};
+
+/**
  * @description Lista todos os cursos de pós-graduação cadastrados para a página principal.
  * @route GET /api/cursos-posgraduacao
  */
@@ -98,7 +147,6 @@ export const excluirCurso = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Erro ao excluir curso:", error);
     
-    // CORREÇÃO: Verifica o tipo do erro antes de acessar suas propriedades
     if (error && typeof error === 'object' && 'code' in error) {
       const mysqlError = error as { code: string };
       if (mysqlError.code === 'ER_ROW_IS_REFERENCED_2') {
