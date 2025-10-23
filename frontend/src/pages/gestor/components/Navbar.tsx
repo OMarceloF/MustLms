@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/components/Navbar.tsx
+
 import { PiCirclesFourBold } from 'react-icons/pi';
 import NotificationsMenu from '../../../components/NotificationsMenu';
 import FeedbackMenu from '../../../components/FeedbackMenu';
