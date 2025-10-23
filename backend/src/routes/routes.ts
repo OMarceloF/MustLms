@@ -322,6 +322,22 @@ import {
   updateColorsController,
 } from '../controllers/colorsController';
 
+import {
+  adicionarCurso,
+  listarCursosPosGraduacao,
+  excluirCurso,
+  obterDetalhesCurso,
+  listarDisciplinasCurso,
+  adicionarDisciplinaCurso,
+  atualizarDisciplinaCurso,
+  deletarDisciplinaCurso,
+  listarEventosCalendario,
+  adicionarEventoCalendario,
+  obterPPC,
+  salvarPPC,
+  obterVinculadosCurso
+} from '../controllers/cursosController';
+
 const router = Router();
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -791,5 +807,39 @@ router.get('/api/ext/feriados/:ano', getFeriados);
 // Rotas de configuração de cores
 router.get('/api/colors', getColorsController);
 router.post('/api/colors', updateColorsController);
+
+// ──────────────────────────────────────────────────────────────────────────────
+// ROTAS PARA GERENCIAMENTO DE CURSOS DE PÓS-GRADUAÇÃO
+// ──────────────────────────────────────────────────────────────────────────────
+
+// --- Rota para LISTAR os cursos de pós-graduação cadastrados ---
+router.get('/api/cursos-posgraduacao', listarCursosPosGraduacao);
+
+// --- Rota para ADICIONAR um novo curso (página adicionar-curso.tsx) ---
+router.post('/api/cursos/adicionar', adicionarCurso);
+
+// --- ROTA CORRIGIDA PARA EXCLUIR ---
+router.delete('/api/cursos/:id', excluirCurso);
+
+// --- Rotas para a página "Configurações do Curso" (Abas internas) ---
+router.get('/api/cursos/:id', obterDetalhesCurso);
+
+// --- Aba "Matriz Curricular" ---
+router.get('/api/cursos/:cursoId/disciplinas', listarDisciplinasCurso);
+router.post('/api/cursos/:cursoId/disciplinas', adicionarDisciplinaCurso);
+router.put('/api/cursos/disciplinas/:disciplinaId', atualizarDisciplinaCurso);
+router.delete('/api/cursos/disciplinas/:disciplinaId', deletarDisciplinaCurso);
+
+// --- Aba "Calendário Acadêmico" ---
+router.get('/api/cursos/:cursoId/calendario', listarEventosCalendario);
+router.post('/api/cursos/:cursoId/calendario', adicionarEventoCalendario);
+
+// --- Aba "PPC" ---
+router.get('/api/cursos/:cursoId/ppc', obterPPC);
+router.post('/api/cursos/:cursoId/ppc', salvarPPC);
+
+// --- Aba "Vinculados" ---
+router.get('/api/cursos/:cursoId/vinculados', obterVinculadosCurso);
+
 
 export default router;
