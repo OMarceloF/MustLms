@@ -119,9 +119,23 @@ export function useChat() {
             
             if (data.type === 'NEW_MESSAGE') {
                 console.log(`Mensagem de ${data.from}: ${data.content}`);
-                // FUTURO: Lógica para adicionar a mensagem à conversa ativa
+                
+                // --- CORREÇÃO: Lógica para adicionar a mensagem recebida ao estado ---
+                const receivedMessage: ChatMessage = {
+                    id: String(data.timestamp), // Usa o timestamp como ID
+                    from: data.from,
+                    to: myUserId, // O destinatário sou eu
+                    content: data.content,
+                    timestamp: data.timestamp,
+                    isMine: false, // Mensagem recebida não é minha
+                };
+
+                // Atualiza o estado das mensagens no React
+                setMessages(prev => [...prev, receivedMessage]);
+                // --------------------------------------------------------------------
+                
             } 
-            // FUTURO: Lógica para atualizar PRESENCE_UPDATE se o servidor enviar
+            // FUTURO: Lógica para atualizar PRESENCE_UPDATE
             
         } catch (e) {
             console.error("Erro ao processar mensagem WS:", e);
