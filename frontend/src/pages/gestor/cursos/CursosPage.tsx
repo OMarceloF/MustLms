@@ -7,7 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom'; // Removido 'Link' qu
 
 // Importações dos seus componentes
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { MatrizCurricularTab } from "./matriz-curricular-tab";
+import { MatrizCurricularTab } from './matriz-curricular-tab'
 import { VinculadosTab } from "./vinculados-tab";
 import { RelatoriosTab } from "./relatorios-tab";
 import { PpcTab } from "./ppc-tab";
