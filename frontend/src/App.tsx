@@ -61,6 +61,8 @@ import Simulados from './pages/aluno/Simulados';
 import ExercicioOnlinePage from './pages/aluno/ExercicioOnlinePage';
 import IaAlunoPage from './pages/aluno/IaAlunoPage';
 import { GraduateCoursePage } from './pages/aluno/curso/cursoPage';
+import MateriaVisualizacaoPage from './pages/aluno/materias/materias';
+
 
 
 // Páginas do Responsável
@@ -96,6 +98,8 @@ import ProfessorLayout from './pages/professor/ProfessorLayout';
 import ConfiguracoesPage from './pages/gestor/configuracoes/configuracoes-page';
 import CursosPage from './pages/gestor/Cursos';
 import GestaoCursoPage from './pages/gestor/cursos/CursosPage';
+import AdicionarCursoPage from './pages/gestor/cursos/adicionar-curso';
+
 
 
 const queryClient = new QueryClient();
@@ -150,6 +154,8 @@ const App: React.FC = () => {
               <Route path="/gestor/financeiro/lancamento" element={<LancamentosPage />} />
               <Route path="/gestor/financeiro/ficha-aluno" element={<FichaFinanceiraAluno />} />
               <Route path="/gestor/financeiro/contratos" element={<Contratos />} />
+              <Route path="/gestor/curso/criar" element={<AdicionarCursoPage />} />
+
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={['professor', 'gestor']} />}>
@@ -188,6 +194,9 @@ const App: React.FC = () => {
               <Route path="/aluno/simulados" element={<Simulados />} />
               <Route path="/aluno/ia" element={<IaAlunoPage />} />
               <Route path="/aluno/curso" element={<GraduateCoursePage />} />
+              <Route path="/aluno/materias/:id" element={<MateriaVisualizacaoPage />} />
+
+
             </Route>
 
             {/* Rotas do Financeiro (Gestor e Financeiro) */}
