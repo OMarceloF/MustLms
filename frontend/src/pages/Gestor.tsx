@@ -182,8 +182,8 @@ export default function GestorDashboard() {
       <ChatBox
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
-        myUserId={String(user?.id ?? 'TESTE')} // Renomeado para myUserId
-        activeChatId={activeChatId} // Novo prop
+        myUserId={String(user?.id ?? 'TESTE')}
+        activeChatId={activeChatId} // <-- PASSE O ESTADO AQUI
       />
 
       {/* Fechamento da div principal */}
