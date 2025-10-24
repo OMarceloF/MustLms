@@ -43,7 +43,14 @@ export interface ChatMessage {
 
 type PresenceMap = Record<string, PresenceStatus>;
 
-const MONOLITH_API_BASE = import.meta.env.VITE_API_URL;
+// Simulação de lista estática de amigos (Em produção, viria da sua API principal)
+// Usamos IDs que sabemos que existem no microserviço (42, 99)
+const MOCK_FRIENDS: Friend[] = [
+  { id: '42', name: 'Usuário Local', is_online: false, last_seen: null },
+  { id: '1', name: 'Usuário Maria', is_online: false, last_seen: null },
+  { id: '101', name: 'Professor João', is_online: false, last_seen: null },
+  { id: '102', name: 'Coordenador Ana', is_online: false, last_seen: null },
+];
 
 export function useChat(activeChatId: string | null) {
   const { user } = useAuth(); 
