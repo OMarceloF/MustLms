@@ -13,7 +13,7 @@ interface ChatBoxProps {
 export default function ChatBox({ isOpen, onClose, myUserId, activeChatId }: ChatBoxProps) {
   
   // Pega as funções e mensagens do hook de comunicação
-  const { messages, sendMessage } = useChat(); 
+  const { messages, sendMessage } = useChat(activeChatId);
   
   const [inputContent, setInputContent] = useState('');
   

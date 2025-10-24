@@ -44,7 +44,7 @@ const MOCK_FRIENDS: Friend[] = [
   { id: '102', name: 'Coordenador Ana', is_online: false, last_seen: null },
 ];
 
-export function useChat() {
+export function useChat(activeChatId: string | null) {
   const { user } = useAuth(); 
   const myUserId = String(user?.id ?? '42'); // Usaremos '42' como fallback do usuário logado
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -53,7 +53,42 @@ export function useChat() {
   
   // Usamos useRef para o WebSocket para evitar que ele mude a cada renderização
   const websocketRef = useRef<WebSocket | null>(null); 
+
+  // Mova a lógica de busca de histórico para o useChat
+  const fetchHistory = useCallback(async (recipientId: string) => {
+    if (!myUserId || !recipientId) return;
+
+    try {
+        // Endpoint REST: /api/v1/history/:recipientId?senderId=...
+        const response = await fetch(`${API_BASE_URL}/history/${recipientId}?senderId=${myUserId}`);
+        
+        if (!response.ok) throw new Error('Falha ao buscar histórico.');
+        
+        const data = await response.json();
+        
+        // Mapeia o histórico do MongoDB para o tipo ChatMessage do frontend
+        const historyMessages: ChatMessage[] = data.history.map((msg: any) => ({
+            id: msg._id.toString(),
+            from: msg.sender_id,
+            to: (msg.sender_id === myUserId) ? recipientId : myUserId, // O outro participante
+            content: msg.content,
+            timestamp: new Date(msg.timestamp).getTime(),
+            isMine: msg.sender_id === myUserId,
+        }));
+
+        setMessages(historyMessages); // Sobrescreve as mensagens com o histórico
+    } catch (error) {
+        console.error("Erro ao buscar histórico:", error);
+    }
+  }, [myUserId]);
   
+  // --- NOVO useEffect: BUSCA DE HISTÓRICO AO MUDAR DE AMIGO ---
+  useEffect(() => {
+    if (activeChatId) {
+        setMessages([]); // Limpa a conversa anterior para mostrar loading
+        fetchHistory(activeChatId);
+    }
+  }, [activeChatId, fetchHistory]); // Dispara quando o amigo ativo muda
 
   // --- 1. FUNÇÃO REST: BUSCAR PRESENÇA INICIAL (API_BASE_URL) ---
   const fetchInitialPresence = useCallback(async () => {
