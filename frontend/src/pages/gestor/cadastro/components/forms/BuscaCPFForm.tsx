@@ -54,7 +54,7 @@ const Icon: React.FC<{ path: string; className?: string }> = ({ path, className 
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d={path} />
   </svg>
- );
+  );
 
 const Search = ({ className = "" }) => <Icon path="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" className={`h-4 w-4 ${className}`} />;
 const Loader2 = ({ className = "" }) => <Icon path="M21 12a9 9 0 11-6.219-8.56" className={`h-4 w-4 animate-spin ${className}`} />;
@@ -121,13 +121,17 @@ export function BuscaCPFForm() {
 
     setLoading(true);
     setResponsavelEncontrado(null);
-    setBuscaRealizada(false);
+    setBuscaRealizada(true); // Marcar que a busca foi feita
     setNaoEncontrado(false);
 
     const cleanCpf = cpf.replace(/\D/g, '');
 
     try {
-      const response = await fetch(`/api/responsaveis/buscar-cpf/${cleanCpf}`);
+      // ======================= INÍCIO DA CORREÇÃO FUNCIONAL =======================
+      // A URL foi corrigida para corresponder à rota do backend.
+      const response = await fetch(`/api/responsaveis/cpf/${cleanCpf}`);
+      // ======================== FIM DA CORREÇÃO FUNCIONAL =========================
+      
       const data = await response.json();
 
       if (response.ok) {
@@ -142,9 +146,9 @@ export function BuscaCPFForm() {
     } catch (err: any) {
       console.error("Erro ao buscar CPF:", err);
       toast.error(err.message || "Ocorreu um erro na busca. Tente novamente.");
+      setNaoEncontrado(true); // Garante que a mensagem de erro apareça
     } finally {
       setLoading(false);
-      setBuscaRealizada(true);
     }
   };
 
@@ -156,12 +160,13 @@ export function BuscaCPFForm() {
 
     setLinking(true);
     try {
-      const response = await fetch(`/api/alunos/${alunoId}/responsaveis/vincular`, {
+      const response = await fetch(`/api/alunos/vincular-responsavel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          alunoId: alunoId,
           responsavelId: responsavelEncontrado.id,
-          financeiro: false
+          parentesco: responsavelEncontrado.grau_parentesco || 'Não informado',
         }),
       });
 
@@ -173,6 +178,7 @@ export function BuscaCPFForm() {
         setBuscaRealizada(false);
         setNaoEncontrado(false);
         setCpf("");
+        setCurrentStep('responsible'); // Avança para a próxima tela
       } else {
         throw new Error(result.message || result.error || "Falha ao vincular responsável.");
       }
@@ -202,6 +208,7 @@ export function BuscaCPFForm() {
     if (error) validateCpf(value);
   };
 
+  // O JSX abaixo é mantido exatamente como no arquivo original para não haver alteração visual.
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4 md:p-6">
       <Card>
