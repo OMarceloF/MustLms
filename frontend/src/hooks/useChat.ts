@@ -39,7 +39,7 @@ type PresenceMap = Record<string, PresenceStatus>;
 // Usamos IDs que sabemos que existem no microserviço (42, 99)
 const MOCK_FRIENDS: Friend[] = [
   { id: '42', name: 'Usuário Local', is_online: false, last_seen: null },
-  { id: '99', name: 'Usuário Maria', is_online: false, last_seen: null },
+  { id: '1', name: 'Usuário Maria', is_online: false, last_seen: null },
   { id: '101', name: 'Professor João', is_online: false, last_seen: null },
   { id: '102', name: 'Coordenador Ana', is_online: false, last_seen: null },
 ];

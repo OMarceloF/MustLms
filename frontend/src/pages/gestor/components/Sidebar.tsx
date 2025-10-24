@@ -1,4 +1,5 @@
-// src/components/SidebarGestor.tsx
+// frontend/src/pages/gestor/components/Sidebar.tsx
+
 import React from 'react';
 import { MdComputer, MdAttachMoney } from "react-icons/md";
 import { PiStudent } from "react-icons/pi";
@@ -84,6 +85,15 @@ export default function SidebarGestor({
           isExpanded={isMenuOpen}
           onClick={() => setActivePage('alunos')}
         />
+
+         <NavItem
+          icon={<PiStudent size={28} />}
+          text="Cadastro"
+          isExpanded={isMenuOpen}
+          onClick={() => setActivePage('cadastro')}
+        />
+
+
         {/* itens apenas para gestores, financeiro e responsáveis */}
         {!isProfessor && (
           <>
