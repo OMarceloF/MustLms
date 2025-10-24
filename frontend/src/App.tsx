@@ -96,6 +96,7 @@ import CursosPage from './pages/gestor/Cursos';
 import GestaoCursoPage from './pages/gestor/cursos/CursosPage';
 import AdicionarCursoPage from './pages/gestor/cursos/adicionar-curso';
 import Cadastro from './pages/gestor/cadastro/Cadastro';
+import Turma from './pages/gestor/turmas/turmas';
 
 const queryClient = new QueryClient();
 
@@ -150,6 +151,7 @@ const App: React.FC = () => {
               <Route path="/gestor/financeiro/ficha-aluno" element={<FichaFinanceiraAluno />} />
               <Route path="/gestor/financeiro/contratos" element={<Contratos />} />
               <Route path="/gestor/cadastro" element={<Cadastro />} />
+              <Route path="/gestor/turmas" element={<TurmasPage />} />
               
               {/* *** ALTERAÇÃO PRINCIPAL AQUI *** */}
               {/* Esta rota agora lida com /adicionar-curso e /adicionar-curso/:id */}

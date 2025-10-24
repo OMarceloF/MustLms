@@ -79,6 +79,14 @@ export default function SidebarGestor({
           isExpanded={isMenuOpen}
           onClick={() => setActivePage('turmas')}
         />
+
+        <NavItem
+          icon={<HiOutlineUserGroup size={28} />}
+          text="Gestão Turma"
+          isExpanded={isMenuOpen}
+          onClick={() => setActivePage('gestaoturmas')}
+        />
+
         <NavItem
           icon={<PiStudent size={28} />}
           text="Alunos"
