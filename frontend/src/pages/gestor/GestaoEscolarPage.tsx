@@ -136,7 +136,7 @@ useEffect(() => {
             key={m.id}
             className="relative transform transition-transform hover:scale-105 border-2 border-transparent hover:border-blue-600 rounded-lg shadow-sm"
           >
-            <Link to={`/gestor/materias/${m.id}`}>
+            <Link to={`/gestor/materiasgestor/${m.id}`}>
               <div className="bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white flex justify-center items-center rounded-t-lg">
                 <Book className="w-12 h-12" />
               </div>

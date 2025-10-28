@@ -1,12 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "../../../lib/utils"; // ajuste o caminho conforme sua estrutura
+import { cn } from "../../../lib/utils";
 
+// --- TIPOS E CONSTANTES ---
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
-    src?: string | null;
-    alt?: string;
-    fallback?: string; // ex: iniciais do usuário
     size?: "sm" | "md" | "lg";
 }
 
@@ -16,15 +14,11 @@ const sizeClasses = {
     lg: "w-16 h-16 text-base",
 };
 
-/**
- * Avatar principal — exibe imagem ou fallback com iniciais.
- */
+// --- COMPONENTE PRINCIPAL (Wrapper) ---
 export const Avatar: React.FC<AvatarProps> = ({
-    src,
-    alt,
-    fallback,
     size = "md",
     className,
+    children, // Recebe os filhos
     ...props
 }) => {
     return (
@@ -36,40 +30,43 @@ export const Avatar: React.FC<AvatarProps> = ({
             )}
             {...props}
         >
-            {src ? (
-                // Imagem do avatar
-                <img
-                    src={src}
-                    alt={alt || "Avatar"}
-                    className="object-cover w-full h-full"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                />
-            ) : (
-                // Fallback (iniciais ou ícone)
-                <AvatarFallback>{fallback || "?"}</AvatarFallback>
-            )}
+            {children} {/* Renderiza os filhos (AvatarImage e AvatarFallback) */}
         </div>
     );
 };
 
-/**
- * Fallback de avatar — usado quando a imagem não está disponível.
- */
+// --- NOVO COMPONENTE: AvatarImage ---
+export const AvatarImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({
+    src,
+    alt,
+    className,
+    ...props
+}) => {
+    if (!src) return null; // Não renderiza se não houver src
+
+    return (
+        <img
+            src={src}
+            alt={alt}
+            className={cn("object-cover w-full h-full", className)}
+            {...props}
+        />
+    );
+};
+
+// --- COMPONENTE: AvatarFallback ---
 export const AvatarFallback: React.FC<{
     children?: React.ReactNode;
-    className?: string; // ✅ adicionado
+    className?: string;
 }> = ({ children, className }) => {
     return (
         <span
             className={cn(
                 "flex items-center justify-center w-full h-full text-slate-600 font-semibold",
-                className // ✅ aplicado corretamente
+                className
             )}
         >
             {children}
         </span>
     );
 };
-
