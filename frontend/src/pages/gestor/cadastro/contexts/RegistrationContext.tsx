@@ -2,6 +2,17 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
 // --- Definição dos Tipos de Dados ---
 
+// 1. Interface para o objeto de endereço (NOVO)
+export interface EnderecoData {
+  cep?: string;
+  logradouro?: string;
+  numero?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  complemento?: string;
+}
+
 export interface StudentData {
   id: number | null;
   nomeCompleto: string;
@@ -12,13 +23,13 @@ export interface StudentData {
   email: string;
   telefone: string;
   sexo: 'M' | 'F' | undefined;
-  contatoResponsaveis: string;
   biografia: string;
   restricoesMedicas: string;
   login: string;
   senha: string;
   foto?: File;
   fotoUrl?: string | null;
+  endereco?: EnderecoData; // 2. Campo de endereço adicionado à interface do aluno
 }
 
 export interface ResponsibleData {
@@ -43,9 +54,6 @@ export interface ResponsibleData {
 
 export interface DocumentData {}
 
-// =================================================================
-// INÍCIO DA CORREÇÃO: Interface ContractData preenchida
-// =================================================================
 export interface ContractData {
   alunoId?: number | null;
   planoPagamento?: 'mensal' | 'semestral' | 'anual';
@@ -57,7 +65,6 @@ export interface ContractData {
   descricaoBolsa?: string;
   formaPagamento?: string[];
 }
-// =================================================================
 
 export interface RegistrationData {
   student: StudentData;
@@ -78,13 +85,21 @@ export const initialStudentData: StudentData = {
   email: '',
   telefone: '',
   sexo: undefined,
-  contatoResponsaveis: '',
   biografia: '',
   restricoesMedicas: '',
   login: '',
   senha: '',
   foto: undefined,
   fotoUrl: null,
+  endereco: { // 3. Objeto de endereço inicializado
+    cep: '',
+    logradouro: '',
+    numero: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
+    complemento: '',
+  },
 };
 
 export const initialResponsibleData: ResponsibleData = {
@@ -109,9 +124,6 @@ export const initialResponsibleData: ResponsibleData = {
 
 export const initialDocumentData: DocumentData = {};
 
-// =================================================================
-// INÍCIO DA CORREÇÃO: Estado inicial do contrato preenchido
-// =================================================================
 export const initialContractData: ContractData = {
   alunoId: null,
   planoPagamento: undefined,
@@ -123,7 +135,6 @@ export const initialContractData: ContractData = {
   descricaoBolsa: '',
   formaPagamento: [],
 };
-// =================================================================
 
 // --- Lógica do Contexto (Reducer, Provider, etc.) ---
 
@@ -158,6 +169,7 @@ const initialState: RegistrationState = {
 function registrationReducer(state: RegistrationState, action: RegistrationAction): RegistrationState {
   switch (action.type) {
     case 'UPDATE_STUDENT':
+      // O reducer já faz o merge profundo, então o endereço será atualizado corretamente
       return { ...state, data: { ...state.data, student: { ...state.data.student, ...action.payload } } };
     case 'UPDATE_RESPONSIBLE':
       return { ...state, data: { ...state.data, responsible: { ...state.data.responsible, ...action.payload } } };

@@ -4,7 +4,7 @@ import { StudentForm } from './forms/EstudanteForm';
 import { ResponsibleForm } from './forms/ResponsavelForm';
 import { DocumentsForm } from './forms/DocumentosForm';
 import { ContractForm } from './forms/ContratoForm';
-import { BuscaCPFForm } from './forms/BuscaCPFForm'; // Busca do Responsável
+import { BuscaCPFForm } from './forms/BuscaCPFResponsavelForm'; // Busca do Responsável
 
 // =================================================================
 // PASSO 1: Importe o novo formulário de busca do aluno

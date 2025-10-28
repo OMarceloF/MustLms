@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 // Interface para os dados do aluno que virão da API
+// CORREÇÃO: Adicionados os campos que estavam faltando para preencher o formulário de estudante.
 interface AlunoEncontrado {
     id: number;
     nome: string;
@@ -19,6 +20,11 @@ interface AlunoEncontrado {
     telefone: string;
     data_nascimento: string; // Vem como string da API
     foto: string | null;
+    endereco: any; // Pode ser um objeto ou uma string JSON
+    biografia: string | null;
+    restricoes_medicas: string | null;
+    login: string;
+    // A senha não é (e não deve ser) retornada pela API por segurança.
 }
 
 export function BuscaCPFAlunoForm() {
@@ -83,6 +89,7 @@ export function BuscaCPFAlunoForm() {
         setCurrentStep('student');
     };
     
+    // CORREÇÃO: Função atualizada para carregar TODOS os dados do aluno no contexto.
     const handleContinuarComAluno = () => {
         if (!alunoEncontrado) return;
         
@@ -94,13 +101,27 @@ export function BuscaCPFAlunoForm() {
             matricula: alunoEncontrado.matricula,
             email: alunoEncontrado.email,
             telefone: alunoEncontrado.telefone,
-            dataNascimento: new Date(alunoEncontrado.data_nascimento),
+            dataNascimento: alunoEncontrado.data_nascimento ? new Date(alunoEncontrado.data_nascimento) : null,
             fotoUrl: alunoEncontrado.foto,
+            login: alunoEncontrado.login,
+            // O endereço pode vir como string JSON, então garantimos que seja um objeto.
+            endereco: typeof alunoEncontrado.endereco === 'string' 
+                        ? JSON.parse(alunoEncontrado.endereco) 
+                        : alunoEncontrado.endereco || {},
+            biografia: alunoEncontrado.biografia || '',
+            restricoesMedicas: alunoEncontrado.restricoes_medicas || '',
+            // A senha é deixada em branco intencionalmente por segurança.
+            // O usuário poderá atualizá-la se desejar.
+            senha: '', 
         });
         
         toast.success(`Dados de ${alunoEncontrado.nome.split(' ')[0]} carregados.`);
+        
+        // Marca a etapa de busca e a de estudante como completas
         completeStep('searchCpfAluno');
         completeStep('student');
+        
+        // Avança diretamente para a busca de CPF do responsável
         setCurrentStep('searchCpf');
     };
 
@@ -149,7 +170,7 @@ export function BuscaCPFAlunoForm() {
                             <InfoItem icon={Fingerprint} label="RG" value={alunoEncontrado.rg} />
                             <InfoItem icon={Mail} label="Email" value={alunoEncontrado.email} />
                             <InfoItem icon={Phone} label="Telefone" value={alunoEncontrado.telefone} />
-                            <InfoItem icon={CalendarIcon} label="Nascimento" value={format(new Date(alunoEncontrado.data_nascimento), 'dd/MM/yyyy', { locale: ptBR })} />
+                            <InfoItem icon={CalendarIcon} label="Nascimento" value={alunoEncontrado.data_nascimento ? format(new Date(alunoEncontrado.data_nascimento), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado'} />
                         </div>
                         <Button onClick={handleContinuarComAluno} className="w-full mt-4">
                             Continuar Matrícula para este Aluno <ArrowRight className="ml-2 h-4 w-4" />

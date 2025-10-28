@@ -1,10 +1,66 @@
-// backend/src/controllers/responsaveisControllerNovo.ts
 import { Request, Response } from 'express';
 import pool from '../config/db';
 
 const apenasDigitos = (valor: string | null | undefined): string => {
     return valor ? String(valor).replace(/\D/g, '') : '';
 };
+
+// =======================================================================
+// FUNÇÃO CORRIGIDA: vincularResponsavel
+// =======================================================================
+export const vincularResponsavel = async (req: Request, res: Response) => {
+    const { alunoId, responsavelId, parentesco } = req.body;
+
+    if (!alunoId || !responsavelId) {
+        return res.status(400).json({ error: "IDs do aluno e do responsável são obrigatórios." });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // 1. Verifica se o responsável que estamos vinculando JÁ É financeiro
+        const [respRows]: any[] = await connection.execute(
+            'SELECT responsavel_financeiro FROM responsaveis WHERE id = ?',
+            [responsavelId]
+        );
+
+        const isFinanceiro = respRows.length > 0 && respRows[0].responsavel_financeiro === 'Sim';
+
+        // 2. Se ele for financeiro, "rebaixa" os outros responsáveis DESTE ALUNO
+        if (isFinanceiro) {
+            await connection.execute(
+                `UPDATE responsaveis r
+                 JOIN alunos_responsaveis ar ON r.id = ar.responsavel_id
+                 SET r.responsavel_financeiro = 'Não'
+                 WHERE ar.aluno_id = ?`,
+                [alunoId]
+            );
+        }
+
+        // 3. Cria o novo vínculo
+        await connection.execute(
+            'INSERT INTO alunos_responsaveis (aluno_id, responsavel_id, parentesco) VALUES (?, ?, ?)',
+            [alunoId, responsavelId, parentesco || 'Não informado']
+        );
+
+        await connection.commit();
+        res.status(201).json({ message: 'Responsável vinculado com sucesso.' });
+
+    } catch (error: any) {
+        await connection.rollback();
+        console.error("Erro ao vincular responsável:", error);
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ error: 'Este responsável já está vinculado a este aluno.' });
+        }
+        res.status(500).json({ error: 'Erro interno do servidor ao vincular responsável.' });
+    } finally {
+        connection.release();
+    }
+};
+
+
+// --- OUTRAS FUNÇÕES (sem alterações) ---
 
 export const criarResponsavelEAssociar = async (req: Request, res: Response) => {
     const { alunoId } = req.params;
@@ -23,11 +79,11 @@ export const criarResponsavelEAssociar = async (req: Request, res: Response) => 
         await connection.beginTransaction();
 
         const [existente]: any[] = await connection.execute(
-            'SELECT id FROM responsaveis WHERE cpf = ? OR email = ?',
-            [apenasDigitos(cpf), email]
+            'SELECT id FROM responsaveis WHERE cpf = ?',
+            [apenasDigitos(cpf)]
         );
         if (existente.length > 0) {
-            throw new Error('CPF ou E-mail já cadastrado para outro responsável.');
+            throw new Error('Um responsável com este CPF já existe. Use a busca por CPF para vinculá-lo.');
         }
 
         if (responsavelFinanceiro === true) {
@@ -37,12 +93,11 @@ export const criarResponsavelEAssociar = async (req: Request, res: Response) => 
             );
         }
         
-        // A query INSERT não inclui a coluna 'id', deixando o AUTO_INCREMENT trabalhar.
         const [result]: any = await connection.execute(
             `INSERT INTO responsaveis (nome, cpf, rg, email, grau_parentesco, estado_civil, numero1, numero2, telefone_contato, nacionalidade, profissao, logradouro, numero_casa, bairro, cidade, cep, responsavel_financeiro)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                nomeResponsavel, apenasDigitos(cpf), apenasDigitos(rg), email, grauParentesco, estadoCivil,
+                nomeResponsavel, apenasDigitos(cpf), rg, email, grauParentesco, estadoCivil,
                 apenasDigitos(numero1), apenasDigitos(numero2), apenasDigitos(telefoneContato),
                 nacionalidade, profissao, logradouro, numeroEndereco, bairro, cidade, apenasDigitos(cep),
                 responsavelFinanceiro === true ? 'Sim' : 'Não'
@@ -56,9 +111,7 @@ export const criarResponsavelEAssociar = async (req: Request, res: Response) => 
         );
 
         await connection.commit();
-
-        const [rows]: any = await connection.execute('SELECT r.*, ar.id as vinculo_id FROM responsaveis r JOIN alunos_responsaveis ar ON r.id = ar.responsavel_id WHERE r.id = ? AND ar.aluno_id = ?', [responsavelId, alunoId]);
-        res.status(201).json({ message: 'Responsável criado e vinculado com sucesso!', responsavel: rows[0] });
+        res.status(201).json({ message: 'Responsável criado e vinculado com sucesso!' });
 
     } catch (error: any) {
         await connection.rollback();
@@ -69,13 +122,13 @@ export const criarResponsavelEAssociar = async (req: Request, res: Response) => 
     }
 };
 
-// ... (O resto das funções: updateResponsavel, listarResponsaveisPorAluno, etc., permanecem as mesmas)
 export const updateResponsavel = async (req: Request, res: Response) => {
     const { id } = req.params;
     const {
         nomeResponsavel, cpf, rg, email, grauParentesco, estadoCivil, numero1, numero2,
         telefoneContato, nacionalidade, profissao, logradouro, numeroEndereco, bairro,
-        cidade, cep, responsavelFinanceiro, id_aluno1
+        cidade, cep, responsavelFinanceiro,
+        id_aluno1
     } = req.body;
 
     if (!id_aluno1) {
@@ -87,11 +140,11 @@ export const updateResponsavel = async (req: Request, res: Response) => {
         await connection.beginTransaction();
 
         const [existente]: any[] = await connection.execute(
-            'SELECT id FROM responsaveis WHERE (cpf = ? OR email = ?) AND id != ?',
-            [apenasDigitos(cpf), email, id]
+            'SELECT id FROM responsaveis WHERE cpf = ? AND id != ?',
+            [apenasDigitos(cpf), id]
         );
         if (existente.length > 0) {
-            throw new Error('CPF ou E-mail já cadastrado para outro responsável.');
+            throw new Error('CPF já cadastrado para outro responsável.');
         }
 
         if (responsavelFinanceiro === true) {
@@ -110,7 +163,7 @@ export const updateResponsavel = async (req: Request, res: Response) => {
             WHERE id = ?`;
 
         await connection.execute(sql, [
-            nomeResponsavel, apenasDigitos(cpf), apenasDigitos(rg), email, grauParentesco, estadoCivil,
+            nomeResponsavel, apenasDigitos(cpf), rg, email, grauParentesco, estadoCivil,
             apenasDigitos(numero1), apenasDigitos(numero2), apenasDigitos(telefoneContato),
             nacionalidade, profissao, logradouro, numeroEndereco, bairro, cidade, apenasDigitos(cep),
             responsavelFinanceiro === true ? 'Sim' : 'Não',
@@ -166,27 +219,13 @@ export const buscarResponsavelPorCPF = async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Formato de CPF inválido.' });
     }
     try {
-        const [rows]: any[] = await pool.execute('SELECT * FROM responsaveis WHERE cpf = ?', [cpfLimpo]);
+        const [rows]: any[] = await pool.execute('SELECT *, CONCAT(logradouro, ", ", numero_casa, " - ", bairro, ", ", cidade, " - ", estado) as endereco_completo FROM responsaveis WHERE cpf = ?', [cpfLimpo]);
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Responsável não encontrado.' });
         }
         res.status(200).json(rows[0]);
     } catch (error) {
         console.error('Erro ao buscar responsável por CPF:', error);
-        res.status(500).json({ error: 'Erro interno do servidor.' });
-    }
-};
-
-export const vincularResponsavel = async (req: Request, res: Response) => {
-    const { alunoId, responsavelId, parentesco } = req.body;
-    try {
-        await pool.execute(
-            'INSERT INTO alunos_responsaveis (aluno_id, responsavel_id, parentesco) VALUES (?, ?, ?)',
-            [alunoId, responsavelId, parentesco]
-        );
-        res.status(201).json({ message: 'Responsável vinculado com sucesso.' });
-    } catch (error) {
-        console.error("Erro ao vincular responsável:", error);
         res.status(500).json({ error: 'Erro interno do servidor.' });
     }
 };

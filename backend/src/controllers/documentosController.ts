@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import pool from '../config/db'; // Corrigido: Caminho para o arquivo de conexão
+import pool from '../config/db';
 
 /**
  * POST /api/alunos/:id/documentos
@@ -7,14 +7,19 @@ import pool from '../config/db'; // Corrigido: Caminho para o arquivo de conexã
  */
 export const uploadDocumentosAluno = async (req: Request, res: Response) => {
   const { id: alunoId } = req.params;
-  // Corrigido: `uploadAny` cria um objeto `req.files` e não um array direto.
-  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  
+  // =======================================================================
+  // CORREÇÃO APLICADA AQUI
+  // Com o middleware `uploadAny()`, `req.files` é um ARRAY de arquivos.
+  // Ex: [ { fieldname: 'foto3x4', ... }, { fieldname: 'adicionais', ... } ]
+  // =======================================================================
+  const files = req.files as Express.Multer.File[];
 
   if (!alunoId) {
     return res.status(400).json({ message: 'ID do aluno é obrigatório.' });
   }
 
-  if (!files || Object.keys(files).length === 0) {
+  if (!files || files.length === 0) {
     return res.status(400).json({ message: 'Nenhum arquivo foi enviado.' });
   }
 
@@ -29,13 +34,23 @@ export const uploadDocumentosAluno = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Aluno não encontrado.' });
     }
 
-    // Itera sobre as chaves do objeto (nomes dos campos)
-    for (const fieldname in files) {
-      // Itera sobre os arquivos de cada campo
-      for (const file of files[fieldname]) {
-        const tipoDocumento = file.fieldname;
-        const caminhoArquivo = `/uploads/documentos/${file.filename}`;
+    // Agora, simplesmente iteramos sobre o array de arquivos.
+    for (const file of files) {
+      // O `fieldname` (tipo do documento) está dentro de cada objeto `file`.
+      const tipoDocumento = file.fieldname; 
+      const caminhoArquivo = `/uploads/documentos/${file.filename}`;
+      const nomeOriginal = file.originalname;
 
+      // A lógica para inserir ou atualizar continua a mesma.
+      if (tipoDocumento === 'adicionais') {
+        // Para documentos adicionais, sempre inserimos um novo registro.
+        await connection.execute(
+          `INSERT INTO documentos_alunos (aluno_id, tipo_documento, caminho_arquivo, nome_original)
+           VALUES (?, ?, ?, ?)`,
+          [alunoId, tipoDocumento, caminhoArquivo, nomeOriginal]
+        );
+      } else {
+        // Para documentos obrigatórios/opcionais, usamos a lógica de substituir se já existir.
         await connection.execute(
           `INSERT INTO documentos_alunos (aluno_id, tipo_documento, caminho_arquivo, nome_original)
            VALUES (?, ?, ?, ?)
@@ -43,7 +58,7 @@ export const uploadDocumentosAluno = async (req: Request, res: Response) => {
            caminho_arquivo = VALUES(caminho_arquivo),
            nome_original = VALUES(nome_original),
            data_upload = CURRENT_TIMESTAMP`,
-          [alunoId, tipoDocumento, caminhoArquivo, file.originalname]
+          [alunoId, tipoDocumento, caminhoArquivo, nomeOriginal]
         );
       }
     }
