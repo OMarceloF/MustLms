@@ -11,6 +11,7 @@ import {
   Home,
   Settings,
   BookOpen,
+  LayoutGrid,
 } from 'lucide-react';
 import { VscRobot } from "react-icons/vsc";
 import { FaRegPenToSquare } from "react-icons/fa6";
@@ -72,6 +73,14 @@ export default function SidebarGestor({
           isExpanded={isMenuOpen}
           onClick={() => setActivePage('gestao')}
         />
+
+         <NavItem
+          icon={<LayoutGrid size={28} />}
+          text="Grade"
+          isExpanded={isMenuOpen}
+          onClick={() => setActivePage('grade')}
+        />
+
         {/* sempre visível */}
         <NavItem
           icon={<HiOutlineUserGroup size={28} />}

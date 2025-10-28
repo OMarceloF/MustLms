@@ -36,7 +36,7 @@ import { BsChatDots } from 'react-icons/bs';
 import ChatSidebar from '../components/ChatSidebar';
 import Cadastro from './gestor/cadastro/Cadastro';
 import Turma from './gestor/turmas/turmas';
-
+import Grade from './gestor/grade/grade';
 
 // Chat, Socket e componentes relacionados foram removidos.
 
@@ -148,6 +148,7 @@ export default function GestorDashboard() {
           {activePage === 'cursos' && <CursosPage />}
           {activePage === 'cadastro' && <Cadastro />}
           {activePage === 'gestaoturmas' && <Turma />}
+          {activePage === 'grade' && <Grade />}
 
 
         </main>
