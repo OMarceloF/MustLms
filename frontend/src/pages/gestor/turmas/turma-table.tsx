@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
-import { Edit, Trash2 } from "lucide-react"
+import { Edit, Trash2, Eye } from "lucide-react"
 import type { Turma } from "../../lib/types"
 import { cursos, professores } from "../../lib/mock-data"
 import { DeleteDialog } from "./delete-dialog"
@@ -14,6 +14,15 @@ interface TurmaTableProps {
   onEdit: (turma: Turma) => void
   onDelete: (id: string) => void
 }
+
+type Materia = {
+    id: number
+    nome: string
+    codigo: string
+    cargaHoraria: number
+}
+
+
 
 export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -97,6 +106,9 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <Button variant="ghost" size="icon">
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => onEdit(turma)}>
                       <Edit className="size-4" />
                       <span className="sr-only">Editar turma</span>
