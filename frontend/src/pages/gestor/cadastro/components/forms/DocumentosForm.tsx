@@ -89,15 +89,21 @@ export function DocumentsForm() {
     setIsSubmitting(true);
     const formData = new FormData();
 
-    // Anexa todos os arquivos ao FormData
+    // =======================================================================
+    // LÓGICA DE ENVIO FINAL:
+    // Anexa cada arquivo com sua própria chave (fieldname), que é o que o
+    // middleware `uploadAny()` no backend espera.
+    // =======================================================================
     for (const key in files) {
       const fileOrFiles = files[key];
       if (Array.isArray(fileOrFiles)) {
+        // Para 'adicionais', anexa cada arquivo ao mesmo nome de campo.
+        // O `uploadAny()` vai agrupar isso em `req.files.adicionais`.
         fileOrFiles.forEach((file) => {
-          // Anexa múltiplos arquivos com o mesmo nome de campo, o que é suportado pelo multer .any()
           formData.append('adicionais', file);
         });
       } else if (fileOrFiles) {
+        // Para arquivos únicos, anexa com sua chave específica.
         formData.append(key, fileOrFiles);
       }
     }
@@ -108,12 +114,25 @@ export function DocumentsForm() {
         body: formData,
       });
 
-      const result = await response.json();
+      // =======================================================================
+      // TRATAMENTO DE ERRO APRIMORADO:
+      // Verifica o tipo de resposta antes de tentar o parse para JSON.
+      // =======================================================================
       if (!response.ok) {
-        throw new Error(result.message || 'Falha ao enviar documentos.');
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          // Se for JSON, podemos ler a mensagem de erro do backend.
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Falha ao enviar documentos.');
+        } else {
+          // Se for HTML, é um erro de autenticação/servidor.
+          throw new Error(`Erro inesperado do servidor (Status: ${response.status}). Sua sessão pode ter expirado. Tente recarregar a página.`);
+        }
       }
 
-      toast.success('Documentos enviados com sucesso!');
+      // Se a resposta for OK, esperamos um JSON.
+      const result = await response.json();
+      toast.success(result.message || 'Documentos enviados com sucesso!');
       completeStep('documents');
       setCurrentStep('contract');
 
@@ -125,7 +144,6 @@ export function DocumentsForm() {
   };
 
   const goBack = () => {
-    // A lógica de voltar pode depender se o aluno é o próprio responsável
     const isSelfResponsible = state.completedSteps.includes('responsible');
     setCurrentStep(isSelfResponsible ? 'student' : 'responsible');
   };

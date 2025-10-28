@@ -32,8 +32,11 @@ import {
   updateAluno,
   getAlunoDashboardData,
   getPerfilUsuario,
-} from '../controllers/alunosController';
-import { criarAluno } from '../controllers/criarAlunoController';
+  criarOuAtualizarAluno,
+  buscarAlunoPorCPF,
+  
+} from '../controllers/alunosControllerNovo';
+// import { criarAluno } from '../controllers/criarAlunoController';
 import { criarResponsavel } from '../controllers/criarResponsavelController';
 import {
   criarMateria,
@@ -210,14 +213,16 @@ import {
 } from '../controllers/configuracoesCalendarioController';
 
 import {
-  getAlunosDoResponsavel,
-  getResponsavelById,
-  updateResponsavel,
   buscarResponsavelPorCPF,
-  listarResponsaveisPorAluno,
+  criarResponsavelEAssociar,
   vincularResponsavel,
   desvincularResponsavel,
-} from '../controllers/responsaveisController';
+  listarResponsaveisPorAluno,
+  getAlunosDoResponsavel,
+  getResponsavelById,
+  updateResponsavel
+} from '../controllers/responsaveisControllerNovo';
+import { uploadDocumentosAluno } from '../controllers/documentosController';
 import {
   criarEnvio,
   listarEnviosPorProfessor,
@@ -395,6 +400,8 @@ router.get(
   '/api/alunos/:alunoId/exercicios-online',
   getExerciciosOnlinePorAluno
 );
+
+
 router.get('/api/exercicios/envio/:enviosId/detalhes', getDetalhesExercicio);
 router.post(
   '/api/exercicios/:envioId/aluno/:alunoId/salvar-respostas',
@@ -451,7 +458,7 @@ router.put('/api/alunos/:id', listarAlunos);
 router.get('/api/listar_alunos', listarAlunos);
 // router.get('/api/alunos', getAlunos);
 // router.get('/api/listar_alunos', listarAlunos);
-router.post('/api/alunos', criarAluno);
+// router.post('/api/alunos', criarAluno);
 router.post('/api/responsaveis', criarResponsavel);
 router.post('/api/materias', criarMateria);
 router.get('/api/listarFuncionariosMateria', listarFuncionariosMateria);
@@ -643,6 +650,9 @@ router.post(
   uploadAny.single('comprovante'),
   criarTransacao
 );
+
+router.get('/api/alunos/buscar-por-cpf/:cpf', buscarAlunoPorCPF);
+
 router.get('/api/aulas', listarAulas);
 router.post('/api/aulas', criarAula);
 router.post('/api/presencas/batch', salvarPresencasBatch);
@@ -845,5 +855,57 @@ router.post('/api/cursos/:cursoId/ppc', salvarPPC);
 // --- Aba "Vinculados" ---
 router.get('/api/cursos/:cursoId/vinculados', obterVinculadosCurso);
 
+router.post(
+  '/api/alunos/:id/documentos', 
+  uploadAny.any(),
+  uploadDocumentosAluno
+);
+
+// =======================================================================
+// ROTAS PARA O FLUXO DE CADASTRO DE ALUNOS (SEÇÃO CORRIGIDA)
+// =======================================================================
+
+// 1. Busca aluno por CPF (Etapa 1 do formulário)
+router.get('/api/alunos/buscar-por-cpf/:cpf', buscarAlunoPorCPF);
+
+// 2. Cria um novo aluno (Etapa 2 do formulário, sem ID na URL)
+router.post('/api/alunos', uploadSingleImage('foto'), criarOuAtualizarAluno);
+
+// 3. Atualiza um aluno existente (se o formulário for usado para edição, com ID na URL)
+router.put('/api/alunos/:id', uploadSingleImage('foto'), criarOuAtualizarAluno);
+
+
+// =======================================================================
+// OUTRAS ROTAS DE ALUNOS (ORGANIZADAS)
+// =======================================================================
+
+// Rota para listar todos os alunos
+router.get('/api/listar_alunos', listarAlunos);
+
+// Rota para obter dados de um aluno específico
+router.get('/api/alunos/:id', getAlunoById);
+
+// Rota para desativar (excluir) um aluno
+router.delete('/api/alunos/:id', excluirAluno);
+
+// Rota para obter os responsáveis de um aluno
+router.get('/api/alunos/:id/responsaveis', getResponsaveisByAluno);
+
+
+// =======================================================================
+// ROTAS DE RESPONSÁVEIS
+// =======================================================================
+
+// Busca responsável por CPF
+router.get('/api/responsaveis/cpf/:cpf', buscarResponsavelPorCPF);
+
+// Cria um novo responsável e o vincula a um aluno
+router.post('/api/alunos/:alunoId/responsaveis', criarResponsavelEAssociar);
+
+// Vincula um responsável já existente a um aluno
+router.post('/api/alunos/vincular-responsavel', vincularResponsavel);
+
+// Desvincula um responsável de um aluno (pelo ID do vínculo)
+router.delete('/api/alunos-responsaveis/:vinculoId', desvincularResponsavel);
 
 export default router;

@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/cadastro/components/forms/ResponsibleForm.tsx
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,14 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ArrowLeft, Crown, Pencil, Trash2, Search, Info, ShieldCheck, User2, Loader2 } from 'lucide-react';
-import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-/* Helper local para classnames */
+// Helper local para classnames
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
+// Schema de validação Zod para os dados do formulário
 const responsibleSchema = z.object({
   nomeResponsavel: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   cpf: z.string().min(11, 'CPF deve ter 11 dígitos'),
@@ -39,6 +41,7 @@ const responsibleSchema = z.object({
 
 type ResponsibleFormData = z.infer<typeof responsibleSchema>;
 
+// Tipo para os dados do responsável vindos do backend
 type BackendResponsavel = {
   id: number;
   nome: string;
@@ -47,7 +50,7 @@ type BackendResponsavel = {
   email: string | null;
   numero1: string | null;
   numero2: string | null;
-  telefone: string | null;
+  telefone_contato: string | null;
   nacionalidade: string | null;
   grau_parentesco: string | null;
   estado_civil: string | null;
@@ -58,17 +61,12 @@ type BackendResponsavel = {
   cidade: string | null;
   cep: string | null;
   responsavel_financeiro?: 'Sim' | 'Não' | string | null;
+  vinculo_id: number;
 };
 
 export function ResponsibleForm() {
   const { state, updateResponsible, setCurrentStep, completeStep } = useRegistration();
-  const { responsible } = state.data;
-  const params = useParams<{ id?: string }>();
-
-  const alunoId = useMemo(() => {
-    const s: any = state?.data;
-    return s?.student?.id || s?.contract?.alunoId || params.id || null;
-  }, [state, params]);
+  const { responsible, student } = state.data;
 
   const [list, setList] = useState<BackendResponsavel[]>([]);
   const [loadingList, setLoadingList] = useState(false);
@@ -79,42 +77,25 @@ export function ResponsibleForm() {
 
   const form = useForm<ResponsibleFormData>({
     resolver: zodResolver(responsibleSchema),
-    defaultValues: {
-      nomeResponsavel: responsible.nomeResponsavel,
-      cpf: responsible.cpf,
-      rg: responsible.rg,
-      email: responsible.email,
-      numero1: responsible.numero1,
-      numero2: responsible.numero2 || '',
-      logradouro: responsible.logradouro,
-      numeroEndereco: responsible.numeroEndereco,
-      bairro: responsible.bairro,
-      cidade: responsible.cidade,
-      cep: responsible.cep,
-      grauParentesco: responsible.grauParentesco,
-      telefoneContato: responsible.telefoneContato,
-      nacionalidade: responsible.nacionalidade,
-      estadoCivil: responsible.estadoCivil,
-      profissao: responsible.profissao,
-    },
+    defaultValues: { ...responsible },
     mode: 'onChange',
   });
 
   const { isDirty } = form.formState;
 
   async function fetchResponsaveis() {
-    if (!alunoId) return;
+    const currentAlunoId = state.data.student.id;
+    if (!currentAlunoId) return;
     try {
       setLoadingList(true);
       setErrorMsg(null);
-      const res = await fetch(`/api/alunos/${alunoId}/responsaveis`);
+      const res = await fetch(`/api/alunos/${currentAlunoId}/responsaveis`);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || 'Erro ao carregar responsáveis');
       }
       const data = await res.json();
-      const arr: BackendResponsavel[] = Array.isArray(data) ? data : data?.responsaveis || [];
-      setList(arr);
+      setList(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setErrorMsg(e?.message || 'Erro ao carregar responsáveis');
     } finally {
@@ -123,48 +104,8 @@ export function ResponsibleForm() {
   }
 
   useEffect(() => {
-    if (alunoId) {
-      fetchResponsaveis();
-    }
-  }, [alunoId]);
-
-  function payloadFromForm(data: ResponsibleFormData) {
-    return {
-      nome: data.nomeResponsavel,
-      cpf: somenteDigitos(data.cpf),
-      rg: somenteDigitos(data.rg),
-      email: data.email,
-      grau_parentesco: data.grauParentesco,
-      estado_civil: data.estadoCivil,
-      numero1: somenteDigitos(data.numero1),
-      numero2: data.numero2 ? somenteDigitos(data.numero2) : null,
-      telefone: somenteDigitos(data.telefoneContato),
-      nacionalidade: data.nacionalidade,
-      profissao: data.profissao,
-      logradouro: data.logradouro,
-      numero_casa: data.numeroEndereco,
-      bairro: data.bairro,
-      cidade: data.cidade,
-      cep: somenteDigitos(data.cep),
-      responsavel_financeiro: responsible.responsavelFinanceiro === true,
-      id_aluno1: alunoId,
-    };
-  }
-
-  function payloadMinimalForAluno(data: ResponsibleFormData) {
-    return {
-      nome: data.nomeResponsavel,
-      parentesco: data.grauParentesco,
-      telefoneContato: somenteDigitos(data.telefoneContato),
-      telefone: somenteDigitos(data.telefoneContato),
-      email: data.email || null,
-      cpf: somenteDigitos(data.cpf) || null,
-      rg: somenteDigitos(data.rg),
-      numero1: somenteDigitos(data.numero1),
-      numero2: data.numero2 ? somenteDigitos(data.numero2) : null,
-      responsavel_financeiro: responsible.responsavelFinanceiro ? 'Sim' : 'Não',
-    };
-  }
+    fetchResponsaveis();
+  }, [state.data.student.id]);
 
   function resetFormToEmpty() {
     form.reset({
@@ -181,106 +122,95 @@ export function ResponsibleForm() {
 
   async function save(data: ResponsibleFormData, keepOnForm = false) {
     const valid = await form.trigger();
-    if (!valid) return;
+    if (!valid) {
+      toast.warning("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+    
+    const alunoId = state.data.student.id;
+    if (!alunoId) {
+        toast.error("ID do Aluno não encontrado. Por favor, volte para a etapa de 'Dados do Aluno' e salve novamente.");
+        return;
+    }
 
     setSaving(true);
     setErrorMsg(null);
     try {
       const checkedFinanceiro = Boolean(responsible.responsavelFinanceiro);
 
-      if (editingId) {
-        const res = await fetch(`/api/responsaveis/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payloadFromForm(data)),
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || 'Falha ao atualizar responsável.');
-        }
-        
-        // Atualiza a lista localmente para refletir a mudança imediatamente
-        setList(prevList => {
-            const updatedList = prevList.map(r => {
-                if (r.id === editingId) {
-                    return { ...r, ...payloadFromForm(data), responsavel_financeiro: checkedFinanceiro ? 'Sim' : 'Não' };
-                }
-                // Se o item editado se tornou financeiro, desmarca os outros
-                if (checkedFinanceiro) {
-                    return { ...r, responsavel_financeiro: 'Não' };
-                }
-                return r;
-            });
-            return updatedList;
-        });
+      const payload = {
+        nomeResponsavel: data.nomeResponsavel,
+        cpf: data.cpf,
+        rg: data.rg,
+        email: data.email,
+        grauParentesco: data.grauParentesco,
+        estadoCivil: data.estadoCivil,
+        numero1: data.numero1,
+        numero2: data.numero2 || null,
+        telefoneContato: data.telefoneContato,
+        nacionalidade: data.nacionalidade,
+        profissao: data.profissao,
+        logradouro: data.logradouro,
+        numeroEndereco: data.numeroEndereco,
+        bairro: data.bairro,
+        cidade: data.cidade,
+        cep: data.cep,
+        responsavelFinanceiro: checkedFinanceiro,
+        id_aluno1: alunoId,
+      };
 
-        resetFormToEmpty();
-        toast.success("Responsável atualizado com sucesso!");
-        return;
-      }
+      const url = editingId ? `/api/responsaveis/${editingId}` : `/api/alunos/${alunoId}/responsaveis`;
+      const method = editingId ? 'PUT' : 'POST';
 
-      const res = await fetch(`/api/alunos/${alunoId}/responsaveis`, {
-        method: 'POST',
+      const res = await fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payloadMinimalForAluno(data)),
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Falha ao criar responsável.');
-      }
-      const created = await res.json();
-      
-      // Atualiza a lista localmente
-      setList(prevList => {
-          const newList = checkedFinanceiro ? prevList.map(r => ({ ...r, responsavel_financeiro: 'Não' })) : prevList;
-          return [created.responsavel, ...newList];
+        body: JSON.stringify(payload),
       });
 
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || `Falha ao ${editingId ? 'atualizar' : 'criar'} responsável.`);
+      }
+
+      toast.success(result.message || "Operação realizada com sucesso!");
+      
+      if (editingId) {
+        setEditingId(null);
+      }
+      
       if (keepOnForm) {
         resetFormToEmpty();
-      } else {
-        // Não avança de etapa automaticamente ao salvar
-        toast.success("Responsável adicionado à lista!");
       }
-    } catch (e: any) {
-      setErrorMsg(e?.message || 'Falha ao salvar responsável');
-      toast.error(e.message || 'Falha ao salvar responsável');
-    } finally {
-      setSaving(false);
-    }
-  }
+      
+      fetchResponsaveis();
 
-  async function removeResponsavel(id: number) {
-    if (!window.confirm('Remover este responsável?')) return;
-
-    const snapshot = [...list];
-    setList(prev => prev.filter((r) => r.id !== id));
-    if (editingId === id) resetFormToEmpty();
-
-    if (!alunoId) return;
-
-    try {
-      setSaving(true);
-      setErrorMsg(null);
-      const res = await fetch(`/api/responsaveis/${id}`, { method: 'DELETE' });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        setList(snapshot);
-        throw new Error(errorData.error || 'Erro ao remover responsável');
-      }
-      toast.success("Responsável removido com sucesso.");
-      // Garante que, se o removido era financeiro, outro seja promovido (visualmente)
-      await fetchResponsaveis(); 
     } catch (e: any) {
       setErrorMsg(e?.message);
-      toast.error(e.message);
+      toast.error(e.message || 'Ocorreu um erro inesperado.');
     } finally {
       setSaving(false);
     }
   }
 
   const onSubmitAndAddAnother = (data: ResponsibleFormData) => save(data, true);
+
+  async function removeResponsavel(vinculoId: number) {
+    if (!window.confirm('Tem certeza que deseja desvincular este responsável?')) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/alunos-responsaveis/${vinculoId}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || 'Erro ao desvincular');
+      toast.success(result.message);
+      fetchResponsaveis();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const goBack = () => setCurrentStep('searchCpf');
   
   function startEdit(r: BackendResponsavel) {
@@ -298,87 +228,40 @@ export function ResponsibleForm() {
       cidade: r.cidade || '',
       cep: r.cep || '',
       grauParentesco: r.grau_parentesco || '',
-      telefoneContato: r.telefone || '',
+      telefoneContato: r.telefone_contato || '',
       nacionalidade: r.nacionalidade || '',
       estadoCivil: r.estado_civil || '',
       profissao: r.profissao || '',
     });
     updateResponsible({ responsavelFinanceiro: r.responsavel_financeiro === 'Sim' });
-    requestAnimationFrame(() => {
-      (document.getElementById('nomeResponsavel') as HTMLInputElement | null)?.focus();
-    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function cancelEdit() {
     resetFormToEmpty();
   }
-
-  // =================================================================
-  // INÍCIO DA NOVA LÓGICA PARA "CONTINUAR"
-  // =================================================================
+  
   const handleContinue = () => {
-    // Validação 1: Deve haver pelo menos um responsável na lista.
     if (list.length === 0) {
-      toast.error("É necessário ter pelo menos um responsável vinculado para continuar.");
+      toast.error("É necessário cadastrar e vincular pelo menos um responsável para continuar.");
       return;
     }
-
-    // Validação 2: Deve haver exatamente um responsável financeiro.
     const financialResponsibleCount = list.filter(r => r.responsavel_financeiro === 'Sim').length;
-
     if (financialResponsibleCount === 0) {
       toast.error("Nenhum responsável financeiro foi definido. Por favor, edite um responsável e marque-o como financeiro.");
       return;
     }
-
-    if (financialResponsibleCount > 1) {
-      // Este caso é raro devido às proteções do backend, mas é uma boa salvaguarda no frontend.
-      toast.error("Há mais de um responsável financeiro definido. Por favor, corrija isso antes de continuar.");
-      return;
-    }
-
-    // Se todas as validações passaram, avança para a próxima etapa.
-    toast.info("Lista de responsáveis validada. Avançando...");
     completeStep('responsible');
     setCurrentStep('documents');
   };
-  // =================================================================
-  // FIM DA NOVA LÓGICA
-  // =================================================================
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let items = list;
-    if (q) {
-      items = items.filter((r) =>
-        [firstName(r.nome), r.grau_parentesco].filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
-      );
-    }
-    items = [...items].sort((a, b) => {
-      const aF = a.responsavel_financeiro === 'Sim' ? 0 : 1;
-      const bF = b.responsavel_financeiro === 'Sim' ? 0 : 1;
-      if (aF !== bF) return aF - bF;
-      return firstName(a.nome).localeCompare(firstName(b.nome));
-    });
-    return items;
+    if (!q) return list;
+    return list.filter((r) =>
+      (r.nome?.toLowerCase().includes(q) || r.grau_parentesco?.toLowerCase().includes(q))
+    );
   }, [list, query]);
-
-  const Skeleton = () => (
-    <div className="animate-pulse space-y-4">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="flex items-center justify-between rounded-2xl border px-4 py-4">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-muted" />
-            <div className="space-y-2">
-              <div className="h-3 w-32 bg-muted rounded" />
-              <div className="h-3 w-20 bg-muted rounded" />
-            </div>
-          </div>
-          <div className="h-4 w-4 rounded-full bg-muted" />
-        </div>
-      ))}
-    </div>
-  );
 
   return (
     <form onSubmit={form.handleSubmit((data) => save(data, false))} className="space-y-6">
@@ -407,7 +290,7 @@ export function ResponsibleForm() {
                 <div className="mt-3 text-xs rounded-md border border-amber-200 bg-amber-50 text-amber-700 px-3 py-2 flex items-center justify-between">
                   <span>🔧 Editando responsável #{editingId}.</span>
                   <Button type="button" variant="outline" size="sm" onClick={cancelEdit}>
-                    Cancelar edição (Esc)
+                    Cancelar edição
                   </Button>
                 </div>
               )}
@@ -528,21 +411,13 @@ export function ResponsibleForm() {
               <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
             </Button>
             <div className="flex items-center gap-2">
-              {!editingId && (
-                <Button type="button" variant="outline" onClick={form.handleSubmit(onSubmitAndAddAnother)} disabled={saving}>
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Salvar e Adicionar Outro'}
-                </Button>
-              )}
+              <Button type="button" variant="outline" onClick={form.handleSubmit(onSubmitAndAddAnother)} disabled={saving || editingId !== null}>
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Salvar e Adicionar Outro'}
+              </Button>
               
-              {editingId ? (
-                <Button type="submit" className="gradient-primary text-primary-foreground px-8" disabled={saving}>
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Salvar Alterações'}
-                </Button>
-              ) : (
-                <Button type="button" onClick={handleContinue} className="gradient-primary text-primary-foreground px-8" disabled={saving}>
-                  Continuar para Documentos
-                </Button>
-              )}
+              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700 px-8" disabled={saving}>
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (editingId ? 'Salvar Alterações' : 'Adicionar à Lista')}
+              </Button>
             </div>
           </div>
         </div>
@@ -575,22 +450,29 @@ export function ResponsibleForm() {
               </div>
 
               {loadingList ? (
-                <Skeleton />
+                <div className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
               ) : filtered.length === 0 ? (
-                <EmptyState onAdd={() => { setEditingId(null); updateResponsible({ responsavelFinanceiro: false }); }} />
+                <div className="text-center p-8 rounded-2xl border bg-card">
+                    <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User2 className="h-6 w-6 text-primary" />
+                    </div>
+                    <p className="font-medium">Nenhum responsável cadastrado</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Cadastre pelo menos um responsável para prosseguir.
+                    </p>
+                </div>
               ) : (
-                <div className="space-y-3">
-                  {filtered.map((r) => {
-                    const isFinanceiro = r.responsavel_financeiro === 'Sim';
-                    const nomeCurto = firstName(r.nome);
-                    return (
-                      <div key={r.id} className={cn('flex items-center justify-between gap-4 rounded-2xl border px-4 py-4 transition-all', isFinanceiro ? 'border-primary/40 bg-primary/5' : 'border-border bg-card hover:bg-muted/40')}>
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                  {filtered.map((r) => (
+                      <div key={r.id} className={cn('flex items-center justify-between gap-4 rounded-2xl border px-4 py-4 transition-all', r.responsavel_financeiro === 'Sim' ? 'border-primary/40 bg-primary/5' : 'border-border bg-card hover:bg-muted/40')}>
                         <div className="flex items-center gap-4 min-w-0">
-                          <Avatar name={r.nome} isFinanceiro={isFinanceiro} />
+                          <div className={cn('h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0', r.responsavel_financeiro === 'Sim' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground')}>
+                            {(r.nome || 'R').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()}
+                          </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="font-semibold text-base truncate">{nomeCurto}</p>
-                              {isFinanceiro && (
+                              <p className="font-semibold text-base truncate">{r.nome}</p>
+                              {r.responsavel_financeiro === 'Sim' && (
                                 <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
                                   <Crown className="h-3 w-3" /> Financeiro
                                 </span>
@@ -601,53 +483,20 @@ export function ResponsibleForm() {
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <Button type="button" variant="ghost" size="icon" onClick={() => startEdit(r)} title="Editar"><Pencil className="h-5 w-5" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => removeResponsavel(r.id)} title="Remover"><Trash2 className="h-5 w-5 text-destructive" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => removeResponsavel(r.vinculo_id)} title="Remover"><Trash2 className="h-5 w-5 text-destructive" /></Button>
                         </div>
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
               )}
             </CardContent>
           </Card>
+          
+          <Button type="button" onClick={handleContinue} className="w-full bg-blue-600 text-white hover:bg-blue-700 px-8" disabled={saving}>
+            Continuar para Documentos
+          </Button>
         </div>
       </div>
     </form>
   );
-}
-
-function Avatar({ name, isFinanceiro }: { name?: string | null; isFinanceiro?: boolean }) {
-  const initials = (name || '').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase() || 'R';
-  return (
-    <div className={cn('h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0', isFinanceiro ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground')} title={name || 'Responsável'}>
-      {initials}
-    </div>
-  );
-}
-
-function EmptyState({ onAdd }: { onAdd: () => void }) {
-  return (
-    <div className="text-center p-8 rounded-2xl border bg-card">
-      <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-        <User2 className="h-6 w-6 text-primary" />
-      </div>
-      <p className="font-medium">Nenhum responsável cadastrado</p>
-      <p className="text-sm text-muted-foreground mt-1">
-        Cadastre pelo menos um responsável para prosseguir no fluxo de matrícula.
-      </p>
-      <Button type="button" variant="outline" className="mt-3" onClick={onAdd}>
-        Adicionar responsável
-      </Button>
-    </div>
-  );
-}
-
-/* --------------------------------- Helpers -------------------------------- */
-function somenteDigitos(v: string) {
-  return (v || '').replace(/\D+/g, '');
-}
-function firstName(fullName?: string | null) {
-  const s = (fullName || '').trim();
-  if (!s) return '';
-  return s.split(/\s+/)[0];
 }
