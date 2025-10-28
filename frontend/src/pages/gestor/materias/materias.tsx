@@ -32,8 +32,8 @@ export default function PainelAcademico() {
     const isPerfilPrincipal = String(currentUser?.id) === id;
     const podeVisualizarInfoPrivada = isPerfilPrincipal || isGestor || currentUser?.role === 'professor';
     const showSidebar = !['responsavel', 'aluno'].includes(currentUser?.role ?? '');
-            const navigate = useNavigate();
-    
+    const navigate = useNavigate();
+
 
     const [activeTab, setActiveTab] = useState("relatorios")
 
@@ -60,10 +60,6 @@ export default function PainelAcademico() {
                                     <h1 className="text-3xl font-bold text-foreground">Painel Acadêmico – Gestor e Professor</h1>
                                     <p className="text-muted-foreground mt-1">Unidade Central • Período: 2024.1</p>
                                 </div>
-                                <Avatar className="h-12 w-12">
-                                    <AvatarImage src="/placeholder.svg?height=48&width=48" />
-                                    <AvatarFallback>GP</AvatarFallback>
-                                </Avatar>
                             </div>
                         </div>
                     </header>

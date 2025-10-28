@@ -17,7 +17,7 @@ import { useToast } from "../hooks/use-toast"
 import { useNavigate, useParams } from "react-router-dom";
 import { ViewGradeModal } from "./visualizar-grade"
 import { EditGradeModal } from "./edit-grade"
-import SidebarGestor from '../../gestor/components/Sidebar';
+// import SidebarGestor from '../../gestor/components/Sidebar';
 import TopbarGestorAuto from '../components/TopbarGestorAuto';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -245,21 +245,13 @@ export default function GradeCurricularPage() {
     }
 
     return (
-        <div className={`dashboard-container flex min-h-screen w-full overflow-x-hidden pl-4 ${showSidebar || showSidebarAluno ? 'md:pl-15' : 'md:pl-0'}`}>
+        <div className={`dashboard-container flex min-h-screen w-full overflow-x-hidden pl-4 ${showSidebar ? 'md:pl-15' : 'md:pl-0'}`}>
             {/* Agora 'navigate' está definida e pode ser passada como prop */}
-            {showSidebar && (
-                <SidebarGestor
-                    isMenuOpen={sidebarAberta}
-                    setActivePage={(page) => navigate('/gestor', { state: { activePage: page } })}
-                    handleMouseEnter={() => setSidebarAberta(true)}
-                    handleMouseLeave={() => setSidebarAberta(false)}
-                />
-            )}
 
-            <div className="flex-1 px-4 py-6 pt-16 md:pt-20">
+            <div className="flex-1 px-4">
                 <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
                 <div className="min-h-screen bg-slate-50">
-                    <div className="container mx-auto max-w-7xl p-8">
+                    <div className="container mx-auto max-w-7xl">
                         <div className="mb-8">
                             <h1 className="text-3xl font-bold tracking-tight text-balance">Gestão de Grades Curriculares</h1>
                             <p className="mt-2 text-muted-foreground text-pretty">
