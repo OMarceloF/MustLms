@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 23/10/2025 às 19:15
+-- Tempo de geração: 28/10/2025 às 21:34
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -31,6 +31,7 @@ CREATE TABLE `alunos` (
   `id` int(11) NOT NULL,
   `nome` varchar(100) NOT NULL,
   `cpf` varchar(11) DEFAULT NULL,
+  `rg` varchar(20) DEFAULT NULL,
   `matricula` varchar(50) NOT NULL,
   `serie` varchar(50) DEFAULT NULL,
   `turma` varchar(50) DEFAULT NULL,
@@ -38,11 +39,11 @@ CREATE TABLE `alunos` (
   `foto` varchar(255) DEFAULT NULL,
   `biografia` text DEFAULT NULL,
   `telefone` varchar(20) DEFAULT NULL,
-  `contato_responsaveis` text DEFAULT NULL,
   `endereco` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`endereco`)),
-  `dados_saude` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`dados_saude`)),
+  `restricoes_medicas` text DEFAULT NULL COMMENT 'Descrição de restrições médicas do aluno',
   `turno` varchar(20) DEFAULT NULL,
   `data_nascimento` date DEFAULT NULL,
+  `nacionalidade` varchar(50) NOT NULL DEFAULT 'Brasileira',
   `genero` varchar(50) DEFAULT NULL,
   `status` enum('regular','transferido','concluido/formado','inativo') DEFAULT 'regular'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -51,18 +52,48 @@ CREATE TABLE `alunos` (
 -- Despejando dados para a tabela `alunos`
 --
 
-INSERT INTO `alunos` (`id`, `nome`, `cpf`, `matricula`, `serie`, `turma`, `email`, `foto`, `biografia`, `telefone`, `contato_responsaveis`, `endereco`, `dados_saude`, `turno`, `data_nascimento`, `genero`, `status`) VALUES
-(2, 'Krysthyan', '12631956325', '612413', NULL, NULL, 'krysthyan@gmail.com', '', NULL, NULL, NULL, '{\"cep\":\"36576130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', '{\"tem_alergia\":false,\"usa_medicacao\":false,\"contato_emergencia\":{\"telefone\":null}}', NULL, '2001-09-02', 'Masculino', 'regular'),
-(3, 'Marcelo', '0', '123456', '6º Ano', 'Turma 1', 'marcelo@gmail.com', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'regular'),
-(4, 'Rinaldo', '0', '121212', '6º Ano', 'Turma 1', 'junio@gmail.com', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'regular'),
-(5, 'Raissa', '25544478996', '212121', '6º Ano', 'Turma 1', 'raissa@gmail.com', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'regular'),
-(7, 'João', '01234567886', 'MAT9876', NULL, NULL, 'joao@escola.com.br', '', NULL, NULL, NULL, '{\"cep\":\"23423345\",\"logradouro\":\"Rua dos Estudantes\",\"numero\":\"204\",\"complemento\":\"Apt 909\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', '{\"tem_alergia\":false,\"usa_medicacao\":false,\"contato_emergencia\":{\"telefone\":null}}', NULL, '2002-12-13', 'Masculino', 'inativo'),
-(8, 'Marcelo Ferreira', NULL, '21028901', '', '', 'marceloNexum@gmail.com', '', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'regular'),
-(10, 'Marcelo Ferreira', '12629680622', '2109888', NULL, NULL, 'the.marcelofNovo@gmail.com', '/uploads/1758741424481-433567356.png', 'fsdfsdfs', NULL, '{\"nome\":\"Dilermanio Ferreira Filho\",\"cpf\":\"488.109.836-53\",\"email\":\"the.marcelofNovo@gmail.com\",\"telefone\":\"(31) 98115-8484\",\"parentesco\":\"Pai\"}', '{\"cep\":\"13213123\",\"logradouro\":\"asdasdad\",\"numero\":\"2\",\"bairro\":\"weqweqw\",\"cidade\":\"fdsfds\",\"uf\":\"bg\"}', '{\"tem_alergia\":false,\"usa_medicacao\":false,\"contato_emergencia\":{\"telefone\":null}}', NULL, '2003-03-07', 'Masculino', 'regular'),
-(12, 'Rinaldo Junior ', '12629680622', '2109888', NULL, NULL, 'junior@gmail.com', '/uploads/1758809924095-718224439.png', NULL, NULL, '{\"nome\":\"Pai\",\"cpf\":\"123.112.313-12\",\"email\":\"paidojunior@gmail.com\",\"telefone\":\"(12) 31231-2312\",\"parentesco\":\"Pai\"}', '{\"cep\":\"12123123\",\"logradouro\":\"asdasdasda\",\"numero\":\"4324\",\"complemento\":\"ASDASDA\",\"bairro\":\"DSA\",\"cidade\":\"seeea\",\"uf\":\"mg\"}', '{\"tem_alergia\":false,\"usa_medicacao\":false,\"contato_emergencia\":{\"telefone\":null}}', NULL, '2025-09-25', 'Masculino', 'regular'),
-(16, 'usuarioteste', '101.010.101', '101010', NULL, NULL, 'usuarioteste@gmail.com', '/uploads/1758907439058-202349397.jpg', NULL, NULL, '{\"nome\":\"Uusuário Teste\",\"cpf\":\"101.010.101-01\",\"email\":\"usuarioteste@gmail.com\",\"telefone\":\"(10) 10101-0101\",\"parentesco\":\"Pai\"}', '{\"cep\":\"10101-010\",\"logradouro\":\"ruateste\",\"numero\":\"1010\",\"complemento\":\"ruateste\",\"bairro\":\"bairroteste\",\"cidade\":\"cidadeteste\",\"uf\":\"ut\"}', '{\"tem_alergia\":false,\"usa_medicacao\":false,\"contato_emergencia\":{}}', NULL, '1010-10-10', 'Masculino', 'regular'),
-(18, 'Arthur Jesus', '67988324212', '54632', NULL, NULL, 'arthur@gmail.com', '/uploads/1758910522190-113759779.png', NULL, NULL, '{\"nome\":\"Pai do Arthur\",\"cpf\":\"126.296.123-15\",\"email\":\"paidoarthur@gmail.com\",\"telefone\":\"(52) 45345-6345\",\"parentesco\":\"Pai\"}', '{\"cep\":\"36576130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', '{\"tem_alergia\":false,\"usa_medicacao\":true,\"medicacao_descricao\":\"Dipirona\",\"plano_saude\":\"Plamuv\",\"numero_carteirinha\":\"1231243254\",\"contato_emergencia\":{\"nome\":\"Leila\",\"telefone\":null}}', NULL, '2007-09-08', 'Masculino', 'regular'),
-(20, 'Lucas Ferreira', '124.325.435', '2343245235', '6º Ano', 'Turma 1', 'lucasferreira@gmail.com', '/uploads/1758911261009-736922933.png', NULL, NULL, '{\"nome\":\"Pai do Lucas\",\"cpf\":\"124.312.432-43\",\"email\":\"paidolucas@gmail.com\",\"telefone\":\"(12) 35462-1412\",\"parentesco\":\"Pai\"}', '{\"cep\":\"36576-130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', '{\"tem_alergia\":false,\"usa_medicacao\":false,\"plano_saude\":\"Plamuv\",\"numero_carteirinha\":\"1231243254\",\"contato_emergencia\":{\"nome\":\"Leila\"}}', NULL, '2002-09-12', 'Masculino', 'regular');
+INSERT INTO `alunos` (`id`, `nome`, `cpf`, `rg`, `matricula`, `serie`, `turma`, `email`, `foto`, `biografia`, `telefone`, `endereco`, `restricoes_medicas`, `turno`, `data_nascimento`, `nacionalidade`, `genero`, `status`) VALUES
+(2, 'Krysthyan', '12631956325', '18765432', '612413', '3º Ano EM', '301', 'krysthyan@gmail.com', '', 'Aluno veterano, focado em tecnologia e desenvolvimento de software.', '31912345678', '{\"cep\":\"36576130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Matutino', '2001-09-02', 'Brasileira', 'Masculino', 'regular'),
+(3, 'Marcelo', '12345678901', '12345678', '123456', '7º Ano', '7B', 'marcelo@gmail.com', '', NULL, '21998877665', NULL, NULL, 'Matutino', '2012-03-10', 'Brasileira', 'Masculino', 'regular'),
+(4, 'Rinaldo', '23456789012', '87654321', '121212', '8º Ano', '8A', 'junio@gmail.com', '', NULL, '11987654321', NULL, NULL, 'Vespertino', '2011-04-22', 'Brasileira', 'Masculino', 'regular'),
+(5, 'Raissa', '34567890123', '56781234', '212121', '9º Ano', '9C', 'raissa@gmail.com', '', NULL, '71976543210', NULL, NULL, 'Matutino', '2010-01-15', 'Brasileira', 'Feminino', 'regular'),
+(7, 'João', '01234567886', '99887766', 'MAT9876', 'Não aplicável', 'Egressos 2023', 'joao@escola.com.br', '', 'Ex-aluno, atualmente cursando Engenharia na universidade local.', '31965432109', '{\"cep\":\"23423345\",\"logradouro\":\"Rua dos Estudantes\",\"numero\":\"204\",\"complemento\":\"Apt 909\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'N/A', '2002-12-13', 'Brasileira', 'Masculino', 'inativo'),
+(8, 'Marcelo Ferreira', '45678901234', '11223344', '21028901', '1º Ano EM', '101', 'marceloNexum@gmail.com', '', NULL, '32954321098', NULL, NULL, 'Vespertino', '2009-07-11', 'Brasileira', 'Masculino', 'regular'),
+(10, 'Marcelo Ferreira', '12629680622', '12312312', '2109888', '2º Ano EM', '202', 'the.marcelofNovo@gmail.com', '/uploads/1758741424481-433567356.png', 'fsdfsdfs', '31981158484', '{\"cep\":\"13213123\",\"logradouro\":\"asdasdad\",\"numero\":\"2\",\"bairro\":\"weqweqw\",\"cidade\":\"fdsfds\",\"uf\":\"bg\"}', NULL, 'Matutino', '2003-03-07', 'Brasileira', 'Masculino', 'regular'),
+(12, 'Rinaldo Junior ', '12629680622', '32132132', '2109888', '8º Ano', '8B', 'junior@gmail.com', '/uploads/1758809924095-718224439.png', NULL, '19912345678', '{\"cep\":\"12123123\",\"logradouro\":\"asdasdasda\",\"numero\":\"4324\",\"complemento\":\"ASDASDA\",\"bairro\":\"DSA\",\"cidade\":\"seeea\",\"uf\":\"mg\"}', NULL, 'Vespertino', '2025-09-25', 'Brasileira', 'Masculino', 'regular'),
+(16, 'usuarioteste', '10101010101', '45645645', '101010', '7º Ano', '7C', 'usuarioteste@gmail.com', '/uploads/1758907439058-202349397.jpg', 'Aluno para fins de teste do sistema.', '61901010101', '{\"cep\":\"10101-010\",\"logradouro\":\"ruateste\",\"numero\":\"1010\",\"complemento\":\"ruateste\",\"bairro\":\"bairroteste\",\"cidade\":\"cidadeteste\",\"uf\":\"ut\"}', NULL, 'Matutino', '1010-10-10', 'Brasileira', 'Masculino', 'regular'),
+(18, 'Arthur Jesus', '67988324212', '78978978', '54632', '9º Ano', '9A', 'arthur@gmail.com', '/uploads/1758910522190-113759779.png', NULL, '31988776655', '{\"cep\":\"36576130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Vespertino', '2007-09-08', 'Brasileira', 'Masculino', 'regular'),
+(20, 'Lucas Ferreira', '12432543567', '98798798', '2343245235', '6º Ano', '6A', 'lucasferreira@gmail.com', '/uploads/1758911261009-736922933.png', NULL, '21977665544', '{\"cep\":\"36576-130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Matutino', '2002-09-12', 'Brasileira', 'Masculino', 'regular'),
+(26, 'Arthur Lopes Saraiva', '22222222222', 'MG0233450', '222222', NULL, NULL, 'arthurlsaraiva@gmail.com', NULL, 'kkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkk', NULL, '1988-10-20', 'Brasileira', 'Masculino', 'regular'),
+(27, 'Arthur L. Saraiva', '99999999999', '999999999', '2332221', NULL, NULL, 'Joaovv@gmail.com', '/uploads/download-1761674394496.jpg', 'kkkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkk', NULL, '1998-10-31', 'Brasileira', 'Masculino', 'regular'),
+(28, 'Arthur Teste', '77777777777', '111111111', '123456789', NULL, NULL, 'arthur11@gmail.com', '/uploads/download-1761683485087.jpg', 'kkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkkkkk', NULL, '1996-10-24', 'Brasileira', 'Masculino', 'regular');
+
+--
+-- Acionadores `alunos`
+--
+DELIMITER $$
+CREATE TRIGGER `alunos_bi` BEFORE INSERT ON `alunos` FOR EACH ROW BEGIN
+    -- Limpa os campos, removendo caracteres não numéricos.
+    SET NEW.cpf = REGEXP_REPLACE(NEW.cpf, '[^0-9]', '');
+    -- SET NEW.rg = REGEXP_REPLACE(NEW.rg, '[^0-9]', ''); -- LINHA REMOVIDA
+    SET NEW.telefone = REGEXP_REPLACE(NEW.telefone, '[^0-9]', '');
+
+    -- Garante que o status seja 'regular' se não for fornecido
+    IF NEW.status IS NULL OR NEW.status = '' THEN
+        SET NEW.status = 'regular';
+    END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `alunos_bu` BEFORE UPDATE ON `alunos` FOR EACH ROW BEGIN
+    -- Limpa os campos para armazenar apenas os dígitos numéricos durante a atualização.
+    SET NEW.cpf = REGEXP_REPLACE(NEW.cpf, '[^0-9]', '');
+    SET NEW.rg = REGEXP_REPLACE(NEW.rg, '[^0-9]', '');
+    SET NEW.telefone = REGEXP_REPLACE(NEW.telefone, '[^0-9]', '');
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -82,15 +113,25 @@ CREATE TABLE `alunos_responsaveis` (
 --
 
 INSERT INTO `alunos_responsaveis` (`id`, `aluno_id`, `responsavel_id`, `parentesco`) VALUES
-(1, 12, 11, 'Pai'),
-(2, 12, 13, 'Mae'),
-(3, 10, 11, 'Pai'),
-(4, 7, 14, 'Pai'),
-(5, 16, 15, 'Pai'),
-(6, 18, 17, 'Pai'),
-(7, 20, 19, 'Pai'),
-(8, 10, 15, 'Pai'),
-(9, 2, 21, 'Pai');
+(1, 2, 0, 'Mãe'),
+(2, 2, 1, 'Avó'),
+(3, 2, 2, 'Mãe'),
+(4, 2, 3, 'Mãe'),
+(5, 2, 1, 'Avó'),
+(6, 7, 1, 'Avó'),
+(7, 7, 2, 'Mãe'),
+(9, 7, 3, 'Mãe'),
+(12, 7, 4, 'Avô'),
+(13, 24, 5, 'Próprio Aluno'),
+(14, 26, 6, 'Próprio Aluno'),
+(17, 27, 3, 'Mãe'),
+(18, 27, 4, 'Avô'),
+(20, 27, 2, 'Mãe'),
+(24, 27, 5, 'Próprio Aluno'),
+(25, 27, 8, 'Avó'),
+(27, 27, 5, 'Próprio Aluno'),
+(28, 28, 9, 'Próprio Aluno'),
+(30, 28, 4, 'Avô');
 
 -- --------------------------------------------------------
 
@@ -511,7 +552,23 @@ INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `codigo`, `carga_hor
 (1, 1, 'Metodologia de Pesquisa Científica', NULL, 60, 4, 1, 'Dr. João Silva', 'Introdução aos métodos de pesquisa científica.'),
 (13, 3, 'Estatística Aplicada', 'POS-002', 64, 4, 1, NULL, 'kkkkkkkkkkkkkkkkkk'),
 (14, 3, 'Cálculo II', 'CALC-02', 64, 4, 2, NULL, 'kkkkkkkkkkkkk'),
-(16, 3, 'Cálculo I', 'CALC-01', 64, 4, 1, NULL, 'kkkkkkkkkkkkkkkkkk');
+(16, 3, 'Cálculo I', 'CALC-01', 64, 4, 1, NULL, 'kkkkkkkkkkkkkkkkkk'),
+(17, 4, 'Fundamentos de Machine Learning Avançado', 'IAA-001', 60, 4, 1, 'Dr. Alan Turing', 'Estudo aprofundado de algoritmos de classificação, regressão e clustering. Tópicos em regularização, otimização e avaliação de modelos.'),
+(18, 4, 'Redes Neurais Profundas e Aplicações', 'IAA-002', 60, 4, 2, 'Dr. Yann LeCun', 'Arquiteturas de redes neurais profundas (CNNs, RNNs, Transformers). Aplicações em visão computacional e processamento de linguagem natural.'),
+(19, 4, 'Processamento de Linguagem Natural', 'IAA-003', 60, 4, 3, 'Dr. Geoffrey Hinton', 'Modelagem de linguagem, análise sintática e semântica, tradução automática e sistemas de diálogo. Estudo de modelos como BERT e GPT.'),
+(20, 4, 'Seminários de Pesquisa em IA', 'IAA-004', 30, 2, 4, 'Dr. Alan Turing', 'Apresentação e discussão de artigos científicos de ponta na área de Inteligência Artificial.'),
+(21, 5, 'Gerenciamento de Projetos Tradicional (PMBOK)', 'GPA-001', 45, 3, 1, 'Prof. Peter Drucker', 'Introdução aos processos, áreas de conhecimento e boas práticas do PMBOK. Gerenciamento de escopo, tempo, custo e riscos.'),
+(22, 5, 'Framework Scrum e Papéis Ágeis', 'GPA-002', 45, 3, 1, 'Prof. Jeff Sutherland', 'Estudo aprofundado do framework Scrum, incluindo papéis (Scrum Master, Product Owner, Dev Team), eventos e artefatos.'),
+(23, 5, 'Kanban, Lean e Otimização de Fluxo', 'GPA-003', 45, 3, 2, 'Prof. David Anderson', 'Aplicação do método Kanban para visualização do trabalho, limitação do WIP (Work in Progress) e melhoria contínua do fluxo de entrega.'),
+(24, 5, 'Gestão de Produtos e Portfólio Ágil', 'GPA-004', 45, 3, 2, 'Prof. Marty Cagan', 'Técnicas para discovery de produtos, priorização de backlog, roadmap de produto e alinhamento estratégico do portfólio de projetos.'),
+(25, 6, 'Fundamentos do Direito Digital e da Sociedade da Informação', 'DDP-001', 40, 3, 1, 'Dr. Lawrence Lessig', 'Análise do impacto da tecnologia no direito, abordando temas como Marco Civil da Internet, neutralidade de rede e governança da internet.'),
+(26, 6, 'Lei Geral de Proteção de Dados (LGPD) na Prática', 'DDP-002', 60, 4, 1, 'Dra. Patrícia Peck', 'Estudo detalhado da LGPD: bases legais, direitos dos titulares, responsabilidades dos agentes de tratamento e o papel da ANPD.'),
+(27, 6, 'Contratos Eletrônicos e Responsabilidade Civil na Internet', 'DDP-003', 40, 3, 2, 'Dr. Ricardo Lorenzetti', 'Validade jurídica de contratos eletrônicos, assinatura digital, responsabilidade de provedores e combate a fake news.'),
+(28, 6, 'Crimes Cibernéticos e Evidências Digitais', 'DDP-004', 40, 3, 2, 'Prof. Jack Goldsmith', 'Tipificação de crimes informáticos, técnicas de investigação digital, cadeia de custódia de provas e cooperação internacional.'),
+(29, 7, 'Bases Neurobiológicas da Aprendizagem e Memória', 'NED-001', 60, 4, 1, 'Dra. Carla Shatz', 'Estudo das estruturas cerebrais e processos sinápticos envolvidos na aquisição, consolidação e evocação de memórias.'),
+(30, 7, 'Funções Executivas e o Desenvolvimento Cognitivo na Escola', 'NED-002', 60, 4, 2, 'Dr. Adele Diamond', 'Análise do papel da atenção, controle inibitório e memória de trabalho no desempenho acadêmico e desenvolvimento de estratégias de ensino.'),
+(31, 8, 'Tecnologias de Energia Solar e Eólica', 'SER-001', 60, 4, 1, 'Prof. Eicke Weber', 'Princípios de funcionamento, dimensionamento e integração de sistemas fotovoltaicos e eólicos na matriz energética.'),
+(32, 8, 'Políticas Públicas para Sustentabilidade e Mudanças Climáticas', 'SER-002', 60, 4, 2, 'Dra. Christiana Figueres', 'Análise de acordos internacionais, legislação ambiental e instrumentos econômicos para a transição para uma economia de baixo carbono.');
 
 -- --------------------------------------------------------
 
@@ -569,7 +626,17 @@ CREATE TABLE `cursos_posgraduacao` (
 
 INSERT INTO `cursos_posgraduacao` (`id`, `nome`, `tipo`, `area_conhecimento`, `carga_horaria`, `duracao_semestres`, `modalidade`, `coordenador_id`, `vice_coordenador_id`, `unidade_id`, `objetivos`, `perfil_egresso`, `justificativa`, `ano_inicio`, `status`, `link_divulgacao`, `criado_em`, `atualizado_em`) VALUES
 (1, 'Mestrado em Ciências da Computação', 'mestrado', 'ciencias-exatas', 240, 1, 'presencial', 1, 2, 2, 'oooooooooooooooo', 'ooooopppppppppppppp', 'lllllllllllllllllllllllllllllllllllllll', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 12:42:14', '2025-10-23 12:42:14'),
-(3, 'Engenharia Civil', 'doutorado', 'engenharias', 4000, 10, 'presencial', 1, 3, 1, 'kkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkk', '2025', 'planejamento', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 14:24:08', '2025-10-23 14:58:57');
+(3, 'Engenharia Civil', 'doutorado', 'engenharias', 4000, 10, 'presencial', 1, 3, 1, 'kkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkk', '2025', 'planejamento', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 14:24:08', '2025-10-23 14:58:57'),
+(4, 'Doutorado em Inteligência Artificial Aplicada', 'doutorado', 'ciencias-exatas', 600, 8, 'hibrido', 1, 23, 1, 'Formar pesquisadores de alto nível capazes de desenvolver soluções inovadoras em IA para problemas complexos da indústria e da sociedade.', 'Pesquisador ou líder técnico em IA, com profundo conhecimento em machine learning, processamento de linguagem natural e visão computacional.', 'A crescente demanda por especialistas em IA justifica um programa de doutorado focado em aplicações práticas e pesquisa de ponta.', '2024', 'ativo', 'https://mustedu.com/pt/ia-aplicada/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(5, 'MBA em Gestão de Projetos e Metodologias Ágeis', 'especializacao', 'ciencias-sociais-aplicadas', 360, 2, 'ead', 1, 6, 2, 'Capacitar profissionais para liderar projetos complexos utilizando frameworks ágeis como Scrum, Kanban e Lean, garantindo entregas de valor.', 'Gerente de projetos, Scrum Master, Product Owner ou Agile Coach, apto a otimizar processos e liderar equipes de alta performance.', 'O mercado de trabalho moderno exige profissionais que dominem tanto a gestão tradicional quanto as abordagens ágeis para se manterem competitivos.', '2025', 'ativo', 'https://mustedu.com/pt/mba-projetos/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(6, 'Especialização em Direito Digital e Proteção de Dados', 'especializacao', 'ciencias-sociais-aplicadas', 400, 3, 'ead', 1, NULL, 1, 'Aprofundar o conhecimento sobre a legislação de proteção de dados (LGPD/GDPR), crimes cibernéticos e os desafios jurídicos da era digital.', 'Advogado especialista em direito digital, Data Protection Officer (DPO) ou consultor em privacidade e proteção de dados.', 'Com a implementação da LGPD, a necessidade de profissionais especializados em proteção de dados tornou-se crítica para todas as organizações.', '2024', 'ativo', 'https://mustedu.com/pt/direito-digital/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(7, 'Mestrado em Neurociência e Educação', 'mestrado', 'ciencias-humanas', 480, 4, 'presencial', 22, 6, 1, 'Investigar a interface entre o funcionamento do cérebro e os processos de aprendizagem, desenvolvendo novas práticas pedagógicas baseadas em evidências científicas.', 'Pesquisador em neuroeducação, coordenador pedagógico ou professor especializado em dificuldades de aprendizagem.', 'Compreender como o cérebro aprende é fundamental para revolucionar a educação e criar métodos de ensino mais eficazes.', '2025', 'planejamento', 'https://mustedu.com/pt/neurociencia-edu/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(8, 'Doutorado em Sustentabilidade e Energias Renováveis', 'doutorado', 'engenharias', 620, 8, 'presencial', 1, 22, 2, 'Desenvolver pesquisa de ponta em tecnologias de energia limpa, políticas de sustentabilidade e gestão de recursos naturais para um futuro mais verde.', 'Cientista, consultor ou gestor em sustentabilidade, apto a criar soluções para os desafios energéticos e ambientais globais.', 'A transição energética é um dos maiores desafios do nosso tempo, demandando pesquisa e inovação constantes.', '2026', 'planejamento', 'https://mustedu.com/pt/sustentabilidade/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(9, 'MBA Executivo em Finanças, Investimentos e Banking', 'especializacao', 'ciencias-sociais-aplicadas', 380, 2, 'hibrido', 23, NULL, 1, 'Formar líderes para o mercado financeiro, com domínio sobre análise de investimentos, gestão de portfólios, banking digital e fintechs.', 'Analista de investimentos, gerente de banco, consultor financeiro ou CFO, preparado para tomar decisões estratégicas em um ambiente volátil.', 'A transformação digital do setor financeiro exige profissionais com uma visão moderna e integrada de finanças e tecnologia.', '2025', 'ativo', 'https://mustedu.com/pt/mba-financas/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(10, 'Mestrado em Design de Interação e Experiência do Usuário (UX)', 'mestrado', 'ciencias-sociais-aplicadas', 450, 4, 'hibrido', 6, 22, 2, 'Capacitar profissionais para projetar produtos e serviços digitais centrados no usuário, combinando pesquisa, design e tecnologia.', 'UX Designer, UX Researcher, Product Designer ou líder de equipes de design, focado em criar experiências digitais memoráveis e eficazes.', 'A experiência do usuário é um diferencial competitivo crucial no mercado digital, tornando este profissional indispensável.', '2025', 'ativo', 'https://mustedu.com/pt/mestrado-ux/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(11, 'Especialização em Psicologia Clínica e Terapia Cognitivo-Comportamental', 'especializacao', 'ciencias-da-saude', 420, 3, 'presencial', 22, NULL, 1, 'Oferecer formação teórica e prática aprofundada em Terapia Cognitivo-Comportamental (TCC) para o tratamento de diversos transtornos mentais.', 'Psicólogo clínico com especialização em TCC, apto a aplicar técnicas baseadas em evidências para promover a saúde mental.', 'A TCC é uma das abordagens terapêuticas mais eficazes e procuradas, havendo grande demanda por psicólogos com esta especialização.', '2024', 'ativo', 'https://mustedu.com/pt/psicologia-tcc/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(12, 'Mestrado Profissional em Saúde Pública', 'mestrado', 'ciencias-da-saude', 500, 4, 'presencial', 22, 1, 2, 'Formar gestores e profissionais para atuarem no planejamento, execução e avaliação de políticas e programas de saúde pública.', 'Gestor de saúde, epidemiologista, sanitarista ou pesquisador em políticas públicas de saúde.', 'Fortalecer o sistema de saúde e responder a emergências sanitárias requer profissionais com visão estratégica e técnica apurada.', '2025', 'ativo', 'https://mustedu.com/pt/saude-publica/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(13, 'Especialização em Marketing Digital e Growth Hacking', 'especializacao', 'ciencias-sociais-aplicadas', 360, 2, 'ead', 23, 6, 1, 'Desenvolver competências em estratégias de marketing digital, análise de dados e técnicas de growth hacking para acelerar o crescimento de negócios.', 'Gerente de marketing digital, analista de growth, especialista em SEO/SEM ou empreendedor digital.', 'Em um mercado saturado, a capacidade de gerar crescimento rápido e escalável através de estratégias digitais é altamente valorizada.', '2025', 'ativo', 'https://mustedu.com/pt/mkt-growth/', '2025-10-24 12:03:55', '2025-10-24 12:03:55');
 
 -- --------------------------------------------------------
 
@@ -629,6 +696,51 @@ CREATE TABLE `disponibilidade` (
   `professor_id` int(11) NOT NULL,
   `disponibilidade_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`disponibilidade_json`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `documentos_alunos`
+--
+
+CREATE TABLE `documentos_alunos` (
+  `id` int(11) NOT NULL,
+  `aluno_id` int(11) NOT NULL,
+  `tipo_documento` varchar(100) NOT NULL COMMENT 'Ex: foto3x4, comprovanteResidencia',
+  `caminho_arquivo` varchar(255) NOT NULL,
+  `nome_original` varchar(255) NOT NULL,
+  `data_upload` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `documentos_alunos`
+--
+
+INSERT INTO `documentos_alunos` (`id`, `aluno_id`, `tipo_documento`, `caminho_arquivo`, `nome_original`, `data_upload`) VALUES
+(1, 7, 'foto3x4', '/uploads/documentos/download-1761656398203.jpg', 'download.jpg', '2025-10-28 12:59:58'),
+(2, 7, 'comprovanteResidencia', '/uploads/documentos/download-1761656398204.jpg', 'download.jpg', '2025-10-28 12:59:58'),
+(3, 7, 'documentoAluno', '/uploads/documentos/download-1761656398205.jpg', 'download.jpg', '2025-10-28 12:59:58'),
+(4, 7, 'documentoResponsavel', '/uploads/documentos/download-1761656398205.jpg', 'download.jpg', '2025-10-28 12:59:58'),
+(5, 7, 'certidaoNascimento', '/uploads/documentos/download-1761656398205.jpg', 'download.jpg', '2025-10-28 12:59:58'),
+(6, 7, 'historicoEscolar', '/uploads/documentos/download-1761656398205.jpg', 'download.jpg', '2025-10-28 12:59:58'),
+(7, 7, 'laudoMedico', '/uploads/documentos/download-1761656398206.jpg', 'download.jpg', '2025-10-28 12:59:58'),
+(8, 7, 'adicionais', '/uploads/documentos/download-1761656398209.jpg', 'download.jpg', '2025-10-28 12:59:58'),
+(9, 27, 'foto3x4', '/uploads/documentos/download-1761683311151.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(10, 27, 'comprovanteResidencia', '/uploads/documentos/download-1761683311152.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(11, 27, 'documentoAluno', '/uploads/documentos/download-1761683311152.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(12, 27, 'documentoResponsavel', '/uploads/documentos/download-1761683311153.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(13, 27, 'certidaoNascimento', '/uploads/documentos/download-1761683311153.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(14, 27, 'historicoEscolar', '/uploads/documentos/download-1761683311153.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(15, 27, 'laudoMedico', '/uploads/documentos/download-1761683311153.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(16, 27, 'adicionais', '/uploads/documentos/download-1761683311156.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(17, 28, 'foto3x4', '/uploads/documentos/transacoes-1761683577610.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
+(18, 28, 'comprovanteResidencia', '/uploads/documentos/transacoes-1761683577610.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
+(19, 28, 'documentoAluno', '/uploads/documentos/transacoes-1761683577610.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
+(20, 28, 'documentoResponsavel', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
+(21, 28, 'certidaoNascimento', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
+(22, 28, 'historicoEscolar', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
+(23, 28, 'laudoMedico', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
+(24, 28, 'adicionais', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57');
 
 -- --------------------------------------------------------
 
@@ -1554,17 +1666,39 @@ INSERT INTO `professores_turmas` (`id`, `professor_id`, `turma_id`, `materia_id`
 CREATE TABLE `responsaveis` (
   `id` int(11) NOT NULL,
   `nome` varchar(255) NOT NULL,
-  `id_aluno1` int(11) NOT NULL,
-  `id_aluno2` int(11) DEFAULT NULL,
-  `id_aluno3` int(11) DEFAULT NULL,
   `numero1` varchar(20) NOT NULL,
   `numero2` varchar(20) DEFAULT NULL,
-  `endereco` text DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
   `cpf` varchar(14) DEFAULT NULL,
+  `rg` varchar(20) DEFAULT NULL,
   `grau_parentesco` varchar(50) DEFAULT NULL,
-  `telefone` varchar(50) DEFAULT NULL
+  `nacionalidade` varchar(50) DEFAULT 'Brasileira',
+  `estado_civil` varchar(50) DEFAULT NULL,
+  `profissao` varchar(100) DEFAULT NULL,
+  `responsavel_financeiro` enum('Sim','Não') NOT NULL DEFAULT 'Não',
+  `cep` varchar(9) DEFAULT NULL,
+  `logradouro` varchar(255) DEFAULT NULL,
+  `numero_casa` varchar(20) DEFAULT NULL COMMENT 'Nome da coluna alterado para evitar conflito com a coluna "numero1"',
+  `complemento` varchar(100) DEFAULT NULL,
+  `bairro` varchar(100) DEFAULT NULL,
+  `cidade` varchar(100) DEFAULT NULL,
+  `estado` varchar(2) DEFAULT NULL,
+  `telefone_contato` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `responsaveis`
+--
+
+INSERT INTO `responsaveis` (`id`, `nome`, `numero1`, `numero2`, `email`, `cpf`, `rg`, `grau_parentesco`, `nacionalidade`, `estado_civil`, `profissao`, `responsavel_financeiro`, `cep`, `logradouro`, `numero_casa`, `complemento`, `bairro`, `cidade`, `estado`, `telefone_contato`) VALUES
+(1, 'Clara', '31988880007', '31932323232', 'Joao3112@gmail.com', '01262224542', '0267250', 'Avó', 'Brasileira', 'Casado(a)', 'Panhador de café', 'Não', '30110000', 'Rua da Bahia', '250', NULL, 'Funcionários', 'Belo Horizonte', NULL, '31932323232'),
+(2, 'Lara', '31931313131', '31932323232', 'Joao99@gmail.com', '02032224543', '0233450', 'Mãe', 'Brasileira', 'Casado(a)', 'Panhador de café', 'Sim', '30110000', 'Rua das Acácias', '250', NULL, 'Maraca', 'Belo Horizonte', NULL, '31932323232'),
+(3, 'Lara S', '31931313131', '31932323232', 'Joao91@gmail.com', '02032224541', '0233454', 'Mãe', 'Brasileira', 'Casado(a)', 'Panhador de café', 'Não', '30110000', 'Rua das Acácias', '250', NULL, 'Maraca', 'Belo Horizonte', NULL, '31932323232'),
+(4, 'Julio', '31988880004', '31932323232', 'Joao23@gmail.com', '02032221543', '999999999', 'Avô', 'Brasileira', 'Solteiro(a)', 'Autônomo', 'Sim', '30160010', 'Av. Brasil', '320', NULL, 'Funcionários', 'Belo Horizonte', NULL, '31932323232'),
+(5, 'Arthur Lopes Saraiva', '31982471122', NULL, 'arthursaraiva@gmail.com', '11111111111', NULL, 'Próprio Aluno', 'Brasileira', NULL, NULL, 'Não', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(7, 'Arthur L. Saraiva', '(31) 98247-1144', NULL, 'Joaovv@gmail.com', '99999999999', NULL, 'Próprio Aluno', 'Brasileira', NULL, NULL, 'Não', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(8, 'Geovanna', '31988880001', '31932323232', 'maria.souza@example.com', '33333333333', '33333333', 'Avó', 'Brasileira', 'Solteiro(a)', 'Engenheiro', 'Não', '30110000', 'Rua das Acácias', '1200', NULL, 'Centro', 'Belo Horizonte', NULL, '31932323232'),
+(9, 'Arthur Teste', '(31) 98247-1144', NULL, 'arthur11@gmail.com', '77777777777', NULL, 'Próprio Aluno', 'Brasileira', NULL, NULL, 'Não', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1649,7 +1783,11 @@ INSERT INTO `stats_seguidores` (`user_id`, `qtd_seguidores`, `qtd_seguindo`) VAL
 (20, 0, 0),
 (21, 0, 0),
 (22, 0, 0),
-(23, 0, 0);
+(23, 0, 0),
+(24, 0, 0),
+(26, 0, 0),
+(27, 0, 0),
+(28, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -1786,7 +1924,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-23 14:49:39'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-28 20:04:07'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1808,7 +1946,11 @@ INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, 
 (20, 'lucasum', '$2b$10$rK2y/upUxF2BIFHXDNCZHeOQeDagythRuWfZ9eOVW7ZrgjYG5Rlz.', 'lucasferreira@gmail.com', 'aluno', 'ativo', 'Lucas Ferreira', NULL, NULL, '2025-09-26 18:27:41', '/uploads/1758911261009-736922933.png', NULL),
 (21, 'lucas@gmail.com', '$2b$10$dsRwmxL8H9lb5k7Y/JaqWOTpqsT0wBlJADyhA8ERvOcrUwQIaZqru', 'lucas@gmail.com', 'responsavel', 'ativo', 'Lucas Fonseca', '52351241243', '54634632754', '2025-09-29 16:13:13', NULL, NULL),
 (22, 'lela', '$2b$10$6oTF70xLe.OeASx74luWxu9JjE/4ARBDHME6Ubt2bYbcaUtFOPAy2', 'lela@gmail.com', 'professor', 'ativo', 'Lela', '54378793223', '52376832341', '2025-09-30 12:28:16', '/uploads/1759235296926-718355380.png', NULL),
-(23, 'OMarceloFuncionario', '$2b$10$qQol/APCBRHsj8B7KaVv8.LJtkD2YO/y2XqZ3lsWkSzc9jo6q65b6', 'marcelofuncionarionovo@gmail.com', 'gestor', 'ativo', 'Marcelo Funcionario ', '12629680232', '31989371121', '2025-09-30 16:21:53', '/uploads/1759249857291-37726123.jpg', NULL);
+(23, 'OMarceloFuncionario', '$2b$10$qQol/APCBRHsj8B7KaVv8.LJtkD2YO/y2XqZ3lsWkSzc9jo6q65b6', 'marcelofuncionarionovo@gmail.com', 'gestor', 'ativo', 'Marcelo Funcionario ', '12629680232', '31989371121', '2025-09-30 16:21:53', '/uploads/1759249857291-37726123.jpg', NULL),
+(24, 'arthurlsaraiva@gmail.com', '$2b$10$U4K1dfAoM/lm1kUpks/pbueozdT01h0xqI4CPwdrxPM63naxu3vDq', 'arthursaraiva@gmail.com', 'aluno', 'ativo', 'Arthur Lopes Saraiva', '11111111111', '31982471122', '2025-10-28 17:00:31', '/uploads/download-1761670831528.jpg', NULL),
+(26, 'arthurlsaraiva@gmail.com', '$2b$10$pU0wPsr3SJYr67FA/WBaH.JNaFKLhx7doucvDIvkZHQlPSmdP.NZ2', 'arthurlsaraiva@gmail.com', 'aluno', 'ativo', 'Arthur Lopes Saraiva', '22222222222', '(31) 98247-1144', '2025-10-28 17:37:05', NULL, NULL),
+(27, 'arthurlsaraiva1@gmail.com', '$2b$10$fZ8q6mMsfMzdanFnAgL06ONstWB1yyPXyp3mNjTkOuBz89yqhnCNm', 'Joaovv@gmail.com', 'aluno', 'ativo', 'Arthur L. Saraiva', '99999999999', '(31) 98247-1144', '2025-10-28 17:59:54', '/uploads/download-1761674394496.jpg', NULL),
+(28, 'arthurlsaraiva1h@gmail.com', '$2b$10$8NuHVqMJfQUwIMx9a1lRI.aRwMHsrUP7FoFxvj8nY2QKzKGxJyAq.', 'arthur11@gmail.com', 'aluno', 'ativo', 'Arthur Teste', '77777777777', '(31) 98247-1144', '2025-10-28 20:31:25', '/uploads/download-1761683485087.jpg', NULL);
 
 --
 -- Acionadores `users`
@@ -2023,6 +2165,13 @@ ALTER TABLE `disponibilidade`
   ADD KEY `professor_id` (`professor_id`);
 
 --
+-- Índices de tabela `documentos_alunos`
+--
+ALTER TABLE `documentos_alunos`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_aluno_tipo` (`aluno_id`,`tipo_documento`);
+
+--
 -- Índices de tabela `envios`
 --
 ALTER TABLE `envios`
@@ -2204,7 +2353,9 @@ ALTER TABLE `professores_turmas`
 -- Índices de tabela `responsaveis`
 --
 ALTER TABLE `responsaveis`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_cpf` (`cpf`),
+  ADD UNIQUE KEY `uk_email` (`email`);
 
 --
 -- Índices de tabela `seguidores`
@@ -2263,7 +2414,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de tabela `alunos_responsaveis`
 --
 ALTER TABLE `alunos_responsaveis`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT de tabela `alunos_turmas`
@@ -2371,7 +2522,7 @@ ALTER TABLE `cursos`
 -- AUTO_INCREMENT de tabela `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_eventos`
@@ -2383,7 +2534,7 @@ ALTER TABLE `cursos_eventos`
 -- AUTO_INCREMENT de tabela `cursos_posgraduacao`
 --
 ALTER TABLE `cursos_posgraduacao`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_ppc`
@@ -2402,6 +2553,12 @@ ALTER TABLE `descontos`
 --
 ALTER TABLE `disponibilidade`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `documentos_alunos`
+--
+ALTER TABLE `documentos_alunos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de tabela `envios`
@@ -2536,6 +2693,12 @@ ALTER TABLE `professores_turmas`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT de tabela `responsaveis`
+--
+ALTER TABLE `responsaveis`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
 -- AUTO_INCREMENT de tabela `transacoes`
 --
 ALTER TABLE `transacoes`
@@ -2557,7 +2720,7 @@ ALTER TABLE `turmas_materias`
 -- AUTO_INCREMENT de tabela `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- Restrições para tabelas despejadas
@@ -2568,13 +2731,6 @@ ALTER TABLE `users`
 --
 ALTER TABLE `alunos`
   ADD CONSTRAINT `fk_aluno_user` FOREIGN KEY (`id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Restrições para tabelas `alunos_responsaveis`
---
-ALTER TABLE `alunos_responsaveis`
-  ADD CONSTRAINT `alunos_responsaveis_ibfk_1` FOREIGN KEY (`aluno_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `alunos_responsaveis_ibfk_2` FOREIGN KEY (`responsavel_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `alunos_turmas`
