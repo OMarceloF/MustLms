@@ -4,514 +4,476 @@ import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-
+import { toast } from 'sonner';
 import SidebarGestor from './components/Sidebar';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
-import { toast } from 'sonner';
+import { 
+  User, Mail, Phone, BadgeCheck, ShieldCheck, Home, Calendar, Fingerprint, 
+  KeyRound, UserSquare, Users, Edit, Loader2, Save, XCircle, FileText, Download, FileSignature 
+} from 'lucide-react';
 
-// As interfaces antigas não são mais necessárias, pois o Zod cuidará da tipagem.
+// --- INTERFACES E TIPOS ---
+interface AlunoData {
+  nome: string;
+  email: string;
+  telefone: string;
+  matricula: string;
+  cpf: string;
+  rg: string;
+  data_nascimento: string;
+  genero: string;
+  login: string;
+  foto_url: string;
+  endereco: {
+    cep?: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    cidade?: string;
+    estado?: string;
+  };
+  responsaveis: Responsavel[];
+  documentos: Documento[];
+  contratos: Contrato[];
+}
 
-// As funções de formatação são úteis, vamos mantê-las
-const formatCPF = (value: string): string => {
-  // 1. Remove tudo que não for dígito
-  const numericValue = value.replace(/\D/g, '');
+interface Responsavel {
+  id: number;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  grau_parentesco: string;
+  responsavel_financeiro: 'Sim' | 'Não';
+}
 
-  // 2. Limita a 11 dígitos
-  const truncatedValue = numericValue.slice(0, 11);
+interface Documento {
+    id: number;
+    tipo_documento: string;
+    caminho_arquivo: string;
+    nome_original: string;
+    data_upload: string;
+}
 
-  // 3. Aplica a máscara
-  if (truncatedValue.length > 9) {
-    return truncatedValue.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  } else if (truncatedValue.length > 6) {
-    return truncatedValue.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
-  } else if (truncatedValue.length > 3) {
-    return truncatedValue.replace(/(\d{3})(\d{1,3})/, '$1.$2');
-  }
+interface Contrato {
+    id: number;
+    nome_contrato: string;
+    situacao_contrato: string;
+    contrato_url: string | null;
+    criado_em: string;
+}
 
-  return truncatedValue;
+// --- FUNÇÕES DE FORMATAÇÃO ---
+const formatCPF = (value: string = ''): string => {
+  const numericValue = (value || '').replace(/\D/g, '').slice(0, 11);
+  return numericValue.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+};
+const formatTelefone = (value: string = ''): string => {
+  const numericValue = (value || '').replace(/\D/g, '').slice(0, 11);
+  if (numericValue.length > 10) return numericValue.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  return numericValue.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+};
+const formatDate = (dateString: string) => {
+  if (!dateString) return 'Não informado';
+  const date = new Date(dateString);
+  const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
+};
+const formatDateForInput = (dateString: string) => {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() + userTimezoneOffset).toISOString().split('T')[0];
+    } catch (e) {
+        return '';
+    }
+};
+const formatDocumentType = (type: string) => {
+    const formatted = type.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+    const typeMap: { [key: string]: string } = {
+        'Foto3x4': 'Foto 3x4',
+        'Comprovante Residencia': 'Comprovante de Residência',
+        'Documento Aluno': 'Documento do Aluno',
+        'Documento Responsavel': 'Documento do Responsável',
+        'Certidao Nascimento': 'Certidão de Nascimento',
+        'Historico Escolar': 'Histórico Escolar',
+        'Laudo Medico': 'Laudo Médico',
+        'Adicionais': 'Adicional'
+    };
+    return typeMap[formatted] || formatted;
 };
 
-const formatTelefone = (value: string): string => {
-  const numericValue = value.replace(/\D/g, '');
-  const truncatedValue = numericValue.slice(0, 11);
-
-  if (truncatedValue.length > 10) {
-    // Celular com 9 dígitos: (XX) XXXXX-XXXX
-    return truncatedValue.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  } else if (truncatedValue.length > 6) {
-    // Telefone fixo ou celular com 8 dígitos: (XX) XXXX-XXXX
-    return truncatedValue.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-  } else if (truncatedValue.length > 2) {
-    return truncatedValue.replace(/(\d{2})(\d{0,5})/, '($1) $2');
-  }
-
-  return truncatedValue.replace(/(\d*)/, '($1');
-};
-
-const formatCEP = (value: string): string => {
-  // 1. Remove tudo que não for dígito
-  const numericValue = value.replace(/\D/g, '');
-
-  // 2. Limita a 8 dígitos
-  const truncatedValue = numericValue.slice(0, 8);
-
-  // 3. Aplica a máscara
-  if (truncatedValue.length > 5) {
-    return truncatedValue.replace(/(\d{5})(\d{1,3})/, '$1-$2');
-  }
-
-  return truncatedValue;
-};
-
+// --- SCHEMA DE VALIDAÇÃO ---
 const formSchema = z.object({
-  // --- Dados do Aluno ---
   nome: z.string().min(3, "O nome deve ter pelo menos 3 caracteres."),
   email: z.string().email("Email inválido."),
-  matricula: z.string().min(5, "A matrícula deve ter pelo menos 5 caracteres."),
+  telefone: z.string().optional(),
   cpf: z.string().min(14, "CPF inválido."),
+  rg: z.string().optional(),
   data_nascimento: z.string().min(1, "A data de nascimento é obrigatória."),
   genero: z.string().optional(),
-
-  // --- Informações de Acesso ---
   login: z.string().min(3, "O login deve ter pelo menos 3 caracteres."),
-  senha: z.string().optional().refine(val => !val || val.length >= 6, {
-    message: "A nova senha deve ter pelo menos 6 caracteres.",
-  }),
-  // --- Dados do Responsável Principal ---
-  responsavel_nome: z.string().min(3, "O nome do responsável é obrigatório."),
-  responsavel_cpf: z.string().min(14, "CPF inválido."), // 11.111.111-11
-  responsavel_email: z.string().email("Email do responsável inválido."),
-  responsavel_telefone: z.string().min(14, "Telefone inválido."), // (11) 91111-1111
-  responsavel_parentesco: z.string().min(1, "O parentesco é obrigatório."),
-
-  // --- Endereço ---
-  endereco_cep: z.string().min(9, "CEP inválido."), // 11111-111
-  endereco_logradouro: z.string().min(1, "O logradouro é obrigatório."),
-  endereco_numero: z.string().min(1, "O número é obrigatório."),
-  endereco_complemento: z.string().optional(),
-  endereco_bairro: z.string().min(1, "O bairro é obrigatório."),
-  endereco_cidade: z.string().min(1, "A cidade é obrigatória."),
-  endereco_uf: z.string().min(2, "O estado é obrigatório."),
-  
-  // ADICIONE ESTES CAMPOS DE SAÚDE
-  saude_tem_alergia: z.coerce.boolean().optional(), // Usa z.coerce.boolean()
-  saude_alergias_descricao: z.string().optional(),
-  saude_usa_medicacao: z.coerce.boolean().optional(), // Usa z.coerce.boolean()
-  saude_medicacao_descricao: z.string().optional(),
-  saude_plano: z.string().optional(),
-  saude_plano_numero: z.string().optional(),
-  saude_contato_emergencia_nome: z.string().optional(),
-  saude_contato_emergencia_telefone: z.string().optional(),
-  
-
-  // ADICIONE ESTES CAMPOS FINANCEIROS
-  mensalidade_valor: z.string().optional(),
-  mensalidade_data_inicial: z.string().optional(),
-  hasDesconto: z.coerce.boolean().optional(),
-  desconto_percentual: z.string().optional(),
-  desconto_descricao: z.string().optional(),
-  desconto_data_inicio: z.string().optional(),
-  desconto_data_fim: z.string().optional(),
+  senha: z.string().optional().refine(val => !val || val.length >= 6, { message: "A nova senha deve ter pelo menos 6 caracteres." }),
+  "endereco.cep": z.string().optional(),
+  "endereco.logradouro": z.string().optional(),
+  "endereco.numero": z.string().optional(),
+  "endereco.complemento": z.string().optional(),
+  "endereco.bairro": z.string().optional(),
+  "endereco.cidade": z.string().optional(),
+  "endereco.estado": z.string().optional(),
 });
-
 type FormValues = z.infer<typeof formSchema>;
 
+// --- COMPONENTES AUXILIARES ---
+const InfoItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string | undefined | null }) => (
+  <div>
+    <p className="text-xs font-semibold text-gray-500 flex items-center gap-1.5"><Icon className="h-3.5 w-3.5" />{label}</p>
+    <p className="text-sm font-medium text-gray-800 mt-1">{value || 'Não informado'}</p>
+  </div>
+);
+const CardSection = ({ title, children }: { title: string, children: React.ReactNode }) => (
+  <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div className="p-4 border-b border-gray-200"><h3 className="text-lg font-semibold text-gray-800">{title}</h3></div>
+    <div className="p-6">{children}</div>
+  </div>
+);
+const FormInput = ({ label, id, error, ...props }: any) => (
+    <div>
+        <label htmlFor={id} className="block text-xs font-medium text-gray-600">{label}</label>
+        <input id={id} className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" {...props} />
+        {error && <p className="mt-1 text-xs text-red-600">{error.message}</p>}
+    </div>
+);
+const FileItem = ({ icon: Icon, label, fileName, filePath }: { icon: React.ElementType, label: string, fileName: string, filePath: string }) => (
+    <div className="border border-gray-200 rounded-lg p-3 flex items-center justify-between gap-4 hover:bg-gray-50">
+        <div className="flex items-center gap-3 overflow-hidden">
+            <Icon className="h-6 w-6 text-gray-500 flex-shrink-0" />
+            <div className="overflow-hidden">
+                <p className="text-sm font-semibold text-gray-700 truncate">{label}</p>
+                <p className="text-xs text-gray-500 truncate">{fileName}</p>
+            </div>
+        </div>
+        <a 
+            href={filePath} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition flex-shrink-0"
+        >
+            <Download className="h-3.5 w-3.5" />
+            Ver
+        </a>
+    </div>
+);
+
+// --- COMPONENTE PRINCIPAL ---
 const EditarAlunoPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // 1. ESTADOS REDUZIDOS: Apenas o que NÃO pertence ao formulário
   const [sidebarAberta, setSidebarAberta] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>('');
-
+  const [aluno, setAluno] = useState<AlunoData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
 
-  // 2. SETUP DO REACT-HOOK-FORM
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm<FormValues>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    // Valores padrão para evitar erro de "componente não controlado"
-    defaultValues: {
-      // Definindo valores padrão para todos os campos
-      nome: "",
-      email: "",
-      matricula: "",
-      cpf: "",
-      data_nascimento: "",
-      genero: "",
-      login: "",
-      senha: "",
-      responsavel_nome: "",
-      responsavel_cpf: "",
-      responsavel_email: "",
-      responsavel_telefone: "",
-      responsavel_parentesco: "",
-      endereco_cep: "",
-      endereco_logradouro: "",
-      endereco_numero: "",
-      endereco_complemento: "",
-      endereco_bairro: "",
-      endereco_cidade: "",
-      endereco_uf: "",
-      saude_tem_alergia: false,
-      saude_alergias_descricao: "",
-      saude_usa_medicacao: false,
-      saude_medicacao_descricao: "",
-      saude_plano: "",
-      saude_plano_numero: "",
-      saude_contato_emergencia_nome: "",
-      saude_contato_emergencia_telefone: "",
-      mensalidade_valor: "",
-      mensalidade_data_inicial: "",
-      hasDesconto: false,
-      desconto_percentual: "",
-      desconto_descricao: "",
-      desconto_data_inicio: "",
-      desconto_data_fim: "",
-    },
   });
 
-  const temAlergia = watch("saude_tem_alergia");
-  const usaMedicacao = watch("saude_usa_medicacao");
-
-  // 3. FETCH UNIFICADO DOS DADOS
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
       setIsLoading(true);
       try {
-        // Este é o endpoint que precisamos criar no backend
         const response = await axios.get(`/api/alunos/${id}/edit-data`);
-        const data = response.data;
-
-        // O `reset` preenche o formulário com os dados da API
-        reset(data);
-
-        // Lógica para definir o preview da foto inicial
-        if (data.foto_url) {
-          setPreviewUrl(`/${data.foto_url}`);
-        }
+        setAluno(response.data);
+        setPreviewUrl(response.data.foto_url || '');
       } catch (err) {
-        console.error('Erro ao buscar dados do aluno:', err);
-        setError('Não foi possível carregar os dados para edição.');
+        setError('Não foi possível carregar os dados do aluno.');
+        toast.error('Falha ao carregar dados do aluno.');
       } finally {
         setIsLoading(false);
       }
     };
-
     fetchData();
-  }, [id, reset]);
+  }, [id]);
 
-  // 4. FUNÇÃO DE SUBMISSÃO SIMPLIFICADA
+  const handleEditToggle = () => {
+    if (!isEditing && aluno) {
+      reset({
+        nome: aluno.nome,
+        email: aluno.email,
+        login: aluno.login,
+        cpf: formatCPF(aluno.cpf),
+        rg: aluno.rg,
+        telefone: formatTelefone(aluno.telefone),
+        data_nascimento: formatDateForInput(aluno.data_nascimento),
+        genero: aluno.genero,
+        "endereco.cep": aluno.endereco?.cep,
+        "endereco.logradouro": aluno.endereco?.logradouro,
+        "endereco.numero": aluno.endereco?.numero,
+        "endereco.complemento": aluno.endereco?.complemento,
+        "endereco.bairro": aluno.endereco?.bairro,
+        "endereco.cidade": aluno.endereco?.cidade,
+        "endereco.estado": aluno.endereco?.estado,
+        senha: '',
+      });
+    } else if (isEditing && aluno) {
+      setFotoFile(null);
+      setPreviewUrl(aluno.foto_url || '');
+    }
+    setIsEditing(!isEditing);
+  };
+
   const onSubmit = async (data: FormValues) => {
+    if (!aluno) return;
     setIsSaving(true);
-    setError('');
-
     const formPayload = new FormData();
+    
+    const endereco = { cep: data["endereco.cep"], logradouro: data["endereco.logradouro"], numero: data["endereco.numero"], complemento: data["endereco.complemento"], bairro: data["endereco.bairro"], cidade: data["endereco.cidade"], estado: data["endereco.estado"] };
+    formPayload.append('endereco', JSON.stringify(endereco));
 
-    // Adiciona todos os campos do formulário ao payload
     Object.entries(data).forEach(([key, value]) => {
-      if (key === 'senha' && !value) return; // Não envia senha se estiver vazia
-      if (value) {
-        formPayload.append(key, value as string);
-      }
+      if (key.startsWith('endereco.')) return;
+      if (key === 'senha' && !value) return;
+      let finalValue = (['cpf', 'telefone'].includes(key)) ? String(value || '').replace(/\D/g, '') : value;
+      if (finalValue !== null && finalValue !== undefined) formPayload.append(key, String(finalValue));
     });
 
-    if (fotoFile) {
-      formPayload.append('foto', fotoFile);
-    }
+    if (fotoFile) formPayload.append('foto', fotoFile);
 
     try {
-      // O endpoint PUT que receberá todos os dados
-      await axios.put(`/api/alunos/${id}`, formPayload, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      toast.success('Aluno atualizado com sucesso!');
-      navigate('/gestor', { state: { activePage: 'alunos' } });
+      const response = await axios.put(`/api/alunos/${id}`, formPayload, { headers: { 'Content-Type': 'multipart/form-data' } });
+      
+      const updatedAlunoData = {
+        ...aluno,
+        ...data,
+        cpf: String(data.cpf).replace(/\D/g, ''),
+        telefone: String(data.telefone).replace(/\D/g, ''),
+        endereco,
+        foto_url: response.data.fotoUrl || aluno.foto_url,
+      };
+      setAluno(updatedAlunoData);
+      setPreviewUrl(response.data.fotoUrl || previewUrl);
+      
+      toast.success('Dados atualizados com sucesso!');
+      setIsEditing(false);
     } catch (err: any) {
-      console.error('Erro ao atualizar aluno:', err);
-      setError(err.response?.data?.message || 'Ocorreu um erro ao salvar.');
-      toast.error(err);
+      toast.error(err.response?.data?.message || 'Erro ao salvar.');
     } finally {
       setIsSaving(false);
     }
   };
 
-
-  if (isLoading) {
-    return <div className="p-6 text-center">Carregando dados para edição...</div>;
-  }
-
-  if (error) {
-    return <div className="p-6 text-center text-red-500">{error}</div>;
-  }
-
+  if (isLoading) return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  if (error || !aluno) return <div className="m-6 p-6 text-center text-red-700 bg-red-100 rounded-lg">{error || 'Aluno não encontrado.'}</div>;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <SidebarGestor
-        isMenuOpen={sidebarAberta}
-        setActivePage={(page) => navigate('/gestor', { state: { activePage: page } })}
-        handleMouseEnter={() => setSidebarAberta(true)}
-        handleMouseLeave={() => setSidebarAberta(false)}
-      />
+    <div className="flex min-h-screen bg-gray-100">
+      <SidebarGestor isMenuOpen={sidebarAberta} setActivePage={(page) => navigate(`/gestor/${page}`)} />
       <div className="flex-1 flex flex-col min-w-0">
         <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
-        <main className="flex-1 p-4 flex justify-center items-start mt-20">
-          <div className="w-full max-w-4xl bg-white rounded-xl shadow-lg p-6 sm:p-8 mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-indigo-900 mb-8 text-center">Editar Aluno</h1>
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
-
-              {Object.keys(errors).length > 0 && (
-                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4" role="alert">
-                  <p className="font-bold">Erros de Validação nos seguintes campos:</p>
-                  <ul className="mt-2 list-disc list-inside">
-                    {Object.keys(errors).map(key => (
-                      <li key={key}>{key}</li>
-                    ))}
-                  </ul>
+        <main className="flex-1 p-4 md:p-6 mt-16">
+          <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-6xl mx-auto space-y-8">
+            
+            {/* CABEÇALHO */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col sm:flex-row items-center gap-6">
+              <div className="relative">
+                <img src={previewUrl || '/placeholder-avatar.png'} alt={`Foto de ${aluno.nome}`} className="h-28 w-28 object-cover rounded-full border-4 border-white shadow-md" />
+                {isEditing && (
+                    <label className="absolute -bottom-2 -right-2 cursor-pointer bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition">
+                        <Edit className="h-4 w-4" />
+                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) { setFotoFile(file); setPreviewUrl(URL.createObjectURL(file)); }
+                        }} />
+                    </label>
+                )}
+              </div>
+              <div className="text-center sm:text-left flex-1">
+                <h1 className="text-3xl font-bold text-gray-900">{isEditing ? 'Editando Perfil' : aluno.nome}</h1>
+                <p className="text-md text-gray-500 mt-1">Matrícula: {aluno.matricula}</p>
+              </div>
+              {!isEditing ? (
+                <button type="button" onClick={handleEditToggle} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+                  <Edit className="h-4 w-4" /> Editar Cadastro
+                </button>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button type="button" onClick={handleEditToggle} className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                    <XCircle className="h-4 w-4" /> Cancelar
+                  </button>
+                  <button type="submit" disabled={isSaving} className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:opacity-50">
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar
+                  </button>
                 </div>
               )}
+            </div>
 
-              {/* --- SEÇÃO: FOTO --- */}
-              <div>
-                <label className="block text-sm font-medium text-indigo-900 mb-2">Foto do Aluno</label>
-                <div className='flex items-center gap-4'>
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="Foto do aluno"
-                      className="h-24 w-24 object-cover rounded-full border-4 border-white shadow-md"
-                    />
-                  ) : (
-                    <div className="h-24 w-24 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
-                      Sem Foto
+            {/* SEÇÕES DE DADOS */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-8">
+                {/* INFORMAÇÕES PESSOAIS */}
+                <CardSection title="Informações Pessoais">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {isEditing ? (
+                      <>
+                        <div className="md:col-span-3"><FormInput label="Nome Completo" id="nome" {...register("nome")} error={errors.nome} /></div>
+                        <FormInput label="Data de Nascimento" id="data_nascimento" type="date" {...register("data_nascimento")} error={errors.data_nascimento} />
+                        <FormInput label="CPF" id="cpf" {...register("cpf", { onChange: (e) => e.target.value = formatCPF(e.target.value) })} error={errors.cpf} />
+                        <FormInput label="RG" id="rg" {...register("rg")} />
+                        <FormInput label="Email" id="email" type="email" {...register("email")} error={errors.email} />
+                        <FormInput label="Telefone" id="telefone" {...register("telefone", { onChange: (e) => e.target.value = formatTelefone(e.target.value) })} />
+                        <div>
+                            <label htmlFor="genero" className="block text-xs font-medium text-gray-600">Gênero</label>
+                            <select id="genero" {...register("genero")} className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="Masculino">Masculino</option>
+                                <option value="Feminino">Feminino</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <InfoItem icon={User} label="Nome Completo" value={aluno.nome} />
+                        <InfoItem icon={Calendar} label="Data de Nascimento" value={formatDate(aluno.data_nascimento)} />
+                        <InfoItem icon={UserSquare} label="Gênero" value={aluno.genero} />
+                        <InfoItem icon={Fingerprint} label="CPF" value={formatCPF(aluno.cpf)} />
+                        <InfoItem icon={Fingerprint} label="RG" value={aluno.rg} />
+                        <InfoItem icon={BadgeCheck} label="Matrícula" value={aluno.matricula} />
+                        <InfoItem icon={Mail} label="Email" value={aluno.email} />
+                        <InfoItem icon={Phone} label="Telefone" value={formatTelefone(aluno.telefone)} />
+                      </>
+                    )}
+                  </div>
+                </CardSection>
+
+                {/* ENDEREÇO */}
+                <CardSection title="Endereço">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {isEditing ? (
+                        <>
+                          <FormInput label="CEP" id="endereco.cep" {...register("endereco.cep")} />
+                          <div className="md:col-span-2"><FormInput label="Logradouro" id="endereco.logradouro" {...register("endereco.logradouro")} /></div>
+                          <FormInput label="Número" id="endereco.numero" {...register("endereco.numero")} />
+                          <FormInput label="Bairro" id="endereco.bairro" {...register("endereco.bairro")} />
+                          <FormInput label="Cidade" id="endereco.cidade" {...register("endereco.cidade")} />
+                          <FormInput label="UF" id="endereco.estado" {...register("endereco.estado")} />
+                          <div className="md:col-span-3"><FormInput label="Complemento" id="endereco.complemento" {...register("endereco.complemento")} /></div>
+                        </>
+                    ) : (
+                        <>
+                          <InfoItem icon={Home} label="CEP" value={aluno.endereco?.cep} />
+                          <div className="sm:col-span-2"><InfoItem icon={Home} label="Logradouro" value={aluno.endereco?.logradouro} /></div>
+                          <InfoItem icon={Home} label="Número" value={aluno.endereco?.numero} />
+                          <InfoItem icon={Home} label="Bairro" value={aluno.endereco?.bairro} />
+                          <InfoItem icon={Home} label="Cidade" value={aluno.endereco?.cidade} />
+                          <InfoItem icon={Home} label="UF" value={aluno.endereco?.estado} />
+                          {aluno.endereco?.complemento && <div className="sm:col-span-3"><InfoItem icon={Home} label="Complemento" value={aluno.endereco.complemento} /></div>}
+                        </>
+                    )}
+                  </div>
+                </CardSection>
+              </div>
+
+              {/* COLUNA DIREITA */}
+              <div className="space-y-8">
+                {/* ACESSO AO SISTEMA */}
+                <CardSection title="Acesso ao Sistema">
+                    <div className="space-y-6">
+                        {isEditing ? (
+                            <>
+                                <FormInput label="Login de Acesso" id="login" {...register("login")} error={errors.login} />
+                                <FormInput label="Nova Senha" id="senha" type="password" placeholder="Deixe em branco para não alterar" {...register("senha")} error={errors.senha} />
+                            </>
+                        ) : (
+                            <>
+                                <InfoItem icon={User} label="Login de Acesso" value={aluno.login} />
+                                <InfoItem icon={KeyRound} label="Senha" value="•••••••• (oculta por segurança)" />
+                            </>
+                        )}
                     </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setFotoFile(file);
-                        setPreviewUrl(URL.createObjectURL(file));
-                      }
-                    }}
-                    className="file-input-style" // Use uma classe de estilo consistente
-                  />
-                </div>
-              </div>
+                </CardSection>
 
-              {/* --- SEÇÃO: DADOS PESSOAIS DO ALUNO --- */}
-              <div className="border-t border-indigo-200 pt-6">
-                <h2 className="text-lg font-semibold text-indigo-900 mb-4">Dados Pessoais</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label htmlFor="nome" className="block text-sm font-medium text-indigo-900">Nome Completo</label>
-                    <input id="nome" type="text" {...register("nome")} className="mt-1 w-full input-style" />
-                    {errors.nome && <p className="error-message">{errors.nome.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="data_nascimento" className="block text-sm font-medium text-indigo-900">Data de Nascimento</label>
-                    <input id="data_nascimento" type="date" {...register("data_nascimento")} className="mt-1 w-full input-style" />
-                    {errors.data_nascimento && <p className="error-message">{errors.data_nascimento.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="genero" className="block text-sm font-medium text-indigo-900">Gênero</label>
-                    <select id="genero" {...register("genero")} className="mt-1 w-full input-style">
-                      <option value="">Selecione...</option>
-                      <option value="Masculino">Masculino</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
-                      <option value="Prefiro não informar">Prefiro não informar</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-indigo-900">Email</label>
-                    <input id="email" type="email" {...register("email")} className="mt-1 w-full input-style" />
-                    {errors.email && <p className="error-message">{errors.email.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="matricula" className="block text-sm font-medium text-indigo-900">Matrícula</label>
-                    <input id="matricula" type="text" {...register("matricula")} className="mt-1 w-full input-style" />
-                    {errors.matricula && <p className="error-message">{errors.matricula.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="cpf" className="block text-sm font-medium text-indigo-900">CPF do Aluno</label>
-                    <input id="cpf" type="text" {...register("cpf", { onChange: (e) => e.target.value = formatCPF(e.target.value) })} className="mt-1 w-full input-style" />
-                    {errors.cpf && <p className="error-message">{errors.cpf.message}</p>}
-                  </div>
-                </div>
+                {/* ======================================================================= */}
+                {/* MODIFICAÇÃO 5: Nova seção para exibir documentos */}
+                {/* ======================================================================= */}
+                <CardSection title="Documentos Enviados">
+                    {aluno.documentos.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {aluno.documentos.map(doc => (
+                                <FileItem 
+                                    key={doc.id}
+                                    icon={FileText}
+                                    label={formatDocumentType(doc.tipo_documento)}
+                                    fileName={doc.nome_original}
+                                    filePath={doc.caminho_arquivo}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-center text-sm text-gray-500 py-4">Nenhum documento encontrado.</p>
+                    )}
+                </CardSection>
               </div>
-
-              {/* --- SEÇÃO: DADOS DO RESPONSÁVEL --- */}
-              <div className="border-t border-indigo-200 pt-6">
-                <h2 className="text-lg font-semibold text-indigo-900 mb-4">Dados do Responsável Principal</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label htmlFor="responsavel_nome" className="block text-sm font-medium text-indigo-900">Nome Completo do Responsável</label>
-                    <input id="responsavel_nome" type="text" {...register("responsavel_nome")} className="mt-1 w-full input-style" />
-                    {errors.responsavel_nome && <p className="error-message">{errors.responsavel_nome.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="responsavel_cpf" className="block text-sm font-medium text-indigo-900">CPF</label>
-                    <input id="responsavel_cpf" type="text" {...register("responsavel_cpf", { onChange: (e) => e.target.value = formatCPF(e.target.value) })} placeholder="000.000.000-00" className="mt-1 w-full input-style" />
-                    {errors.responsavel_cpf && <p className="error-message">{errors.responsavel_cpf.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="responsavel_parentesco" className="block text-sm font-medium text-indigo-900">Parentesco</label>
-                    <select id="responsavel_parentesco" {...register("responsavel_parentesco")} className="mt-1 w-full input-style">
-                      <option value="">Selecione...</option>
-                      <option value="Pai">Pai</option>
-                      <option value="Mãe">Mãe</option>
-                      <option value="Avô/Avó">Avô/Avó</option>
-                      <option value="Tio/Tia">Tio/Tia</option>
-                      <option value="Outro">Outro</option>
-                    </select>
-                    {errors.responsavel_parentesco && <p className="error-message">{errors.responsavel_parentesco.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="responsavel_email" className="block text-sm font-medium text-indigo-900">Email do Responsável</label>
-                    <input id="responsavel_email" type="email" {...register("responsavel_email")} className="mt-1 w-full input-style" />
-                    {errors.responsavel_email && <p className="error-message">{errors.responsavel_email.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="responsavel_telefone" className="block text-sm font-medium text-indigo-900">Telefone do Responsável</label>
-                    <input id="responsavel_telefone" type="text" {...register("responsavel_telefone", { onChange: (e) => e.target.value = formatTelefone(e.target.value) })} placeholder="(00) 00000-0000" className="mt-1 w-full input-style" />
-                    {errors.responsavel_telefone && <p className="error-message">{errors.responsavel_telefone.message}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* --- SEÇÃO: ENDEREÇO --- */}
-              <div className="border-t border-indigo-200 pt-6">
-                <h2 className="text-lg font-semibold text-indigo-900 mb-4">Endereço</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label htmlFor="endereco_cep" className="block text-sm font-medium text-indigo-900">CEP</label>
-                    <input id="endereco_cep" type="text" {...register("endereco_cep", { onChange: (e) => e.target.value = formatCEP(e.target.value) })} placeholder="00000-000" className="mt-1 w-full input-style" />
-                    {errors.endereco_cep && <p className="error-message">{errors.endereco_cep.message}</p>}
-                  </div>
-                  <div className="md:col-span-2">
-                    <label htmlFor="endereco_logradouro" className="block text-sm font-medium text-indigo-900">Logradouro</label>
-                    <input id="endereco_logradouro" type="text" {...register("endereco_logradouro")} className="mt-1 w-full input-style" />
-                    {errors.endereco_logradouro && <p className="error-message">{errors.endereco_logradouro.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="endereco_numero" className="block text-sm font-medium text-indigo-900">Número</label>
-                    <input id="endereco_numero" type="text" {...register("endereco_numero")} className="mt-1 w-full input-style" />
-                    {errors.endereco_numero && <p className="error-message">{errors.endereco_numero.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="endereco_complemento" className="block text-sm font-medium text-indigo-900">Complemento</label>
-                    <input id="endereco_complemento" type="text" {...register("endereco_complemento")} className="mt-1 w-full input-style" />
-                  </div>
-                  <div>
-                    <label htmlFor="endereco_bairro" className="block text-sm font-medium text-indigo-900">Bairro</label>
-                    <input id="endereco_bairro" type="text" {...register("endereco_bairro")} className="mt-1 w-full input-style" />
-                    {errors.endereco_bairro && <p className="error-message">{errors.endereco_bairro.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="endereco_cidade" className="block text-sm font-medium text-indigo-900">Cidade</label>
-                    <input id="endereco_cidade" type="text" {...register("endereco_cidade")} className="mt-1 w-full input-style" />
-                    {errors.endereco_cidade && <p className="error-message">{errors.endereco_cidade.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="endereco_uf" className="block text-sm font-medium text-indigo-900">Estado (UF)</label>
-                    <input id="endereco_uf" type="text" {...register("endereco_uf")} className="mt-1 w-full input-style" />
-                    {errors.endereco_uf && <p className="error-message">{errors.endereco_uf.message}</p>}
-                  </div>
-                </div>
-              </div>
-              {/* --- SEÇÃO: SAÚDE --- */}
-              <div className="border-b border-indigo-300 pb-6">
-                <h2 className="text-lg font-semibold text-indigo-900 mb-4">Informações de Saúde</h2>
+            </div>
+            
+            {/* RESPONSÁVEIS VINCULADOS */}
+            <CardSection title="Responsáveis Vinculados">
+              {aluno.responsaveis.length > 0 ? (
                 <div className="space-y-4">
-                  <div className="flex items-start">
-                    <input id="saude_tem_alergia" type="checkbox" {...register("saude_tem_alergia")} className="h-4 w-4 mt-1 checkbox-style" />
-                    <div className="ml-3 text-sm">
-                      <label htmlFor="saude_tem_alergia" className="font-medium text-indigo-900">Possui alguma alergia?</label>
-                      {temAlergia && (
-                        <textarea {...register("saude_alergias_descricao")} placeholder="Descreva as alergias..." className="mt-2 w-full input-style" rows={2}></textarea>
-                      )}
+                  {aluno.responsaveis.map((resp) => (
+                    <div key={resp.id} className="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row items-start gap-4">
+                      <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-6 w-6 text-gray-500" /></div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-gray-900">{resp.nome}</p>
+                          {resp.responsavel_financeiro === 'Sim' && <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium"><ShieldCheck className="h-3 w-3" /> Financeiro</span>}
+                        </div>
+                        <p className="text-sm text-gray-600">{resp.grau_parentesco}</p>
+                        <div className="mt-2 flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                          <span className="flex items-center gap-1.5"><Mail className="h-4 w-4" /> {resp.email || 'N/A'}</span>
+                          <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" /> {formatTelefone(resp.telefone)}</span>
+                          <span className="flex items-center gap-1.5"><BadgeCheck className="h-4 w-4" /> CPF: {formatCPF(resp.cpf)}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-start">
-                    <input id="saude_usa_medicacao" type="checkbox" {...register("saude_usa_medicacao")} className="h-4 w-4 mt-1 checkbox-style" />
-                    <div className="ml-3 text-sm">
-                      <label htmlFor="saude_usa_medicacao" className="font-medium text-indigo-900">Usa medicação contínua?</label>
-                      {usaMedicacao && (
-                        <textarea {...register("saude_medicacao_descricao")} placeholder="Descreva os medicamentos e dosagens..." className="mt-2 w-full input-style" rows={2}></textarea>
-                      )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div>
-                      <label htmlFor="saude_plano" className="block text-sm font-medium text-indigo-900">Plano de Saúde</label>
-                      <input id="saude_plano" type="text" {...register("saude_plano")} className="mt-1 w-full input-style" />
-                    </div>
-                    <div>
-                      <label htmlFor="saude_plano_numero" className="block text-sm font-medium text-indigo-900">Número da Carteirinha</label>
-                      <input id="saude_plano_numero" type="text" {...register("saude_plano_numero")} className="mt-1 w-full input-style" />
-                    </div>
-                    <div>
-                      <label htmlFor="saude_contato_emergencia_nome" className="block text-sm font-medium text-indigo-900">Contato de Emergência (Nome)</label>
-                      <input id="saude_contato_emergencia_nome" type="text" {...register("saude_contato_emergencia_nome")} className="mt-1 w-full input-style" />
-                    </div>
-                    <div>
-                      <label htmlFor="saude_contato_emergencia_telefone" className="block text-sm font-medium text-indigo-900">Contato de Emergência (Telefone)</label>
-                      <input id="saude_contato_emergencia_telefone" type="text" {...register("saude_contato_emergencia_telefone")} placeholder="(00) 00000-0000" className="mt-1 w-full input-style" {...register("responsavel_telefone", {
-                        onChange: (e) => {
-                          e.target.value = formatTelefone(e.target.value);
-                        },
-                      })} />
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
+              ) : <p className="text-center text-gray-500 py-4">Nenhum responsável vinculado a este aluno.</p>}
+            </CardSection>
 
-              {/* --- SEÇÃO: INFORMAÇÕES DE ACESSO --- */}
-              <div className="border-t border-indigo-200 pt-6">
-                <h2 className="text-lg font-semibold text-indigo-900 mb-4">Informações de Acesso</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="login" className="block text-sm font-medium text-indigo-900">Login</label>
-                    <input id="login" type="text" {...register("login")} className="mt-1 w-full input-style" />
-                    {errors.login && <p className="error-message">{errors.login.message}</p>}
-                  </div>
-                  <div>
-                    <label htmlFor="senha" className="block text-sm font-medium text-indigo-900">Nova Senha</label>
-                    <input id="senha" type="password" {...register("senha")} className="mt-1 w-full input-style" placeholder="Deixe em branco para não alterar" />
-                    {errors.senha && <p className="error-message">{errors.senha.message}</p>}
-                  </div>
-                </div>
-              </div>
+            {/* ======================================================================= */}
+            {/* MODIFICAÇÃO 6: Nova seção para exibir contratos */}
+            {/* ======================================================================= */}
+            <CardSection title="Contratos Vinculados">
+                {aluno.contratos.length > 0 ? (
+                    <div className="space-y-3">
+                        {aluno.contratos.map(cont => (
+                            <FileItem
+                                key={cont.id}
+                                icon={FileSignature}
+                                label={cont.nome_contrato}
+                                fileName={`Situação: ${cont.situacao_contrato} - Criado em: ${formatDate(cont.criado_em)}`}
+                                filePath={cont.contrato_url || '#'}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-center text-sm text-gray-500 py-4">Nenhum contrato encontrado.</p>
+                )}
+            </CardSection>
 
-              {/* Botão de Salvar */}
-              <div className="flex justify-end gap-4 pt-4">
-                <button type="button" onClick={() => navigate(-1)} className="btn-secondary">Cancelar</button>
-                <button type="submit" className="btn-primary" disabled={isSaving}>
-                  {isSaving ? "Salvando..." : "Salvar Alterações"}
-                </button>
-              </div>
-            </form>
-          </div>
+          </form>
         </main>
       </div>
     </div>
   );
-}
+};
 
 export default EditarAlunoPage;
