@@ -5,7 +5,35 @@ import pool from '../config/db';
 import { ResultSetHeader } from 'mysql2';
 
 //==============================================================================
-// CRUD para Matriz Curricular (Tabela: cursos_disciplinas)
+// NOVA FUNÇÃO - Para a página de Gestão Escolar
+//==============================================================================
+
+/**
+ * @description Lista TODAS as disciplinas de pós-graduação para a página de gestão.
+ * @route GET /api/disciplinas-posgraduacao
+ */
+export const listarTodasDisciplinasPosGraduacao = async (req: Request, res: Response) => {
+  try {
+    const query = `
+      SELECT 
+        d.id, 
+        d.nome, 
+        c.nome AS breve_descricao 
+      FROM cursos_disciplinas AS d
+      JOIN cursos_posgraduacao AS c ON d.curso_id = c.id
+      ORDER BY d.nome ASC;
+    `;
+    const [rows] = await pool.query(query);
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Erro ao listar todas as disciplinas de pós-graduação:", error);
+    res.status(500).json({ message: "Erro interno ao buscar as disciplinas." });
+  }
+};
+
+
+//==============================================================================
+// CRUD para Matriz Curricular (Disciplinas de um CURSO ESPECÍFICO)
 //==============================================================================
 
 /**
