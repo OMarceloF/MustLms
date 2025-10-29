@@ -241,16 +241,30 @@ export function ResponsibleForm() {
     resetFormToEmpty();
   }
   
+  // =======================================================================
+  // CORREÇÃO APLICADA AQUI
+  // A lógica de validação foi movida para esta função.
+  // =======================================================================
   const handleContinue = () => {
-    if (list.length === 0) {
-      toast.error("É necessário cadastrar e vincular pelo menos um responsável para continuar.");
-      return;
-    }
+    // 1. Conta quantos responsáveis financeiros existem na lista.
     const financialResponsibleCount = list.filter(r => r.responsavel_financeiro === 'Sim').length;
+
+    // 2. Verifica a condição: deve ser exatamente 1.
     if (financialResponsibleCount === 0) {
-      toast.error("Nenhum responsável financeiro foi definido. Por favor, edite um responsável e marque-o como financeiro.");
-      return;
+      toast.error("Nenhum responsável financeiro foi definido.", {
+        description: "Por favor, edite um responsável e marque-o como financeiro para continuar.",
+      });
+      return; // Bloqueia o avanço
     }
+
+    if (financialResponsibleCount > 1) {
+      toast.error("Há mais de um responsável financeiro definido.", {
+        description: "Apenas um responsável pode ser o financeiro. Por favor, corrija a lista.",
+      });
+      return; // Bloqueia o avanço
+    }
+
+    // 3. Se a validação passar, permite o avanço.
     completeStep('responsible');
     setCurrentStep('documents');
   };

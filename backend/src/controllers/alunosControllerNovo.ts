@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import pool from '../config/db';
 
 // =================================================================================
-// FUNÇÕES DO NOVO FLUXO DE MATRÍCULA
+// FUNÇÕES DO FLUXO DE MATRÍCULA E EDIÇÃO
 // =================================================================================
 
 /**
@@ -18,7 +18,6 @@ export const buscarAlunoPorCPF = async (req: Request, res: Response) => {
     }
 
     try {
-        // CORREÇÃO: A query agora seleciona TODOS os campos necessários para o formulário.
         const [rows]: any[] = await pool.execute(
             `SELECT 
                 u.id, 
@@ -47,10 +46,9 @@ export const buscarAlunoPorCPF = async (req: Request, res: Response) => {
         
         const aluno = rows[0];
         try {
-            // Garante que o endereço seja um objeto, mesmo que seja nulo ou inválido no banco
             aluno.endereco = aluno.endereco ? JSON.parse(aluno.endereco) : {};
         } catch (e) {
-            aluno.endereco = {}; // Proteção contra JSON inválido
+            aluno.endereco = {};
         }
         
         res.status(200).json(aluno);
@@ -64,7 +62,7 @@ export const buscarAlunoPorCPF = async (req: Request, res: Response) => {
 /**
  * @route   POST /api/alunos
  * @route   PUT /api/alunos/:id
- * @desc    Cria um novo aluno ou atualiza um existente a partir do formulário de matrícula.
+ * @desc    Cria um novo aluno ou atualiza um existente.
  */
 export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
     const { id: alunoId } = req.params;
@@ -92,7 +90,6 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
         const sexoFormatado = sexo === 'Masculino' ? 'Masculino' : (sexo === 'Feminino' ? 'Feminino' : null);
         const enderecoJson = typeof endereco === 'string' ? endereco : (endereco ? JSON.stringify(endereco) : null);
 
-        // VERIFICAÇÃO DE UNICIDADE
         const [cpfExistente]: any[] = await connection.execute(
             'SELECT id FROM users WHERE cpf = ? AND id != ?',
             [cleanCpf, userId || 0]
@@ -112,7 +109,12 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
         if (userId) { // --- LÓGICA DE ATUALIZAÇÃO ---
             let userQuery = 'UPDATE users SET login = ?, email = ?, nome = ?, cpf = ?, telefone = ?';
             const userParams: any[] = [login, email, nome, cleanCpf, telefone];
-            if (fotoPath) {
+            if (senha) {
+                const senhaHash = await bcrypt.hash(senha, 10);
+                userQuery += ', senha = ?';
+                userParams.push(senhaHash);
+            }
+            if (foto) {
                 userQuery += ', foto_url = ?';
                 userParams.push(fotoPath);
             }
@@ -120,8 +122,8 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
             userParams.push(userId);
             await connection.execute(userQuery, userParams);
 
-            const alunoQuery = `UPDATE alunos SET nome = ?, cpf = ?, rg = ?, matricula = ?, data_nascimento = ?, email = ?, telefone = ?, genero = ?, biografia = ?, restricoes_medicas = ?, foto = ?, endereco = ? WHERE id = ?`;
-            await connection.execute(alunoQuery, [nome, cleanCpf, cleanRg, matricula, data_nascimento, email, telefone, sexoFormatado, biografia, restricoes_medicas, fotoPath, enderecoJson, userId]);
+            const alunoQuery = `UPDATE alunos SET nome = ?, cpf = ?, rg = ?, matricula = ?, data_nascimento = ?, email = ?, telefone = ?, genero = ?, biografia = ?, restricoes_medicas = ?, endereco = ? WHERE id = ?`;
+            await connection.execute(alunoQuery, [nome, cleanCpf, cleanRg, matricula, data_nascimento, email, telefone, sexoFormatado, biografia, restricoes_medicas, enderecoJson, userId]);
         
         } else { // --- LÓGICA DE CRIAÇÃO ---
             const senhaHash = await bcrypt.hash(senha, 10);
@@ -155,23 +157,100 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
     } catch (error: any) {
         await connection.rollback();
         console.error('Erro ao salvar dados do aluno:', error);
-        
-        if (error.message.includes('CPF') || error.message.includes('RG')) {
-            return res.status(409).json({ message: error.message });
+        if (error.message.includes('CPF') || error.message.includes('RG') || error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ message: error.message || 'O CPF, RG, Login ou E-mail informado já está cadastrado no sistema.' });
         }
-        
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(409).json({ message: 'O CPF, RG, Login ou E-mail informado já está cadastrado no sistema.' });
-        }
-
         res.status(500).json({ message: 'Erro interno ao salvar os dados do aluno.' });
     } finally {
         if (connection) connection.release();
     }
 };
 
+/**
+ * @route   GET /api/alunos/:id/edit-data
+ * @desc    Busca todos os dados agregados de um aluno para a página de edição.
+ */
+export const getAlunoEditData = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id) {
+        return res.status(400).json({ message: 'ID do aluno é obrigatório.' });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        // 1. Buscar dados principais do aluno
+        const [alunoRows]: any[] = await connection.execute(
+            `SELECT 
+                u.nome, u.email, u.login, u.foto_url, u.telefone,
+                a.matricula, a.cpf, a.rg, a.data_nascimento, a.genero, a.endereco
+             FROM users u
+             JOIN alunos a ON u.id = a.id
+             WHERE u.id = ?`,
+            [id]
+        );
+
+        if (alunoRows.length === 0) {
+            return res.status(404).json({ message: 'Aluno não encontrado.' });
+        }
+        const alunoData = alunoRows[0];
+
+        // 2. Buscar responsáveis vinculados
+        const [responsaveisRows]: any[] = await connection.execute(
+            `SELECT r.id, r.nome, r.cpf, r.email, r.numero1 as telefone, r.grau_parentesco, r.responsavel_financeiro
+             FROM responsaveis r
+             JOIN alunos_responsaveis ar ON r.id = ar.responsavel_id
+             WHERE ar.aluno_id = ?
+             ORDER BY r.responsavel_financeiro DESC, r.id ASC`,
+            [id]
+        );
+
+        // 3. Buscar documentos do aluno
+        const [documentosRows]: any[] = await connection.execute(
+            `SELECT id, tipo_documento, caminho_arquivo, nome_original, data_upload 
+             FROM documentos_alunos 
+             WHERE aluno_id = ? 
+             ORDER BY data_upload DESC`,
+            [id]
+        );
+
+        // 4. Buscar contratos do aluno
+        const [contratosRows]: any[] = await connection.execute(
+            `SELECT 
+                cp.id, 
+                c.nome as nome_contrato, 
+                cp.situacao_contrato, 
+                cp.contrato_url, 
+                cp.criado_em 
+             FROM contratos_preenchidos cp
+             JOIN contratos c ON cp.contrato_id = c.id
+             WHERE cp.aluno_id = ?
+             ORDER BY cp.criado_em DESC`,
+            [id]
+        );
+        
+        // 5. Montar o objeto de resposta final
+        const responseData = {
+            ...alunoData,
+            endereco: alunoData.endereco ? JSON.parse(alunoData.endereco) : {},
+            responsaveis: responsaveisRows,
+            documentos: documentosRows,
+            contratos: contratosRows,
+        };
+
+        res.status(200).json(responseData);
+
+    } catch (error) {
+        console.error("Erro ao buscar dados agregados do aluno:", error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar dados.' });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+
 // =================================================================================
-// FUNÇÕES DE CRUD E CONSULTA (IMPLEMENTAÇÃO COMPLETA)
+// FUNÇÕES DE CRUD E CONSULTA (EXISTENTES)
 // =================================================================================
 
 export const getAlunoById = async (req: Request, res: Response) => {
@@ -189,7 +268,11 @@ export const getAlunoById = async (req: Request, res: Response) => {
         }
         const aluno = rows[0];
         if (aluno.endereco) {
-            aluno.endereco = JSON.parse(aluno.endereco);
+            try {
+                aluno.endereco = JSON.parse(aluno.endereco);
+            } catch (e) {
+                aluno.endereco = {}; // Proteção contra JSON inválido
+            }
         }
         res.status(200).json(aluno);
     } catch (error) {
@@ -204,7 +287,7 @@ export const listarAlunos = async (req: Request, res: Response) => {
             `SELECT a.id, u.nome, a.matricula, a.serie, a.turma, u.email, u.telefone, a.status 
              FROM alunos a
              JOIN users u ON a.id = u.id
-             WHERE a.status = 'regular'
+             WHERE u.status = 'ativo'
              ORDER BY u.nome ASC`
         );
         res.status(200).json(rows);
@@ -249,8 +332,7 @@ export const getResponsaveisByAluno = async (req: Request, res: Response) => {
     }
 };
 
-// Funções que ainda não foram implementadas ou detalhadas
-export const getAlunoEditData = async (req: Request, res: Response) => getAlunoById(req, res);
+// Funções stub (não implementadas ou delegadas)
 export const getMensalidadeByAluno = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });
 export const getDescontoByAluno = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });
 export const getDadosAcademicosDoAluno = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });

@@ -22,8 +22,8 @@ import { useAuth } from '../../../hooks/useAuth';
 interface SidebarGestorProps {
   isMenuOpen: boolean;
   setActivePage: (page: string) => void;
-  handleMouseEnter: () => void;
-  handleMouseLeave: () => void;
+  handleMouseEnter?: () => void;
+  handleMouseLeave?: () => void;
 }
 
 export default function SidebarGestor({
