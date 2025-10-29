@@ -2,62 +2,40 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import pool from '../config/db';
 
-// =================================================================================
-// FUNÇÕES DO FLUXO DE MATRÍCULA E EDIÇÃO
-// =================================================================================
+// =======================================================================
+// FUNÇÃO AUXILIAR PARA GERAR MATRÍCULA
+// =======================================================================
+async function gerarProximaMatricula(): Promise<string> {
+    const anoAtual = new Date().getFullYear();
+    const prefixoAno = String(anoAtual);
 
-/**
- * @route   GET /api/alunos/buscar-por-cpf/:cpf
- * @desc    Busca um aluno existente pelo CPF para o formulário de matrícula.
- */
-export const buscarAlunoPorCPF = async (req: Request, res: Response) => {
-    const { cpf } = req.params;
-    const cleanCpf = String(cpf).replace(/\D/g, '');
-    if (cleanCpf.length !== 11) {
-        return res.status(400).json({ message: 'Formato de CPF inválido.' });
-    }
-
+    const connection = await pool.getConnection();
     try {
-        const [rows]: any[] = await pool.execute(
-            `SELECT 
-                u.id, 
-                u.nome, 
-                u.cpf, 
-                u.email, 
-                u.telefone,
-                u.foto_url as foto,
-                u.login,
-                a.rg, 
-                a.matricula, 
-                a.data_nascimento, 
-                a.genero,
-                a.biografia,
-                a.restricoes_medicas,
-                a.endereco 
-             FROM users u
-             JOIN alunos a ON u.id = a.id 
-             WHERE u.cpf = ? AND u.status = 'ativo'`,
-            [cleanCpf]
+        // Busca a maior matrícula que começa com o ano atual.
+        const [rows]: any[] = await connection.execute(
+            "SELECT MAX(matricula) as ultimaMatricula FROM alunos WHERE matricula LIKE ?",
+            [`${prefixoAno}%`]
         );
 
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Aluno não encontrado.' });
-        }
-        
-        const aluno = rows[0];
-        try {
-            aluno.endereco = aluno.endereco ? JSON.parse(aluno.endereco) : {};
-        } catch (e) {
-            aluno.endereco = {};
-        }
-        
-        res.status(200).json(aluno);
+        let proximoNumero = 1; // Padrão se não houver nenhuma matrícula no ano.
 
-    } catch (error) {
-        console.error('Erro ao buscar aluno por CPF:', error);
-        res.status(500).json({ message: 'Erro interno do servidor.' });
+        if (rows.length > 0 && rows[0].ultimaMatricula) {
+            const ultimaMatricula = rows[0].ultimaMatricula;
+            // Extrai a parte sequencial (os últimos 6 dígitos) e converte para número.
+            const ultimoSequencial = parseInt(ultimaMatricula.substring(4), 10);
+            proximoNumero = ultimoSequencial + 1;
+        }
+
+        // Formata o próximo número para ter 6 dígitos, preenchendo com zeros à esquerda.
+        const proximoSequencialFormatado = String(proximoNumero).padStart(6, '0');
+
+        return `${prefixoAno}${proximoSequencialFormatado}`;
+
+    } finally {
+        if (connection) connection.release();
     }
-};
+}
+
 
 /**
  * @route   POST /api/alunos
@@ -66,8 +44,9 @@ export const buscarAlunoPorCPF = async (req: Request, res: Response) => {
  */
 export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
     const { id: alunoId } = req.params;
+    // 'matricula' é removida do body, pois será gerada automaticamente ou já existe.
     const {
-        nome, cpf, rg, matricula, data_nascimento, email, telefone, sexo,
+        nome, cpf, rg, data_nascimento, email, telefone, sexo,
         biografia, restricoes_medicas, login, senha,
         aluno_e_responsavel,
         endereco,
@@ -77,7 +56,7 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
     const foto = req.file;
     const fotoPath = foto ? `/uploads/${foto.filename}` : (fotoUrl || null);
 
-    if (!nome || !cpf || !rg || !matricula || !email || !login || (!alunoId && !senha)) {
+    if (!nome || !cpf || !rg || !email || !login || (!alunoId && !senha)) {
         return res.status(400).json({ message: 'Campos obrigatórios estão faltando.' });
     }
 
@@ -90,21 +69,12 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
         const sexoFormatado = sexo === 'Masculino' ? 'Masculino' : (sexo === 'Feminino' ? 'Feminino' : null);
         const enderecoJson = typeof endereco === 'string' ? endereco : (endereco ? JSON.stringify(endereco) : null);
 
-        const [cpfExistente]: any[] = await connection.execute(
-            'SELECT id FROM users WHERE cpf = ? AND id != ?',
-            [cleanCpf, userId || 0]
-        );
-        if (cpfExistente.length > 0) {
-            throw new Error('O CPF informado já está cadastrado em nosso sistema.');
-        }
+        // Verificações de unicidade (CPF, RG)
+        const [cpfExistente]: any[] = await connection.execute('SELECT id FROM users WHERE cpf = ? AND id != ?', [cleanCpf, userId || 0]);
+        if (cpfExistente.length > 0) throw new Error('O CPF informado já está cadastrado em nosso sistema.');
+        const [rgExistente]: any[] = await connection.execute('SELECT id FROM alunos WHERE rg = ? AND id != ?', [cleanRg, userId || 0]);
+        if (rgExistente.length > 0) throw new Error('O RG informado já está cadastrado em nosso sistema.');
 
-        const [rgExistente]: any[] = await connection.execute(
-            'SELECT id FROM alunos WHERE rg = ? AND id != ?',
-            [cleanRg, userId || 0]
-        );
-        if (rgExistente.length > 0) {
-            throw new Error('O RG informado já está cadastrado em nosso sistema.');
-        }
 
         if (userId) { // --- LÓGICA DE ATUALIZAÇÃO ---
             let userQuery = 'UPDATE users SET login = ?, email = ?, nome = ?, cpf = ?, telefone = ?';
@@ -122,19 +92,25 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
             userParams.push(userId);
             await connection.execute(userQuery, userParams);
 
-            const alunoQuery = `UPDATE alunos SET nome = ?, cpf = ?, rg = ?, matricula = ?, data_nascimento = ?, email = ?, telefone = ?, genero = ?, biografia = ?, restricoes_medicas = ?, endereco = ? WHERE id = ?`;
-            await connection.execute(alunoQuery, [nome, cleanCpf, cleanRg, matricula, data_nascimento, email, telefone, sexoFormatado, biografia, restricoes_medicas, enderecoJson, userId]);
+            // A matrícula não é alterada na atualização.
+            const alunoQuery = `UPDATE alunos SET nome = ?, cpf = ?, rg = ?, data_nascimento = ?, email = ?, telefone = ?, genero = ?, biografia = ?, restricoes_medicas = ?, endereco = ? WHERE id = ?`;
+            await connection.execute(alunoQuery, [nome, cleanCpf, cleanRg, data_nascimento, email, telefone, sexoFormatado, biografia, restricoes_medicas, enderecoJson, userId]);
         
         } else { // --- LÓGICA DE CRIAÇÃO ---
+            // Gerando a matrícula automaticamente
+            const novaMatricula = await gerarProximaMatricula();
+
             const senhaHash = await bcrypt.hash(senha, 10);
             const userSql = `INSERT INTO users (login, senha, email, role, nome, cpf, telefone, foto_url) VALUES (?, ?, ?, 'aluno', ?, ?, ?, ?)`;
             const [userResult]: any = await connection.execute(userSql, [login, senhaHash, email, nome, cleanCpf, telefone, fotoPath]);
             userId = userResult.insertId;
 
+            // Inserindo o aluno com a matrícula gerada
             const alunoSql = `INSERT INTO alunos (id, nome, cpf, rg, matricula, data_nascimento, email, telefone, genero, biografia, restricoes_medicas, foto, endereco) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            await connection.execute(alunoSql, [userId, nome, cleanCpf, cleanRg, matricula, data_nascimento, email, telefone, sexoFormatado, biografia, restricoes_medicas, fotoPath, enderecoJson]);
+            await connection.execute(alunoSql, [userId, nome, cleanCpf, cleanRg, novaMatricula, data_nascimento, email, telefone, sexoFormatado, biografia, restricoes_medicas, fotoPath, enderecoJson]);
         }
 
+        // Lógica para aluno ser o próprio responsável
         if (aluno_e_responsavel === 'true' && userId) {
             const [respRows]: any[] = await connection.execute('SELECT id FROM responsaveis WHERE cpf = ?', [cleanCpf]);
             let responsavelId;
@@ -166,10 +142,46 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * @route   GET /api/alunos/:id/edit-data
- * @desc    Busca todos os dados agregados de um aluno para a página de edição.
- */
+// ... (O restante do arquivo, como buscarAlunoPorCPF, getAlunoEditData, etc., permanece inalterado) ...
+
+export const buscarAlunoPorCPF = async (req: Request, res: Response) => {
+    const { cpf } = req.params;
+    const cleanCpf = String(cpf).replace(/\D/g, '');
+    if (cleanCpf.length !== 11) {
+        return res.status(400).json({ message: 'Formato de CPF inválido.' });
+    }
+
+    try {
+        const [rows]: any[] = await pool.execute(
+            `SELECT 
+                u.id, u.nome, u.cpf, u.email, u.telefone, u.foto_url as foto, u.login,
+                a.rg, a.matricula, a.data_nascimento, a.genero, a.biografia,
+                a.restricoes_medicas, a.endereco 
+             FROM users u
+             JOIN alunos a ON u.id = a.id 
+             WHERE u.cpf = ? AND u.status = 'ativo'`,
+            [cleanCpf]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Aluno não encontrado.' });
+        }
+        
+        const aluno = rows[0];
+        try {
+            aluno.endereco = aluno.endereco ? JSON.parse(aluno.endereco) : {};
+        } catch (e) {
+            aluno.endereco = {};
+        }
+        
+        res.status(200).json(aluno);
+
+    } catch (error) {
+        console.error('Erro ao buscar aluno por CPF:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
 export const getAlunoEditData = async (req: Request, res: Response) => {
     const { id } = req.params;
     if (!id) {
@@ -179,7 +191,6 @@ export const getAlunoEditData = async (req: Request, res: Response) => {
     const connection = await pool.getConnection();
 
     try {
-        // 1. Buscar dados principais do aluno
         const [alunoRows]: any[] = await connection.execute(
             `SELECT 
                 u.nome, u.email, u.login, u.foto_url, u.telefone,
@@ -195,7 +206,6 @@ export const getAlunoEditData = async (req: Request, res: Response) => {
         }
         const alunoData = alunoRows[0];
 
-        // 2. Buscar responsáveis vinculados
         const [responsaveisRows]: any[] = await connection.execute(
             `SELECT r.id, r.nome, r.cpf, r.email, r.numero1 as telefone, r.grau_parentesco, r.responsavel_financeiro
              FROM responsaveis r
@@ -205,7 +215,6 @@ export const getAlunoEditData = async (req: Request, res: Response) => {
             [id]
         );
 
-        // 3. Buscar documentos do aluno
         const [documentosRows]: any[] = await connection.execute(
             `SELECT id, tipo_documento, caminho_arquivo, nome_original, data_upload 
              FROM documentos_alunos 
@@ -214,14 +223,10 @@ export const getAlunoEditData = async (req: Request, res: Response) => {
             [id]
         );
 
-        // 4. Buscar contratos do aluno
         const [contratosRows]: any[] = await connection.execute(
             `SELECT 
-                cp.id, 
-                c.nome as nome_contrato, 
-                cp.situacao_contrato, 
-                cp.contrato_url, 
-                cp.criado_em 
+                cp.id, c.nome as nome_contrato, cp.situacao_contrato, 
+                cp.contrato_url, cp.criado_em 
              FROM contratos_preenchidos cp
              JOIN contratos c ON cp.contrato_id = c.id
              WHERE cp.aluno_id = ?
@@ -229,7 +234,6 @@ export const getAlunoEditData = async (req: Request, res: Response) => {
             [id]
         );
         
-        // 5. Montar o objeto de resposta final
         const responseData = {
             ...alunoData,
             endereco: alunoData.endereco ? JSON.parse(alunoData.endereco) : {},
@@ -247,11 +251,6 @@ export const getAlunoEditData = async (req: Request, res: Response) => {
         if (connection) connection.release();
     }
 };
-
-
-// =================================================================================
-// FUNÇÕES DE CRUD E CONSULTA (EXISTENTES)
-// =================================================================================
 
 export const getAlunoById = async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -271,7 +270,7 @@ export const getAlunoById = async (req: Request, res: Response) => {
             try {
                 aluno.endereco = JSON.parse(aluno.endereco);
             } catch (e) {
-                aluno.endereco = {}; // Proteção contra JSON inválido
+                aluno.endereco = {};
             }
         }
         res.status(200).json(aluno);
@@ -316,7 +315,7 @@ export const excluirAluno = async (req: Request, res: Response) => {
 };
 
 export const getResponsaveisByAluno = async (req: Request, res: Response) => {
-    const { id } = req.params; // id do aluno
+    const { id } = req.params;
     try {
         const [rows] = await pool.execute(
             `SELECT r.* 
@@ -332,7 +331,7 @@ export const getResponsaveisByAluno = async (req: Request, res: Response) => {
     }
 };
 
-// Funções stub (não implementadas ou delegadas)
+// Funções stub
 export const getMensalidadeByAluno = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });
 export const getDescontoByAluno = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });
 export const getDadosAcademicosDoAluno = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });
