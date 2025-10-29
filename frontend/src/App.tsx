@@ -157,39 +157,31 @@ const App: React.FC = () => {
               <Route path="/gestor/turmas" element={<TurmasPage />} />
               <Route path="/gestor/grade" element={<Grade />} />
               <Route path="/gestor/grade/nova" element={<CriarGrade />} />
+              
+              {/* === ESTA É A LINHA ESSENCIAL PARA A FUNCIONALIDADE === */}
               <Route path="/gestor/materiasgestor/:id" element={<MateriasGestor />} />
               
-              {/* *** ALTERAÇÃO PRINCIPAL AQUI *** */}
-              {/* Esta rota agora lida com /adicionar-curso e /adicionar-curso/:id */}
               <Route path="/adicionar-curso/:id?" element={<AdicionarCursoPage />} />
 
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={['professor', 'gestor']} />}>
               <Route path="/professor" element={<ProfessorLayout />}>
-
-                {/* A rota /professor/home renderiza o componente Professor dentro do Layout */}
                 <Route path="home" element={<Professor />} />
                 <Route path="/professor/turmas/:id/visualizar" element={<VisualizarTurmaPage />} />
                 <Route path="/professor/turmas/:turmaId/materias/:materiaId/diario" element={<DiarioPage />} />
                 <Route path="/professor/turmas/:turmaId/materias/:materiaId/avaliacoes-notas" element={<AvaliacoesNotasPage />} />
-
-                {/* Outras rotas filhas do layout do professor */}
                 <Route path="ia" element={<IaPage />} />
                 <Route path="turmas" element={<TurmasPage />} />
                 <Route path="alunos" element={<AlunosPage />} />
                 <Route path="envio" element={<ProfessorEnvios />} />
                 <Route path="configuracoes" element={<ConfiguracoesProfessorPage />} />
-
-                {/* Rotas de Avaliações aninhadas */}
                 <Route path="avaliacoes">
-                  <Route index element={<HomeAvaliacoes />} /> {/* Acessada via /professor/avaliacoes */}
-                  <Route path="montagem" element={<Avaliacoes />} /> {/* /professor/avaliacoes/montagem */}
+                  <Route index element={<HomeAvaliacoes />} />
+                  <Route path="montagem" element={<Avaliacoes />} />
                   <Route path="banco-questoes" element={<BancoQuestoes />} />
                   <Route path="perfil" element={<PerfilAvaliacoes />} />
                 </Route>
-
-                {/* Redirecionamento: se alguém acessar /professor, vai para /professor/home */}
                 <Route index element={<Navigate to="home" replace />} />
               </Route>
             </Route>

@@ -333,16 +333,20 @@ import {
   excluirCurso,
   atualizarCurso,
   obterDetalhesCurso,
-  listarDisciplinasCurso,
-  adicionarDisciplinaCurso,
-  atualizarDisciplinaCurso,
-  deletarDisciplinaCurso,
   listarEventosCalendario,
   adicionarEventoCalendario,
   obterPPC,
   salvarPPC,
   obterVinculadosCurso
 } from '../controllers/cursosController';
+
+import {
+  listarDisciplinasCurso,
+  adicionarDisciplinaCurso,
+  atualizarDisciplinaCurso,
+  deletarDisciplinaCurso,
+  listarTodasDisciplinasPosGraduacao
+} from '../controllers/disciplinasController';
 
 const router = Router();
 
@@ -822,6 +826,9 @@ router.post('/api/colors', updateColorsController);
 // ──────────────────────────────────────────────────────────────────────────────
 // ROTAS PARA GERENCIAMENTO DE CURSOS DE PÓS-GRADUAÇÃO
 // ──────────────────────────────────────────────────────────────────────────────
+
+// --- ROTA PARA A PÁGINA GERAL DE DISCIPLINAS (GESTOR) ---
+router.get('/api/disciplinas-posgraduacao', listarTodasDisciplinasPosGraduacao);
 
 // --- Rota para LISTAR os cursos de pós-graduação cadastrados ---
 router.get('/api/cursos-posgraduacao', listarCursosPosGraduacao);

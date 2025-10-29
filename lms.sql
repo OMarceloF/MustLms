@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 28/10/2025 às 21:34
+-- Tempo de geração: 29/10/2025 às 19:47
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -60,13 +60,14 @@ INSERT INTO `alunos` (`id`, `nome`, `cpf`, `rg`, `matricula`, `serie`, `turma`, 
 (7, 'João', '01234567886', '99887766', 'MAT9876', 'Não aplicável', 'Egressos 2023', 'joao@escola.com.br', '', 'Ex-aluno, atualmente cursando Engenharia na universidade local.', '31965432109', '{\"cep\":\"23423345\",\"logradouro\":\"Rua dos Estudantes\",\"numero\":\"204\",\"complemento\":\"Apt 909\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'N/A', '2002-12-13', 'Brasileira', 'Masculino', 'inativo'),
 (8, 'Marcelo Ferreira', '45678901234', '11223344', '21028901', '1º Ano EM', '101', 'marceloNexum@gmail.com', '', NULL, '32954321098', NULL, NULL, 'Vespertino', '2009-07-11', 'Brasileira', 'Masculino', 'regular'),
 (10, 'Marcelo Ferreira', '12629680622', '12312312', '2109888', '2º Ano EM', '202', 'the.marcelofNovo@gmail.com', '/uploads/1758741424481-433567356.png', 'fsdfsdfs', '31981158484', '{\"cep\":\"13213123\",\"logradouro\":\"asdasdad\",\"numero\":\"2\",\"bairro\":\"weqweqw\",\"cidade\":\"fdsfds\",\"uf\":\"bg\"}', NULL, 'Matutino', '2003-03-07', 'Brasileira', 'Masculino', 'regular'),
-(12, 'Rinaldo Junior ', '12629680622', '32132132', '2109888', '8º Ano', '8B', 'junior@gmail.com', '/uploads/1758809924095-718224439.png', NULL, '19912345678', '{\"cep\":\"12123123\",\"logradouro\":\"asdasdasda\",\"numero\":\"4324\",\"complemento\":\"ASDASDA\",\"bairro\":\"DSA\",\"cidade\":\"seeea\",\"uf\":\"mg\"}', NULL, 'Vespertino', '2025-09-25', 'Brasileira', 'Masculino', 'regular'),
+(12, 'Rinaldo Junior ', '12629680622', '32132132', '2109888', '8º Ano', '8B', 'junior@gmail.com', '/uploads/1758809924095-718224439.png', NULL, '19912345678', '{\"cep\":\"12123123\",\"logradouro\":\"asdasdasda\",\"numero\":\"4324\",\"complemento\":\"ASDASDA\",\"bairro\":\"DSA\",\"cidade\":\"seeea\",\"uf\":\"mg\"}', NULL, 'Vespertino', '2025-09-25', 'Brasileira', 'Masculino', 'inativo'),
 (16, 'usuarioteste', '10101010101', '45645645', '101010', '7º Ano', '7C', 'usuarioteste@gmail.com', '/uploads/1758907439058-202349397.jpg', 'Aluno para fins de teste do sistema.', '61901010101', '{\"cep\":\"10101-010\",\"logradouro\":\"ruateste\",\"numero\":\"1010\",\"complemento\":\"ruateste\",\"bairro\":\"bairroteste\",\"cidade\":\"cidadeteste\",\"uf\":\"ut\"}', NULL, 'Matutino', '1010-10-10', 'Brasileira', 'Masculino', 'regular'),
 (18, 'Arthur Jesus', '67988324212', '78978978', '54632', '9º Ano', '9A', 'arthur@gmail.com', '/uploads/1758910522190-113759779.png', NULL, '31988776655', '{\"cep\":\"36576130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Vespertino', '2007-09-08', 'Brasileira', 'Masculino', 'regular'),
 (20, 'Lucas Ferreira', '12432543567', '98798798', '2343245235', '6º Ano', '6A', 'lucasferreira@gmail.com', '/uploads/1758911261009-736922933.png', NULL, '21977665544', '{\"cep\":\"36576-130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Matutino', '2002-09-12', 'Brasileira', 'Masculino', 'regular'),
 (26, 'Arthur Lopes Saraiva', '22222222222', 'MG0233450', '222222', NULL, NULL, 'arthurlsaraiva@gmail.com', NULL, 'kkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkk', NULL, '1988-10-20', 'Brasileira', 'Masculino', 'regular'),
 (27, 'Arthur L. Saraiva', '99999999999', '999999999', '2332221', NULL, NULL, 'Joaovv@gmail.com', '/uploads/download-1761674394496.jpg', 'kkkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkk', NULL, '1998-10-31', 'Brasileira', 'Masculino', 'regular'),
-(28, 'Arthur Teste', '77777777777', '111111111', '123456789', NULL, NULL, 'arthur11@gmail.com', '/uploads/download-1761683485087.jpg', 'kkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkkkkk', NULL, '1996-10-24', 'Brasileira', 'Masculino', 'regular');
+(28, 'Arthur Teste', '77777777777', '111111111', '123456789', NULL, NULL, 'arthur11@gmail.com', '/uploads/download-1761683485087.jpg', 'kkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkkkkk', NULL, '1996-10-24', 'Brasileira', 'Masculino', 'regular'),
+(29, 'Arthur Teste 2', '02036224544', '111112224', '2025000001', NULL, NULL, 'arthur123@gmail.com', NULL, '1111111111111111111111', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', '11111111111111111111111', NULL, '1996-10-01', 'Brasileira', 'Masculino', 'regular');
 
 --
 -- Acionadores `alunos`
@@ -131,7 +132,9 @@ INSERT INTO `alunos_responsaveis` (`id`, `aluno_id`, `responsavel_id`, `parentes
 (25, 27, 8, 'Avó'),
 (27, 27, 5, 'Próprio Aluno'),
 (28, 28, 9, 'Próprio Aluno'),
-(30, 28, 4, 'Avô');
+(30, 28, 4, 'Avô'),
+(32, 29, 10, 'Próprio Aluno'),
+(33, 29, 5, 'Próprio Aluno');
 
 -- --------------------------------------------------------
 
@@ -490,28 +493,6 @@ INSERT INTO `conversas` (`id`, `usuario1_id`, `usuario2_id`, `criado_em`) VALUES
 (16, 1, 3, '2025-08-26 13:39:19'),
 (19, 1, 5, '2025-08-27 14:32:18'),
 (20, 1, 4, '2025-08-27 14:32:27');
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `cursos`
---
-
-CREATE TABLE `cursos` (
-  `id` int(11) NOT NULL,
-  `nome` varchar(255) NOT NULL,
-  `coordenador` varchar(255) DEFAULT NULL,
-  `descricao` text DEFAULT NULL,
-  `duracao_semestres` int(11) DEFAULT 8,
-  `criado_em` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `cursos`
---
-
-INSERT INTO `cursos` (`id`, `nome`, `coordenador`, `descricao`, `duracao_semestres`, `criado_em`) VALUES
-(1, 'Mestrado em Engenharia de Software', 'Dr. Alan Turing', 'Um programa focado em formar pesquisadores e profissionais de ponta em engenharia de software.', 8, '2025-10-21 21:10:56');
 
 -- --------------------------------------------------------
 
@@ -1692,13 +1673,14 @@ CREATE TABLE `responsaveis` (
 
 INSERT INTO `responsaveis` (`id`, `nome`, `numero1`, `numero2`, `email`, `cpf`, `rg`, `grau_parentesco`, `nacionalidade`, `estado_civil`, `profissao`, `responsavel_financeiro`, `cep`, `logradouro`, `numero_casa`, `complemento`, `bairro`, `cidade`, `estado`, `telefone_contato`) VALUES
 (1, 'Clara', '31988880007', '31932323232', 'Joao3112@gmail.com', '01262224542', '0267250', 'Avó', 'Brasileira', 'Casado(a)', 'Panhador de café', 'Não', '30110000', 'Rua da Bahia', '250', NULL, 'Funcionários', 'Belo Horizonte', NULL, '31932323232'),
-(2, 'Lara', '31931313131', '31932323232', 'Joao99@gmail.com', '02032224543', '0233450', 'Mãe', 'Brasileira', 'Casado(a)', 'Panhador de café', 'Sim', '30110000', 'Rua das Acácias', '250', NULL, 'Maraca', 'Belo Horizonte', NULL, '31932323232'),
-(3, 'Lara S', '31931313131', '31932323232', 'Joao91@gmail.com', '02032224541', '0233454', 'Mãe', 'Brasileira', 'Casado(a)', 'Panhador de café', 'Não', '30110000', 'Rua das Acácias', '250', NULL, 'Maraca', 'Belo Horizonte', NULL, '31932323232'),
-(4, 'Julio', '31988880004', '31932323232', 'Joao23@gmail.com', '02032221543', '999999999', 'Avô', 'Brasileira', 'Solteiro(a)', 'Autônomo', 'Sim', '30160010', 'Av. Brasil', '320', NULL, 'Funcionários', 'Belo Horizonte', NULL, '31932323232'),
+(2, 'Lara', '31931313131', '31932323232', 'Joao99@gmail.com', '02032224543', '0233450', 'Mãe', 'Brasileira', 'Casado(a)', 'Panhador de café', 'Não', '30110000', 'Rua das Acácias', '250', NULL, 'Maraca', 'Belo Horizonte', NULL, '31932323232'),
+(3, 'Lara S', '31931313131', '31932323232', 'Joao91@gmail.com', '02032224541', '0233454', 'Mãe', 'Brasileira', 'Casado(a)', 'Panhador de café', 'Sim', '30110000', 'Rua das Acácias', '250', NULL, 'Maraca', 'Belo Horizonte', NULL, '31932323232'),
+(4, 'Julio', '31988880004', '31932323232', 'Joao23@gmail.com', '02032221543', '999999999', 'Avô', 'Brasileira', 'Solteiro(a)', 'Autônomo', 'Não', '30160010', 'Av. Brasil', '320', NULL, 'Funcionários', 'Belo Horizonte', NULL, '31932323232'),
 (5, 'Arthur Lopes Saraiva', '31982471122', NULL, 'arthursaraiva@gmail.com', '11111111111', NULL, 'Próprio Aluno', 'Brasileira', NULL, NULL, 'Não', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (7, 'Arthur L. Saraiva', '(31) 98247-1144', NULL, 'Joaovv@gmail.com', '99999999999', NULL, 'Próprio Aluno', 'Brasileira', NULL, NULL, 'Não', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (8, 'Geovanna', '31988880001', '31932323232', 'maria.souza@example.com', '33333333333', '33333333', 'Avó', 'Brasileira', 'Solteiro(a)', 'Engenheiro', 'Não', '30110000', 'Rua das Acácias', '1200', NULL, 'Centro', 'Belo Horizonte', NULL, '31932323232'),
-(9, 'Arthur Teste', '(31) 98247-1144', NULL, 'arthur11@gmail.com', '77777777777', NULL, 'Próprio Aluno', 'Brasileira', NULL, NULL, 'Não', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(9, 'Arthur Teste', '(31) 98247-1144', NULL, 'arthur11@gmail.com', '77777777777', NULL, 'Próprio Aluno', 'Brasileira', NULL, NULL, 'Não', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(10, 'Arthur Teste 2', '(31) 98247-1144', NULL, 'arthur123@gmail.com', '02036224544', NULL, 'Próprio Aluno', 'Brasileira', NULL, NULL, 'Sim', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1787,7 +1769,8 @@ INSERT INTO `stats_seguidores` (`user_id`, `qtd_seguidores`, `qtd_seguindo`) VAL
 (24, 0, 0),
 (26, 0, 0),
 (27, 0, 0),
-(28, 0, 0);
+(28, 0, 0),
+(29, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -1924,7 +1907,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-28 20:04:07'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-29 18:32:41'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1935,7 +1918,7 @@ INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, 
 (9, 'marceloCompleto', '$2b$10$fsPuidL8UlRMTq2q3CwlceSyGUgIFF4/esbMTUjy1XGFDfqET4.Na', 'the.marcelof@gmail.com', 'aluno', 'ativo', 'Marcelo Ferreira', NULL, NULL, '2025-09-24 19:09:52', '/uploads/1758740992212-140524608.png', NULL),
 (10, 'dasdadasdasda', '$2b$10$wo8pb1F8VFARB70Ji9g0ZOfr2BxhZK5Pk/nN1AGIE7ay.7uPmMd06', 'the.marcelofNovo@gmail.com', 'aluno', 'ativo', 'Marcelo Ferreira', '12629680622', NULL, '2025-09-24 19:17:04', '/uploads/1758741424481-433567356.png', '2025-09-25 12:06:15'),
 (11, 'paidojunior@gmail.com', '$2b$10$iaCAs11H4GYG.uxLwJnVUeINsXnxA72DJituzKmBwM1lw07RxCgIq', 'ddfbdfgsdfd@gmail.com', 'responsavel', 'ativo', '24dsfsdfdssdfdsfsdfs', '23132143232', '21423534523', '2025-09-25 14:18:44', NULL, NULL),
-(12, 'marceloCompletoNovo', '$2b$10$Od6OBmUJ5JHGpHwYlT/QW.vnDVbHyY3cXfONxki9eh1HDUtFsnc82', 'the.sad@gmail.com', 'aluno', 'ativo', '232eqweewasdas', NULL, NULL, '2025-09-25 14:18:44', '/uploads/1758809924095-718224439.png', NULL),
+(12, 'marceloCompletoNovo', '$2b$10$Od6OBmUJ5JHGpHwYlT/QW.vnDVbHyY3cXfONxki9eh1HDUtFsnc82', 'the.sad@gmail.com', 'aluno', 'inativo', '232eqweewasdas', NULL, NULL, '2025-09-25 14:18:44', '/uploads/1758809924095-718224439.png', NULL),
 (13, 'maedojunior@gmail.com', '$2b$10$QEwS0tmTRQM4gS1IIgw.zup.KqQuJBVb36YG/kyOriWgnGElDWCX6', 'maedojunior@gmail.com', 'responsavel', 'ativo', 'Mae do Junior', '14567110801', '31241234212', '2025-09-25 16:25:36', NULL, NULL),
 (14, 'sdasdas@gmail.com', '$2b$10$dcGCqSrwuTWSxIpps675xO/XKvJgApE.Vl9LXMDlKLSDTDLKnE2gm', 'sdasdas@gmail.com', 'responsavel', 'ativo', 'PaiDoJoao', '23123123131', '32423543534', '2025-09-26 16:55:56', NULL, NULL),
 (15, 'usuarioteste@gmail.com', '$2b$10$9JiiYG8lpW5TXwAwdMq2ZebjKCoWHBOh89jPWzPn/tXGMmRwgSmOu', 'usuarioteste@gmail.com', 'responsavel', 'ativo', 'Uusuário Teste', '10101010101', '(10) 10101-0101', '2025-09-26 17:23:59', NULL, NULL),
@@ -1950,7 +1933,8 @@ INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, 
 (24, 'arthurlsaraiva@gmail.com', '$2b$10$U4K1dfAoM/lm1kUpks/pbueozdT01h0xqI4CPwdrxPM63naxu3vDq', 'arthursaraiva@gmail.com', 'aluno', 'ativo', 'Arthur Lopes Saraiva', '11111111111', '31982471122', '2025-10-28 17:00:31', '/uploads/download-1761670831528.jpg', NULL),
 (26, 'arthurlsaraiva@gmail.com', '$2b$10$pU0wPsr3SJYr67FA/WBaH.JNaFKLhx7doucvDIvkZHQlPSmdP.NZ2', 'arthurlsaraiva@gmail.com', 'aluno', 'ativo', 'Arthur Lopes Saraiva', '22222222222', '(31) 98247-1144', '2025-10-28 17:37:05', NULL, NULL),
 (27, 'arthurlsaraiva1@gmail.com', '$2b$10$fZ8q6mMsfMzdanFnAgL06ONstWB1yyPXyp3mNjTkOuBz89yqhnCNm', 'Joaovv@gmail.com', 'aluno', 'ativo', 'Arthur L. Saraiva', '99999999999', '(31) 98247-1144', '2025-10-28 17:59:54', '/uploads/download-1761674394496.jpg', NULL),
-(28, 'arthurlsaraiva1h@gmail.com', '$2b$10$8NuHVqMJfQUwIMx9a1lRI.aRwMHsrUP7FoFxvj8nY2QKzKGxJyAq.', 'arthur11@gmail.com', 'aluno', 'ativo', 'Arthur Teste', '77777777777', '(31) 98247-1144', '2025-10-28 20:31:25', '/uploads/download-1761683485087.jpg', NULL);
+(28, 'arthurlsaraiva1h@gmail.com', '$2b$10$8NuHVqMJfQUwIMx9a1lRI.aRwMHsrUP7FoFxvj8nY2QKzKGxJyAq.', 'arthur11@gmail.com', 'aluno', 'ativo', 'Arthur Teste', '77777777777', '(31) 98247-1144', '2025-10-28 20:31:25', '/uploads/download-1761683485087.jpg', NULL),
+(29, 'arthurlh12@gmail.com', '$2b$10$A2RjjfOocqTDPm9QkhmgP.sdrItNpunTl2WLaNhAn3HwL8WcBwUC6', 'arthur123@gmail.com', 'aluno', 'ativo', 'Arthur Teste 2', '02036224544', '(31) 98247-1144', '2025-10-29 14:02:13', NULL, NULL);
 
 --
 -- Acionadores `users`
@@ -2100,12 +2084,6 @@ ALTER TABLE `conversas`
   ADD UNIQUE KEY `chave_unica_conversa` (`chave_unica_conversa`),
   ADD KEY `usuario1_id` (`usuario1_id`),
   ADD KEY `usuario2_id` (`usuario2_id`);
-
---
--- Índices de tabela `cursos`
---
-ALTER TABLE `cursos`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- Índices de tabela `cursos_alunos`
@@ -2414,7 +2392,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de tabela `alunos_responsaveis`
 --
 ALTER TABLE `alunos_responsaveis`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT de tabela `alunos_turmas`
@@ -2513,16 +2491,10 @@ ALTER TABLE `conversas`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
--- AUTO_INCREMENT de tabela `cursos`
---
-ALTER TABLE `cursos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
 -- AUTO_INCREMENT de tabela `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_eventos`
@@ -2534,7 +2506,7 @@ ALTER TABLE `cursos_eventos`
 -- AUTO_INCREMENT de tabela `cursos_posgraduacao`
 --
 ALTER TABLE `cursos_posgraduacao`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_ppc`
@@ -2624,13 +2596,13 @@ ALTER TABLE `materiais`
 -- AUTO_INCREMENT de tabela `materias`
 --
 ALTER TABLE `materias`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de tabela `materias_materiais`
 --
 ALTER TABLE `materias_materiais`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de tabela `mensagens`
@@ -2696,7 +2668,7 @@ ALTER TABLE `professores_turmas`
 -- AUTO_INCREMENT de tabela `responsaveis`
 --
 ALTER TABLE `responsaveis`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de tabela `transacoes`
@@ -2714,13 +2686,13 @@ ALTER TABLE `turmas`
 -- AUTO_INCREMENT de tabela `turmas_materias`
 --
 ALTER TABLE `turmas_materias`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de tabela `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- Restrições para tabelas despejadas

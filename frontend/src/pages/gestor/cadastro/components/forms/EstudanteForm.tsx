@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format, differenceInYears } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, Upload, X, Loader2, User, MapPin, Lock } from 'lucide-react';
+import { CalendarIcon, Upload, X, Loader2, User, MapPin, Lock, BadgeCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useRegistration } from '../../contexts/RegistrationContext';
@@ -19,19 +19,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Checkbox } from '../../../components/ui/checkbox';
 import { cn } from '../../../../lib/utils';
 
-// Schema de validação do formulário com Zod
+// Schema de validação (matricula não é mais validada aqui)
 const studentSchema = z.object({
   nomeCompleto: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   cpf: z.string().min(14, 'CPF inválido, preencha completamente').max(14),
   rg: z.string().min(1, 'RG é obrigatório'),
-  matricula: z.string().min(1, 'Matrícula é obrigatória'),
   email: z.string().email('Email inválido'),
   biografia: z.string().max(500, 'Biografia deve ter no máximo 500 caracteres').optional().or(z.literal('')),
   telefone: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
   sexo: z.enum(['Masculino', 'Feminino'], { required_error: 'Sexo é obrigatório' }),
   login: z.string().min(3, 'Login deve ter pelo menos 3 caracteres'),
-  // A senha só é obrigatória se não for uma edição (sem student.id)
-  senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').or(z.literal('')),
+  senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
   restricoesMedicas: z.string().optional(),
   endereco: z.object({
     cep: z.string().optional().or(z.literal('')),
@@ -46,41 +44,9 @@ const studentSchema = z.object({
 
 type StudentFormData = z.infer<typeof studentSchema>;
 
-const calculateAge = (birthDate: Date | null): number => {
-  if (!birthDate) return 0;
-  return differenceInYears(new Date(), birthDate);
-};
-
-async function sendStudentData(payload: any, studentId: number | null) {
-  const formData = new FormData();
-  
-  for (const key in payload) {
-    const value = payload[key];
-    if (value !== null && value !== undefined) {
-      if (key === 'endereco' && typeof value === 'object') {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        if (key === 'cpf' || key === 'rg') {
-            formData.append(key, String(value).replace(/\D/g, ''));
-        } else {
-            formData.append(key, value);
-        }
-      }
-    }
-  }
-
-  const url = studentId ? `/api/alunos/${studentId}` : '/api/alunos';
-  const method = studentId ? 'PUT' : 'POST';
-  
-  const res = await fetch(url, { method, body: formData });
-
-  if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ message: 'Ocorreu um erro no servidor.' }));
-    throw new Error(errorData.message || `Erro ao ${method === 'POST' ? 'criar' : 'atualizar'} aluno`);
-  }
-  
-  return res.json();
-}
+// Funções auxiliares
+const formatCPF = (value: string) => value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2').slice(0, 14);
+const formatRG = (value: string) => value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1})$/, '$1-$2').slice(0, 12);
 
 export function StudentForm() {
   const { state, updateStudent, setCurrentStep, completeStep } = useRegistration();
@@ -90,18 +56,15 @@ export function StudentForm() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(student.dataNascimento ? new Date(student.dataNascimento) : undefined);
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isOver18, setIsOver18] = useState<boolean>(calculateAge(student.dataNascimento ? new Date(student.dataNascimento) : null) >= 18);
+  const [isOver18, setIsOver18] = useState<boolean>(differenceInYears(new Date(), student.dataNascimento || new Date()) >= 18);
   const [isSelfResponsible, setIsSelfResponsible] = useState(false);
 
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
-    // Este bloco é a chave. Ele usa os dados do contexto (preenchidos pela etapa anterior)
-    // para popular os valores padrão do formulário.
     defaultValues: {
       nomeCompleto: student.nomeCompleto || '',
       cpf: student.cpf || '',
       rg: student.rg || '',
-      matricula: student.matricula || '',
       email: student.email || '',
       biografia: student.biografia || '',
       telefone: student.telefone || '',
@@ -109,35 +72,9 @@ export function StudentForm() {
       login: student.login || '',
       senha: student.senha || '',
       restricoesMedicas: student.restricoesMedicas || '',
-      endereco: {
-        cep: student.endereco?.cep || '',
-        logradouro: student.endereco?.logradouro || '',
-        numero: student.endereco?.numero || '',
-        bairro: student.endereco?.bairro || '',
-        cidade: student.endereco?.cidade || '',
-        estado: student.endereco?.estado || '',
-        complemento: student.endereco?.complemento || '',
-      },
+      endereco: student.endereco || {},
     },
   });
-
-  const formatCPF = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-      .slice(0, 14);
-  };
-
-  const formatRG = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{2})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1})$/, '$1-$2')
-      .slice(0, 12);
-  };
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -147,54 +84,11 @@ export function StudentForm() {
       reader.readAsDataURL(file);
     }
   };
-
   const removePhoto = () => {
     setPhotoPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (student.fotoUrl) {
-        updateStudent({ fotoUrl: null });
-    }
+    if (student.fotoUrl) updateStudent({ fotoUrl: null });
   };
-
-  useEffect(() => {
-    if (student.fotoUrl) setPhotoPreview(student.fotoUrl);
-    
-    // Resetar o formulário com os novos valores do contexto sempre que o ID do aluno mudar
-    form.reset({
-      nomeCompleto: student.nomeCompleto || '',
-      cpf: student.cpf || '',
-      rg: student.rg || '',
-      matricula: student.matricula || '',
-      email: student.email || '',
-      biografia: student.biografia || '',
-      telefone: student.telefone || '',
-      sexo: student.sexo === 'M' ? 'Masculino' : student.sexo === 'F' ? 'Feminino' : undefined,
-      login: student.login || '',
-      senha: student.senha || '',
-      restricoesMedicas: student.restricoesMedicas || '',
-      endereco: {
-        cep: student.endereco?.cep || '',
-        logradouro: student.endereco?.logradouro || '',
-        numero: student.endereco?.numero || '',
-        bairro: student.endereco?.bairro || '',
-        cidade: student.endereco?.cidade || '',
-        estado: student.endereco?.estado || '',
-        complemento: student.endereco?.complemento || '',
-      },
-    });
-    // Atualiza a data de nascimento também
-    setSelectedDate(student.dataNascimento ? new Date(student.dataNascimento) : undefined);
-
-  }, [student.id, form.reset]); // Dependência no ID do aluno para recarregar
-
-  useEffect(() => {
-    const age = calculateAge(selectedDate || null);
-    setIsOver18(age >= 18);
-    if (age < 18) {
-      setIsSelfResponsible(false);
-    }
-  }, [selectedDate]);
-
   const handleSelfResponsibleChange = (checked: boolean) => {
     if (!isOver18 && checked) {
       toast.warning("O aluno deve ter 18 anos ou mais para ser seu próprio responsável.");
@@ -202,42 +96,53 @@ export function StudentForm() {
     }
     setIsSelfResponsible(checked);
   };
+  useEffect(() => { if (student.fotoUrl) setPhotoPreview(student.fotoUrl); }, [student.fotoUrl]);
+  useEffect(() => {
+    const age = differenceInYears(new Date(), selectedDate || new Date());
+    setIsOver18(age >= 18);
+    if (age < 18) setIsSelfResponsible(false);
+  }, [selectedDate]);
 
   const onSubmit = async (data: StudentFormData) => {
-    // Validação da senha para novos alunos
-    if (!student.id && !data.senha) {
-        form.setError('senha', { type: 'manual', message: 'Senha é obrigatória para novos cadastros.' });
-        toast.error('O campo senha é obrigatório.');
-        return;
-    }
-
     setSubmitting(true);
     try {
       const yyyyMMdd = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
       const fotoFile = fileInputRef.current?.files?.[0];
 
       const payload: any = {
-        nome: data.nomeCompleto, cpf: data.cpf, rg: data.rg, matricula: data.matricula,
+        nome: data.nomeCompleto, cpf: data.cpf, rg: data.rg,
         data_nascimento: yyyyMMdd, email: data.email, telefone: data.telefone, sexo: data.sexo,
         biografia: data.biografia ?? '',
-        restricoes_medicas: data.restricoesMedicas ?? '', login: data.login, 
+        restricoes_medicas: data.restricoesMedicas ?? '', login: data.login, senha: data.senha,
         aluno_e_responsavel: isSelfResponsible,
         endereco: data.endereco,
       };
 
-      // Apenas adiciona a senha ao payload se ela foi preenchida
-      if (data.senha) {
-        payload.senha = data.senha;
-      }
+      if (fotoFile) payload.foto = fotoFile;
+      else if (student.fotoUrl) payload.fotoUrl = student.fotoUrl;
 
-      if (fotoFile) {
-        payload.foto = fotoFile;
-      } else if (student.fotoUrl) {
-        payload.fotoUrl = student.fotoUrl;
+      const formData = new FormData();
+      for (const key in payload) {
+        const value = payload[key];
+        if (value !== null && value !== undefined) {
+          if (key === 'endereco' && typeof value === 'object') {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        }
       }
 
       const studentId = state.data.student.id;
-      const response = await sendStudentData(payload, studentId);
+      const url = studentId ? `/api/alunos/${studentId}` : '/api/alunos';
+      const method = studentId ? 'PUT' : 'POST';
+      const res = await fetch(url, { method, body: formData });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Ocorreu um erro no servidor.' }));
+        throw new Error(errorData.message || `Erro ao ${method === 'POST' ? 'criar' : 'atualizar'} aluno`);
+      }
+      const response = await res.json();
 
       const updatedStudentData = {
         ...data,
@@ -245,16 +150,14 @@ export function StudentForm() {
         dataNascimento: selectedDate || null,
         id: response.id || studentId,
         fotoUrl: response.fotoUrl || photoPreview,
+        matricula: response.matricula || student.matricula,
       };
       updateStudent(updatedStudentData);
       
       toast.success(`Dados do aluno ${studentId ? 'atualizados' : 'salvos'} com sucesso!`);
 
       if (isSelfResponsible) {
-        toast.info("Aluno definido como responsável. Etapa de responsáveis pulada.");
-        completeStep('student');
-        completeStep('searchCpf');
-        completeStep('responsible');
+        completeStep('student'); completeStep('searchCpf'); completeStep('responsible');
         setCurrentStep('documents');
       } else {
         completeStep('student');
@@ -273,13 +176,8 @@ export function StudentForm() {
       {/* CARD 1: DADOS PESSOAIS */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-3 text-xl">
-            <User className="h-6 w-6" />
-            Dados Pessoais
-          </CardTitle>
-          <CardDescription>
-            Informações de identificação e contato do aluno.
-          </CardDescription>
+          <CardTitle className="flex items-center gap-3 text-xl"><User className="h-6 w-6" /> Dados Pessoais</CardTitle>
+          <CardDescription>Informações de identificação e contato do aluno.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Seção da Foto */}
@@ -287,27 +185,10 @@ export function StudentForm() {
             <Label>Foto de Perfil</Label>
             <div className="mt-2 flex items-center gap-4">
               <div className="relative">
-                <img
-                  src={photoPreview || '/placeholder-avatar.png'}
-                  alt="Preview"
-                  className="w-24 h-24 rounded-full object-cover border-2 border-muted"
-                />
-                {photoPreview && (
-                   <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full"
-                    onClick={removePhoto}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
+                <img src={photoPreview || '/placeholder-avatar.png'} alt="Preview" className="w-24 h-24 rounded-full object-cover border-2 border-muted" />
+                {photoPreview && (<Button type="button" variant="destructive" size="icon" className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full" onClick={removePhoto}><X className="h-4 w-4" /></Button>)}
               </div>
-              <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                <Upload className="mr-2 h-4 w-4" />
-                Alterar Foto
-              </Button>
+              <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="mr-2 h-4 w-4" /> Alterar Foto</Button>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
             </div>
           </div>
@@ -334,10 +215,21 @@ export function StudentForm() {
               {form.formState.errors.rg && <p className="text-destructive text-sm mt-1">{form.formState.errors.rg.message}</p>}
             </div>
             
+            {/* ======================================================================= */}
+            {/* MODIFICAÇÃO: Campo de Matrícula alterado para exibição */}
+            {/* ======================================================================= */}
             <div>
-              <Label htmlFor="matricula">Matrícula *</Label>
-              <Input id="matricula" {...form.register('matricula')} className="mt-1" />
-              {form.formState.errors.matricula && <p className="text-destructive text-sm mt-1">{form.formState.errors.matricula.message}</p>}
+              <Label htmlFor="matricula">Matrícula</Label>
+              {student.matricula ? (
+                <div className="mt-1 flex items-center gap-2 p-2 h-10 border rounded-md bg-gray-100 text-gray-600">
+                  <BadgeCheck className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm font-medium">{student.matricula}</span>
+                </div>
+              ) : (
+                <div className="mt-1 flex items-center gap-2 p-2 h-10 border border-dashed rounded-md text-gray-500">
+                  <span className="text-sm italic">Será gerada automaticamente</span>
+                </div>
+              )}
             </div>
 
             <div>
@@ -385,84 +277,38 @@ export function StudentForm() {
       {/* CARD 2: ENDEREÇO */}
       <Card>
         <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-xl">
-                <MapPin className="h-6 w-6" />
-                Endereço Residencial
-            </CardTitle>
+            <CardTitle className="flex items-center gap-3 text-xl"><MapPin className="h-6 w-6" /> Endereço Residencial</CardTitle>
         </CardHeader>
         <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-                <div className="md:col-span-2">
-                    <Label htmlFor="cep">CEP</Label>
-                    <Input id="cep" {...form.register('endereco.cep')} placeholder="00000-000" className="mt-1" />
-                </div>
-                <div className="md:col-span-4">
-                    <Label htmlFor="logradouro">Logradouro (Rua/Avenida)</Label>
-                    <Input id="logradouro" {...form.register('endereco.logradouro')} className="mt-1" />
-                </div>
-                <div className="md:col-span-2">
-                    <Label htmlFor="numero">Número</Label>
-                    <Input id="numero" {...form.register('endereco.numero')} className="mt-1" />
-                </div>
-                <div className="md:col-span-4">
-                    <Label htmlFor="complemento">Complemento</Label>
-                    <Input id="complemento" {...form.register('endereco.complemento')} placeholder="Apto, Bloco, Casa" className="mt-1" />
-                </div>
-                <div className="md:col-span-2">
-                    <Label htmlFor="bairro">Bairro</Label>
-                    <Input id="bairro" {...form.register('endereco.bairro')} className="mt-1" />
-                </div>
-                <div className="md:col-span-3">
-                    <Label htmlFor="cidade">Cidade</Label>
-                    <Input id="cidade" {...form.register('endereco.cidade')} className="mt-1" />
-                </div>
-                <div className="md:col-span-1">
-                    <Label htmlFor="estado">UF</Label>
-                    <Input id="estado" {...form.register('endereco.estado')} maxLength={2} placeholder="MG" className="mt-1" />
-                </div>
+                <div className="md:col-span-2"><Label htmlFor="cep">CEP</Label><Input id="cep" {...form.register('endereco.cep')} placeholder="00000-000" className="mt-1" /></div>
+                <div className="md:col-span-4"><Label htmlFor="logradouro">Logradouro (Rua/Avenida)</Label><Input id="logradouro" {...form.register('endereco.logradouro')} className="mt-1" /></div>
+                <div className="md:col-span-2"><Label htmlFor="numero">Número</Label><Input id="numero" {...form.register('endereco.numero')} className="mt-1" /></div>
+                <div className="md:col-span-4"><Label htmlFor="complemento">Complemento</Label><Input id="complemento" {...form.register('endereco.complemento')} placeholder="Apto, Bloco, Casa" className="mt-1" /></div>
+                <div className="md:col-span-2"><Label htmlFor="bairro">Bairro</Label><Input id="bairro" {...form.register('endereco.bairro')} className="mt-1" /></div>
+                <div className="md:col-span-3"><Label htmlFor="cidade">Cidade</Label><Input id="cidade" {...form.register('endereco.cidade')} className="mt-1" /></div>
+                <div className="md:col-span-1"><Label htmlFor="estado">UF</Label><Input id="estado" {...form.register('endereco.estado')} maxLength={2} placeholder="MG" className="mt-1" /></div>
             </div>
         </CardContent>
       </Card>
 
       {/* CARD 3: INFORMAÇÕES ADICIONAIS */}
       <Card>
-        <CardHeader>
-            <CardTitle className="text-xl">Informações Adicionais</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="text-xl">Informações Adicionais</CardTitle></CardHeader>
         <CardContent className="space-y-6">
-            <div>
-              <Label htmlFor="biografia">Biografia</Label>
-              <Textarea id="biografia" {...form.register('biografia')} placeholder="Conte um pouco sobre o aluno, seus interesses e objetivos..." className="mt-1" rows={4} />
-            </div>
-            <div>
-              <Label htmlFor="restricoesMedicas">Restrições Médicas ou Alergias</Label>
-              <Textarea id="restricoesMedicas" {...form.register('restricoesMedicas')} placeholder="Descreva qualquer condição médica, alergia ou necessidade especial relevante..." className="mt-1" rows={4} />
-            </div>
+            <div><Label htmlFor="biografia">Biografia</Label><Textarea id="biografia" {...form.register('biografia')} placeholder="Conte um pouco sobre o aluno, seus interesses e objetivos..." className="mt-1" rows={4} /></div>
+            <div><Label htmlFor="restricoesMedicas">Restrições Médicas ou Alergias</Label><Textarea id="restricoesMedicas" {...form.register('restricoesMedicas')} placeholder="Descreva qualquer condição médica, alergia ou necessidade especial relevante..." className="mt-1" rows={4} /></div>
         </CardContent>
       </Card>
 
       {/* CARD 4: ACESSO E RESPONSABILIDADE */}
       <Card>
-        <CardHeader>
-            <CardTitle className="flex items-center gap-3 text-xl">
-                <Lock className="h-6 w-6" />
-                Acesso e Responsabilidade
-            </CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-3 text-xl"><Lock className="h-6 w-6" /> Acesso e Responsabilidade</CardTitle></CardHeader>
         <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="login">Login *</Label>
-                  <Input id="login" {...form.register('login')} placeholder="nome.de.usuario" className="mt-1" />
-                  {form.formState.errors.login && <p className="text-destructive text-sm mt-1">{form.formState.errors.login.message}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="senha">Senha {student.id ? '(Deixe em branco para não alterar)' : '*'}</Label>
-                  <Input id="senha" type="password" {...form.register('senha')} placeholder="••••••••" className="mt-1" />
-                  {form.formState.errors.senha && form.formState.errors.senha.message && <p className="text-destructive text-sm mt-1">{form.formState.errors.senha.message}</p>}
-                </div>
+                <div><Label htmlFor="login">Login *</Label><Input id="login" {...form.register('login')} placeholder="nome.de.usuario" className="mt-1" />{form.formState.errors.login && <p className="text-destructive text-sm mt-1">{form.formState.errors.login.message}</p>}</div>
+                <div><Label htmlFor="senha">Senha *</Label><Input id="senha" type="password" {...form.register('senha')} placeholder="••••••••" className="mt-1" />{form.formState.errors.senha && <p className="text-destructive text-sm mt-1">{form.formState.errors.senha.message}</p>}</div>
             </div>
-
             {isOver18 && (
                 <>
                     <div className="border-t border-border -mx-6"></div>
@@ -471,12 +317,8 @@ export function StudentForm() {
                         <div className="flex items-start gap-4 rounded-lg border p-4 bg-muted/50">
                             <Checkbox id="selfResponsible" checked={isSelfResponsible} onCheckedChange={(checked) => handleSelfResponsibleChange(Boolean(checked))} className="mt-1 h-5 w-5" />
                             <div className="grid gap-1.5">
-                                <label htmlFor="selfResponsible" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                O próprio aluno é o responsável financeiro
-                                </label>
-                                <p className="text-sm text-muted-foreground">
-                                Ao marcar, o aluno (maior de 18 anos) receberá todas as comunicações financeiras e será o titular do contrato.
-                                </p>
+                                <label htmlFor="selfResponsible" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">O próprio aluno é o responsável financeiro</label>
+                                <p className="text-sm text-muted-foreground">Ao marcar, o aluno (maior de 18 anos) receberá todas as comunicações financeiras e será o titular do contrato.</p>
                             </div>
                         </div>
                     </div>
