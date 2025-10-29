@@ -333,16 +333,19 @@ import {
   excluirCurso,
   atualizarCurso,
   obterDetalhesCurso,
-  listarDisciplinasCurso,
-  adicionarDisciplinaCurso,
-  atualizarDisciplinaCurso,
-  deletarDisciplinaCurso,
   listarEventosCalendario,
   adicionarEventoCalendario,
   obterPPC,
   salvarPPC,
   obterVinculadosCurso
 } from '../controllers/cursosController';
+
+import {
+  listarDisciplinasCurso,
+  adicionarDisciplinaCurso,
+  atualizarDisciplinaCurso,
+  deletarDisciplinaCurso
+} from '../controllers/disciplinasController';
 
 const router = Router();
 
