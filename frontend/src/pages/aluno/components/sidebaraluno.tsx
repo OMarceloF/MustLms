@@ -52,14 +52,12 @@ export default function SidebarGestor({
                     text="Início"
                     isExpanded={isMenuOpen}
                     onClick={() => navigate(`/aluno`)}
-                    active={isActive(`/HomeAluno`)}
                 />
                 <NavItem
                     icon={<VscRobot size={28} />}
                     text="IA"
                     isExpanded={isMenuOpen}
                     onClick={() => navigate(`/aluno/ia`)}
-                    active={isActive(`/aluno/ia`)}
                 />
 
                 <NavItem
@@ -67,7 +65,6 @@ export default function SidebarGestor({
                     text="Curso"
                     isExpanded={isMenuOpen}
                     onClick={() => navigate('/aluno/curso')}
-                    active={isActive('/aluno/curso')}
                 />
 
                 <NavItem
@@ -76,7 +73,6 @@ export default function SidebarGestor({
                     isExpanded={isMenuOpen}
                     // Exemplo de navegação para a primeira matéria (id=1)
                     onClick={() => navigate('/aluno/materias/1')}
-                    active={isActive('/aluno/materias')}
                 />
 
                 <NavItem
@@ -84,7 +80,6 @@ export default function SidebarGestor({
                     text="Envios"
                     isExpanded={isMenuOpen}
                     onClick={() => navigate(`${basePath}/enviosdeprofessores`)}
-                    active={isActive(`${basePath}/enviosdeprofessores`)}
                 />
                 <NavItem
                     icon={<SiTestcafe size={28} />}
@@ -92,8 +87,7 @@ export default function SidebarGestor({
                     isExpanded={isMenuOpen}
                     // CORREÇÃO: Adicionada a barra "/" no início para navegação absoluta.
                     onClick={() => navigate('/aluno/simulados')}
-                    // CORREÇÃO: Adicionada a barra "/" para a verificação de rota ativa.
-                    active={isActive('/aluno/simulados')}
+                // CORREÇÃO: Adicionada a barra "/" para a verificação de rota ativa.
                 />
             </div>
         </aside>
