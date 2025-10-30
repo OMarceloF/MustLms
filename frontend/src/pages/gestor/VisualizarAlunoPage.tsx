@@ -1,370 +1,886 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import Skeleton from 'react-loading-skeleton';
-import 'react-loading-skeleton/dist/skeleton.css';
-import { Star, GraduationCap, Book, Users } from 'lucide-react';
-import SidebarGestor from '../gestor/components/Sidebar';
-import SidebarAluno from '../aluno/components/sidebaraluno';
+// src/pages/VisualizarTurmasPage.tsx
+
+import React, { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useNavigate, useParams } from 'react-router-dom';
+import SidebarGestor from './components/Sidebar';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import axios from 'axios';
-import { FaRegPenToSquare } from 'react-icons/fa6';
-import { VscRobot } from 'react-icons/vsc';
-import ModalVincularResponsavel from './components/ModalVincularResponsavel';
+import { Trash } from 'lucide-react';
 import { toast } from 'sonner';
 
-// --- INTERFACES UNIFICADAS ---
-
-interface AlunoDashboardData {
-  id: string;
-  type: 'aluno';
-  name: string;
-  email: string;
-  registration: string;
-  series: string;
-  turma: string;
-  biography: string;
-  foto_url: string;
-  data_nascimento: string;
-  genero: string;
-  cpf: string;
-  endereco: {
-    logradouro: string;
-    numero: string;
-    complemento: string;
-    bairro: string;
-    cidade: string;
-    uf: string;
-    cep: string;
-  };
-  saude: {
-    tem_alergia: boolean;
-    alergias_descricao: string;
-    usa_medicacao: boolean;
-    medicacao_descricao: string;
-    plano_saude: string;
-    numero_carteirinha: string;
-    contato_emergencia: {
-      nome: string;
-      telefone: string;
-    };
-  };
-  responsaveis: Array<{
-    id: number;
-    nome: string;
-    email: string;
-    telefone: string;
-    parentesco: string;
-    vinculoId: number;
-  }>;
+// ... (interfaces Aluno, DisciplinaComProfessor, etc. permanecem as mesmas)
+interface Aluno {
+  id: number;
+  nome: string;
+  role: string;
+  foto_url?: string;
+  matricula: string;
 }
 
-interface FuncionarioDashboardData {
-  id: string;
-  type: 'professor' | 'gestor' | 'secretaria';
-  name: string;
-  email: string;
-  foto_url: string;
-  biography: string;
-  cpf: string;
-  telefone: string;
-  data_nascimento: string;
-  endereco: {
-    logradouro: string;
-    numero: string;
-    complemento: string;
-    bairro: string;
-    cidade: string;
-    uf: string;
-    cep: string;
-  };
-  registration: string;
-  departamento: string;
-  data_contratacao: string;
-  formacao_academica: string;
-  especialidades: string;
+interface DisciplinaComProfessor {
+  materiaId: number;
+  nome: string;
+  aulasSemana: number;
+  professorId: number | null;
+  professorNome: string | null;
 }
 
-type PerfilDashboardData = AlunoDashboardData | FuncionarioDashboardData;
+interface Turma {
+  id: number;
+  nome: string;
+  serie: string;
+  turno: string;
+  ano_letivo: string;
+  qtd_alunos: number;
+  professor_responsavel?: string;
+  alunos?: Aluno[];
+}
 
-// --- FUNÇÕES AUXILIARES ---
+interface MateriaItem {
+  id: number;
+  nome: string;
+}
 
-function getSafeImagePath(path: string | null): string | null {
-  if (!path) return null;
+
+function getSafeImagePath(path: string): string | null {
   const regex = /^\/uploads\/[a-zA-Z0-9_\-\.]+\.(jpg|jpeg|png|webp)$/i;
   return regex.test(path) ? path : null;
 }
 
-// --- COMPONENTE PRINCIPAL ---
+function getSafeImagePathOne(path: string): string | null {
+  const regex = /^\/uploads\/[a-zA-Z0-9_\-\.]+\.(jpg|jpeg|png|webp)$/i;
+  return regex.test(path) ? `/${path}` : null;
+}
 
-const VisualizarUsuarioPage = () => {
-  const { id } = useParams<{ id: string }>();
+const VisualizarTurmaPage = () => {
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const { user, loading: authLoading } = useAuth();
+  const isProfessor = user.role === 'professor';
 
-  // --- ESTADOS PRINCIPAIS ---
-  const [dashboardData, setDashboardData] = useState<PerfilDashboardData | null>(null);
+  const [turma, setTurma] = useState<Turma | null>(null);
+  const [disciplinas, setDisciplinas] = useState<DisciplinaComProfessor[]>([]);
+  const materiasParaSelecao = useMemo(() => {
+    if (isProfessor) {
+      return disciplinas.filter((d) => d.professorId === user.id);
+    }
+    return disciplinas;
+  }, [disciplinas, isProfessor, user.id]);
+  const [professoresPorMateria, setProfessoresPorMateria] = useState<{
+    [materiaId: number]: { id: number; nome: string }[];
+  }>({});
+  const [selecoes, setSelecoes] = useState<{ [materiaId: number]: number }>({});
+  const [editingMateriaId, setEditingMateriaId] = useState<number | null>(null);
+
+  // Alunos
+  const [alunosDisponiveis, setAlunosDisponiveis] = useState<Aluno[]>([]);
+  const [alunosSelecionados, setAlunosSelecionados] = useState<number[]>([]);
+  const [buscaAluno, setBuscaAluno] = useState('');
+  const [selectedMateriaId, setSelectedMateriaId] = useState<number | ''>('');
+  const [periodos] = useState<string[]>([
+    '1º Bimestre',
+    '2º Bimestre',
+    '3º Bimestre',
+    '4º Bimestre',
+  ]);
+  const [notasMap, setNotasMap] = useState<{
+    [alunoId: number]: (number | null)[];
+  }>({});
+  const [mediaMap, setMediaMap] = useState<{
+    [alunoId: number]: number | null;
+  }>({});
+
+  const alunosParaBoletim = turma?.alunos || [];
+
+  // Adicionar Disciplinas
+  const [listaMaterias, setListaMaterias] = useState<MateriaItem[]>([]);
+  const [filtroMaterias, setFiltroMaterias] = useState('');
+  const [materiasSelecionadas, setMateriasSelecionadas] = useState<number[]>(
+    []
+  );
+
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // --- ESTADOS DE UI (INTERFACE DO USUÁRIO) ---
+  const [error, setError] = useState('');
   const [sidebarAberta, setSidebarAberta] = useState(false);
-  const [isModalVincularAberto, setIsModalVincularAberto] = useState(false);
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  const [bioDraft, setBioDraft] = useState('');
 
-  // --- LÓGICA DE BUSCA DE DADOS ---
-  const fetchDashboardData = async () => {
+  // 1) Buscar dados gerais da turma (incluindo alunos)
+  useEffect(() => {
+    const fetchTurma = async () => {
+      if (!id) return; // Garante que o ID existe antes de fazer a chamada
+      try {
+        setIsLoading(true);
+        
+        // <<--- CORREÇÃO PRINCIPAL APLICADA AQUI --- >>
+        // A URL foi alterada para buscar os dados da nova rota de turmas de pós-graduação.
+        const response = await axios.get<Turma>(
+          `/api/turmas-novo/${id}`
+        );
+        
+        if (response.data.alunos) {
+          response.data.alunos.sort((a, b) => a.nome.localeCompare(b.nome));
+        }
+        setTurma(response.data);
+      } catch (err) {
+        console.error('Erro ao buscar turma:', err);
+        toast.error('Erro ao carregar os dados da turma.');
+        setError('Não foi possível carregar os dados da turma.'); // Define um erro para exibição
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTurma();
+  }, [id]);
+
+  // 2) Buscar disciplinas + professor vinculado para esta turma
+  const fetchDisciplinasComProfessor = async () => {
     if (!id) return;
-    setIsLoading(true);
     try {
-      const response = await axios.get<PerfilDashboardData>(`/api/usuarios/${id}/perfil`);
-      setDashboardData(response.data);
-      setBioDraft(response.data.biography || ''); // Inicializa o rascunho da bio
-      setError(null);
-    } catch (err: any) {
-      console.error("Erro ao buscar dados do perfil:", err);
-      setError(err.response?.data?.message || "Falha ao carregar dados do usuário.");
-      setDashboardData(null);
-    } finally {
-      setIsLoading(false);
+      // Esta rota parece ser genérica e pode funcionar para ambos os tipos de turma.
+      // Se também precisar ser adaptada, o padrão seria criar uma nova.
+      const resp = await axios.get<DisciplinaComProfessor[]>(
+        `${import.meta.env.VITE_API_URL}/api/turmas/${id}/disciplinas-com-professor`
+      );
+      const ordenadas = resp.data.slice().sort((a, b) => a.nome.localeCompare(b.nome));
+      setDisciplinas(ordenadas);
+    } catch (err) {
+      console.error('Erro ao buscar disciplinas com professor:', err);
+      setError('Erro ao carregar disciplinas.');
     }
   };
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [id]);
-
-  // --- FUNÇÕES DE AÇÃO ---
-  const handleDesvincular = async (vinculoId: number) => {
-    if (window.confirm("Tem certeza que deseja desvincular este responsável?")) {
-      try {
-        await axios.delete(`/api/alunos-responsaveis/${vinculoId}`);
-        toast.success("Responsável desvinculado com sucesso.");
-        fetchDashboardData(); // Atualiza toda a página
-      } catch (error) {
-        toast.error("Falha ao desvincular responsável.");
-      }
+    if (turma) {
+      fetchDisciplinasComProfessor();
     }
-  };
+  }, [turma]);
 
-  const handleSaveBio = async () => {
+  // ... (o restante do arquivo continua igual, pois a lógica interna da página
+  // já foi projetada para lidar com os dados que a nova API retorna)
+
+  // 3) Buscar alunos disponíveis (não vinculados)
+  const atualizarAlunosDisponiveis = async () => {
     try {
-      await axios.patch(`/api/users/${id}/biography`, { biography: bioDraft });
-      setDashboardData(prev => prev ? { ...prev, biography: bioDraft } : null);
-      setIsEditingBio(false);
-      toast.success("Biografia atualizada com sucesso!");
+      const response = await axios.get<Aluno[]>(
+        `/api/turmas/alunos/disponiveis`
+      );
+      const ordenados = response.data
+        .slice()
+        .sort((a, b) => a.nome.localeCompare(b.nome));
+      setAlunosDisponiveis(ordenados);
     } catch (err) {
-      toast.error("Erro ao salvar biografia.");
+      console.error('Erro ao buscar alunos disponíveis:', err);
+      setError('Erro ao carregar os alunos disponíveis.');
     }
   };
 
-  // --- VARIÁVEIS DE CONTROLE DE UI ---
-  const isGestor = currentUser?.role === 'gestor';
-  const isPerfilPrincipal = String(currentUser?.id) === id;
-  const podeVisualizarInfoPrivada = isPerfilPrincipal || isGestor || currentUser?.role === 'professor';
-  const showSidebar = !['responsavel', 'aluno'].includes(currentUser?.role ?? '');
-  const showSidebarAluno = currentUser?.role === 'aluno';
+  useEffect(() => {
+    atualizarAlunosDisponiveis();
+  }, []);
 
-  // --- RENDERIZAÇÃO DE LOADING, ERRO E DADOS NÃO ENCONTRADOS ---
-  if (isLoading) {
-    return <div className="p-8"><Skeleton count={10} /></div>;
-  }
-  if (error) {
-    return <div className="p-8 text-center text-red-500">{error}</div>;
-  }
-  if (!dashboardData) {
-    return <div className="p-8 text-center text-gray-600">Usuário não encontrado.</div>;
-  }
+  const alunosFiltrados = alunosDisponiveis.filter((aluno) =>
+    aluno.nome.toLowerCase().includes(buscaAluno.toLowerCase())
+  );
 
-  // --- JSX PRINCIPAL ---
+  const handleSelecionarAluno = (alunoId: number) => {
+    setAlunosSelecionados((prev) =>
+      prev.includes(alunoId)
+        ? prev.filter((a) => a !== alunoId)
+        : [...prev, alunoId]
+    );
+  };
+
+  const handleVincularAluno = async () => {
+    if (alunosSelecionados.length === 0) {
+      toast.error('Por favor, selecione pelo menos um aluno para vincular.');
+      return;
+    }
+    try {
+      await axios.post(`/api/turmas/${id}/adicionar-alunos`, {
+        alunos: alunosSelecionados,
+      });
+      toast.success('Alunos vinculados com sucesso!');
+      setAlunosSelecionados([]);
+      const response = await axios.get<Turma>(
+        `/api/turmas-novo/${id}` // Recarrega da rota correta
+      );
+      if (response.data.alunos) {
+        response.data.alunos.sort((a, b) => a.nome.localeCompare(b.nome));
+      }
+      setTurma(response.data);
+      await atualizarAlunosDisponiveis();
+    } catch (err) {
+      console.error('Erro ao vincular alunos:', err);
+      setError('Erro ao vincular os alunos à turma.');
+    }
+  };
+
+  const handleRemoverAluno = async (alunoId: number) => {
+    if (!window.confirm('Tem certeza que deseja remover este aluno da turma?'))
+      return;
+    try {
+      await axios.delete(`/api/turmas/${id}/alunos/${alunoId}`);
+      const response = await axios.get<Turma>(
+        `/api/turmas-novo/${id}` // Recarrega da rota correta
+      );
+      if (response.data.alunos) {
+        response.data.alunos.sort((a, b) => a.nome.localeCompare(b.nome));
+      }
+      setTurma(response.data);
+      await atualizarAlunosDisponiveis();
+      toast.success('Aluno removido com sucesso!');
+    } catch (err) {
+      console.error('Erro ao remover aluno:', err);
+      toast.error('Erro ao remover aluno da turma.');
+    }
+  };
+
+  // ... (o restante do seu código, como handleSalvarProfessor, fetchMaterias, etc., continua aqui)
+  
+  const fetchProfessoresParaMateria = async (materiaId: number) => {
+    if (professoresPorMateria[materiaId]) {
+      return;
+    }
+    try {
+      const resp = await axios.get<{ id: number; nome: string }[]>(
+        `/api/materias/${materiaId}/professores`
+      );
+      setProfessoresPorMateria((prev) => ({
+        ...prev,
+        [materiaId]: resp.data,
+      }));
+    } catch (err) {
+      console.error(
+        `Erro ao buscar professores para matéria ${materiaId}:`,
+        err
+      );
+    }
+  };
+
+  useEffect(() => {
+    disciplinas.forEach((disc) => {
+      if (!disc.professorNome && !professoresPorMateria[disc.materiaId]) {
+        fetchProfessoresParaMateria(disc.materiaId);
+      }
+    });
+  }, [disciplinas]);
+
+  const handleChangeSelecaoProfessor = (
+    materiaId: number,
+    novoProfessorId: number
+  ) => {
+    setSelecoes((prev) => ({
+      ...prev,
+      [materiaId]: novoProfessorId,
+    }));
+  };
+
+  const handleSalvarProfessor = async (materiaId: number) => {
+    const professorId = selecoes[materiaId];
+    if (!professorId) {
+      toast.error('Selecione um professor primeiro.');
+      return;
+    }
+    try {
+      await axios.post(`/api/turmas/${id}/professores`, {
+        materiaId,
+        professorId,
+      });
+      await fetchDisciplinasComProfessor();
+      setEditingMateriaId(null);
+      toast.success('Professor atribuído/atualizado com sucesso.');
+    } catch (err) {
+      console.error('Erro ao salvar professor:', err);
+      toast.error('Falha ao salvar professor.');
+    }
+  };
+
+  useEffect(() => {
+    const fetchMaterias = async () => {
+      try {
+        const resp = await axios.get<MateriaItem[]>(
+          `/api/listarMaterias`
+        );
+        const ordenadas = resp.data.slice().sort((a, b) => a.nome.localeCompare(b.nome));
+        setListaMaterias(ordenadas);
+      } catch (err) {
+        console.error('Erro ao buscar lista de matérias:', err);
+      }
+    };
+    fetchMaterias();
+  }, []);
+
+  useEffect(() => {
+    if (selectedMateriaId && turma?.alunos?.length) {
+      const alunos = turma.alunos;
+      Promise.all(
+        alunos.map((a) =>
+          axios.get<{ tipoAvaliacao: string; materias: any[] }>(
+            `/api/boletim/${a.id}`
+          )
+        )
+      )
+        .then((resps) => {
+          const tempNotas: Record<number, (number | null)[]> = {};
+          const tempMedia: Record<number, number | null> = {};
+
+          resps.forEach((res, i) => {
+            const aluno = alunos[i];
+            const mat = res.data.materias.find(
+              (m) => m.id === selectedMateriaId
+            );
+            if (mat) {
+              tempNotas[aluno.id] = mat.grades.map((g: number) =>
+                typeof g === 'number' ? Number(g.toFixed(1)) : null
+              );
+              tempMedia[aluno.id] = mat.finalGrade;
+            } else {
+              tempNotas[aluno.id] = Array(periodos.length).fill(null);
+              tempMedia[aluno.id] = null;
+            }
+          });
+
+          setNotasMap(tempNotas);
+          setMediaMap(tempMedia);
+        })
+        .catch((err) => {
+          console.error('Erro ao buscar boletim por aluno:', err);
+          setNotasMap({});
+          setMediaMap({});
+        });
+    } else {
+      setNotasMap({});
+      setMediaMap({});
+    }
+  }, [selectedMateriaId, turma]);
+
+  const materiasDisponiveisParaVinculo = useMemo(() => {
+    const vinculadasIds = new Set(disciplinas.map((d) => d.materiaId));
+    return listaMaterias.filter((mat) => !vinculadasIds.has(mat.id));
+  }, [listaMaterias, disciplinas]);
+
+  const materiasFiltradas = materiasDisponiveisParaVinculo.filter((mat) =>
+    mat.nome.toLowerCase().includes(filtroMaterias.toLowerCase())
+  );
+
+  const toggleSelecionarMateria = (matId: number) => {
+    setMateriasSelecionadas((prev) =>
+      prev.includes(matId) ? prev.filter((m) => m !== matId) : [...prev, matId]
+    );
+  };
+
+  const handleVincularMaterias = async () => {
+    if (materiasSelecionadas.length === 0) {
+      toast.error('Selecione ao menos uma matéria para vincular.');
+      return;
+    }
+    try {
+      await axios.post(`/api/turmas/${id}/materias`, {
+        materias: materiasSelecionadas,
+      });
+      toast.success('Matérias vinculadas com sucesso!');
+      setMateriasSelecionadas([]);
+      await fetchDisciplinasComProfessor();
+    } catch (err) {
+      console.error('Erro ao vincular matérias:', err);
+      toast.error('Falha ao vincular matérias.');
+    }
+  };
+
+  const handleRemoverDisciplina = async (materiaId: number) => {
+    if (!window.confirm('Remover esta disciplina da turma?')) return;
+    try {
+      await axios.delete(`/api/turmas/${id}/materias/${materiaId}`);
+      await fetchDisciplinasComProfessor();
+    } catch (err) {
+      console.error('Erro ao remover disciplina:', err);
+      toast.error('Falha ao remover disciplina.');
+    }
+  };
+
+  const handleEditar = () => {
+    if (isProfessor) {
+      navigate(`/professor/turmas/${id}/editar`);
+    } else {
+      navigate(`/gestor/turmas/${id}/editar`);
+    }
+  };
+
+  const handleVoltar = () => {
+    if (isProfessor) {
+      navigate('/professor', { state: { activePage: 'turmas' } });
+    } else {
+      navigate('/gestor', { state: { activePage: 'turmas' } });
+    }
+  };
+
   return (
-    <div className={`dashboard-container flex min-h-screen w-full overflow-x-hidden pl-4 ${showSidebar || showSidebarAluno ? 'md:pl-15' : 'md:pl-0'}`}>
-      {showSidebar && <SidebarGestor isMenuOpen={sidebarAberta} setActivePage={(page) => navigate('/gestor', { state: { activePage: page } })} handleMouseEnter={() => setSidebarAberta(true)} handleMouseLeave={() => setSidebarAberta(false)} />}
-      {showSidebarAluno && <SidebarAluno isMenuOpen={sidebarAberta} handleMouseEnter={() => setSidebarAberta(true)} handleMouseLeave={() => setSidebarAberta(false)} setActivePage={(page) => navigate(`/aluno/${page}`)} />}
-
-      <div className="flex-1 px-4 py-6 pt-16 md:pt-20">
-        <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
-
-        <div className="w-full px-4 py-6">
-          {/* Seção de Banner e Avatar */}
-          <div className="relative w-full h-64 md:h-80 lg:h-96">
-            <img src="/couto.png" alt="Banner" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 w-full p-4 md:p-8 flex flex-col md:flex-row items-center md:items-end gap-4">
-              <div className="relative group w-20 h-20 md:w-24 md:h-24 rounded-full border-4 border-white overflow-hidden">
-                {getSafeImagePath(dashboardData.foto_url) ? (
-                  <img src={`/${getSafeImagePath(dashboardData.foto_url)}`} alt={dashboardData.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-indigo-600 to-indigo-800 flex items-center justify-center">
-                    <span className="text-white text-2xl font-bold">{dashboardData.name.slice(0, 2).toUpperCase()}</span>
-                  </div>
-                )}
+    <div className="min-h-screen bg-gray-100 w-full min-w-0 overflow-x-hidden">
+      <div className="flex flex-col md:flex-row w-full min-w-0 md:flex">
+        <SidebarGestor
+          isMenuOpen={sidebarAberta}
+          setActivePage={(page: string) =>
+            navigate('/gestor', { state: { activePage: page } })
+          }
+          handleMouseEnter={() => setSidebarAberta(true)}
+          handleMouseLeave={() => setSidebarAberta(false)}
+        />
+        <div className="flex-1 min-w-0 flex flex-col">
+          <TopbarGestorAuto
+            isMenuOpen={sidebarAberta}
+            setIsMenuOpen={setSidebarAberta}
+          />
+          <div className="w-full min-w-0 max-w-7xl mx-auto p-2 sm:p-6 mt-20 my-10">
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin w-10 h-10 border-4 border-indigo-700 border-t-transparent rounded-full mx-auto mb-4" />
+                <p className="text-indigo-900">Carregando turma...</p>
               </div>
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="text-2xl md:text-3xl font-bold text-white">{dashboardData.name}</h1>
+            ) : error ? (
+              <div className="p-8 text-center">
+                <p className="text-red-500">{error}</p>
               </div>
-              {dashboardData.type === 'aluno' && podeVisualizarInfoPrivada && (
-                <div className="flex flex-wrap justify-center md:justify-end gap-2">
-                  <Link to={`/aluno/${id}/enviosdeprofessores`} className="btn-action bg-orange-500 hover:bg-orange-600"><FaRegPenToSquare className="w-4 h-4 mr-2" /><span>Envios</span></Link>
-                  <Link to={`/gestor/alunos/${id}/boletim`} className="btn-action bg-purple-500 hover:bg-purple-600"><Star className="w-4 h-4 mr-2" /><span>Ver Notas</span></Link>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Corpo do Perfil */}
-          <div className="container mx-auto px-4 py-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                
-                {/* Card: Informações Gerais */}
-                <div className="card-style">
-                  <h2 className="card-title">Informações Gerais</h2>
-                  <div className="space-y-3">
-                    <InfoRow label="Nome Completo" value={dashboardData.name} />
-                    {podeVisualizarInfoPrivada && <InfoRow label="Email" value={dashboardData.email} />}
-                    {podeVisualizarInfoPrivada && <InfoRow label="CPF" value={dashboardData.cpf} />}
-                    {podeVisualizarInfoPrivada && <InfoRow label="Data de Nascimento" value={new Date(dashboardData.data_nascimento).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} />}
+            ) : turma ? (
+              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 mt-4 md:mt-0 md:ml-16">
+                <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center mb-6">
+                  <h1 className="text-3xl font-bold text-indigo-900">
+                    {turma.nome}
+                  </h1>
+                  <div className="flex items-center gap-2 mb-4">
+                    <label className="font-medium">Matéria:</label>
+                    <select
+                      value={selectedMateriaId}
+                      onChange={(e) =>
+                        setSelectedMateriaId(Number(e.target.value))
+                      }
+                      className="px-2 py-1 border rounded focus:ring-indigo-700 focus:outline-none"
+                    >
+                      <option value={''} disabled>
+                        Selecione...
+                      </option>
+                      {materiasParaSelecao.map((d) => (
+                        <option key={d.materiaId} value={d.materiaId}>
+                          {d.nome}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                  <button
+                    onClick={() =>
+                      isProfessor
+                        ? navigate(
+                            `/professor/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`
+                          )
+                        : navigate(
+                            `/gestor/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`
+                          )
+                    }
+                    disabled={!selectedMateriaId}
+                    className="px-4 py-2 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm disabled:opacity-50"
+                  >
+                    Avaliações &amp; Notas
+                  </button>
+                  <button
+                    onClick={() =>
+                      isProfessor
+                        ? navigate(
+                            `/professor/turmas/${id}/materias/${selectedMateriaId}/diario`
+                          )
+                        : navigate(
+                            `/gestor/turmas/${id}/materias/${selectedMateriaId}/diario`
+                          )
+                    }
+                    disabled={!selectedMateriaId}
+                    className="bg-orange-600 text-white px-4 py-2 rounded-lg shadow hover:bg-orange-700 transition duration-200 disabled:opacity-50"
+                  >
+                    Ver Diário
+                  </button>
                 </div>
-
-                {/* Card: Biografia */}
-                <div className="card-style">
-                  <div className="flex items-center justify-between">
-                    <h2 className="card-title">Biografia</h2>
-                    {isGestor && !isEditingBio && <button onClick={() => setIsEditingBio(true)} className="text-blue-600 text-sm font-medium">✏️ Editar</button>}
-                  </div>
-                  {isEditingBio ? (
-                    <>
-                      <textarea className="w-full border border-gray-300 rounded p-2 my-2" rows={4} value={bioDraft} onChange={(e) => setBioDraft(e.target.value)} />
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => setIsEditingBio(false)} className="btn-secondary">Cancelar</button>
-                        <button onClick={handleSaveBio} className="btn-primary">Salvar</button>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-gray-700 text-sm mt-2">{dashboardData.biography || 'Nenhuma biografia informada.'}</p>
+                <div className="space-y-4">
+                  <p>
+                    <strong>Série:</strong> {turma.serie}
+                  </p>
+                  <p>
+                    <strong>Turno:</strong> {turma.turno}
+                  </p>
+                  <p>
+                    <strong>Ano Letivo:</strong> {turma.ano_letivo}
+                  </p>
+                  <p>
+                    <strong>Qtd. de Alunos:</strong> {turma.qtd_alunos}
+                  </p>
+                  {turma.professor_responsavel && (
+                    <p>
+                      <strong>Professor Responsável:</strong>{' '}
+                      {turma.professor_responsavel}
+                    </p>
                   )}
                 </div>
-
-                {/* Cards Específicos para ALUNOS */}
-                {dashboardData.type === 'aluno' && (
-                  <>
-                    <div className="card-style">
-                      <h2 className="card-title">Dados Acadêmicos</h2>
-                      <div className="space-y-3">
-                        <InfoRow label="Matrícula" value={dashboardData.registration} />
-                        <InfoRow label="Série" value={dashboardData.series} />
-                        <InfoRow label="Turma" value={dashboardData.turma} />
-                      </div>
-                    </div>
-                    {podeVisualizarInfoPrivada && <CardEndereco endereco={dashboardData.endereco} />}
-                    {podeVisualizarInfoPrivada && <CardSaude saude={dashboardData.saude} />}
-                  </>
-                )}
-
-                {/* Cards Específicos para FUNCIONÁRIOS */}
-                {dashboardData.type !== 'aluno' && (
-                  <>
-                    <div className="card-style">
-                      <h2 className="card-title">Dados Profissionais</h2>
-                      <div className="space-y-3">
-                        <InfoRow label="Cargo" value={dashboardData.type.charAt(0).toUpperCase() + dashboardData.type.slice(1)} />
-                        <InfoRow label="Departamento" value={(dashboardData as FuncionarioDashboardData).departamento} />
-                        <InfoRow label="Data de Contratação" value={new Date((dashboardData as FuncionarioDashboardData).data_contratacao).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} />
-                        <InfoRow label="Formação" value={(dashboardData as FuncionarioDashboardData).formacao_academica || 'Não informada'} />
-                        <InfoRow label="Especialidades" value={(dashboardData as FuncionarioDashboardData).especialidades || 'Não informada'} />
-                      </div>
-                    </div>
-                    {podeVisualizarInfoPrivada && <CardEndereco endereco={dashboardData.endereco} />}
-                  </>
-                )}
-              </div>
-
-              {/* Coluna Direita */}
-              <div className="space-y-6">
-                {dashboardData.type === 'aluno' && podeVisualizarInfoPrivada && (
-                  <div className="card-style">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="card-title">Responsáveis</h2>
-                      {isGestor && <button onClick={() => setIsModalVincularAberto(true)} className="btn-primary text-sm">+ Vincular</button>}
-                    </div>
-                    {dashboardData.responsaveis.length > 0 ? (
-                      <div className="space-y-4">
-                        {dashboardData.responsaveis.map((resp) => (
-                          <div key={resp.id} className="p-3 border rounded-lg bg-gray-50 flex justify-between items-start">
-                            <div>
-                              <p className="font-semibold text-gray-900">{resp.nome}</p>
-                              <p className="text-sm text-gray-600"><strong>Parentesco:</strong> {resp.parentesco}</p>
-                              <p className="text-sm text-gray-600"><strong>Email:</strong> {resp.email}</p>
-                              <p className="text-sm text-gray-600"><strong>Telefone:</strong> {resp.telefone}</p>
-                            </div>
-                            {isGestor && <button onClick={() => handleDesvincular(resp.vinculoId)} className="text-red-500 hover:text-red-700 text-xs font-medium p-1" title="Desvincular">Desvincular</button>}
-                          </div>
+                <div className="mt-8">
+                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
+                    Alunos
+                  </h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-indigo-400">
+                      <thead>
+                        <tr className="bg-indigo-50">
+                          <th className="border border-indigo-400 p-2 text-left w-12">
+                            Foto
+                          </th>
+                          <th className="border border-indigo-400 p-2 text-left">
+                            Nome
+                          </th>
+                          <th className="border border-indigo-400 p-2 text-left">
+                            Matrícula
+                          </th>
+                          <th className="border border-indigo-400 p-2 text-left">
+                            Status
+                          </th>
+                          <th className="border border-indigo-400 p-2 text-left w-10">
+                            Excluir
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {turma.alunos?.map((aluno) => (
+                          <tr key={aluno.id} className="hover:bg-indigo-50">
+                            <td className="border border-indigo-400 p-2">
+                              {(() => {
+                                const segura = getSafeImagePath(
+                                  aluno.foto_url || ''
+                                );
+                                return segura ? (
+                                  <img
+                                    src={`${
+                                      import.meta.env.VITE_API_URL
+                                    }${segura}`}
+                                    alt={aluno.nome}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-300 text-indigo-900 font-bold">
+                                    {aluno.nome.substring(0, 2).toUpperCase()}
+                                  </span>
+                                );
+                              })()}
+                            </td>
+                            <td className="border border-indigo-400 p-2">
+                              {aluno.nome}
+                            </td>
+                            <td className="border border-indigo-400 p-2">
+                              {aluno.matricula}
+                            </td>
+                            <td className="border border-indigo-400 p-2">
+                              {aluno.role}
+                            </td>
+                            <td className="border border-indigo-400 p-2 w-10 text-center">
+                              <button
+                                onClick={() => handleRemoverAluno(aluno.id)}
+                                className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                                title="Excluir"
+                              >
+                                <Trash size={18} />
+                              </button>
+                            </td>
+                          </tr>
                         ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 text-center py-4">Nenhum responsável vinculado.</p>
-                    )}
+                      </tbody>
+                    </table>
                   </div>
-                )}
+                </div>
+                <div className="mt-8">
+                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
+                    Disciplinas
+                  </h2>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-indigo-400">
+                      <thead>
+                        <tr className="bg-indigo-50">
+                          <th className="border border-indigo-400 p-2 text-left">
+                            Disciplina
+                          </th>
+                          <th className="border border-indigo-400 p-2 text-left">
+                            Aulas/semana
+                          </th>
+                          <th className="border border-indigo-400 p-2 text-left">
+                            Professor
+                          </th>
+                          <th className="border border-indigo-400 p-2 text-center w-24">
+                            Editar
+                          </th>
+                          <th className="border border-indigo-400 p-2 text-center w-10">
+                            Excluir
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {disciplinas.map((disc) => (
+                          <tr key={disc.materiaId} className="hover:bg-indigo-50">
+                            <td className="border border-indigo-400 p-2">
+                              {disc.nome}
+                            </td>
+                            <td className="border border-indigo-400 p-2">
+                              {disc.aulasSemana}
+                            </td>
+                            <td className="border border-indigo-400 p-2">
+                              {disc.professorNome &&
+                              editingMateriaId !== disc.materiaId ? (
+                                <span className="text-gray-700">
+                                  {disc.professorNome}
+                                </span>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    className="border border-indigo-400 rounded-lg p-1 focus:outline-none focus:ring-2 focus:ring-indigo-700"
+                                    value={selecoes[disc.materiaId] || ''}
+                                    onChange={(e) => {
+                                      const novoProfId = Number(e.target.value);
+                                      handleChangeSelecaoProfessor(
+                                        disc.materiaId,
+                                        novoProfId
+                                      );
+                                    }}
+                                    onFocus={() => {
+                                      fetchProfessoresParaMateria(
+                                        disc.materiaId
+                                      );
+                                    }}
+                                  >
+                                    <option value="">
+                                      Selecionar professor...
+                                    </option>
+                                    {professoresPorMateria[disc.materiaId]?.map(
+                                      (prof) => (
+                                        <option key={prof.id} value={prof.id}>
+                                          {prof.nome}
+                                        </option>
+                                      )
+                                    )}
+                                  </select>
+                                </div>
+                              )}
+                            </td>
+                            <td className="border border-indigo-400 p-2 text-center">
+                              {disc.professorNome &&
+                              editingMateriaId !== disc.materiaId ? (
+                                <button
+                                  onClick={() => {
+                                    setEditingMateriaId(disc.materiaId);
+                                    if (disc.professorId) {
+                                      setSelecoes((prev) => ({
+                                        ...prev,
+                                        [disc.materiaId]: disc.professorId!,
+                                      }));
+                                    }
+                                    fetchProfessoresParaMateria(disc.materiaId);
+                                  }}
+                                  className="px-3 py-1 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm"
+                                  title="Editar Professor"
+                                >
+                                  Editar
+                                </button>
+                              ) : (
+                                <div className="flex justify-center gap-2">
+                                  <button
+                                    onClick={() =>
+                                      handleSalvarProfessor(disc.materiaId)
+                                    }
+                                    className="px-3 py-1 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm"
+                                    title="Salvar Professor"
+                                  >
+                                    Salvar
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingMateriaId(null);
+                                      setSelecoes((prev) => {
+                                        const copia = { ...prev };
+                                        delete copia[disc.materiaId];
+                                        return copia;
+                                      });
+                                    }}
+                                    className="px-3 py-1 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm"
+                                    title="Cancelar Edição"
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                            <td className="border border-indigo-400 p-2 w-10 text-center">
+                              <button
+                                onClick={() =>
+                                  handleRemoverDisciplina(disc.materiaId)
+                                }
+                                className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
+                                title="Excluir Disciplina"
+                              >
+                                <Trash size={18} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="mt-8">
+                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
+                    Adicionar Disciplinas
+                  </h2>
+                  <input
+                    type="text"
+                    placeholder="Buscar matérias..."
+                    className="w-full mb-2 px-3 py-2 border border-indigo-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-700"
+                    value={filtroMaterias}
+                    onChange={(e) => setFiltroMaterias(e.target.value)}
+                  />
+                  <div className="max-h-48 overflow-y-auto border border-indigo-400 rounded-md p-1">
+                    {materiasFiltradas.length === 0 && (
+                      <div className="p-2 text-gray-500">
+                        Nenhuma matéria encontrada.
+                      </div>
+                    )}
+                    {materiasFiltradas.map((mat) => (
+                      <label
+                        key={mat.id}
+                        className={`flex items-center gap-3 p-2 cursor-pointer rounded-lg transition-colors
+                          ${
+                            materiasSelecionadas.includes(mat.id)
+                              ? 'bg-indigo-400'
+                              : 'hover:bg-indigo-50'
+                          }`}
+                        onClick={() => toggleSelecionarMateria(mat.id)}
+                        style={{ userSelect: 'none' }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={materiasSelecionadas.includes(mat.id)}
+                          onChange={() => toggleSelecionarMateria(mat.id)}
+                          className="hidden"
+                        />
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-300 text-indigo-900 font-bold">
+                          {mat.nome.substring(0, 2).toUpperCase()}
+                        </span>
+                        <span className="text-gray-800">{mat.nome}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleVincularMaterias}
+                    className="mt-3 bg-indigo-800 text-white px-4 py-2 rounded-lg hover:bg-indigo-900"
+                  >
+                                        Vincular Selecionados
+                  </button>
+                </div>
+
+                {/* ─── Seção “Boletim da Turma” ────────────────────────────────────────── */}
+                <div className="mt-8 bg-white rounded-xl shadow p-6">
+                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
+                    Boletim da Turma
+                  </h2>
+
+                  {/* Filtro de Matéria */}
+                  <div className="mb-4 flex items-center gap-2">
+                    <label htmlFor="filtroMateria" className="font-medium">
+                      Filtrar Matéria:
+                    </label>
+                    <select
+                      id="filtroMateria"
+                      value={selectedMateriaId}
+                      onChange={(e) =>
+                        setSelectedMateriaId(
+                          e.target.value === '' ? '' : Number(e.target.value)
+                        )
+                      }
+                      className="border border-indigo-500 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-indigo-700"
+                    >
+                      <option value="">Todas as Matérias</option>
+                      {listaMaterias.map((mat) => (
+                        <option key={mat.id} value={mat.id}>
+                          {mat.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Tabela de Boletim */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-indigo-400">
+                      <thead>
+                        <tr className="bg-indigo-50">
+                          <th className="border border-indigo-400 p-2 text-left">
+                            Aluno
+                          </th>
+                          {periodos.map((p, i) => (
+                            <th
+                              key={i}
+                              className="border border-indigo-400 p-2 text-center"
+                            >
+                              {p}
+                            </th>
+                          ))}
+                          <th className="border border-indigo-400 p-2 text-center">
+                            Média Geral
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {alunosParaBoletim.map((aluno) => {
+                          const notasArr =
+                            notasMap[aluno.id] ||
+                            Array(periodos.length).fill(null);
+                          const media = mediaMap[aluno.id];
+                          return (
+                            <tr key={aluno.id} className="hover:bg-indigo-50">
+                              <td className="border border-indigo-400 p-2">
+                                {aluno.nome}
+                              </td>
+                              {notasArr.map((n, i) => (
+                                <td
+                                  key={i}
+                                  className="border border-indigo-400 p-2 text-center"
+                                >
+                                  {n != null ? n.toFixed(1) : '—'}
+                                </td>
+                              ))}
+                              <td className="border border-indigo-400 p-2 text-center">
+                                {media != null ? media.toFixed(1) : '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* ─── Botões “Editar Turma” / “Voltar” ─────────────────────────────── */}
+                <div className="flex justify-end gap-4 mt-8">
+                  <button
+                    onClick={handleEditar}
+                    className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
+                  >
+                    Editar Turma
+                  </button>
+                  <button
+                    onClick={handleVoltar}
+                    className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                  >
+                    Voltar
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-gray-500">Turma não encontrada.</p>
+              </div>
+            )}
           </div>
         </div>
-
-        {dashboardData.type === 'aluno' && isPerfilPrincipal && (
-          <div onClick={() => navigate('/aluno/ia')} className="fixed bottom-5 right-6 bg-orange-700 text-white rounded-full p-3 cursor-pointer shadow-lg hover:scale-110 transition-transform duration-200 z-50" title="Assistente Virtual">
-            <VscRobot size={32} />
-          </div>
-        )}
-
-        {isModalVincularAberto && (
-          <ModalVincularResponsavel alunoId={id!} onClose={() => setIsModalVincularAberto(false)} onSuccess={() => { fetchDashboardData(); setIsModalVincularAberto(false); }} />
-        )}
       </div>
     </div>
   );
 };
 
-// --- COMPONENTES AUXILIARES ---
-
-const InfoRow = ({ label, value }: { label: string; value: string | null | undefined }) => (
-  <div className="flex flex-col md:flex-row text-sm">
-    <span className="text-gray-500 md:w-1/3 font-semibold">{label}:</span>
-    <span className="text-gray-800 md:w-2/3">{value || 'Não informado'}</span>
-  </div>
-);
-
-const CardEndereco = ({ endereco }: { endereco: AlunoDashboardData['endereco'] | FuncionarioDashboardData['endereco'] }) => (
-  <div className="card-style">
-    <h2 className="card-title">📍 Endereço</h2>
-    <div className="space-y-2 text-sm">
-      <p><span className="font-semibold">Logradouro:</span> {endereco.logradouro}, {endereco.numero}</p>
-      {endereco.complemento && <p><span className="font-semibold">Complemento:</span> {endereco.complemento}</p>}
-      <p><span className="font-semibold">Bairro:</span> {endereco.bairro}</p>
-      <p><span className="font-semibold">Cidade/UF:</span> {endereco.cidade} - {endereco.uf}</p>
-      <p><span className="font-semibold">CEP:</span> {endereco.cep}</p>
-    </div>
-  </div>
-);
-
-const CardSaude = ({ saude }: { saude: AlunoDashboardData['saude'] }) => (
-  <div className="card-style">
-    <h2 className="card-title">❤️ Saúde e Bem-Estar</h2>
-    <div className="space-y-3 text-sm">
-      <InfoRow label="Alergias" value={saude.tem_alergia ? saude.alergias_descricao : "Nenhuma alergia registrada."} />
-      <InfoRow label="Uso de Medicação Contínua" value={saude.usa_medicacao ? saude.medicacao_descricao : "Nenhum medicamento registrado."} />
-      {saude.plano_saude && <InfoRow label="Plano de Saúde" value={`${saude.plano_saude} (Nº: ${saude.numero_carteirinha || 'Não informado'})`} />}
-      {saude.contato_emergencia?.nome && (
-        <div className="mt-4 pt-3 border-t">
-          <p className="font-semibold text-red-600">Contato de Emergência:</p>
-          <p className="text-gray-800">{saude.contato_emergencia.nome} - {saude.contato_emergencia.telefone}</p>
-        </div>
-      )}
-    </div>
-  </div>
-);
-
-export default VisualizarUsuarioPage;
+export default VisualizarTurmaPage;
