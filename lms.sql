@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 29/10/2025 às 19:47
+-- Tempo de geração: 30/10/2025 às 16:37
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -125,7 +125,6 @@ INSERT INTO `alunos_responsaveis` (`id`, `aluno_id`, `responsavel_id`, `parentes
 (12, 7, 4, 'Avô'),
 (13, 24, 5, 'Próprio Aluno'),
 (14, 26, 6, 'Próprio Aluno'),
-(17, 27, 3, 'Mãe'),
 (18, 27, 4, 'Avô'),
 (20, 27, 2, 'Mãe'),
 (24, 27, 5, 'Próprio Aluno'),
@@ -134,7 +133,12 @@ INSERT INTO `alunos_responsaveis` (`id`, `aluno_id`, `responsavel_id`, `parentes
 (28, 28, 9, 'Próprio Aluno'),
 (30, 28, 4, 'Avô'),
 (32, 29, 10, 'Próprio Aluno'),
-(33, 29, 5, 'Próprio Aluno');
+(33, 29, 5, 'Próprio Aluno'),
+(34, 27, 5, 'Próprio Aluno'),
+(35, 28, 5, 'Próprio Aluno'),
+(36, 27, 3, 'Mãe'),
+(37, 27, 4, 'Avô'),
+(38, 29, 7, 'Próprio Aluno');
 
 -- --------------------------------------------------------
 
@@ -381,8 +385,8 @@ CREATE TABLE `configuracoes_periodos_letivos` (
 --
 
 INSERT INTO `configuracoes_periodos_letivos` (`id`, `nome`, `data_inicio`, `data_fim`, `config_calendario_id`) VALUES
-(9, '1º Semestre', '2025-02-01', '2025-06-30', 1),
-(10, '2º Periodo', '2025-07-01', '2025-12-30', 1);
+(11, '2025.1', '2025-02-01', '2025-06-30', 1),
+(12, '2025.2', '2025-07-01', '2025-12-30', 1);
 
 -- --------------------------------------------------------
 
@@ -706,22 +710,29 @@ INSERT INTO `documentos_alunos` (`id`, `aluno_id`, `tipo_documento`, `caminho_ar
 (6, 7, 'historicoEscolar', '/uploads/documentos/download-1761656398205.jpg', 'download.jpg', '2025-10-28 12:59:58'),
 (7, 7, 'laudoMedico', '/uploads/documentos/download-1761656398206.jpg', 'download.jpg', '2025-10-28 12:59:58'),
 (8, 7, 'adicionais', '/uploads/documentos/download-1761656398209.jpg', 'download.jpg', '2025-10-28 12:59:58'),
-(9, 27, 'foto3x4', '/uploads/documentos/download-1761683311151.jpg', 'download.jpg', '2025-10-28 20:28:31'),
-(10, 27, 'comprovanteResidencia', '/uploads/documentos/download-1761683311152.jpg', 'download.jpg', '2025-10-28 20:28:31'),
-(11, 27, 'documentoAluno', '/uploads/documentos/download-1761683311152.jpg', 'download.jpg', '2025-10-28 20:28:31'),
-(12, 27, 'documentoResponsavel', '/uploads/documentos/download-1761683311153.jpg', 'download.jpg', '2025-10-28 20:28:31'),
-(13, 27, 'certidaoNascimento', '/uploads/documentos/download-1761683311153.jpg', 'download.jpg', '2025-10-28 20:28:31'),
-(14, 27, 'historicoEscolar', '/uploads/documentos/download-1761683311153.jpg', 'download.jpg', '2025-10-28 20:28:31'),
-(15, 27, 'laudoMedico', '/uploads/documentos/download-1761683311153.jpg', 'download.jpg', '2025-10-28 20:28:31'),
+(9, 27, 'foto3x4', '/uploads/documentos/download-1761835245866.jpg', 'download.jpg', '2025-10-30 14:40:45'),
+(10, 27, 'comprovanteResidencia', '/uploads/documentos/download-1761835245866.jpg', 'download.jpg', '2025-10-30 14:40:45'),
+(11, 27, 'documentoAluno', '/uploads/documentos/download-1761835245866.jpg', 'download.jpg', '2025-10-30 14:40:45'),
+(12, 27, 'documentoResponsavel', '/uploads/documentos/download-1761835245867.jpg', 'download.jpg', '2025-10-30 14:40:45'),
+(13, 27, 'certidaoNascimento', '/uploads/documentos/download-1761835245867.jpg', 'download.jpg', '2025-10-30 14:40:45'),
+(14, 27, 'historicoEscolar', '/uploads/documentos/download-1761835245867.jpg', 'download.jpg', '2025-10-30 14:40:45'),
+(15, 27, 'laudoMedico', '/uploads/documentos/download-1761835245868.jpg', 'download.jpg', '2025-10-30 14:40:45'),
 (16, 27, 'adicionais', '/uploads/documentos/download-1761683311156.jpg', 'download.jpg', '2025-10-28 20:28:31'),
-(17, 28, 'foto3x4', '/uploads/documentos/transacoes-1761683577610.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
-(18, 28, 'comprovanteResidencia', '/uploads/documentos/transacoes-1761683577610.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
-(19, 28, 'documentoAluno', '/uploads/documentos/transacoes-1761683577610.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
-(20, 28, 'documentoResponsavel', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
-(21, 28, 'certidaoNascimento', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
-(22, 28, 'historicoEscolar', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
-(23, 28, 'laudoMedico', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
-(24, 28, 'adicionais', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57');
+(17, 28, 'foto3x4', '/uploads/documentos/download-1761832955788.jpg', 'download.jpg', '2025-10-30 14:02:35'),
+(18, 28, 'comprovanteResidencia', '/uploads/documentos/download-1761832955789.jpg', 'download.jpg', '2025-10-30 14:02:35'),
+(19, 28, 'documentoAluno', '/uploads/documentos/download-1761832955789.jpg', 'download.jpg', '2025-10-30 14:02:35'),
+(20, 28, 'documentoResponsavel', '/uploads/documentos/download-1761832955789.jpg', 'download.jpg', '2025-10-30 14:02:35'),
+(21, 28, 'certidaoNascimento', '/uploads/documentos/download-1761832955789.jpg', 'download.jpg', '2025-10-30 14:02:35'),
+(22, 28, 'historicoEscolar', '/uploads/documentos/download-1761832955789.jpg', 'download.jpg', '2025-10-30 14:02:35'),
+(23, 28, 'laudoMedico', '/uploads/documentos/download-1761832955790.jpg', 'download.jpg', '2025-10-30 14:02:35'),
+(24, 28, 'adicionais', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
+(47, 29, 'foto3x4', '/uploads/documentos/download-1761838566327.jpg', 'download.jpg', '2025-10-30 15:36:06'),
+(48, 29, 'comprovanteResidencia', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
+(49, 29, 'documentoAluno', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
+(50, 29, 'documentoResponsavel', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
+(51, 29, 'certidaoNascimento', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
+(52, 29, 'historicoEscolar', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
+(53, 29, 'laudoMedico', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06');
 
 -- --------------------------------------------------------
 
@@ -1837,20 +1848,27 @@ CREATE TABLE `turmas` (
   `ano_letivo` year(4) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `aulas_por_dia` int(11) NOT NULL DEFAULT 5,
-  `serie` varchar(50) NOT NULL,
-  `turno` enum('Matutino','Vespertino','Noturno') NOT NULL,
-  `etapa_ensino` enum('EI','EFAI','EFAF','EM') NOT NULL,
+  `serie` varchar(50) DEFAULT NULL,
+  `turno` enum('Matutino','Vespertino','Noturno') DEFAULT NULL,
+  `etapa_ensino` enum('EI','EFAI','EFAF','EM') DEFAULT NULL,
   `qtd_alunos` int(11) NOT NULL DEFAULT 0,
-  `professor_responsavel` int(11) DEFAULT NULL
+  `professor_responsavel` int(11) DEFAULT NULL,
+  `curso_id` int(11) DEFAULT NULL COMMENT 'ID do curso de pós-graduação vinculado',
+  `materias_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Array de IDs das matérias vinculadas' CHECK (json_valid(`materias_ids`)),
+  `semestre_id` int(11) DEFAULT NULL COMMENT 'ID do período letivo (semestre) vinculado',
+  `modalidade` enum('Presencial','Híbrido','EAD') DEFAULT NULL,
+  `quantidade_alunos` int(11) DEFAULT NULL COMMENT 'Quantidade estimada de alunos',
+  `status` enum('Ativa','Em Planejamento','Encerrada') DEFAULT NULL,
+  `descricao` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Despejando dados para a tabela `turmas`
 --
 
-INSERT INTO `turmas` (`id`, `nome`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`) VALUES
-(1, 'Turma 1', '2025', '2025-07-22 12:48:52', 2, '6º Ano', 'Matutino', 'EFAF', 5, 6),
-(2, 'Turma 2', '2002', '2025-09-26 16:31:36', 4, '2º Ano', 'Matutino', 'EFAI', 0, NULL);
+INSERT INTO `turmas` (`id`, `nome`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `materias_ids`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
+(1, 'Turma 1', '2025', '2025-07-22 12:48:52', 2, '6º Ano', 'Matutino', 'EFAF', 5, 6, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 'Turma 2', '2002', '2025-09-26 16:31:36', 4, '2º Ano', 'Matutino', 'EFAI', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1907,7 +1925,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-29 18:32:41'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-30 12:46:22'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1949,6 +1967,30 @@ CREATE TRIGGER `trg_after_insert_user` AFTER INSERT ON `users` FOR EACH ROW BEGI
 END
 $$
 DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `vincular_aluno_curso`
+--
+
+CREATE TABLE `vincular_aluno_curso` (
+  `id` int(11) NOT NULL,
+  `aluno_id` int(11) NOT NULL,
+  `curso_posgraduacao_id` int(11) NOT NULL,
+  `turma_id_mocado` varchar(50) DEFAULT NULL COMMENT 'Armazena o ID mocado da turma selecionada',
+  `grade_mocada` varchar(50) DEFAULT NULL COMMENT 'Armazena a grade mocada selecionada',
+  `data_vinculo` timestamp NOT NULL DEFAULT current_timestamp(),
+  `status_matricula` enum('Ativa','Concluída','Cancelada') NOT NULL DEFAULT 'Ativa'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `vincular_aluno_curso`
+--
+
+INSERT INTO `vincular_aluno_curso` (`id`, `aluno_id`, `curso_posgraduacao_id`, `turma_id_mocado`, `grade_mocada`, `data_vinculo`, `status_matricula`) VALUES
+(1, 29, 8, '1', '2025.1', '2025-10-30 14:56:28', 'Ativa'),
+(2, 29, 4, '1', '2025.1', '2025-10-30 15:35:20', 'Ativa');
 
 --
 -- Índices para tabelas despejadas
@@ -2367,7 +2409,9 @@ ALTER TABLE `transacoes`
 --
 ALTER TABLE `turmas`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `professor_responsavel` (`professor_responsavel`);
+  ADD KEY `professor_responsavel` (`professor_responsavel`),
+  ADD KEY `fk_turma_curso` (`curso_id`),
+  ADD KEY `fk_turma_semestre` (`semestre_id`);
 
 --
 -- Índices de tabela `turmas_materias`
@@ -2385,6 +2429,14 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `cpf` (`cpf`);
 
 --
+-- Índices de tabela `vincular_aluno_curso`
+--
+ALTER TABLE `vincular_aluno_curso`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_aluno_curso` (`aluno_id`,`curso_posgraduacao_id`),
+  ADD KEY `curso_posgraduacao_id` (`curso_posgraduacao_id`);
+
+--
 -- AUTO_INCREMENT para tabelas despejadas
 --
 
@@ -2392,7 +2444,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de tabela `alunos_responsaveis`
 --
 ALTER TABLE `alunos_responsaveis`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT de tabela `alunos_turmas`
@@ -2458,7 +2510,7 @@ ALTER TABLE `configuracoes_escola`
 -- AUTO_INCREMENT de tabela `configuracoes_periodos_letivos`
 --
 ALTER TABLE `configuracoes_periodos_letivos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de tabela `configuracoes_sistema`
@@ -2530,7 +2582,7 @@ ALTER TABLE `disponibilidade`
 -- AUTO_INCREMENT de tabela `documentos_alunos`
 --
 ALTER TABLE `documentos_alunos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT de tabela `envios`
@@ -2693,6 +2745,12 @@ ALTER TABLE `turmas_materias`
 --
 ALTER TABLE `users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+--
+-- AUTO_INCREMENT de tabela `vincular_aluno_curso`
+--
+ALTER TABLE `vincular_aluno_curso`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Restrições para tabelas despejadas
@@ -2956,6 +3014,20 @@ ALTER TABLE `status_digitando`
   ADD CONSTRAINT `status_digitando_ibfk_1` FOREIGN KEY (`conversa_id`) REFERENCES `conversas` (`id`),
   ADD CONSTRAINT `status_digitando_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `status_digitando_ibfk_3` FOREIGN KEY (`destinatario_id`) REFERENCES `users` (`id`);
+
+--
+-- Restrições para tabelas `turmas`
+--
+ALTER TABLE `turmas`
+  ADD CONSTRAINT `fk_turma_curso` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_turma_semestre` FOREIGN KEY (`semestre_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE SET NULL;
+
+--
+-- Restrições para tabelas `vincular_aluno_curso`
+--
+ALTER TABLE `vincular_aluno_curso`
+  ADD CONSTRAINT `vincular_aluno_curso_ibfk_1` FOREIGN KEY (`aluno_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `vincular_aluno_curso_ibfk_2` FOREIGN KEY (`curso_posgraduacao_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
