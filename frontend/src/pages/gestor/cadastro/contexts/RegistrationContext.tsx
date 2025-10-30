@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/cadastro/contexts/RegistrationContext.tsx
+
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
 // --- Definição dos Tipos de Dados ---
@@ -52,7 +54,7 @@ export interface ResponsibleData {
   profissao: string;
 }
 
-export interface DocumentData {}
+export interface DocumentData { }
 
 export interface ContractData {
   alunoId?: number | null;
@@ -138,7 +140,14 @@ export const initialContractData: ContractData = {
 
 // --- Lógica do Contexto (Reducer, Provider, etc.) ---
 
-export type WizardStep = 'searchCpfAluno' | 'student' | 'searchCpf' | 'responsible' | 'documents' | 'contract';
+export type WizardStep =
+  | 'searchCpfAluno'
+  | 'student'
+  | 'searchCpf'
+  | 'responsible'
+  | 'documents'
+  | 'vincularAluno'
+  | 'contract';
 
 interface RegistrationState {
   data: RegistrationData;
@@ -219,12 +228,26 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
   const resetData = () => dispatch({ type: 'RESET_DATA' });
 
   const canNavigateToStep = (step: WizardStep): boolean => {
-    const stepOrder: WizardStep[] = ['searchCpfAluno', 'student', 'searchCpf', 'responsible', 'documents', 'contract'];
+    const stepOrder: WizardStep[] = [
+      'searchCpfAluno',
+      'student',
+      'searchCpf',
+      'responsible',
+      'documents',
+      'vincularAluno',
+      'contract',
+    ];
+
     const stepIndex = stepOrder.indexOf(step);
     const currentIndex = stepOrder.indexOf(state.currentStep);
-    if (stepIndex <= currentIndex) return true;
+
+    // Proteção caso alguma string não esteja no stepOrder
+    if (stepIndex === -1) return false;
+
+    if (currentIndex !== -1 && stepIndex <= currentIndex) return true;
     return stepIndex === 0 || state.completedSteps.includes(stepOrder[stepIndex - 1]);
   };
+
 
   const value: RegistrationContextType = {
     state,

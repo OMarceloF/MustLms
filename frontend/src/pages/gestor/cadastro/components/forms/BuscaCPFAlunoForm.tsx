@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/cadastro/components/forms/BuscaCPFAlunoForm.tsx
+
 import React, { useState } from 'react';
 import { useRegistration } from '../../contexts/RegistrationContext';
 import { toast } from 'sonner';
