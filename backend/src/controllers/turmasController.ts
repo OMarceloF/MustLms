@@ -7,7 +7,7 @@ import { OkPacket, RowDataPacket } from 'mysql2';
  */
 export const criarTurma = async (req: Request, res: Response) => {
   const {
-    nome,
+    nome, // Esta função ainda pode receber 'nome' do frontend antigo
     serie,
     turno,
     ano_letivo,
@@ -20,10 +20,10 @@ export const criarTurma = async (req: Request, res: Response) => {
   try {
     const [result] = await pool.query<OkPacket>(
       `INSERT INTO turmas 
-         (nome, serie, turno, ano_letivo, aulas_por_dia, etapa_ensino, qtd_alunos, professor_responsavel) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (nome_turma, serie, turno, ano_letivo, aulas_por_dia, etapa_ensino, qtd_alunos, professor_responsavel) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, // Usando nome_turma
       [
-        nome,
+        nome, // O valor de 'nome' será inserido em 'nome_turma'
         serie,
         turno,
         ano_letivo,
@@ -60,7 +60,7 @@ export const getTurmas = async (req: Request, res: Response) => {
     const [turmasRows] = await pool.query<RowDataPacket[]>(
       `SELECT 
          t.id AS turma_id, 
-         t.nome_turma AS turma_nome, -- CORREÇÃO APLICADA
+         t.nome_turma AS turma_nome,
          t.serie, 
          t.turno, 
          t.ano_letivo, 
@@ -257,7 +257,7 @@ export const getTurmaById = async (req: Request, res: Response) => {
       `
       SELECT 
         t.id, 
-        t.nome, 
+        t.nome_turma AS nome, -- <<--- CORREÇÃO PRINCIPAL APLICADA AQUI
         t.serie, 
         t.turno, 
         t.ano_letivo, 
@@ -277,7 +277,7 @@ export const getTurmaById = async (req: Request, res: Response) => {
 
     const turma = turmaRows[0];
 
-    // 2) Busca todos os alunos da turma, incluindo matricula via JOIN em "alunos"
+    // 2) Busca todos os alunos da turma
     const [alunosRows] = await pool.query<RowDataPacket[]>(
       `
       SELECT 
@@ -288,7 +288,7 @@ export const getTurmaById = async (req: Request, res: Response) => {
         a.matricula
       FROM alunos_turmas a_t
       JOIN users u ON a_t.aluno_id = u.id
-      JOIN alunos a ON u.id = a.id         /* ou 'a.aluno_id', conforme seu schema */
+      JOIN alunos a ON u.id = a.id
       WHERE a_t.turma_id = ?
       `,
       [turmaId]
@@ -302,9 +302,10 @@ export const getTurmaById = async (req: Request, res: Response) => {
       matricula: row.matricula,
     }));
 
+    // 3) Monta a resposta final
     return res.status(200).json({
       id: turma.id,
-      nome: turma.nome,
+      nome: turma.nome, // O alias 'AS nome' na query já garante que este campo exista
       serie: turma.serie,
       turno: turma.turno,
       ano_letivo: turma.ano_letivo,
@@ -312,10 +313,10 @@ export const getTurmaById = async (req: Request, res: Response) => {
       etapa_ensino: turma.etapa_ensino,
       qtd_alunos: turma.qtd_alunos,
       professor_responsavel: turma.professor_responsavel,
-      alunos, // agora cada aluno tem também "matricula"
+      alunos,
     });
   } catch (error) {
-    console.error('Erro ao buscar turma:', error);
+    console.error('Erro ao buscar turma (controller antigo):', error);
     return res.status(500).json({ message: 'Erro interno do servidor' });
   }
 };

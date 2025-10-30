@@ -280,3 +280,78 @@ export const getProfessoresParaForm = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Erro ao buscar professores.' });
     }
 };
+
+/**
+ * [GET] /api/turmas-novo/:id - Busca uma turma de pós-graduação pelo ID com todos os detalhes.
+ * Inspirado na função getTurmaById do controller antigo.
+ */
+export const getTurmaByIdNovo = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        // <<--- CORREÇÃO APLICADA AQUI --- >>
+        // Removida a condição "AND t.curso_id IS NOT NULL". O LEFT JOIN já lida com isso.
+        // Se a turma existir, ela será encontrada, e os campos do curso virão como NULL se não houver vínculo.
+        const [turmaRows] = await pool.query<RowDataPacket[]>(`
+            SELECT 
+                t.id,
+                t.nome_turma,
+                t.ano_letivo,
+                t.modalidade,
+                t.status,
+                t.descricao,
+                t.quantidade_alunos,
+                cp.nome AS curso_nome,
+                cpl.nome AS semestre_nome,
+                f.nome AS professor_nome
+            FROM turmas t
+            LEFT JOIN cursos_posgraduacao cp ON t.curso_id = cp.id
+            LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
+            LEFT JOIN funcionarios f ON t.professor_responsavel = f.id
+            WHERE t.id = ?
+        `, [id]);
+
+        if (turmaRows.length === 0) {
+            // Este erro agora só acontecerá se o ID da turma realmente não existir na tabela.
+            return res.status(404).json({ message: 'Turma não encontrada' });
+        }
+        const turma = turmaRows[0];
+
+        // 2. Busca os alunos vinculados a esta turma (se houver)
+        const [alunosRows] = await pool.query<RowDataPacket[]>(`
+            SELECT u.id, u.nome, u.foto_url, u.role, a.matricula
+            FROM alunos_turmas at
+            JOIN users u ON at.aluno_id = u.id
+            JOIN alunos a ON u.id = a.id
+            WHERE at.turma_id = ?
+            ORDER BY u.nome ASC
+        `, [id]);
+        
+        const alunos = alunosRows.map((row: any) => ({
+            id: row.id,
+            nome: row.nome,
+            foto_url: row.foto_url,
+            role: row.role,
+            matricula: row.matricula,
+        }));
+
+        // 3. Monta o objeto de resposta final
+        const responseData = {
+            id: turma.id,
+            nome: turma.nome_turma,
+            ano_letivo: turma.ano_letivo,
+            qtd_alunos: alunos.length,
+            professor_responsavel: turma.professor_nome,
+            alunos: alunos,
+            // Mapeando campos para compatibilidade com o frontend VisualizarTurmasPage
+            serie: turma.curso_nome || 'Não vinculado', // Usa o nome do curso ou um fallback
+            turno: turma.modalidade || 'Não definido',   // Usa a modalidade ou um fallback
+        };
+
+        return res.status(200).json(responseData);
+
+    } catch (error) {
+        console.error('Erro ao buscar detalhes da turma:', error);
+        return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+};

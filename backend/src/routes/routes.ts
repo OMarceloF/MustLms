@@ -191,6 +191,7 @@ import {
     createTurma as createTurmaNovo,
     updateTurma as updateTurmaNovo,
     deleteTurma as deleteTurmaNovo,
+    getTurmaByIdNovo,
     getCursosParaForm,
     getMateriasPorCursoParaForm,
     getSemestresParaForm,
@@ -937,6 +938,9 @@ router.post('/api/matriculas/vincular-aluno-curso', vincularAlunoCursoPosGraduac
 // ==============================================================================
 // ROTAS PARA A NOVA GESTÃO DE TURMAS (PÓS-GRADUAÇÃO)
 // ==============================================================================
+
+// Rotas para o CRUD de Turmas
+router.get('/api/turmas-novo/:id', getTurmaByIdNovo);
 
 // Rotas para o CRUD de Turmas
 router.get('/api/turmas-novo', getTurmasNovo);
