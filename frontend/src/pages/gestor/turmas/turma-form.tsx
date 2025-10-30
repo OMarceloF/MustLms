@@ -123,10 +123,10 @@ export function TurmaForm({ turma, onSave, onCancel }: TurmaFormProps) {
 
     const onSubmit = (data: TurmaFormValues) => {
         const turmaData: Turma = {
-            id: turma?.id ?? Date.now().toString(), // ID temporário para criação
-            ...data,
-        };
-        onSave(turmaData);
+        id: turma?.id ?? -Date.now(), // Gera um ID numérico temporário
+        ...data,
+    };
+    onSave(turmaData);
     };
 
 
