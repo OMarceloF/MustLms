@@ -23,10 +23,14 @@ export interface Turma {
   cursoId: string
   materiasIds: string[]
   anoInicio: number
-  semestre: 1 | 2
+  semestre: string
   responsavelId: string
   modalidade: "Presencial" | "Híbrido" | "EAD"
   quantidadeAlunos?: number
   status: "Ativa" | "Em Planejamento" | "Encerrada"
   descricao?: string
+  cursoNome?: string;
+  semestreNome?: string;
+  responsavelNome?: string;
+  materiasNomes?: string[];
 }

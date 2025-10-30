@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 30/10/2025 às 16:37
+-- Tempo de geração: 30/10/2025 às 18:32
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -1844,7 +1844,7 @@ INSERT INTO `transacoes` (`id`, `descricao`, `id_pessoa`, `valor`, `desconto_per
 
 CREATE TABLE `turmas` (
   `id` int(11) NOT NULL,
-  `nome` varchar(100) NOT NULL,
+  `nome_turma` varchar(100) NOT NULL,
   `ano_letivo` year(4) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `aulas_por_dia` int(11) NOT NULL DEFAULT 5,
@@ -1866,9 +1866,10 @@ CREATE TABLE `turmas` (
 -- Despejando dados para a tabela `turmas`
 --
 
-INSERT INTO `turmas` (`id`, `nome`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `materias_ids`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
+INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `materias_ids`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
 (1, 'Turma 1', '2025', '2025-07-22 12:48:52', 2, '6º Ano', 'Matutino', 'EFAF', 5, 6, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(2, 'Turma 2', '2002', '2025-09-26 16:31:36', 4, '2º Ano', 'Matutino', 'EFAI', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+(2, 'Turma 2', '2002', '2025-09-26 16:31:36', 4, '2º Ano', 'Matutino', 'EFAI', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 11, 'Presencial', 30, 'Ativa', 'kkkkkkkkkkkkkkkkkkk');
 
 -- --------------------------------------------------------
 
@@ -2410,8 +2411,8 @@ ALTER TABLE `transacoes`
 ALTER TABLE `turmas`
   ADD PRIMARY KEY (`id`),
   ADD KEY `professor_responsavel` (`professor_responsavel`),
-  ADD KEY `fk_turma_curso` (`curso_id`),
-  ADD KEY `fk_turma_semestre` (`semestre_id`);
+  ADD KEY `fk_turma_curso_pos` (`curso_id`),
+  ADD KEY `fk_turma_semestre_periodo` (`semestre_id`);
 
 --
 -- Índices de tabela `turmas_materias`
@@ -2732,7 +2733,7 @@ ALTER TABLE `transacoes`
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de tabela `turmas_materias`
@@ -3020,7 +3021,9 @@ ALTER TABLE `status_digitando`
 --
 ALTER TABLE `turmas`
   ADD CONSTRAINT `fk_turma_curso` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_turma_semestre` FOREIGN KEY (`semestre_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `fk_turma_curso_pos` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_turma_semestre` FOREIGN KEY (`semestre_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_turma_semestre_periodo` FOREIGN KEY (`semestre_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE SET NULL;
 
 --
 -- Restrições para tabelas `vincular_aluno_curso`

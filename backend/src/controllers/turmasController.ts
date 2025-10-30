@@ -60,7 +60,7 @@ export const getTurmas = async (req: Request, res: Response) => {
     const [turmasRows] = await pool.query<RowDataPacket[]>(
       `SELECT 
          t.id AS turma_id, 
-         t.nome AS turma_nome, 
+         t.nome_turma AS turma_nome, -- CORREÇÃO APLICADA
          t.serie, 
          t.turno, 
          t.ano_letivo, 
@@ -69,7 +69,8 @@ export const getTurmas = async (req: Request, res: Response) => {
          t.qtd_alunos,
          u.nome AS professor_responsavel
        FROM turmas t
-       LEFT JOIN users u ON t.professor_responsavel = u.id`
+       LEFT JOIN users u ON t.professor_responsavel = u.id
+       WHERE t.curso_id IS NULL`
     );
 
     const turmas = turmasRows.map((row) => ({
@@ -86,7 +87,7 @@ export const getTurmas = async (req: Request, res: Response) => {
 
     return res.status(200).json(turmas);
   } catch (error) {
-    console.error('Erro ao buscar turmas:', error);
+    console.error('Erro ao buscar turmas (antigas):', error);
     return res.status(500).json({ message: 'Erro interno do servidor' });
   }
 };
@@ -156,7 +157,7 @@ export const adicionarAlunosTurma = async (req: Request, res: Response) => {
 
     // Atualiza campo turma e série nos alunos
     const [turmaDadosRows] = await pool.query<RowDataPacket[]>(
-      'SELECT nome, serie FROM turmas WHERE id = ?',
+      'SELECT nome_turma AS nome, serie FROM turmas WHERE id = ?',
       [turmaId]
     );
     const nomeTurma = (turmaDadosRows[0] as any).nome;
