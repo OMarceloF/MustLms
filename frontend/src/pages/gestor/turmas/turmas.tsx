@@ -98,7 +98,7 @@ export default function TurmasPage( ) {
         }
     };
 
-    const handleDeleteTurma = async (id: string) => {
+    const handleDeleteTurma = async (id: number) => {
         try {
             const response = await fetch(`${API_BASE_URL}/turmas-novo/${id}`, {
                 method: 'DELETE',
