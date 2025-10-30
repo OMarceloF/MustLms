@@ -6,7 +6,6 @@ import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { Edit, Trash2, Eye } from "lucide-react"
 import type { Turma } from "../../lib/types"
-import { cursos, professores } from "../../lib/mock-data"
 import { DeleteDialog } from "./delete-dialog"
 
 interface TurmaTableProps {
@@ -15,26 +14,12 @@ interface TurmaTableProps {
   onDelete: (id: string) => void
 }
 
-type Materia = {
-    id: number
-    nome: string
-    codigo: string
-    cargaHoraria: number
-}
-
-
-
 export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [turmaToDelete, setTurmaToDelete] = useState<string | null>(null)
 
-  const getCursoNome = (cursoId: string) => {
-    return cursos.find((c) => c.id === cursoId)?.nome || "N/A"
-  }
-
-  const getProfessorNome = (professorId: string) => {
-    return professores.find((p) => p.id === professorId)?.nome || "N/A"
-  }
+  // As funções getCursoNome e getProfessorNome foram removidas pois agora
+  // os nomes vêm diretamente do objeto 'turma' da API.
 
   const getStatusVariant = (status: Turma["status"]) => {
     switch (status) {
@@ -80,9 +65,9 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
             <TableRow>
               <TableHead>Nome da Turma</TableHead>
               <TableHead>Curso Vinculado</TableHead>
-              <TableHead>Matérias</TableHead>
+              <TableHead>Matéria</TableHead>
               <TableHead>Ano/Semestre</TableHead>
-              <TableHead>Responsável</TableHead>
+              <TableHead>Professor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -91,16 +76,23 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
             {turmas.map((turma) => (
               <TableRow key={turma.id}>
                 <TableCell className="font-medium">{turma.nomeTurma}</TableCell>
-                <TableCell>{getCursoNome(turma.cursoId)}</TableCell>
+                <TableCell>{turma.cursoNome || "N/A"}</TableCell>
                 <TableCell>
-                  <span className="text-muted-foreground">
-                    {turma.materiasIds.length} {turma.materiasIds.length === 1 ? "matéria" : "matérias"}
-                  </span>
+                  {/* Exibe o nome da primeira matéria e um contador para as restantes */}
+                  {turma.materiasNomes && turma.materiasNomes.length > 0
+                    ? turma.materiasNomes[0]
+                    : `${turma.materiasIds.length} matéria(s)`
+                  }
+                  {turma.materiasNomes && turma.materiasNomes.length > 1 && (
+                    <span className="ml-2 text-muted-foreground text-xs font-medium">
+                      (+{turma.materiasNomes.length - 1})
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell>
-                  {turma.anoInicio}/{turma.semestre}º
+                  {turma.anoInicio}/{turma.semestreNome || turma.semestre}
                 </TableCell>
-                <TableCell>{getProfessorNome(turma.responsavelId)}</TableCell>
+                <TableCell>{turma.responsavelNome || "N/A"}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(turma.status)}>{turma.status}</Badge>
                 </TableCell>
@@ -108,6 +100,7 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
                   <div className="flex justify-end gap-2">
                     <Button variant="ghost" size="icon">
                       <Eye className="h-4 w-4" />
+                      <span className="sr-only">Visualizar turma</span>
                     </Button>
                     <Button variant="ghost" size="icon" onClick={() => onEdit(turma)}>
                       <Edit className="size-4" />

@@ -187,7 +187,18 @@ import {
 import fs from 'fs';
 
 import {
-  getAvaliacoesByTurmaMateria, // <- importe
+    getTurmas as getTurmasNovo,
+    createTurma as createTurmaNovo,
+    updateTurma as updateTurmaNovo,
+    deleteTurma as deleteTurmaNovo,
+    getCursosParaForm,
+    getMateriasPorCursoParaForm,
+    getSemestresParaForm,
+    getProfessoresParaForm
+} from '../controllers/turmasControllerNovo';
+
+import {
+  getAvaliacoesByTurmaMateria,
   createAvaliacao,
   updateAvaliacao,
   deleteAvaliacao,
@@ -491,7 +502,7 @@ router.get('/api/evento/:id/usuarios', obterUsuariosEvento);
 router.get('/api/evento/usuario/:user_id/:role', obterEventosUsuario);
 router.post('/api/turmas', criarTurma);
 router.get('/api/turmas/alunos/disponiveis', getAlunosDisponiveis);
-router.get('/api/turmas', getTurmas);
+router.get('/turmas', getTurmas);
 router.get('/api/turmas/:turmaId', getTurmaById);
 router.put('/api/turmas/:id', editarTurma);
 router.delete('/api/turmas/:id', deleteTurma);
@@ -922,5 +933,21 @@ router.get('/api/cursos-posgraduacao', listarCursosPosGraduacao);
 
 // ROTAS DE MATRÍCULA / VÍNCULO
 router.post('/api/matriculas/vincular-aluno-curso', vincularAlunoCursoPosGraduacao);
+
+// ==============================================================================
+// ROTAS PARA A NOVA GESTÃO DE TURMAS (PÓS-GRADUAÇÃO)
+// ==============================================================================
+
+// Rotas para o CRUD de Turmas
+router.get('/api/turmas-novo', getTurmasNovo);
+router.post('/api/turmas-novo', createTurmaNovo);
+router.put('/api/turmas-novo/:id', updateTurmaNovo);
+router.delete('/api/turmas-novo/:id', deleteTurmaNovo);
+
+// Rotas para popular os selects do formulário
+router.get('/api/form-data/cursos', getCursosParaForm);
+router.get('/api/form-data/materias/:cursoId', getMateriasPorCursoParaForm);
+router.get('/api/form-data/semestres', getSemestresParaForm);
+router.get('/api/form-data/professores', getProfessoresParaForm);
 
 export default router;

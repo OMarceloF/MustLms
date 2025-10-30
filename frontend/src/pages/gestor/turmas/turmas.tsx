@@ -1,46 +1,139 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Plus, Search } from "lucide-react"
 import { TurmaTable } from "./turma-table"
 import { TurmaModal } from "./turma-modal"
-import { turmas as initialTurmas } from "../../lib/mock-data"
 import type { Turma } from "../../lib/types"
+import { useToast } from "../hooks/use-toast"
 
-export default function TurmasPage() {
-    const [turmas, setTurmas] = useState<Turma[]>(initialTurmas)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [isModalOpen, setIsModalOpen] = useState(false)
-    const [editingTurma, setEditingTurma] = useState<Turma | undefined>()
+// <<--- CORREÇÃO AQUI --->>
+// URL base da sua API. Como este é um componente de cliente,
+// definimos a URL diretamente.
+const API_BASE_URL = 'http://localhost:3001/api';
+
+export default function TurmasPage( ) {
+    const [turmas, setTurmas] = useState<Turma[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingTurma, setEditingTurma] = useState<Turma | undefined>();
+    const { toast } = useToast();
+
+    useEffect(() => {
+        const fetchTurmas = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/turmas-novo`);
+                if (!response.ok) {
+                    throw new Error('Falha ao buscar os dados das turmas.');
+                }
+                const data: Turma[] = await response.json();
+                setTurmas(data);
+            } catch (error) {
+                console.error("Erro ao buscar turmas:", error);
+                toast({
+                    title: "Erro de Conexão",
+                    description: "Não foi possível carregar as turmas. Verifique se o backend está rodando.",
+                    variant: "destructive",
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTurmas();
+    }, [toast]);
 
     const filteredTurmas = turmas.filter((turma) => {
-        const searchLower = searchTerm.toLowerCase()
-        return turma.nomeTurma.toLowerCase().includes(searchLower) || turma.status.toLowerCase().includes(searchLower)
-    })
+        const searchLower = searchTerm.toLowerCase();
+        return turma.nomeTurma.toLowerCase().includes(searchLower) || (turma.status && turma.status.toLowerCase().includes(searchLower));
+    });
 
-    const handleAddTurma = (turma: Turma) => {
-        setTurmas([...turmas, turma])
-    }
+    const refreshTurmas = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/turmas-novo`);
+            const data = await response.json();
+            setTurmas(data);
+        } catch (error) {
+            console.error("Erro ao recarregar turmas:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-    const handleEditTurma = (turma: Turma) => {
-        setTurmas(turmas.map((t) => (t.id === turma.id ? turma : t)))
-    }
+    const handleSaveTurma = async (turmaData: Turma) => {
+        const isEditing = !!editingTurma;
+        const url = isEditing ? `${API_BASE_URL}/turmas-novo/${turmaData.id}` : `${API_BASE_URL}/turmas-novo`;
+        const method = isEditing ? 'PUT' : 'POST';
 
-    const handleDeleteTurma = (id: string) => {
-        setTurmas(turmas.filter((t) => t.id !== id))
-    }
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(turmaData),
+            });
+
+            if (!response.ok) {
+                throw new Error(isEditing ? 'Falha ao atualizar a turma.' : 'Falha ao criar a turma.');
+            }
+
+            toast({
+                title: isEditing ? "Turma atualizada!" : "Turma criada!",
+                description: `A turma "${turmaData.nomeTurma}" foi salva com sucesso.`,
+            });
+            
+            refreshTurmas();
+            closeModal();
+
+        } catch (error) {
+            console.error("Erro ao salvar turma:", error);
+            toast({
+                title: "Erro ao Salvar",
+                description: "Não foi possível salvar a turma. Tente novamente.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleDeleteTurma = async (id: string) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/turmas-novo/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Falha ao excluir a turma.');
+            }
+
+            toast({
+                title: "Turma excluída!",
+                description: "A turma foi removida com sucesso.",
+            });
+            
+            refreshTurmas();
+
+        } catch (error) {
+            console.error("Erro ao excluir turma:", error);
+            toast({
+                title: "Erro ao Excluir",
+                description: "Não foi possível excluir a turma. Tente novamente.",
+                variant: "destructive",
+            });
+        }
+    };
 
     const openEditModal = (turma: Turma) => {
-        setEditingTurma(turma)
-        setIsModalOpen(true)
-    }
+        setEditingTurma(turma);
+        setIsModalOpen(true);
+    };
 
     const closeModal = () => {
-        setIsModalOpen(false)
-        setEditingTurma(undefined)
-    }
+        setIsModalOpen(false);
+        setEditingTurma(undefined);
+    };
 
     return (
         <div className="min-h-screen bg-muted/30 p-8">
@@ -72,7 +165,13 @@ export default function TurmasPage() {
                     </div>
 
                     {/* Table */}
-                    <TurmaTable turmas={filteredTurmas} onEdit={openEditModal} onDelete={handleDeleteTurma} />
+                    {isLoading ? (
+                        <div className="flex min-h-[400px] items-center justify-center">
+                            <p className="text-muted-foreground">Carregando turmas...</p>
+                        </div>
+                    ) : (
+                        <TurmaTable turmas={filteredTurmas} onEdit={openEditModal} onDelete={handleDeleteTurma} />
+                    )}
                 </div>
             </div>
 
@@ -81,14 +180,7 @@ export default function TurmasPage() {
                 open={isModalOpen}
                 onOpenChange={closeModal}
                 turma={editingTurma}
-                onSave={(turma) => {
-                    if (editingTurma) {
-                        handleEditTurma(turma)
-                    } else {
-                        handleAddTurma(turma)
-                    }
-                    closeModal()
-                }}
+                onSave={handleSaveTurma}
             />
         </div>
     )
