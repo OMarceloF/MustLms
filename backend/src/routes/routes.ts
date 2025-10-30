@@ -247,6 +247,8 @@ import {
   getUltimoArquivoEnviado,
 } from '../controllers/enviosDeProfessorAlunoController';
 
+import { vincularAlunoCursoPosGraduacao } from '../controllers/vincularAlunoCursoController';
+
 // import {
 //   criarGrupo,
 //   convidarParaGrupo,
@@ -914,5 +916,11 @@ router.post('/api/alunos/vincular-responsavel', vincularResponsavel);
 
 // Desvincula um responsável de um aluno (pelo ID do vínculo)
 router.delete('/api/alunos-responsaveis/:vinculoId', desvincularResponsavel);
+
+// --- Rota para LISTAR os cursos de pós-graduação cadastrados ---
+router.get('/api/cursos-posgraduacao', listarCursosPosGraduacao);
+
+// ROTAS DE MATRÍCULA / VÍNCULO
+router.post('/api/matriculas/vincular-aluno-curso', vincularAlunoCursoPosGraduacao);
 
 export default router;
