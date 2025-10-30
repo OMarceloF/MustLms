@@ -1,4 +1,4 @@
-// frontend/src/pages/gestor/cadastro/components/forms/ResponsibleForm.tsx
+// frontend/src/pages/gestor/cadastro/components/forms/ResponsavelForm.tsx
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';

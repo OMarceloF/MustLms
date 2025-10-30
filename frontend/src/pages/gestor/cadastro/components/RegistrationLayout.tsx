@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/cadastro/components/RegistrationLayout.tsx
+
 import React from 'react';
 import { Sidebar } from '../components/sidebarcadastro';
 import { StudentForm } from './forms/EstudanteForm';
@@ -5,6 +7,7 @@ import { ResponsibleForm } from './forms/ResponsavelForm';
 import { DocumentsForm } from './forms/DocumentosForm';
 import { ContractForm } from './forms/ContratoForm';
 import { BuscaCPFForm } from './forms/BuscaCPFResponsavelForm'; // Busca do Responsável
+import { VincularAlunoCursoForm } from './forms/vincularAlunoCursoForm';
 
 // =================================================================
 // PASSO 1: Importe o novo formulário de busca do aluno
@@ -23,6 +26,7 @@ const stepComponents = {
     searchCpf: BuscaCPFForm,
     responsible: ResponsibleForm,
     documents: DocumentsForm,
+    vincularAluno: VincularAlunoCursoForm,
     contract: ContractForm,
 } as const;
 // =================================================================

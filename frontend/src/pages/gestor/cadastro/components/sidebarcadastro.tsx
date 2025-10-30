@@ -1,5 +1,7 @@
+// frontend/src/pages/gestor/cadastro/components/sidebarcadastro.tsx
+
 import React from 'react';
-import { Check, User, Users, FileText, FileCheck, Search as SearchIcon } from 'lucide-react';
+import { Check, User, Users, FileText, FileCheck, Search as SearchIcon, Link as LinkIcon } from 'lucide-react';
 import { useRegistration, WizardStep } from '../contexts/RegistrationContext';
 import { cn } from '../../../lib/utils';
 
@@ -41,6 +43,14 @@ const steps: { id: WizardStep; title: string; description: string; icon: React.E
         description: 'Upload de arquivos',
         icon: FileText,
     },
+
+    {
+        id: "vincularAluno", // se você realmente quiser com espaço: "vincular aluno"
+        title: "Vincular Aluno",
+        description: "Vincular aluno ao curso",
+        icon: LinkIcon,
+    },
+
     {
         id: 'contract',
         title: 'Contrato',

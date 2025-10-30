@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/cadastro/components/forms/DocumentosForm.tsx
+
 import React, { useRef, useState } from 'react';
 import { useRegistration } from '../../contexts/RegistrationContext';
 import { Button } from '../../../components/ui/button';
