@@ -18,7 +18,7 @@ export interface Professor {
 }
 
 export interface Turma {
-  id: string
+  id: number
   nomeTurma: string
   cursoId: string
   materiasIds: string[]

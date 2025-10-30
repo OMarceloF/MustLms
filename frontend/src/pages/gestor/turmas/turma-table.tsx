@@ -1,22 +1,31 @@
 "use client"
 
 import { useState } from "react"
+import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
 import { Button } from "../components/ui/button"
 import { Badge } from "../components/ui/badge"
 import { Edit, Trash2, Eye } from "lucide-react"
 import type { Turma } from "../../lib/types"
 import { DeleteDialog } from "./delete-dialog"
+import { useAuth } from '../../../hooks/useAuth';
+
 
 interface TurmaTableProps {
   turmas: Turma[]
   onEdit: (turma: Turma) => void
-  onDelete: (id: string) => void
+  onDelete: (id: number) => void
 }
+
 
 export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [turmaToDelete, setTurmaToDelete] = useState<string | null>(null)
+  const [turmaToDelete, setTurmaToDelete] = useState<number | null>(null)
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();  // ← pega o usuário
+  const isProfessor = user.role === 'professor';     // ← flag de professor
+
+
 
   // As funções getCursoNome e getProfessorNome foram removidas pois agora
   // os nomes vêm diretamente do objeto 'turma' da API.
@@ -34,16 +43,25 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
     }
   }
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = (id: number) => {
     setTurmaToDelete(id)
     setDeleteDialogOpen(true)
   }
 
+
   const handleConfirmDelete = () => {
-    if (turmaToDelete) {
+    if (turmaToDelete !== null) { // Verificação mais segura
       onDelete(turmaToDelete)
       setTurmaToDelete(null)
       setDeleteDialogOpen(false)
+    }
+  }
+
+  const handleVisualizar = (id: number) => {
+    if (isProfessor) {
+      navigate(`/professor/turmas/${id}/visualizar`)
+    } else {
+      navigate(`/gestor/${id}/visualizar`)
     }
   }
 
@@ -98,7 +116,7 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleVisualizar(turma.id)}>
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">Visualizar turma</span>
                     </Button>
