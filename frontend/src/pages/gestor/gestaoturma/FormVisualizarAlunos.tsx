@@ -1,58 +1,71 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-import { toast } from 'sonner'
-import { Trash2 } from 'lucide-react'
-import { getSafeImagePath } from './utils'
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react';
+import { getSafeImagePath } from './utils';
 
+// Interface para a estrutura de um aluno
 interface Aluno {
-  id: number
-  nome: string
-  matricula: string
-  role: string
-  foto_url?: string
+  id: number;
+  nome: string;
+  matricula: string;
+  role: string;
+  foto_url?: string;
 }
 
+// Props que o componente espera receber do pai
 interface FormVisualizarAlunosProps {
-  turmaId: string
+  turmaId: string;
+  initialAlunos: Aluno[];
+  onAlunoRemovido: () => void; // Função para notificar o pai sobre a remoção
 }
 
-export function FormVisualizarAlunos({ turmaId }: FormVisualizarAlunosProps) {
-  const [alunos, setAlunos] = useState<Aluno[]>([])
-  const [loading, setLoading] = useState(true)
+export function FormVisualizarAlunos({ turmaId, initialAlunos, onAlunoRemovido }: FormVisualizarAlunosProps) {
+  // O estado local é inicializado com os dados recebidos do pai
+  const [alunos, setAlunos] = useState<Aluno[]>(initialAlunos || []);
+  const [loading, setLoading] = useState(false); // O loading inicial é controlado pelo pai
 
-  // 🔹 Buscar alunos da turma
+  // Este useEffect garante que o componente se atualize se a lista de alunos do pai mudar.
+  useEffect(() => {
+    if (initialAlunos) {
+      const listaOrdenada = [...initialAlunos].sort((a, b) => a.nome.localeCompare(b.nome));
+      setAlunos(listaOrdenada);
+    }
+  }, [initialAlunos]);
+
+  // Função para buscar alunos manualmente (usada pelo botão "Atualizar")
   const fetchAlunos = async () => {
     try {
-      setLoading(true)
-      const { data } = await axios.get(`/api/turmas/${turmaId}`)
-      const listaOrdenada = (data.alunos || []).sort((a: Aluno, b: Aluno) =>
-        a.nome.localeCompare(b.nome)
-      )
-      setAlunos(listaOrdenada)
+      setLoading(true);
+      // A rota /api/turmas-novo/:id já retorna os alunos
+      const { data } = await axios.get(`/api/turmas-novo/${turmaId}`);
+      const listaOrdenada = (data.alunos || []).sort((a: Aluno, b: Aluno) => a.nome.localeCompare(b.nome));
+      setAlunos(listaOrdenada);
+      toast.success('Lista de alunos atualizada!');
     } catch (err) {
-      console.error('Erro ao buscar alunos da turma:', err)
-      toast.error('Erro ao carregar alunos da turma.')
+      console.error('Erro ao buscar alunos da turma:', err);
+      toast.error('Erro ao carregar alunos da turma.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    fetchAlunos()
-  }, [turmaId])
-
-  // 🔹 Remover aluno da turma
+  // Função para remover um aluno da turma
   const handleRemoverAluno = async (alunoId: number) => {
-    if (!window.confirm('Tem certeza que deseja remover este aluno da turma?')) return
+    if (!window.confirm('Tem certeza que deseja remover este aluno da turma?')) return;
     try {
-      await axios.delete(`/api/turmas/${turmaId}/alunos/${alunoId}`)
-      toast.success('Aluno removido com sucesso!')
-      fetchAlunos()
+      // Usa a nova rota para remover o aluno
+      await axios.delete(`/api/turmas-novo/${turmaId}/alunos/${alunoId}`);
+      toast.success('Aluno removido com sucesso!');
+      
+      // Notifica o componente pai para que ele possa recarregar o estado geral
+      onAlunoRemovido();
+
     } catch (err) {
-      console.error('Erro ao remover aluno:', err)
-      toast.error('Erro ao remover aluno da turma.')
+      console.error('Erro ao remover aluno:', err);
+      toast.error('Erro ao remover aluno da turma.');
     }
-  }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -60,9 +73,10 @@ export function FormVisualizarAlunos({ turmaId }: FormVisualizarAlunosProps) {
         <h2 className="text-xl font-semibold text-indigo-900">Alunos Vinculados</h2>
         <button
           onClick={fetchAlunos}
-          className="text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
+          disabled={loading}
+          className="text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Atualizar
+          {loading ? 'Atualizando...' : 'Atualizar'}
         </button>
       </div>
 
@@ -72,7 +86,7 @@ export function FormVisualizarAlunos({ turmaId }: FormVisualizarAlunosProps) {
           Carregando alunos...
         </div>
       ) : alunos.length === 0 ? (
-        <p className="text-gray-500 text-center py-4">Nenhum aluno vinculado à turma.</p>
+        <p className="text-gray-500 text-center py-4">Nenhum aluno vinculado a esta turma.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse border border-indigo-300 text-sm">
@@ -87,12 +101,9 @@ export function FormVisualizarAlunos({ turmaId }: FormVisualizarAlunosProps) {
             </thead>
             <tbody>
               {alunos.map((aluno) => {
-                const safePath = getSafeImagePath(aluno.foto_url)
+                const safePath = getSafeImagePath(aluno.foto_url);
                 return (
-                  <tr
-                    key={aluno.id}
-                    className="hover:bg-indigo-50 transition-colors"
-                  >
+                  <tr key={aluno.id} className="hover:bg-indigo-50 transition-colors">
                     <td className="border border-indigo-300 p-2">
                       {safePath ? (
                         <img
@@ -119,12 +130,12 @@ export function FormVisualizarAlunos({ turmaId }: FormVisualizarAlunosProps) {
                       </button>
                     </td>
                   </tr>
-                )
+                );
               })}
             </tbody>
           </table>
         </div>
       )}
     </div>
-  )
+  );
 }

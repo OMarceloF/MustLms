@@ -63,11 +63,9 @@ import {
   criarTurma,
   getTurmas,
   deleteTurma,
-  adicionarAlunosTurma,
   getAlunosDisponiveis,
   getAlunosTurma,
   getTurmaById,
-  removerAlunoDaTurma,
   editarTurma,
   getDisciplinasComProfessorPorTurma,
   getProfessoresPorMateria,
@@ -195,7 +193,10 @@ import {
     getCursosParaForm,
     getMateriasPorCursoParaForm,
     getSemestresParaForm,
-    getProfessoresParaForm
+    getProfessoresParaForm,
+    getAlunosDisponiveisParaTurma,
+    adicionarAlunosTurma,
+    removerAlunoDaTurma
 } from '../controllers/turmasControllerNovo';
 
 import {
@@ -948,8 +949,12 @@ router.get('/api/turmas-novo/:id', getTurmaByIdNovo);
 // Rotas para o CRUD de Turmas
 router.get('/api/turmas-novo', getTurmasNovo);
 router.post('/api/turmas-novo', createTurmaNovo);
+router.get('/api/turmas-novo/:id', getTurmaByIdNovo);
 router.put('/api/turmas-novo/:id', updateTurmaNovo);
 router.delete('/api/turmas-novo/:id', deleteTurmaNovo);
+router.get('/api/turmas-novo/:turmaId/alunos-disponiveis', getAlunosDisponiveisParaTurma);
+router.post('/api/turmas-novo/:turmaId/adicionar-alunos', adicionarAlunosTurma);
+router.delete('/api/turmas-novo/:turmaId/alunos/:alunoId', removerAlunoDaTurma);
 
 // Rotas para popular os selects do formulário
 router.get('/api/form-data/cursos', getCursosParaForm);
