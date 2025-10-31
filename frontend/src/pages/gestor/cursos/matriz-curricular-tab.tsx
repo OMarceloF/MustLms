@@ -6,8 +6,6 @@ import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import axios from "axios"
 import { toast } from "sonner"
-
-// --- Importações de UI ---
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "../components/ui/card"
@@ -15,13 +13,7 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "../components/ui/accordion"
 import { Button } from "../components/ui/button"
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "../components/ui/dialog"
-import { Input } from "../components/ui/input"
-import { Label } from "../components/ui/label"
-import { Textarea } from "../components/ui/textarea"
-import { Plus, Pencil, Trash2, Loader2, BookCopy } from "lucide-react"
+import { Pencil, Trash2, Loader2, BookCopy } from "lucide-react"
 
 // --- Interfaces ---
 interface Turma {
@@ -58,7 +50,7 @@ export function MatrizCurricularTab() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingDisciplina, setEditingDisciplina] = useState<DisciplinaFormData | null>(null)
-  
+
   const semestres = [...new Set(disciplinas.map(d => d.semestre))].sort((a, b) => a - b);
 
   const fetchDisciplinas = async () => {
@@ -66,7 +58,7 @@ export function MatrizCurricularTab() {
     try {
       setIsLoading(true)
       const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas`)
-      
+
       const disciplinasFormatadas = response.data.map(d => ({
         ...d,
         turmas: d.turmas || []
@@ -104,34 +96,6 @@ export function MatrizCurricularTab() {
     setIsDialogOpen(true)
   }
 
-  const handleSave = async () => {
-    if (!editingDisciplina) return
-
-    const payload = {
-      nome: editingDisciplina.nome,
-      codigo: editingDisciplina.codigo,
-      creditos: editingDisciplina.creditos,
-      carga_horaria: editingDisciplina.cargaHoraria,
-      semestre: editingDisciplina.semestre,
-      ementa: editingDisciplina.ementa,
-    };
-
-    try {
-      if (editingDisciplina.id) {
-        await axios.put(`/api/cursos/disciplinas/${editingDisciplina.id}`, payload)
-        toast.success("Disciplina atualizada com sucesso!")
-      } else {
-        await axios.post(`/api/cursos/${cursoId}/disciplinas`, payload)
-        toast.success("Disciplina adicionada com sucesso!")
-      }
-      setIsDialogOpen(false)
-      fetchDisciplinas()
-    } catch (error) {
-      console.error("Erro ao salvar disciplina:", error)
-      toast.error("Ocorreu um erro ao salvar a disciplina.")
-    }
-  }
-
   const handleDelete = async (disciplinaId: number) => {
     if (window.confirm("Tem certeza que deseja apagar esta disciplina?")) {
       try {
@@ -150,7 +114,7 @@ export function MatrizCurricularTab() {
       setEditingDisciplina({ ...editingDisciplina, [field]: value });
     }
   };
-  
+
   if (isLoading) {
     return <div className="flex justify-center items-center p-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -164,10 +128,6 @@ export function MatrizCurricularTab() {
               <CardTitle>Gestão da Matriz Curricular</CardTitle>
               <CardDescription>Adicione, edite ou remova as disciplinas do curso.</CardDescription>
             </div>
-            <Button onClick={() => handleOpenDialog(null)} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Disciplina
-            </Button>
           </div>
         </CardHeader>
       </Card>
@@ -239,48 +199,7 @@ export function MatrizCurricularTab() {
         )
       })}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl bg-card">
-          <DialogHeader>
-            <DialogTitle>{editingDisciplina?.id ? "Editar Disciplina" : "Nova Disciplina"}</DialogTitle>
-            <DialogDescription>Preencha as informações da disciplina.</DialogDescription>
-          </DialogHeader>
-          {editingDisciplina && (
-            <div className="grid gap-6 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="nome">Nome da Disciplina</Label>
-                <Input id="nome" value={editingDisciplina.nome} onChange={(e) => handleFormChange('nome', e.target.value)} className="bg-background" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="codigo">Código</Label>
-                <Input id="codigo" value={editingDisciplina.codigo} onChange={(e) => handleFormChange('codigo', e.target.value)} className="bg-background" />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="cargaHoraria">Carga Horária (h)</Label>
-                  <Input id="cargaHoraria" type="number" value={editingDisciplina.cargaHoraria} onChange={(e) => handleFormChange('cargaHoraria', Number(e.target.value))} className="bg-background" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="creditos">Créditos</Label>
-                  <Input id="creditos" type="number" value={editingDisciplina.creditos} onChange={(e) => handleFormChange('creditos', Number(e.target.value))} className="bg-background" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="semestre">Semestre</Label>
-                  <Input id="semestre" type="number" value={editingDisciplina.semestre} onChange={(e) => handleFormChange('semestre', Number(e.target.value))} className="bg-background" />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="ementa">Ementa</Label>
-                <Textarea id="ementa" value={editingDisciplina.ementa} onChange={(e) => handleFormChange('ementa', e.target.value)} rows={4} className="bg-background" />
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} className="bg-primary text-primary-foreground">Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   )
 }

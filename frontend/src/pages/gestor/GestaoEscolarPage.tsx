@@ -2,18 +2,52 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 // Importa o componente Link para navegação
-import { Link, useNavigate } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom';
 import { Book, MoreVertical, Plus } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
+import { useParams } from "react-router-dom"
 import { toast } from 'sonner';
+import { Button } from './components/ui/button';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "./components/ui/dialog"
+import { Input } from "./components/ui/input"
+import { Label } from "./components/ui/label"
+import { Textarea } from "./components/ui/textarea"
+
 
 // Interface para os dados da disciplina
-interface Disciplina {
+
+interface Turma {
   id: number;
   nome: string;
+  ano_letivo?: number;
+}
+
+
+interface Disciplina {
+  id: number
+  nome: string
+  codigo: string
+  creditos: number
+  carga_horaria: number
+  semestre: number
+  ementa: string
+  turmas?: Turma[]
   breve_descricao: string; // Usado para mostrar o nome do curso
 }
+
+interface DisciplinaFormData {
+  id?: number
+  nome: string
+  codigo: string
+  creditos: number
+  cargaHoraria: number
+  semestre: number
+  ementa: string
+}
+
 
 // Componente de Layout para manter a estrutura da página
 const Layout = ({ children }: { children: React.ReactNode }) => (
@@ -31,6 +65,14 @@ const GestaoEscolarPage: React.FC = () => {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [editingDisciplina, setEditingDisciplina] = useState<DisciplinaFormData | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { id: cursoId } = useParams<{ id: string }>()
+  const [isLoading, setIsLoading] = useState(true)
+
+
+
+
 
   // Efeito para carregar as disciplinas da API
   useEffect(() => {
@@ -49,9 +91,9 @@ const GestaoEscolarPage: React.FC = () => {
         setDisciplinas([]);
       }
     }
-    
+
     if (!loading && user?.id) {
-        carregarDisciplinas();
+      carregarDisciplinas();
     }
   }, [user, loading]);
 
@@ -81,6 +123,81 @@ const GestaoEscolarPage: React.FC = () => {
     }
   };
 
+  const fetchDisciplinas = async () => {
+    if (!cursoId) return
+    try {
+      setIsLoading(true)
+      const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas`)
+
+      const disciplinasFormatadas = response.data.map(d => ({
+        ...d,
+        turmas: d.turmas || []
+      }));
+      setDisciplinas(disciplinasFormatadas);
+
+    } catch (error) {
+      console.error("Erro ao buscar disciplinas:", error)
+      toast.error("Não foi possível carregar a matriz curricular.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!editingDisciplina) return
+
+    const payload = {
+      nome: editingDisciplina.nome,
+      codigo: editingDisciplina.codigo,
+      creditos: editingDisciplina.creditos,
+      carga_horaria: editingDisciplina.cargaHoraria,
+      semestre: editingDisciplina.semestre,
+      ementa: editingDisciplina.ementa,
+    };
+
+    try {
+      if (editingDisciplina.id) {
+        await axios.put(`/api/cursos/disciplinas/${editingDisciplina.id}`, payload)
+        toast.success("Disciplina atualizada com sucesso!")
+      } else {
+        await axios.post(`/api/cursos/${cursoId}/disciplinas`, payload)
+        toast.success("Disciplina adicionada com sucesso!")
+      }
+      setIsDialogOpen(false)
+      fetchDisciplinas()
+    } catch (error) {
+      console.error("Erro ao salvar disciplina:", error)
+      toast.error("Ocorreu um erro ao salvar a disciplina.")
+    }
+  }
+
+
+
+  const handleOpenDialog = (disciplina: Disciplina | null) => {
+    if (disciplina) {
+      setEditingDisciplina({
+        id: disciplina.id,
+        nome: disciplina.nome,
+        codigo: disciplina.codigo,
+        creditos: disciplina.creditos,
+        cargaHoraria: disciplina.carga_horaria,
+        semestre: disciplina.semestre,
+        ementa: disciplina.ementa,
+      })
+    } else {
+      setEditingDisciplina({
+        nome: "", codigo: "", creditos: 0, cargaHoraria: 0, semestre: 1, ementa: ""
+      })
+    }
+    setIsDialogOpen(true)
+  }
+
+  const handleFormChange = (field: keyof DisciplinaFormData, value: string | number) => {
+    if (editingDisciplina) {
+      setEditingDisciplina({ ...editingDisciplina, [field]: value });
+    }
+  };
+
   // Exibe mensagem de carregamento
   if (loading) {
     return <p>Carregando...</p>;
@@ -97,13 +214,11 @@ const GestaoEscolarPage: React.FC = () => {
         </div>
         {user.role !== 'Professor' && (
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-            <button
-              onClick={() => navigate('/gestor/cursos')}
-              className="flex items-center gap-2 bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg shadow-lg transition-all"
-            >
-              <Plus size={20} />
-              <span>Gerenciar Disciplinas</span>
-            </button>
+
+            <Button onClick={() => handleOpenDialog(null)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar Disciplina
+            </Button>
           </div>
         )}
       </div>
@@ -172,7 +287,51 @@ const GestaoEscolarPage: React.FC = () => {
           <p className="text-gray-500 col-span-full">Nenhuma disciplina de pós-graduação encontrada.</p>
         )}
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl bg-card">
+          <DialogHeader>
+            <DialogTitle>{editingDisciplina?.id ? "Editar Disciplina" : "Nova Disciplina"}</DialogTitle>
+            <DialogDescription>Preencha as informações da disciplina.</DialogDescription>
+          </DialogHeader>
+          {editingDisciplina && (
+            <div className="grid gap-6 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="nome">Nome da Disciplina</Label>
+                <Input id="nome" value={editingDisciplina.nome} onChange={(e) => handleFormChange('nome', e.target.value)} className="bg-background" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="codigo">Código</Label>
+                <Input id="codigo" value={editingDisciplina.codigo} onChange={(e) => handleFormChange('codigo', e.target.value)} className="bg-background" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="cargaHoraria">Carga Horária (h)</Label>
+                  <Input id="cargaHoraria" type="number" value={editingDisciplina.cargaHoraria} onChange={(e) => handleFormChange('cargaHoraria', Number(e.target.value))} className="bg-background" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="creditos">Créditos</Label>
+                  <Input id="creditos" type="number" value={editingDisciplina.creditos} onChange={(e) => handleFormChange('creditos', Number(e.target.value))} className="bg-background" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="semestre">Semestre</Label>
+                  <Input id="semestre" type="number" value={editingDisciplina.semestre} onChange={(e) => handleFormChange('semestre', Number(e.target.value))} className="bg-background" />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="ementa">Ementa</Label>
+                <Textarea id="ementa" value={editingDisciplina.ementa} onChange={(e) => handleFormChange('ementa', e.target.value)} rows={4} className="bg-background" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} className="bg-primary text-primary-foreground">Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
+
   );
 };
 
