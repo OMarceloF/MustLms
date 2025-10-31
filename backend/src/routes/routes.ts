@@ -196,7 +196,8 @@ import {
     getProfessoresParaForm,
     getAlunosDisponiveisParaTurma,
     adicionarAlunosTurma,
-    removerAlunoDaTurma
+    removerAlunoDaTurma,
+    updateAlunoTurmaStatus
 } from '../controllers/turmasControllerNovo';
 
 import {
@@ -895,6 +896,9 @@ router.post('/api/alunos', uploadSingleImage('foto'), criarOuAtualizarAluno);
 
 // 3. Atualiza um aluno existente (se o formulário for usado para edição, com ID na URL)
 router.put('/api/alunos/:id', uploadSingleImage('foto'), criarOuAtualizarAluno);
+
+// Adicione esta linha junto com as outras rotas de gerenciamento de alunos na turma
+router.patch('/api/alunos-turmas/:vinculoId/status', updateAlunoTurmaStatus);
 
 
 // =======================================================================

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 31/10/2025 às 18:46
+-- Tempo de geração: 31/10/2025 às 20:03
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -149,20 +149,27 @@ INSERT INTO `alunos_responsaveis` (`id`, `aluno_id`, `responsavel_id`, `parentes
 CREATE TABLE `alunos_turmas` (
   `id` int(11) NOT NULL,
   `aluno_id` int(11) NOT NULL,
-  `turma_id` int(11) NOT NULL
+  `turma_id` int(11) NOT NULL,
+  `status_vinculo` enum('ativo','inativo','trancado') NOT NULL DEFAULT 'ativo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Despejando dados para a tabela `alunos_turmas`
 --
 
-INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`) VALUES
-(16, 18, 3),
-(9, 24, 3),
-(12, 26, 3),
-(13, 27, 3),
-(11, 28, 3),
-(10, 29, 3);
+INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VALUES
+(9, 24, 3, 'ativo'),
+(10, 29, 3, 'ativo'),
+(11, 28, 3, 'ativo'),
+(12, 26, 3, 'ativo'),
+(13, 27, 3, 'ativo'),
+(16, 18, 3, 'ativo'),
+(17, 18, 7, 'ativo'),
+(18, 27, 7, 'ativo'),
+(19, 26, 7, 'ativo'),
+(20, 24, 7, 'ativo'),
+(21, 28, 7, 'ativo'),
+(22, 29, 7, 'ativo');
 
 -- --------------------------------------------------------
 
@@ -1824,7 +1831,8 @@ CREATE TABLE `turmas` (
 INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `materias_ids`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
 (3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 2, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkkkkkkkkkkk'),
 (5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '[\"19\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk');
+(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, '[\"27\"]', 16, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk');
 
 -- --------------------------------------------------------
 
@@ -1871,7 +1879,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-31 17:38:25'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-31 17:48:00'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2406,7 +2414,7 @@ ALTER TABLE `alunos_responsaveis`
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
@@ -2694,7 +2702,7 @@ ALTER TABLE `transacoes`
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `turmas_materias`
