@@ -22,11 +22,8 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [turmaToDelete, setTurmaToDelete] = useState<number | null>(null)
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();  // ← pega o usuário
-  const isProfessor = user.role === 'professor';     // ← flag de professor
-
-  // As funções getCursoNome e getProfessorNome foram removidas pois agora
-  // os nomes vêm diretamente do objeto 'turma' da API.
+  const { user } = useAuth();
+  const isProfessor = user?.role === 'professor';
 
   const getStatusVariant = (status: Turma["status"]) => {
     switch (status) {
@@ -48,7 +45,7 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
 
 
   const handleConfirmDelete = () => {
-    if (turmaToDelete !== null) { // Verificação mais segura
+    if (turmaToDelete !== null) {
       onDelete(turmaToDelete)
       setTurmaToDelete(null)
       setDeleteDialogOpen(false)
@@ -94,10 +91,11 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
                 <TableCell className="font-medium">{turma.nomeTurma}</TableCell>
                 <TableCell>{turma.cursoNome || "N/A"}</TableCell>
                 <TableCell>
-                  {/* Exibe o nome da primeira matéria e um contador para as restantes */}
+                  {/* *** ALTERAÇÃO AQUI *** */}
+                  {/* Lógica aprimorada para exibir o nome da matéria ou um fallback */}
                   {turma.materiasNomes && turma.materiasNomes.length > 0
                     ? turma.materiasNomes[0]
-                    : `${turma.materiasIds.length} matéria(s)`
+                    : "Nenhuma matéria vinculada"
                   }
                   {turma.materiasNomes && turma.materiasNomes.length > 1 && (
                     <span className="ml-2 text-muted-foreground text-xs font-medium">

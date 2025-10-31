@@ -57,12 +57,24 @@ export const getTurmas = async (req: Request, res: Response) => {
             LEFT JOIN cursos_posgraduacao cp ON t.curso_id = cp.id
             LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
             LEFT JOIN funcionarios f ON t.professor_responsavel = f.id
-            WHERE t.curso_id IS NOT NULL;
+            WHERE t.curso_id IS NOT NULL
+            ORDER BY t.id DESC;
         `);
 
-        // Otimização: Buscar todos os nomes de matérias de uma só vez
-        const allMateriaIds = turmasRows.flatMap(turma => turma.materias_ids ? JSON.parse(turma.materias_ids) : []);
-        const uniqueMateriaIds = [...new Set(allMateriaIds)];
+        // Pega todos os IDs de matérias de todas as turmas
+        const allMateriaIds = turmasRows.flatMap(turma => {
+            try {
+                // Garante que o parse funcione mesmo com string vazia ou inválida
+                const ids = JSON.parse(turma.materias_ids || '[]');
+                return Array.isArray(ids) ? ids : [];
+            } catch {
+                return [];
+            }
+        });
+        
+        const uniqueMateriaIds = [...new Set(allMateriaIds)].filter(id => id != null); // Remove nulos/undefined
+
+        // Cria um mapa para associar ID da matéria ao seu nome
         const materiasMap = new Map<number, string>();
 
         if (uniqueMateriaIds.length > 0) {
@@ -74,19 +86,30 @@ export const getTurmas = async (req: Request, res: Response) => {
             disciplinasRows.forEach(d => materiasMap.set(d.id, d.nome));
         }
 
-        // Mapear os resultados na aplicação
+        // Mapeia os resultados, agora com os nomes das matérias
         const turmasFormatadas = turmasRows.map(turma => {
-            const materiasIds = turma.materias_ids ? JSON.parse(turma.materias_ids) : [];
-            const materiasNomes = materiasIds.map((id: number) => materiasMap.get(id) || 'Disciplina não encontrada');
+            let materiasIds: (string | number)[] = [];
+            try {
+                const parsedIds = JSON.parse(turma.materias_ids || '[]');
+                materiasIds = Array.isArray(parsedIds) ? parsedIds : [];
+            } catch {
+                // Deixa o array vazio se o JSON for inválido
+            }
+            
+            // *** LINHA DA CORREÇÃO PRINCIPAL ***
+            // Converte os IDs para número e busca o nome no mapa
+            const materiasNomes = materiasIds
+                .map(id => materiasMap.get(Number(id)))
+                .filter((nome): nome is string => !!nome); // Filtra nomes não encontrados
 
             return {
-                id: String(turma.id),
+                id: turma.id, // Mantém o ID como número para consistência interna
                 nomeTurma: turma.nome_turma,
                 anoInicio: turma.ano_letivo,
                 cursoId: String(turma.curso_id),
                 cursoNome: turma.curso_nome,
-                materiasIds: materiasIds,
-                materiasNomes: materiasNomes,
+                materiasIds: materiasIds.map(String), // Converte para string para o frontend
+                materiasNomes: materiasNomes.length > 0 ? materiasNomes : ["Nenhuma matéria vinculada"], // Mensagem padrão se não houver nomes
                 semestre: String(turma.semestre_id),
                 semestreNome: turma.semestre_nome,
                 responsavelId: String(turma.professor_responsavel),
