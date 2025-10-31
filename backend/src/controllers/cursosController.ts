@@ -46,6 +46,7 @@ export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
         const query = `
             SELECT 
                 c.id, c.nome, c.tipo, c.status, c.modalidade, c.ano_inicio,
+                c.duracao_semestres, -- <<< ADICIONE ESTA LINHA
                 coord.nome AS coordenador_nome,
                 (SELECT COUNT(*) FROM cursos_disciplinas WHERE curso_id = c.id) as disciplinas_count,
                 (SELECT COUNT(*) FROM turmas WHERE curso_id = c.id) as turmas_count
