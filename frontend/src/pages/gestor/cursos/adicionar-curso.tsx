@@ -79,8 +79,6 @@ export default function AdicionarCursoPage() {
     const helpModalRef = useRef<HTMLDivElement>(null);
     const feedbackMenuRef = useRef<HTMLDivElement>(null);
 
-    // *** CORREÇÃO PRINCIPAL AQUI ***
-    // Efeito para buscar e MAPEAR CORRETAMENTE os dados do curso
     useEffect(() => {
         if (isEditMode && id) {
             const fetchCursoData = async () => {
@@ -133,43 +131,62 @@ export default function AdicionarCursoPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!validateForm()) {
-            toast({
-                title: "Erro de validação",
-                description: "Por favor, preencha todos os campos obrigatórios.",
-                variant: "destructive",
-            });
-            return;
-        }
+ const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) {
+        toast({
+            title: "Erro de validação",
+            description: "Por favor, preencha todos os campos obrigatórios.",
+            variant: "destructive",
+        });
+        return;
+    }
 
-        try {
-            if (isEditMode) {
-                // No modo de edição, a requisição PUT já envia o `formData` com as chaves corretas (camelCase)
-                await axios.put(`/api/cursos/${id}`, formData);
-                toast({
-                    title: "Curso atualizado com sucesso!",
-                    description: `O curso "${formData.nome}" foi modificado.`,
-                });
-            } else {
-                // No modo de adição, a requisição POST também envia o `formData`
-                await axios.post('/api/cursos/adicionar', formData);
-                toast({
-                    title: "Curso cadastrado com sucesso!",
-                    description: `O curso "${formData.nome}" foi adicionado ao sistema.`,
-                });
-            }
-            navigate("/gestaocurso"); 
-        } catch (error) {
-            console.error(`Erro ao salvar curso (modo ${isEditMode ? 'edição' : 'adição'}):`, error);
+    const apiPayload = {
+        nome: formData.nome,
+        tipo: formData.tipo,
+        area_conhecimento: formData.area,
+        carga_horaria: Number(formData.cargaHoraria),
+        duracao_semestres: Number(formData.duracao),
+        modalidade: formData.modalidade,
+        coordenador_id: Number(formData.coordenador),
+        vice_coordenador_id: formData.viceCoordenador ? Number(formData.viceCoordenador) : null,
+        unidade_id: Number(formData.unidade),
+        objetivos: formData.objetivos,
+        perfil_egresso: formData.perfilEgresso,
+        justificativa: formData.justificativa,
+        ano_inicio: Number(formData.anoInicio),
+        status: formData.status,
+        link_divulgacao: formData.linkDivulgacao,
+    };
+    // *** FIM DA CORREÇÃO ***
+
+    try {
+        if (isEditMode) {
+            // Envia o payload corrigido para a API
+            await axios.put(`/api/cursos/${id}`, apiPayload);
             toast({
-                title: `Erro ao ${isEditMode ? 'atualizar' : 'salvar'} curso`,
-                description: "Ocorreu um erro ao processar sua solicitação. Verifique o console para mais detalhes.",
-                variant: "destructive",
+                title: "Curso atualizado com sucesso!",
+                description: `O curso "${formData.nome}" foi modificado.`,
+            });
+        } else {
+            // Envia o payload corrigido também na criação
+            await axios.post('/api/cursos/adicionar', apiPayload);
+            toast({
+                title: "Curso cadastrado com sucesso!",
+                description: `O curso "${formData.nome}" foi adicionado ao sistema.`,
             });
         }
-    };
+        navigate("/gestaocurso"); 
+    } catch (error) {
+        console.error(`Erro ao salvar curso (modo ${isEditMode ? 'edição' : 'adição'}):`, error);
+        toast({
+            title: `Erro ao ${isEditMode ? 'atualizar' : 'salvar'} curso`,
+            description: "Ocorreu um erro ao processar sua solicitação. Verifique o console para mais detalhes.",
+            variant: "destructive",
+        });
+    }
+};
 
     const handleCancel = () => navigate("/gestaocurso");
     const handleLogout = () => navigate('/');
