@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/cursos/matriz-curricular-tab.tsx
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -5,7 +7,7 @@ import { useParams } from "react-router-dom"
 import axios from "axios"
 import { toast } from "sonner"
 
-// --- ALTERAÇÃO 1: Importar Checkbox ---
+// --- Importações de UI ---
 import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "../components/ui/card"
@@ -19,14 +21,13 @@ import {
 import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
 import { Textarea } from "../components/ui/textarea"
-import { Checkbox } from "../components/ui/checkbox" // <-- Importação adicionada
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react"
+import { Plus, Pencil, Trash2, Loader2, BookCopy } from "lucide-react"
 
-// --- ALTERAÇÃO 2: Definir as interfaces para Turma e atualizar a Disciplina ---
+// --- Interfaces ---
 interface Turma {
   id: number;
   nome: string;
-  ano_letivo?: number; // snake_case para corresponder à API
+  ano_letivo?: number;
 }
 
 interface Disciplina {
@@ -37,7 +38,7 @@ interface Disciplina {
   carga_horaria: number
   semestre: number
   ementa: string
-  turmas?: Turma[] // Adicionado para receber as turmas já vinculadas
+  turmas?: Turma[]
 }
 
 interface DisciplinaFormData {
@@ -48,7 +49,6 @@ interface DisciplinaFormData {
   cargaHoraria: number
   semestre: number
   ementa: string
-  turmas: Turma[] // Adicionado para gerenciar as turmas no formulário
 }
 
 export function MatrizCurricularTab() {
@@ -58,21 +58,21 @@ export function MatrizCurricularTab() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingDisciplina, setEditingDisciplina] = useState<DisciplinaFormData | null>(null)
-
-  // --- ALTERAÇÃO 3: Adicionar estados para gerenciar turmas no modal ---
-  const [allTurmas, setAllTurmas] = useState<Turma[]>([]);
-  const [turmaSearchQuery, setTurmaSearchQuery] = useState("");
-  const [loadingTurmas, setLoadingTurmas] = useState(false);
-
+  
   const semestres = [...new Set(disciplinas.map(d => d.semestre))].sort((a, b) => a - b);
 
   const fetchDisciplinas = async () => {
     if (!cursoId) return
     try {
       setIsLoading(true)
-      // Ajuste a rota se necessário para incluir as turmas vinculadas
-      const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas?include=turmas`)
-      setDisciplinas(response.data)
+      const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas`)
+      
+      const disciplinasFormatadas = response.data.map(d => ({
+        ...d,
+        turmas: d.turmas || []
+      }));
+      setDisciplinas(disciplinasFormatadas);
+
     } catch (error) {
       console.error("Erro ao buscar disciplinas:", error)
       toast.error("Não foi possível carregar a matriz curricular.")
@@ -85,25 +85,6 @@ export function MatrizCurricularTab() {
     fetchDisciplinas()
   }, [cursoId])
 
-  // --- ALTERAÇÃO 4: Buscar turmas quando o modal for aberto ---
-  useEffect(() => {
-    if (isDialogOpen) {
-      const fetchAllTurmas = async () => {
-        setLoadingTurmas(true);
-        try {
-          // Ajuste a rota da API conforme necessário
-          const response = await axios.get<Turma[]>('/api/turmas');
-          setAllTurmas(response.data);
-        } catch (error) {
-          toast.error("Não foi possível carregar a lista de turmas.");
-        } finally {
-          setLoadingTurmas(false);
-        }
-      };
-      fetchAllTurmas();
-    }
-  }, [isDialogOpen]);
-
   const handleOpenDialog = (disciplina: Disciplina | null) => {
     if (disciplina) {
       setEditingDisciplina({
@@ -114,21 +95,18 @@ export function MatrizCurricularTab() {
         cargaHoraria: disciplina.carga_horaria,
         semestre: disciplina.semestre,
         ementa: disciplina.ementa,
-        turmas: disciplina.turmas || [], // Carrega as turmas já vinculadas
       })
     } else {
       setEditingDisciplina({
-        nome: "", codigo: "", creditos: 0, cargaHoraria: 0, semestre: 1, ementa: "", turmas: [] // Inicia com array vazio
+        nome: "", codigo: "", creditos: 0, cargaHoraria: 0, semestre: 1, ementa: ""
       })
     }
-    setTurmaSearchQuery(""); // Limpa a busca ao abrir o modal
     setIsDialogOpen(true)
   }
 
   const handleSave = async () => {
     if (!editingDisciplina) return
 
-    // --- ALTERAÇÃO 5: Preparar payload para o backend, incluindo os IDs das turmas ---
     const payload = {
       nome: editingDisciplina.nome,
       codigo: editingDisciplina.codigo,
@@ -136,7 +114,6 @@ export function MatrizCurricularTab() {
       carga_horaria: editingDisciplina.cargaHoraria,
       semestre: editingDisciplina.semestre,
       ementa: editingDisciplina.ementa,
-      turma_ids: editingDisciplina.turmas.map(t => t.id), // Envia apenas os IDs
     };
 
     try {
@@ -173,31 +150,13 @@ export function MatrizCurricularTab() {
       setEditingDisciplina({ ...editingDisciplina, [field]: value });
     }
   };
-
-  // --- ALTERAÇÃO 6: Adicionar funções para manipular a seleção de turmas ---
-  const handleTurmaSelectionChange = (turma: Turma, isSelected: boolean) => {
-    if (!editingDisciplina) return;
-
-    const outrasTurmas = editingDisciplina.turmas.filter(t => t.id !== turma.id);
-
-    if (isSelected) {
-      setEditingDisciplina({ ...editingDisciplina, turmas: [...outrasTurmas, turma] });
-    } else {
-      setEditingDisciplina({ ...editingDisciplina, turmas: outrasTurmas });
-    }
-  };
-
-  const filteredTurmas = allTurmas.filter(turma =>
-    turma.nome.toLowerCase().includes(turmaSearchQuery.toLowerCase())
-  );
-
+  
   if (isLoading) {
     return <div className="flex justify-center items-center p-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
   return (
     <div className="space-y-6">
-      {/* ... (código do Card Header e Accordion sem alterações) ... */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -252,16 +211,19 @@ export function MatrizCurricularTab() {
                       <div className="space-y-4 rounded-lg bg-muted/50 p-4">
                         <div>
                           <h4 className="mb-2 font-semibold">Ementa:</h4>
-                          <p className="text-sm leading-relaxed text-muted-foreground">{disciplina.ementa}</p>
+                          <p className="text-sm leading-relaxed text-muted-foreground">{disciplina.ementa || "Nenhuma ementa cadastrada."}</p>
                         </div>
-                        {/* Mostra as turmas vinculadas no Accordion */}
+
                         {disciplina.turmas && disciplina.turmas.length > 0 && (
-                          <div className="border-t pt-4">
-                            <h4 className="mb-2 font-semibold">Turmas Vinculadas:</h4>
+                          <div className="border-t border-border/50 pt-4">
+                            <h4 className="mb-3 font-semibold flex items-center">
+                              <BookCopy className="mr-2 h-4 w-4" />
+                              Turmas Vinculadas:
+                            </h4>
                             <div className="flex flex-wrap gap-2">
                               {disciplina.turmas.map(t => (
-                                <span key={t.id} className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-full">
-                                  {t.nome}
+                                <span key={t.id} className="text-xs font-medium bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20">
+                                  {t.nome} {t.ano_letivo && `(${t.ano_letivo})`}
                                 </span>
                               ))}
                             </div>
@@ -281,12 +243,10 @@ export function MatrizCurricularTab() {
         <DialogContent className="max-w-2xl bg-card">
           <DialogHeader>
             <DialogTitle>{editingDisciplina?.id ? "Editar Disciplina" : "Nova Disciplina"}</DialogTitle>
-            <DialogDescription>Preencha as informações da disciplina e vincule as turmas desejadas.</DialogDescription>
+            <DialogDescription>Preencha as informações da disciplina.</DialogDescription>
           </DialogHeader>
           {editingDisciplina && (
-            // --- ALTERAÇÃO 7: Adicionar a nova seção de turmas ao modal ---
             <div className="grid gap-6 py-4">
-              {/* Campos antigos */}
               <div className="grid gap-2">
                 <Label htmlFor="nome">Nome da Disciplina</Label>
                 <Input id="nome" value={editingDisciplina.nome} onChange={(e) => handleFormChange('nome', e.target.value)} className="bg-background" />
@@ -312,43 +272,6 @@ export function MatrizCurricularTab() {
               <div className="grid gap-2">
                 <Label htmlFor="ementa">Ementa</Label>
                 <Textarea id="ementa" value={editingDisciplina.ementa} onChange={(e) => handleFormChange('ementa', e.target.value)} rows={4} className="bg-background" />
-              </div>
-
-              {/* Nova seção para vincular turmas */}
-              <div className="grid gap-4 p-4 border rounded-lg bg-background/50">
-                <div className="grid gap-2">
-                  <Label>Vincular Turmas</Label>
-                  <Input
-                    placeholder="Pesquisar turmas pelo nome..."
-                    value={turmaSearchQuery}
-                    onChange={(e) => setTurmaSearchQuery(e.target.value)}
-                    className="bg-background"
-                  />
-                </div>
-
-                {loadingTurmas ? (
-                  <div className="flex justify-center p-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
-                ) : (
-                  <div className="max-h-48 overflow-y-auto space-y-2 pr-2 border-t pt-4">
-                    {filteredTurmas.length > 0 ? filteredTurmas.map(turma => (
-                      <div
-                        key={turma.id}
-                        className="flex items-center justify-between rounded-md border p-3 hover:bg-muted transition-colors"
-                      >
-                        <Label htmlFor={`turma-${turma.id}`} className="font-normal flex-1 cursor-pointer">
-                          {turma.nome} {turma.ano_letivo && `(${turma.ano_letivo})`}
-                        </Label>
-                        <Checkbox
-                          id={`turma-${turma.id}`}
-                          checked={editingDisciplina.turmas.some(t => t.id === turma.id)}
-                          onCheckedChange={(checked) => handleTurmaSelectionChange(turma, !!checked)}
-                        />
-                      </div>
-                    )) : (
-                      <p className="text-sm text-muted-foreground text-center py-4">Nenhuma turma encontrada.</p>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           )}
