@@ -11,11 +11,11 @@ import { useAuth } from '../../../hooks/useAuth';
 
 // Interface para um único aluno, conforme a API
 interface Aluno {
-  id: number;
-  nome: string;
-  matricula: string;
-  role: string;
-  foto_url?: string;
+    id: number;
+    nome: string;
+    matricula: string;
+    role: string;
+    foto_url?: string;
 }
 
 // Interface para os dados completos da turma, conforme a API
@@ -27,7 +27,7 @@ interface Turma {
     professor_responsavel?: string;
     serie?: string; // Mapeado de curso_nome
     turno?: string; // Mapeado de modalidade
-    alunos: Aluno[]; 
+    alunos: Aluno[];
     materias: { materiaId: number; nome: string }[];
 }
 
@@ -38,17 +38,16 @@ export default function GestorTurma() {
     const [turma, setTurma] = useState<Turma | null>(null);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState<string | null>(null);
-    const [selectedMateriaId, setSelectedMateriaId] = useState<number | ''>('');
+    // O ID da matéria agora é derivado diretamente dos dados da turma
+    const materiaId = turma?.materias?.[0]?.materiaId;
     const [sidebarAberta, setSidebarAberta] = useState(false);
 
     const isProfessor = user?.role === 'professor';
 
     // Função centralizada para buscar todos os dados da turma.
-    // Usamos useCallback para evitar recriações desnecessárias da função.
     const fetchTurma = useCallback(async () => {
         if (!id) return;
         try {
-            // Não precisa de setLoading(true) aqui para evitar piscar a tela em atualizações
             const { data } = await axios.get(`/api/turmas-novo/${id}`);
             setTurma(data);
         } catch (err) {
@@ -56,7 +55,7 @@ export default function GestorTurma() {
             setErro('Erro ao carregar informações da turma.');
             toast.error('Erro ao carregar informações da turma.');
         } finally {
-            setLoading(false); // Garante que o loading inicial termine
+            setLoading(false);
         }
     }, [id]);
 
@@ -66,29 +65,28 @@ export default function GestorTurma() {
         fetchTurma();
     }, [fetchTurma]);
 
-    // Função de callback que será chamada pelos componentes filhos para atualizar a página
+    // Função de callback para atualizar a página
     const handleAlunosUpdate = () => {
-        // Simplesmente busca os dados da turma novamente para refletir as mudanças
         fetchTurma();
     };
 
-    // Funções de navegação
+    // Funções de navegação atualizadas
     const handleNotas = () => {
-        if (!selectedMateriaId) {
-            toast.error('Selecione uma matéria primeiro.');
+        if (!materiaId) {
+            toast.error('Nenhuma matéria encontrada para esta turma.');
             return;
         }
         const base = isProfessor ? '/professor' : '/gestor';
-        navigate(`${base}/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`);
+        navigate(`${base}/turmas/${id}/materias/${materiaId}/avaliacoes-notas`);
     };
 
     const handleDiario = () => {
-        if (!selectedMateriaId) {
-            toast.error('Selecione uma matéria primeiro.');
+        if (!materiaId) {
+            toast.error('Nenhuma matéria encontrada para esta turma.');
             return;
         }
         const base = isProfessor ? '/professor' : '/gestor';
-        navigate(`${base}/turmas/${id}/materias/${selectedMateriaId}/diario`);
+        navigate(`${base}/turmas/${id}/materias/${materiaId}/diario`);
     };
 
     // Renderização de estados de carregamento e erro
@@ -145,26 +143,21 @@ export default function GestorTurma() {
                                 )}
                             </div>
 
-                            {/* Seletor de matéria e botões */}
+                            {/* Botões de ação direta */}
                             <div className="flex flex-col sm:flex-row items-center gap-3">
-                                <select
-                                    value={selectedMateriaId}
-                                    onChange={(e) => setSelectedMateriaId(Number(e.target.value))}
-                                    className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-700"
+                                <button
+                                    onClick={handleNotas}
+                                    disabled={!materiaId}
+                                    className="px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <option value="">Selecione uma matéria...</option>
-                                    {turma.materias.map((d) => (
-                                        <option key={d.materiaId} value={d.materiaId}>
-                                            {d.nome}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <button onClick={handleNotas} disabled={!selectedMateriaId} className="px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition disabled:opacity-50">
                                     Avaliações & Notas
                                 </button>
 
-                                <button onClick={handleDiario} disabled={!selectedMateriaId} className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition disabled:opacity-50">
+                                <button
+                                    onClick={handleDiario}
+                                    disabled={!materiaId}
+                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
                                     Ver Diário
                                 </button>
                             </div>
@@ -172,17 +165,17 @@ export default function GestorTurma() {
                     </div>
 
                     {/* Forms principais */}
-                    <FormVisualizarAlunos 
-                        turmaId={id!} 
+                    <FormVisualizarAlunos
+                        turmaId={id!}
                         initialAlunos={turma.alunos}
                         onAlunoRemovido={handleAlunosUpdate}
                     />
-                    <FormVincularAluno 
+                    <FormVincularAluno
                         turmaId={id!}
                         onAlunosVinculados={handleAlunosUpdate}
                     />
                     <FormBoletim turmaId={id!} />
-                    
+
                     {/* Botão voltar */}
                     <div className="flex justify-end mt-10">
                         <button
