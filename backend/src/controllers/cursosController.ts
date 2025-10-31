@@ -1,5 +1,3 @@
-// src/controllers/cursosController.ts
-
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
@@ -46,7 +44,7 @@ export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
         const query = `
             SELECT 
                 c.id, c.nome, c.tipo, c.status, c.modalidade, c.ano_inicio,
-                c.duracao_semestres, -- <<< ADICIONE ESTA LINHA
+                c.duracao_semestres,
                 coord.nome AS coordenador_nome,
                 (SELECT COUNT(*) FROM cursos_disciplinas WHERE curso_id = c.id) as disciplinas_count,
                 (SELECT COUNT(*) FROM turmas WHERE curso_id = c.id) as turmas_count
@@ -191,7 +189,7 @@ export const salvarPPC = async (req: Request, res: Response) => {
 };
 
 /**
- * @description Obtém os professores e turmas vinculados a um curso específico.
+ * @description Obtém os professores, turmas e alunos vinculados a um curso específico.
  * @route GET /api/cursos/:cursoId/vinculados
  */
 export const obterVinculadosCurso = async (req: Request, res: Response) => {
@@ -202,12 +200,10 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
     }
 
     try {
-        // Query para buscar professores (esta query já estava correta)
+        // Query para buscar professores
         const [professores] = await pool.query<RowDataPacket[]>(`
             SELECT DISTINCT
-                f.id,
-                f.nome,
-                f.departamento,
+                f.id, f.nome, f.departamento,
                 (SELECT COUNT(*) FROM alunos_turmas at2 WHERE at2.turma_id IN (SELECT id FROM turmas WHERE professor_responsavel = f.id)) AS orientandos
             FROM funcionarios f
             JOIN turmas t ON f.id = t.professor_responsavel
@@ -215,26 +211,21 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
             ORDER BY f.nome;
         `, [cursoId]);
 
-        // Query CORRIGIDA para buscar turmas (sem JSON_TABLE)
-        // Etapa 1: Buscar as turmas e os IDs das suas disciplinas
+        // Query para buscar turmas
         const [turmasBase] = await pool.query<RowDataPacket[]>(`
             SELECT 
-                t.id,
-                t.nome_turma AS codigo,
-                cpl.nome AS periodo,
-                t.quantidade_alunos AS alunos,
-                t.materias_ids
+                t.id, t.nome_turma AS codigo, cpl.nome AS periodo,
+                t.quantidade_alunos AS alunos, t.materias_ids
             FROM turmas t
             LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
             WHERE t.curso_id = ?
             ORDER BY cpl.data_inicio DESC, t.nome_turma;
         `, [cursoId]);
 
-        // Etapa 2: Processar os resultados no Node.js para buscar os nomes das disciplinas
+        // Processamento para buscar nomes das disciplinas das turmas
         const turmas = await Promise.all(turmasBase.map(async (turma) => {
             let disciplinaNomes = 'N/A';
-            // Verifica se materias_ids existe e não está vazio
-            if (turma.materias_ids && turma.materias_ids.length > 2) { // > 2 para ignorar '[]'
+            if (turma.materias_ids && turma.materias_ids.length > 2) {
                 try {
                     const ids = JSON.parse(turma.materias_ids);
                     if (ids.length > 0) {
@@ -258,10 +249,26 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
             };
         }));
 
-        res.status(200).json({ professores, turmas });
+        // ================== MODIFICAÇÃO APLICADA AQUI ==================
+        // Nova query para buscar os alunos vinculados ao curso através das turmas
+        const [alunos] = await pool.query<RowDataPacket[]>(`
+            SELECT DISTINCT
+                u.id,
+                u.nome,
+                a.matricula,
+                a.status
+            FROM users u
+            JOIN alunos a ON u.id = a.id
+            JOIN alunos_turmas at ON u.id = at.aluno_id
+            JOIN turmas t ON at.turma_id = t.id
+            WHERE t.curso_id = ? AND u.role = 'aluno'
+            ORDER BY u.nome ASC;
+        `, [cursoId]);
+
+        res.status(200).json({ professores, turmas, alunos });
 
     } catch (error) {
         console.error("Erro ao buscar vinculados do curso:", error);
-        res.status(500).json({ message: "Erro interno ao buscar professores e turmas." });
+        res.status(500).json({ message: "Erro interno ao buscar professores, turmas e alunos." });
     }
 };
