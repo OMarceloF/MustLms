@@ -1,5 +1,3 @@
-// frontend/src/pages/gestor/cursos/vinculados-tab.tsx
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -29,25 +27,43 @@ interface Turma {
   disciplina: string;
 }
 
-// --- Dados mocados para Alunos ---
-const mockAlunos = [
-  { id: "1", nome: "Ana Paula Oliveira", matricula: "2023001", status: "Ativo", nivel: "Mestrado" },
-  { id: "2", nome: "Carlos Eduardo Santos", matricula: "2023002", status: "Ativo", nivel: "Doutorado" },
-  { id: "3", nome: "Beatriz Lima", matricula: "2022015", status: "Concluído", nivel: "Mestrado" },
-  { id: "4", nome: "Daniel Ferreira", matricula: "2023003", status: "Ativo", nivel: "Mestrado" },
-  { id: "5", nome: "Fernanda Costa", matricula: "2021008", status: "Desistente", nivel: "Doutorado" },
-]
+// Interface para os dados dos alunos vindos da API
+interface Aluno {
+  id: string;
+  nome: string;
+  matricula: string;
+  status: "regular" | "transferido" | "concluido/formado" | "inativo";
+}
 
+// Função para converter o status do DB para um texto mais amigável
+const getStatusText = (status: string) => {
+  switch (status) {
+    case "regular":
+      return "Ativo";
+    case "concluido/formado":
+      return "Concluído";
+    case "inativo":
+      return "Inativo";
+    case "transferido":
+      return "Transferido";
+    default:
+      // Capitaliza a primeira letra para outros casos
+      return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+}
+
+// Função para definir a cor do badge com base no status
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "Ativo":
-      return "bg-success/10 text-success border-success/20"
-    case "Concluído":
-      return "bg-info/10 text-info border-info/20"
-    case "Desistente":
-      return "bg-destructive/10 text-destructive border-destructive/20"
+    case "regular":
+      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700";
+    case "concluido/formado":
+      return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700";
+    case "inativo":
+    case "transferido":
+      return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-300 dark:border-red-700";
     default:
-      return "bg-muted text-muted-foreground"
+      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600";
   }
 }
 
@@ -55,6 +71,7 @@ export function VinculadosTab() {
   const { id: cursoId } = useParams<{ id: string }>();
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [alunos, setAlunos] = useState<Aluno[]>([]); // Estado para os alunos reais
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -65,9 +82,10 @@ export function VinculadosTab() {
         const response = await axios.get(`/api/cursos/${cursoId}/vinculados`);
         setProfessores(response.data.professores || []);
         setTurmas(response.data.turmas || []);
+        setAlunos(response.data.alunos || []); // Popula o estado com os alunos da API
       } catch (error) {
         console.error("Erro ao buscar dados de vinculados:", error);
-        toast.error("Não foi possível carregar os professores e turmas.");
+        toast.error("Não foi possível carregar os dados vinculados ao curso.");
       } finally {
         setIsLoading(false);
       }
@@ -106,7 +124,7 @@ export function VinculadosTab() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Aba de Alunos (Dados MOCADOS) */}
+          {/* Aba de Alunos (AGORA COM DADOS REAIS) */}
           <TabsContent value="alunos" className="mt-0">
             <div className="rounded-md border border-border">
               <Table>
@@ -114,23 +132,27 @@ export function VinculadosTab() {
                   <TableRow className="border-border hover:bg-muted/50">
                     <TableHead>Nome</TableHead>
                     <TableHead>Matrícula</TableHead>
-                    <TableHead>Nível</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockAlunos.map((aluno) => (
-                    <TableRow key={aluno.id} className="border-border hover:bg-muted/50">
-                      <TableCell className="font-medium">{aluno.nome}</TableCell>
-                      <TableCell>{aluno.matricula}</TableCell>
-                      <TableCell>{aluno.nivel}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getStatusColor(aluno.status)}>
-                          {aluno.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {isLoading ? (
+                    <TableRow><TableCell colSpan={3}>{renderLoading()}</TableCell></TableRow>
+                  ) : alunos.length > 0 ? (
+                    alunos.map((aluno) => (
+                      <TableRow key={aluno.id} className="border-border hover:bg-muted/50">
+                        <TableCell className="font-medium">{aluno.nome}</TableCell>
+                        <TableCell>{aluno.matricula}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={getStatusColor(aluno.status)}>
+                            {getStatusText(aluno.status)}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow><TableCell colSpan={3} className="text-center h-24">Nenhum aluno vinculado a este curso.</TableCell></TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
