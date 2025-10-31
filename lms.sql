@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 30/10/2025 às 18:32
+-- Tempo de geração: 31/10/2025 às 17:31
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -64,7 +64,7 @@ INSERT INTO `alunos` (`id`, `nome`, `cpf`, `rg`, `matricula`, `serie`, `turma`, 
 (16, 'usuarioteste', '10101010101', '45645645', '101010', '7º Ano', '7C', 'usuarioteste@gmail.com', '/uploads/1758907439058-202349397.jpg', 'Aluno para fins de teste do sistema.', '61901010101', '{\"cep\":\"10101-010\",\"logradouro\":\"ruateste\",\"numero\":\"1010\",\"complemento\":\"ruateste\",\"bairro\":\"bairroteste\",\"cidade\":\"cidadeteste\",\"uf\":\"ut\"}', NULL, 'Matutino', '1010-10-10', 'Brasileira', 'Masculino', 'regular'),
 (18, 'Arthur Jesus', '67988324212', '78978978', '54632', '9º Ano', '9A', 'arthur@gmail.com', '/uploads/1758910522190-113759779.png', NULL, '31988776655', '{\"cep\":\"36576130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Vespertino', '2007-09-08', 'Brasileira', 'Masculino', 'regular'),
 (20, 'Lucas Ferreira', '12432543567', '98798798', '2343245235', '6º Ano', '6A', 'lucasferreira@gmail.com', '/uploads/1758911261009-736922933.png', NULL, '21977665544', '{\"cep\":\"36576-130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Matutino', '2002-09-12', 'Brasileira', 'Masculino', 'regular'),
-(26, 'Arthur Lopes Saraiva', '22222222222', 'MG0233450', '222222', NULL, NULL, 'arthurlsaraiva@gmail.com', NULL, 'kkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkk', NULL, '1988-10-20', 'Brasileira', 'Masculino', 'regular'),
+(26, 'Arthur Lopes Saraiva', '22222222222', '0233450', '222222', NULL, 'Turma 1', 'arthurlsaraiva@gmail.com', NULL, 'kkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkk', NULL, '1988-10-20', 'Brasileira', 'Masculino', 'regular'),
 (27, 'Arthur L. Saraiva', '99999999999', '999999999', '2332221', NULL, NULL, 'Joaovv@gmail.com', '/uploads/download-1761674394496.jpg', 'kkkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkk', NULL, '1998-10-31', 'Brasileira', 'Masculino', 'regular'),
 (28, 'Arthur Teste', '77777777777', '111111111', '123456789', NULL, NULL, 'arthur11@gmail.com', '/uploads/download-1761683485087.jpg', 'kkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkkkkk', NULL, '1996-10-24', 'Brasileira', 'Masculino', 'regular'),
 (29, 'Arthur Teste 2', '02036224544', '111112224', '2025000001', NULL, NULL, 'arthur123@gmail.com', NULL, '1111111111111111111111', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', '11111111111111111111111', NULL, '1996-10-01', 'Brasileira', 'Masculino', 'regular');
@@ -157,11 +157,8 @@ CREATE TABLE `alunos_turmas` (
 --
 
 INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`) VALUES
-(1, 2, 1),
-(2, 3, 1),
-(3, 5, 1),
-(4, 4, 1),
-(6, 20, 1);
+(7, 26, 3),
+(9, 24, 3);
 
 -- --------------------------------------------------------
 
@@ -209,14 +206,6 @@ CREATE TABLE `aulas` (
   `calendario_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Despejando dados para a tabela `aulas`
---
-
-INSERT INTO `aulas` (`id`, `data`, `descricao`, `status`, `materia_id`, `turma_id`, `calendario_id`) VALUES
-(5, '2025-07-25', 'Aula 1', 'realizada', 1, 1, 13),
-(6, '2025-07-24', 'Aula 2', 'realizada', 1, 1, 13);
-
 -- --------------------------------------------------------
 
 --
@@ -233,14 +222,6 @@ CREATE TABLE `avaliacoes` (
   `data` date NOT NULL,
   `status` enum('Pendente','Concluído') NOT NULL DEFAULT 'Pendente'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `avaliacoes`
---
-
-INSERT INTO `avaliacoes` (`id`, `descricao`, `valor`, `calendario_id`, `materia_id`, `turma_id`, `data`, `status`) VALUES
-(12, 'Prova', 10.00, 13, 1, 1, '2025-03-14', 'Concluído'),
-(13, 'Trabalho', 15.00, 13, 1, 1, '2025-03-21', 'Concluído');
 
 -- --------------------------------------------------------
 
@@ -385,8 +366,12 @@ CREATE TABLE `configuracoes_periodos_letivos` (
 --
 
 INSERT INTO `configuracoes_periodos_letivos` (`id`, `nome`, `data_inicio`, `data_fim`, `config_calendario_id`) VALUES
-(11, '2025.1', '2025-02-01', '2025-06-30', 1),
-(12, '2025.2', '2025-07-01', '2025-12-30', 1);
+(16, '2025.1', '2025-02-01', '2025-06-30', 1),
+(17, '2025.2', '2025-07-01', '2025-12-30', 1),
+(18, '2026.1', '2026-02-01', '2026-06-30', 1),
+(19, '2026.2', '2026-07-01', '2026-12-30', 1),
+(20, '2027.1', '2027-02-01', '2027-06-30', 1),
+(21, '2027.2', '2027-07-01', '2027-12-30', 1);
 
 -- --------------------------------------------------------
 
@@ -553,7 +538,8 @@ INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `codigo`, `carga_hor
 (29, 7, 'Bases Neurobiológicas da Aprendizagem e Memória', 'NED-001', 60, 4, 1, 'Dra. Carla Shatz', 'Estudo das estruturas cerebrais e processos sinápticos envolvidos na aquisição, consolidação e evocação de memórias.'),
 (30, 7, 'Funções Executivas e o Desenvolvimento Cognitivo na Escola', 'NED-002', 60, 4, 2, 'Dr. Adele Diamond', 'Análise do papel da atenção, controle inibitório e memória de trabalho no desempenho acadêmico e desenvolvimento de estratégias de ensino.'),
 (31, 8, 'Tecnologias de Energia Solar e Eólica', 'SER-001', 60, 4, 1, 'Prof. Eicke Weber', 'Princípios de funcionamento, dimensionamento e integração de sistemas fotovoltaicos e eólicos na matriz energética.'),
-(32, 8, 'Políticas Públicas para Sustentabilidade e Mudanças Climáticas', 'SER-002', 60, 4, 2, 'Dra. Christiana Figueres', 'Análise de acordos internacionais, legislação ambiental e instrumentos econômicos para a transição para uma economia de baixo carbono.');
+(32, 8, 'Políticas Públicas para Sustentabilidade e Mudanças Climáticas', 'SER-002', 60, 4, 2, 'Dra. Christiana Figueres', 'Análise de acordos internacionais, legislação ambiental e instrumentos econômicos para a transição para uma economia de baixo carbono.'),
+(35, 4, 'Engenharia Civil', 'CALC-01', 2, 2, 2, NULL, '1');
 
 -- --------------------------------------------------------
 
@@ -669,6 +655,18 @@ CREATE TABLE `descontos` (
 
 INSERT INTO `descontos` (`id`, `aluno_id`, `descricao`, `percentual`, `data_inicio`, `data_fim`) VALUES
 (1, 8, 'Segundo Filho', 5.00, '2025-10-01', '2025-12-01');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `disciplinas_turmas`
+--
+
+CREATE TABLE `disciplinas_turmas` (
+  `id` int(11) NOT NULL,
+  `disciplina_id` int(11) NOT NULL,
+  `turma_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -904,13 +902,6 @@ CREATE TABLE `exercicios_alunos` (
   `status_correcao` enum('pendente','corrigido','corrigido_manual') DEFAULT 'pendente',
   `arquivo_url` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `exercicios_alunos`
---
-
-INSERT INTO `exercicios_alunos` (`id`, `envios_id`, `exercicios_questoes_id`, `aluno_id`, `turma_id`, `exercicio_id`, `questao_id`, `tentativa`, `tempo_realizado`, `alt_selecionada`, `nota_obtida`, `resp_texto`, `resp_num`, `data_envio`, `status_correcao`, `arquivo_url`) VALUES
-(1, 2, 1, 2, 1, 1, NULL, 1, NULL, 1, 1.00, NULL, NULL, '2025-09-17 14:35:56', 'pendente', NULL);
 
 -- --------------------------------------------------------
 
@@ -1178,22 +1169,6 @@ CREATE TABLE `notas` (
   `data` date NOT NULL,
   `avaliacao_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `notas`
---
-
-INSERT INTO `notas` (`id`, `tipo`, `valor`, `nota`, `recuperacao`, `nota_rec`, `turma_id`, `aluno_id`, `materia_id`, `data`, `avaliacao_id`) VALUES
-(214, 'Prova', 10, 8, 'Não', 0, 1, 2, 1, '2025-03-14', 12),
-(215, 'Trabalho', 15, 9, 'Não', 0, 1, 2, 1, '2025-03-21', 13),
-(216, 'Prova', 10, 8, 'Não', 0, 1, 3, 1, '2025-03-14', 12),
-(217, 'Trabalho', 15, 8, 'Não', 0, 1, 3, 1, '2025-03-21', 13),
-(218, 'Prova', 10, 1, 'Não', 0, 1, 4, 1, '2025-03-14', 12),
-(219, 'Trabalho', 15, 1, 'Não', 0, 1, 4, 1, '2025-03-21', 13),
-(220, 'Prova', 10, 5, 'Não', 0, 1, 5, 1, '2025-03-14', 12),
-(221, 'Trabalho', 15, 5, 'Não', 0, 1, 5, 1, '2025-03-21', 13),
-(222, 'Prova', 10, 2, 'Não', 0, 1, 7, 1, '2025-03-14', 12),
-(223, 'Trabalho', 15, 2, 'Não', 0, 1, 7, 1, '2025-03-21', 13);
 
 -- --------------------------------------------------------
 
@@ -1594,22 +1569,6 @@ CREATE TABLE `presencas` (
   `aula_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Despejando dados para a tabela `presencas`
---
-
-INSERT INTO `presencas` (`id`, `turma_id`, `aluno_id`, `materia_id`, `data`, `descricao`, `presenca`, `aula_id`) VALUES
-(24, 1, 2, 1, '2025-07-25', 'Aula 1', 0, 5),
-(25, 1, 3, 1, '2025-07-25', 'Aula 1', 1, 5),
-(26, 1, 4, 1, '2025-07-25', 'Aula 1', 1, 5),
-(27, 1, 5, 1, '2025-07-25', 'Aula 1', 1, 5),
-(28, 1, 7, 1, '2025-07-25', 'Aula 1', 0, 5),
-(29, 1, 2, 1, '2025-07-24', 'Aula 2', 1, 6),
-(30, 1, 3, 1, '2025-07-24', 'Aula 2', 0, 6),
-(31, 1, 4, 1, '2025-07-24', 'Aula 2', 0, 6),
-(32, 1, 5, 1, '2025-07-24', 'Aula 2', 0, 6),
-(33, 1, 7, 1, '2025-07-24', 'Aula 2', 0, 6);
-
 -- --------------------------------------------------------
 
 --
@@ -1641,13 +1600,6 @@ CREATE TABLE `professores_turmas` (
   `turma_id` int(11) NOT NULL,
   `materia_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `professores_turmas`
---
-
-INSERT INTO `professores_turmas` (`id`, `professor_id`, `turma_id`, `materia_id`) VALUES
-(1, 6, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -1867,9 +1819,9 @@ CREATE TABLE `turmas` (
 --
 
 INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `materias_ids`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
-(1, 'Turma 1', '2025', '2025-07-22 12:48:52', 2, '6º Ano', 'Matutino', 'EFAF', 5, 6, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(2, 'Turma 2', '2002', '2025-09-26 16:31:36', 4, '2º Ano', 'Matutino', 'EFAI', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 11, 'Presencial', 30, 'Ativa', 'kkkkkkkkkkkkkkkkkkk');
+(3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 2, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkkkkkkkkkkk'),
+(5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '[\"19\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk');
 
 -- --------------------------------------------------------
 
@@ -1888,17 +1840,7 @@ CREATE TABLE `turmas_materias` (
 --
 
 INSERT INTO `turmas_materias` (`id`, `turma_id`, `materia_id`) VALUES
-(3, 1, 2),
-(4, 1, 1),
-(5, 1, 3),
-(6, 1, 4),
-(7, 1, 5),
-(8, 1, 6),
-(9, 1, 7),
-(10, 1, 8),
-(11, 1, 9),
-(12, 1, 10),
-(13, 1, 11);
+(15, 3, 5);
 
 -- --------------------------------------------------------
 
@@ -1926,7 +1868,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-30 12:46:22'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-31 16:25:28'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2177,6 +2119,15 @@ ALTER TABLE `cursos_professores`
 ALTER TABLE `descontos`
   ADD PRIMARY KEY (`id`),
   ADD KEY `aluno_id` (`aluno_id`);
+
+--
+-- Índices de tabela `disciplinas_turmas`
+--
+ALTER TABLE `disciplinas_turmas`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_disciplina_turma_unica` (`disciplina_id`,`turma_id`),
+  ADD KEY `fk_disciplina_id` (`disciplina_id`),
+  ADD KEY `fk_turma_id` (`turma_id`);
 
 --
 -- Índices de tabela `disponibilidade`
@@ -2451,7 +2402,7 @@ ALTER TABLE `alunos_responsaveis`
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
@@ -2511,7 +2462,7 @@ ALTER TABLE `configuracoes_escola`
 -- AUTO_INCREMENT de tabela `configuracoes_periodos_letivos`
 --
 ALTER TABLE `configuracoes_periodos_letivos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT de tabela `configuracoes_sistema`
@@ -2547,7 +2498,7 @@ ALTER TABLE `conversas`
 -- AUTO_INCREMENT de tabela `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_eventos`
@@ -2572,6 +2523,12 @@ ALTER TABLE `cursos_ppc`
 --
 ALTER TABLE `descontos`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `disciplinas_turmas`
+--
+ALTER TABLE `disciplinas_turmas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `disponibilidade`
@@ -2733,13 +2690,13 @@ ALTER TABLE `transacoes`
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `turmas_materias`
 --
 ALTER TABLE `turmas_materias`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT de tabela `users`
@@ -2874,6 +2831,13 @@ ALTER TABLE `cursos_professores`
 --
 ALTER TABLE `descontos`
   ADD CONSTRAINT `descontos_ibfk_1` FOREIGN KEY (`aluno_id`) REFERENCES `alunos` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `disciplinas_turmas`
+--
+ALTER TABLE `disciplinas_turmas`
+  ADD CONSTRAINT `fk_disciplina_id` FOREIGN KEY (`disciplina_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_turma_id` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `disponibilidade`
