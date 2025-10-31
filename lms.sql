@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 31/10/2025 às 17:31
+-- Tempo de geração: 31/10/2025 às 18:46
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -64,7 +64,7 @@ INSERT INTO `alunos` (`id`, `nome`, `cpf`, `rg`, `matricula`, `serie`, `turma`, 
 (16, 'usuarioteste', '10101010101', '45645645', '101010', '7º Ano', '7C', 'usuarioteste@gmail.com', '/uploads/1758907439058-202349397.jpg', 'Aluno para fins de teste do sistema.', '61901010101', '{\"cep\":\"10101-010\",\"logradouro\":\"ruateste\",\"numero\":\"1010\",\"complemento\":\"ruateste\",\"bairro\":\"bairroteste\",\"cidade\":\"cidadeteste\",\"uf\":\"ut\"}', NULL, 'Matutino', '1010-10-10', 'Brasileira', 'Masculino', 'regular'),
 (18, 'Arthur Jesus', '67988324212', '78978978', '54632', '9º Ano', '9A', 'arthur@gmail.com', '/uploads/1758910522190-113759779.png', NULL, '31988776655', '{\"cep\":\"36576130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Vespertino', '2007-09-08', 'Brasileira', 'Masculino', 'regular'),
 (20, 'Lucas Ferreira', '12432543567', '98798798', '2343245235', '6º Ano', '6A', 'lucasferreira@gmail.com', '/uploads/1758911261009-736922933.png', NULL, '21977665544', '{\"cep\":\"36576-130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"45\",\"complemento\":\"arfsdf\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', NULL, 'Matutino', '2002-09-12', 'Brasileira', 'Masculino', 'regular'),
-(26, 'Arthur Lopes Saraiva', '22222222222', '0233450', '222222', NULL, 'Turma 1', 'arthurlsaraiva@gmail.com', NULL, 'kkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkk', NULL, '1988-10-20', 'Brasileira', 'Masculino', 'regular'),
+(26, 'Arthur Lopes Saraiva', '22222222222', '0233450', '222222', NULL, NULL, 'arthurlsaraiva@gmail.com', NULL, 'kkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkk', NULL, '1988-10-20', 'Brasileira', 'Masculino', 'regular'),
 (27, 'Arthur L. Saraiva', '99999999999', '999999999', '2332221', NULL, NULL, 'Joaovv@gmail.com', '/uploads/download-1761674394496.jpg', 'kkkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkk', NULL, '1998-10-31', 'Brasileira', 'Masculino', 'regular'),
 (28, 'Arthur Teste', '77777777777', '111111111', '123456789', NULL, NULL, 'arthur11@gmail.com', '/uploads/download-1761683485087.jpg', 'kkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkkkkk', NULL, '1996-10-24', 'Brasileira', 'Masculino', 'regular'),
 (29, 'Arthur Teste 2', '02036224544', '111112224', '2025000001', NULL, NULL, 'arthur123@gmail.com', NULL, '1111111111111111111111', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', '11111111111111111111111', NULL, '1996-10-01', 'Brasileira', 'Masculino', 'regular');
@@ -157,8 +157,12 @@ CREATE TABLE `alunos_turmas` (
 --
 
 INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`) VALUES
-(7, 26, 3),
-(9, 24, 3);
+(16, 18, 3),
+(9, 24, 3),
+(12, 26, 3),
+(13, 27, 3),
+(11, 28, 3),
+(10, 29, 3);
 
 -- --------------------------------------------------------
 
@@ -524,7 +528,6 @@ INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `codigo`, `carga_hor
 (14, 3, 'Cálculo II', 'CALC-02', 64, 4, 2, NULL, 'kkkkkkkkkkkkk'),
 (16, 3, 'Cálculo I', 'CALC-01', 64, 4, 1, NULL, 'kkkkkkkkkkkkkkkkkk'),
 (17, 4, 'Fundamentos de Machine Learning Avançado', 'IAA-001', 60, 4, 1, 'Dr. Alan Turing', 'Estudo aprofundado de algoritmos de classificação, regressão e clustering. Tópicos em regularização, otimização e avaliação de modelos.'),
-(18, 4, 'Redes Neurais Profundas e Aplicações', 'IAA-002', 60, 4, 2, 'Dr. Yann LeCun', 'Arquiteturas de redes neurais profundas (CNNs, RNNs, Transformers). Aplicações em visão computacional e processamento de linguagem natural.'),
 (19, 4, 'Processamento de Linguagem Natural', 'IAA-003', 60, 4, 3, 'Dr. Geoffrey Hinton', 'Modelagem de linguagem, análise sintática e semântica, tradução automática e sistemas de diálogo. Estudo de modelos como BERT e GPT.'),
 (20, 4, 'Seminários de Pesquisa em IA', 'IAA-004', 30, 2, 4, 'Dr. Alan Turing', 'Apresentação e discussão de artigos científicos de ponta na área de Inteligência Artificial.'),
 (21, 5, 'Gerenciamento de Projetos Tradicional (PMBOK)', 'GPA-001', 45, 3, 1, 'Prof. Peter Drucker', 'Introdução aos processos, áreas de conhecimento e boas práticas do PMBOK. Gerenciamento de escopo, tempo, custo e riscos.'),
@@ -598,7 +601,7 @@ CREATE TABLE `cursos_posgraduacao` (
 INSERT INTO `cursos_posgraduacao` (`id`, `nome`, `tipo`, `area_conhecimento`, `carga_horaria`, `duracao_semestres`, `modalidade`, `coordenador_id`, `vice_coordenador_id`, `unidade_id`, `objetivos`, `perfil_egresso`, `justificativa`, `ano_inicio`, `status`, `link_divulgacao`, `criado_em`, `atualizado_em`) VALUES
 (1, 'Mestrado em Ciências da Computação', 'mestrado', 'ciencias-exatas', 240, 1, 'presencial', 1, 2, 2, 'oooooooooooooooo', 'ooooopppppppppppppp', 'lllllllllllllllllllllllllllllllllllllll', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 12:42:14', '2025-10-23 12:42:14'),
 (3, 'Engenharia Civil', 'doutorado', 'engenharias', 4000, 10, 'presencial', 1, 3, 1, 'kkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkk', '2025', 'planejamento', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 14:24:08', '2025-10-23 14:58:57'),
-(4, 'Doutorado em Inteligência Artificial Aplicada', 'doutorado', 'ciencias-exatas', 600, 8, 'hibrido', 1, 23, 1, 'Formar pesquisadores de alto nível capazes de desenvolver soluções inovadoras em IA para problemas complexos da indústria e da sociedade.', 'Pesquisador ou líder técnico em IA, com profundo conhecimento em machine learning, processamento de linguagem natural e visão computacional.', 'A crescente demanda por especialistas em IA justifica um programa de doutorado focado em aplicações práticas e pesquisa de ponta.', '2024', 'ativo', 'https://mustedu.com/pt/ia-aplicada/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
+(4, 'Doutorado em Inteligência Artificial Aplicada', 'doutorado', 'ciencias-exatas', 600, 8, 'hibrido', 1, 3, 1, 'Formar pesquisadores de alto nível capazes de desenvolver soluções inovadoras em IA para problemas complexos da indústria e da sociedade.', 'Pesquisador ou líder técnico em IA, com profundo conhecimento em machine learning, processamento de linguagem natural e visão computacional.', 'A crescente demanda por especialistas em IA justifica um programa de doutorado focado em aplicações práticas e pesquisa de ponta.', '2025', 'ativo', 'https://mustedu.com/pt/ia-aplicada/', '2025-10-24 12:03:55', '2025-10-31 17:46:05'),
 (5, 'MBA em Gestão de Projetos e Metodologias Ágeis', 'especializacao', 'ciencias-sociais-aplicadas', 360, 2, 'ead', 1, 6, 2, 'Capacitar profissionais para liderar projetos complexos utilizando frameworks ágeis como Scrum, Kanban e Lean, garantindo entregas de valor.', 'Gerente de projetos, Scrum Master, Product Owner ou Agile Coach, apto a otimizar processos e liderar equipes de alta performance.', 'O mercado de trabalho moderno exige profissionais que dominem tanto a gestão tradicional quanto as abordagens ágeis para se manterem competitivos.', '2025', 'ativo', 'https://mustedu.com/pt/mba-projetos/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
 (6, 'Especialização em Direito Digital e Proteção de Dados', 'especializacao', 'ciencias-sociais-aplicadas', 400, 3, 'ead', 1, NULL, 1, 'Aprofundar o conhecimento sobre a legislação de proteção de dados (LGPD/GDPR), crimes cibernéticos e os desafios jurídicos da era digital.', 'Advogado especialista em direito digital, Data Protection Officer (DPO) ou consultor em privacidade e proteção de dados.', 'Com a implementação da LGPD, a necessidade de profissionais especializados em proteção de dados tornou-se crítica para todas as organizações.', '2024', 'ativo', 'https://mustedu.com/pt/direito-digital/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
 (7, 'Mestrado em Neurociência e Educação', 'mestrado', 'ciencias-humanas', 480, 4, 'presencial', 22, 6, 1, 'Investigar a interface entre o funcionamento do cérebro e os processos de aprendizagem, desenvolvendo novas práticas pedagógicas baseadas em evidências científicas.', 'Pesquisador em neuroeducação, coordenador pedagógico ou professor especializado em dificuldades de aprendizagem.', 'Compreender como o cérebro aprende é fundamental para revolucionar a educação e criar métodos de ensino mais eficazes.', '2025', 'planejamento', 'https://mustedu.com/pt/neurociencia-edu/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
@@ -1868,7 +1871,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-31 16:25:28'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-31 17:38:25'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1958,6 +1961,7 @@ ALTER TABLE `alunos_responsaveis`
 --
 ALTER TABLE `alunos_turmas`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_aluno_turma_unico` (`aluno_id`,`turma_id`),
   ADD KEY `aluno_id` (`aluno_id`),
   ADD KEY `turma_id` (`turma_id`);
 
@@ -2402,7 +2406,7 @@ ALTER TABLE `alunos_responsaveis`
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
