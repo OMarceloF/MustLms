@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import {
   Search,
   Filter,
@@ -10,376 +10,242 @@ import {
   UserPlus,
   Check,
   X,
-} from 'lucide-react';
+  Loader2,
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { Button } from '../gestor/components/ui/button'
 
 interface Funcionario {
-  id: string;
-  nome: string;
-  email: string;
-  login: string;
-  role: string;
-  cargo?: string;
-  departamento?: string;
-  foto: string;
-  created_at: string;
+  id: string
+  nome: string
+  email: string
+  login: string
+  role: string
+  cargo?: string
+  departamento?: string
+  foto?: string
+  created_at: string
 }
 
 function getSafeImagePath(path: string): string | null {
-  const regex = /^\/uploads\/[a-zA-Z0-9_\-\.]+\.(jpg|jpeg|png|webp)$/i;
-  return regex.test(path) ? path : null;
+  const regex = /^\/uploads\/[a-zA-Z0-9_\-\.]+\.(jpg|jpeg|png|webp)$/i
+  return regex.test(path) ? path : null
 }
 
 const ProfessoresPage = () => {
-  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
-  const [filteredFuncionarios, setFilteredFuncionarios] = useState<
-    Funcionario[]
-  >([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
-    null
-  );
-  const [sortConfig, setSortConfig] = useState<{
-    key: keyof Funcionario | null;
-    direction: 'ascending' | 'descending';
-  }>({ key: null, direction: 'ascending' });
-  const [filterCargo, setFilterCargo] = useState<string>('');
-  const [filterDepartamento, setFilterDepartamento] = useState<string>('');
-
-  const navigate = useNavigate();
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([])
+  const [filteredFuncionarios, setFilteredFuncionarios] = useState<Funcionario[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Funcionario | null; direction: 'ascending' | 'descending' }>({ key: null, direction: 'ascending' })
+  const [filterCargo, setFilterCargo] = useState('')
+  const [filterDepartamento, setFilterDepartamento] = useState('')
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchFuncionarios = async () => {
       try {
-        setIsLoading(true);
-        const response = await axios.get(`/api/listar_funcionarios`
-        );
-        setFuncionarios(response.data);
-        setFilteredFuncionarios(response.data);
-        setIsLoading(false);
+        setIsLoading(true)
+        const { data } = await axios.get('/api/listar_funcionarios')
+        setFuncionarios(data)
+        setFilteredFuncionarios(data)
       } catch (err) {
-        setError('Erro ao carregar os dados dos funcionários.');
-        setIsLoading(false);
-        console.error('Erro ao buscar funcionários:', err);
+        console.error('Erro ao buscar professores:', err)
+        toast.error('Erro ao carregar os dados dos professores.')
+        setError('Erro ao carregar professores.')
+      } finally {
+        setIsLoading(false)
       }
-    };
+    }
+    fetchFuncionarios()
+  }, [])
 
-    fetchFuncionarios();
-  }, []);
-
+  // 🔍 Filtros e ordenação
   useEffect(() => {
-    // Filter by search term and other filters
-    let result = funcionarios;
+    let result = [...funcionarios]
 
     if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-
-      result = result.filter((funcionario) => {
-        const nome = funcionario.nome?.toLowerCase() ?? '';
-        const email = funcionario.email?.toLowerCase() ?? '';
-        const cargo = funcionario.cargo?.toLowerCase() ?? '';
-
-        return (
-          nome.includes(term) || email.includes(term) || cargo.includes(term)
-        );
-      });
+      const term = searchTerm.toLowerCase()
+      result = result.filter(f =>
+        (f.nome?.toLowerCase() ?? '').includes(term) ||
+        (f.email?.toLowerCase() ?? '').includes(term) ||
+        (f.cargo?.toLowerCase() ?? '').includes(term)
+      )
     }
 
-    if (filterCargo) {
-      result = result.filter(
-        (funcionario) => funcionario.cargo === filterCargo
-      );
-    }
+    if (filterCargo) result = result.filter(f => f.cargo === filterCargo)
+    if (filterDepartamento) result = result.filter(f => f.departamento === filterDepartamento)
 
-    if (filterDepartamento) {
-      result = result.filter(
-        (funcionario) => funcionario.departamento === filterDepartamento
-      );
-    }
-
-    // Sort the filtered results
     if (sortConfig.key && sortConfig.key !== 'foto') {
-      const key = sortConfig.key;
-
+      const key = sortConfig.key
       result.sort((a, b) => {
-        const aValue = a[key];
-        const bValue = b[key];
-
-        // Se algum valor for null ou undefined, substitui por string vazia
-        const aStr =
-          aValue !== null && aValue !== undefined ? String(aValue) : '';
-        const bStr =
-          bValue !== null && bValue !== undefined ? String(bValue) : '';
-
+        const aVal = a[key] ?? ''
+        const bVal = b[key] ?? ''
         return sortConfig.direction === 'ascending'
-          ? aStr.localeCompare(bStr)
-          : bStr.localeCompare(aStr);
-      });
+          ? String(aVal).localeCompare(String(bVal))
+          : String(bVal).localeCompare(String(aVal))
+      })
     }
 
-    setFilteredFuncionarios(result);
-  }, [funcionarios, searchTerm, filterCargo, filterDepartamento, sortConfig]);
+    setFilteredFuncionarios(result)
+  }, [funcionarios, searchTerm, filterCargo, filterDepartamento, sortConfig])
 
   const handleSort = (key: keyof Funcionario) => {
-    let direction: 'ascending' | 'descending' = 'ascending';
-
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-
-    setSortConfig({ key, direction });
-  };
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'ascending' ? 'descending' : 'ascending',
+    }))
+  }
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`/api/professores/${id}`
-      );
-      setFuncionarios((prevFuncionarios) =>
-        prevFuncionarios.filter((funcionario) => funcionario.id !== id)
-      );
-      setShowDeleteConfirm(null);
+      await axios.delete(`/api/professores/${id}`)
+      setFuncionarios(prev => prev.filter(f => f.id !== id))
+      toast.success('Professor removido com sucesso!')
+      setShowDeleteConfirm(null)
     } catch (err) {
-      console.error('Erro ao excluir funcionário:', err);
-      setError('Erro ao excluir funcionário.');
+      console.error('Erro ao excluir professor:', err)
+      toast.error('Erro ao excluir professor.')
     }
-  };
+  }
 
-  const uniqueCargos = [
-    ...new Set(
-      funcionarios.map((funcionario) => funcionario.cargo).filter(Boolean)
-    ),
-  ];
-  const uniqueDepartamentos = [
-    ...new Set(
-      funcionarios
-        .map((funcionario) => funcionario.departamento)
-        .filter(Boolean)
-    ),
-  ];
+  const uniqueCargos = [...new Set(funcionarios.map(f => f.cargo).filter(Boolean))]
+  const uniqueDepartamentos = [...new Set(funcionarios.map(f => f.departamento).filter(Boolean))]
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-muted/30 p-8 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-destructive font-medium">
+        {error}
+      </div>
+    )
+  }
 
   return (
-    //bg-gradient-to-b from-indigo-50 to-white p-6
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto mt-[20px]">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-black mb-4 md:mb-0">
-            Lista de Funcionários
-          </h1>
+    <div className="min-h-screen bg-muted/30 p-4 sm:p-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="rounded-2xl bg-card p-6 sm:p-8 shadow-sm">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">
+              Gerenciamento de Funcionários
+            </h1>
+            <p className="mt-2 text-pretty text-muted-foreground">
+              Visualize, filtre e gerencie os funcionários cadastrados no sistema.
+            </p>
+          </div>
 
-          <button
-            onClick={() => navigate('/gestor/criarProfessor')}
-            className="flex items-center gap-2 bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg transition-all shadow-lg"
-          >
-            <UserPlus size={20} />
-            <span>Adicionar Funcionário</span>
-          </button>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-          <div className="p-6 border-b border-indigo-300">
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              {/* Search field */}
-              <div className="relative flex-1">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <Search className="w-5 h-5 text-indigo-700" />
-                </div>
+          {/* Actions Bar */}
+          <div className="mb-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative flex-1 sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Buscar funcionários..."
+                  placeholder="Buscar por nome, cargo ou e-mail..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full py-2 border border-indigo-400 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-700 outline-none"
+                  className="w-full rounded-lg border bg-background py-2 pl-9 pr-4 focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-
-              {/* Filter dropdowns */}
-              <div className="flex flex-col sm:flex-row gap-2 flex-1">
-                <div className="relative w-full sm:w-auto">
-                  <select
-                    value={filterCargo}
-                    onChange={(e) => setFilterCargo(e.target.value)}
-                    className="w-full py-2 pl-3 pr-10 border border-indigo-400 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-700 outline-none"
-                  >
-                    <option value="">Todos os Cargos</option>
-                    {uniqueCargos.map((cargo) => (
-                      <option key={cargo} value={cargo}>
-                        {cargo}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <Filter className="w-4 h-4 text-indigo-700" />
-                  </div>
-                </div>
-
-                <div className="relative w-full sm:w-auto">
-                  <select
-                    value={filterDepartamento}
-                    onChange={(e) => setFilterDepartamento(e.target.value)}
-                    className="w-full py-2 pl-3 pr-10 border border-indigo-400 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-700 outline-none"
-                  >
-                    <option value="">Todos os Departamentos</option>
-                    {uniqueDepartamentos.map((departamento) => (
-                      <option key={departamento} value={departamento}>
-                        {departamento}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <Filter className="w-4 h-4 text-indigo-700" />
-                  </div>
-                </div>
+              <Button onClick={() => navigate('/gestor/criarProfessor')} className="gap-2">
+                <UserPlus className="size-4" />
+                Adicionar Novo Funcionário
+              </Button>
+            </div>
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="relative flex-1 sm:max-w-xs">
+                <Filter className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <select
+                  value={filterCargo}
+                  onChange={(e) => setFilterCargo(e.target.value)}
+                  className="w-full appearance-none rounded-lg border bg-background py-2 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Filtrar por Cargo</option>
+                  {uniqueCargos.map((cargo) => (
+                    <option key={cargo} value={cargo}>{cargo}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="relative flex-1 sm:max-w-xs">
+                <Filter className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <select
+                  value={filterDepartamento}
+                  onChange={(e) => setFilterDepartamento(e.target.value)}
+                  className="w-full appearance-none rounded-lg border bg-background py-2 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Filtrar por Departamento</option>
+                  {uniqueDepartamentos.map((dep) => (
+                    <option key={dep} value={dep}>{dep}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
 
-          {isLoading ? (
-            <div className="p-8 text-center">
-              <div className="animate-spin w-10 h-10 border-4 border-indigo-700 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-indigo-900">Carregando funcionários...</p>
-            </div>
-          ) : error ? (
-            <div className="p-8 text-center">
-              <p className="text-red-500">{error}</p>
-            </div>
-          ) : filteredFuncionarios.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-indigo-900">Nenhum funcionário encontrado.</p>
+          {/* Tabela / Cards */}
+          {filteredFuncionarios.length === 0 ? (
+            <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-dashed">
+              <p className="text-muted-foreground">Nenhum funcionário encontrado com os filtros atuais.</p>
             </div>
           ) : (
             <>
-              {/* Tabela só para telas extra grandes */}
-              <div className="hidden xl:block overflow-x-auto">
-                <table className="w-full min-w-[700px]">
-                  <thead>
-                    <tr className="bg-indigo-50">
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-indigo-900 uppercase tracking-wider cursor-pointer hover:bg-indigo-300">
-                        Foto
-                      </th>
-                      <th
-                        className="px-6 py-3 text-left text-xs font-semibold text-indigo-900 uppercase tracking-wider cursor-pointer hover:bg-indigo-300"
-                        onClick={() => handleSort('nome')}
-                      >
-                        Nome
-                      </th>
-                      <th
-                        className="px-6 py-3 text-left text-xs font-semibold text-indigo-900 uppercase tracking-wider cursor-pointer hover:bg-indigo-300"
-                        onClick={() => handleSort('cargo')}
-                      >
-                        Cargo
-                      </th>
-                      <th
-                        className="px-6 py-3 text-left text-xs font-semibold text-indigo-900 uppercase tracking-wider cursor-pointer hover:bg-indigo-300"
-                        onClick={() => handleSort('departamento')}
-                      >
-                        Departamento
-                      </th>
-                      <th
-                        className="px-6 py-3 text-left text-xs font-semibold text-indigo-900 uppercase tracking-wider cursor-pointer hover:bg-indigo-300"
-                        onClick={() => handleSort('email')}
-                      >
-                        Email
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-semibold text-indigo-900 uppercase tracking-wider">
-                        Ações
-                      </th>
+              {/* Tabela para telas grandes */}
+              <div className="hidden lg:block overflow-x-auto rounded-lg border">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr className="border-b">
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">Foto</th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('nome')}>Nome</th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('cargo')}>Cargo</th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('departamento')}>Departamento</th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground">Email</th>
+                      <th className="px-4 py-3 text-right font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-indigo-300">
-                    {filteredFuncionarios.map((funcionario) => (
-                      <tr
-                        key={funcionario.id}
-                        className="hover:bg-indigo-50 transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="h-10 w-10 rounded-full overflow-hidden bg-indigo-400 flex items-center justify-center">
-                            {(() => {
-                              const segura = getSafeImagePath(
-                                funcionario.foto || ''
-                              );
-                              return segura ? (
-                                <img
-                                  src={`${
-                                    import.meta.env.VITE_API_URL
-                                  }${segura}`}
-                                  alt={funcionario.nome}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <span className="text-xs text-indigo-900 font-bold">
-                                  {funcionario.nome
-                                    .substring(0, 2)
-                                    .toUpperCase()}
-                                </span>
-                              );
-                            })()}
+                  <tbody className="divide-y">
+                    {filteredFuncionarios.map((f) => (
+                      <tr key={f.id} className="hover:bg-muted/50">
+                        <td className="p-4">
+                          <div className="size-10 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center">
+                            {f.foto && getSafeImagePath(f.foto) ? (
+                              <img
+                                src={`${import.meta.env.VITE_API_URL}${encodeURI(f.foto)}`}
+                                alt={f.nome}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-xs font-bold text-primary">
+                                {f.nome.substring(0, 2).toUpperCase()}
+                              </span>
+                            )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-800">
-                          {funcionario.nome}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                          {funcionario.cargo}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                          {funcionario.departamento}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                          {funcionario.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex justify-end gap-3">
-                            {showDeleteConfirm === funcionario.id ? (
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleDelete(funcionario.id)}
-                                  className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                                  title="Confirmar"
-                                >
-                                  <Check size={18} />
-                                </button>
-                                <button
-                                  onClick={() => setShowDeleteConfirm(null)}
-                                  className="p-1 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200"
-                                  title="Cancelar"
-                                >
-                                  <X size={18} />
-                                </button>
-                              </div>
+                        <td className="p-4 font-medium text-foreground">{f.nome}</td>
+                        <td className="p-4 text-muted-foreground">{f.cargo || '—'}</td>
+                        <td className="p-4 text-muted-foreground">{f.departamento || '—'}</td>
+                        <td className="p-4 text-muted-foreground">{f.email || '—'}</td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-1">
+                            {showDeleteConfirm === f.id ? (
+                              <>
+                                <Button variant="ghost" size="icon" onClick={() => handleDelete(f.id)} className="text-destructive hover:bg-destructive/10 hover:text-destructive"><Check className="size-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(null)}><X className="size-4" /></Button>
+                              </>
                             ) : (
                               <>
-                                <button
-                                  onClick={() =>
-                                    navigate(
-                                      `/gestor/alunos/${funcionario.id}/visualizaraluno`
-                                    )
-                                  }
-                                  className="p-1 bg-indigo-300 text-indigo-800 rounded-full hover:bg-indigo-400"
-                                  title="Ver perfil"
-                                >
-                                  <Eye size={18} />
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    navigate(
-                                      `/gestor/professores/${funcionario.id}/editar`
-                                    )
-                                  }
-                                  className="p-1 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200"
-                                  title="Configurações"
-                                >
-                                  <Settings size={18} />
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    setShowDeleteConfirm(funcionario.id)
-                                  }
-                                  className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                                  title="Excluir"
-                                >
-                                  <Trash size={18} />
-                                </button>
+                                <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/visualizarprofessor`, { state: { funcionario: f, todos: funcionarios } })}><Eye className="size-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/editar`)}><Settings className="size-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(f.id)} className="text-destructive hover:bg-destructive/10 hover:text-destructive"><Trash className="size-4" /></Button>
                               </>
                             )}
                           </div>
@@ -390,100 +256,48 @@ const ProfessoresPage = () => {
                 </table>
               </div>
 
-              {/* Cards para mobile, tablet e desktop até 1279px */}
-              <div className="xl:hidden flex flex-col gap-3 p-2">
-                {filteredFuncionarios.map((funcionario) => (
-                  <div
-                    key={funcionario.id}
-                    className="bg-white rounded-lg shadow p-3 flex flex-col gap-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full overflow-hidden bg-indigo-400 flex items-center justify-center">
-                        {(() => {
-                          const segura = getSafeImagePath(
-                            funcionario.foto || ''
-                          );
-                          return segura ? (
-                            <img
-                              src={`/${segura}`}
-                              alt={funcionario.nome}
-                              className="h-full w-full object-cover"
-                            />
+              {/* Cards para mobile */}
+              <div className="grid grid-cols-1 gap-4 lg:hidden">
+                {filteredFuncionarios.map((f) => (
+                  <div key={f.id} className="rounded-lg border bg-card p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="size-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
+                          {f.foto && getSafeImagePath(f.foto) ? (
+                            <img src={`${import.meta.env.VITE_API_URL}${encodeURI(f.foto)}`} alt={f.nome} className="h-full w-full object-cover" />
                           ) : (
-                            <span className="text-xs text-indigo-900 font-bold">
-                              {funcionario.nome.substring(0, 2).toUpperCase()}
-                            </span>
-                          );
-                        })()}
+                            <span className="font-bold text-primary">{f.nome.substring(0, 2).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">{f.nome}</p>
+                          <p className="text-sm text-muted-foreground">{f.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        {showDeleteConfirm === f.id ? (
+                          <>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(f.id)} className="text-destructive hover:bg-destructive/10 hover:text-destructive"><Check className="size-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(null)}><X className="size-4" /></Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/visualizarprofessor`, { state: { funcionario: f } })}><Eye className="size-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/editar`)}><Settings className="size-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(f.id)} className="text-destructive hover:bg-destructive/10 hover:text-destructive"><Trash className="size-4" /></Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4 border-t pt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground">Cargo</p>
+                        <p className="font-medium">{f.cargo || '—'}</p>
                       </div>
                       <div>
-                        <div className="font-semibold text-gray-800">
-                          {funcionario.nome}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {funcionario.email}
-                        </div>
+                        <p className="text-xs font-medium text-muted-foreground">Departamento</p>
+                        <p className="font-medium">{f.departamento || '—'}</p>
                       </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                      <span>
-                        <b>Cargo:</b> {funcionario.cargo}
-                      </span>
-                      <span>
-                        <b>Departamento:</b> {funcionario.departamento}
-                      </span>
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      {showDeleteConfirm === funcionario.id ? (
-                        <>
-                          <button
-                            onClick={() => handleDelete(funcionario.id)}
-                            className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                            title="Confirmar"
-                          >
-                            <Check size={18} />
-                          </button>
-                          <button
-                            onClick={() => setShowDeleteConfirm(null)}
-                            className="p-1 bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200"
-                            title="Cancelar"
-                          >
-                            <X size={18} />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() =>
-                              navigate(
-                                `/gestor/alunos/${funcionario.id}/visualizaraluno`
-                              )
-                            }
-                            className="p-1 bg-indigo-300 text-indigo-800 rounded-full hover:bg-indigo-400"
-                            title="Ver perfil"
-                          >
-                            <Eye size={18} />
-                          </button>
-                          <button
-                            onClick={() =>
-                              navigate(
-                                `/gestor/professores/${funcionario.id}/editar`
-                              )
-                            }
-                            className="p-1 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200"
-                            title="Configurações"
-                          >
-                            <Settings size={18} />
-                          </button>
-                          <button
-                            onClick={() => setShowDeleteConfirm(funcionario.id)}
-                            className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                            title="Excluir"
-                          >
-                            <Trash size={18} />
-                          </button>
-                        </>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -493,7 +307,7 @@ const ProfessoresPage = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ProfessoresPage;
+export default ProfessoresPage
