@@ -131,8 +131,7 @@ const VisualizarTurmaPage = () => {
   const fetchDisciplinasComProfessor = async () => {
     try {
       const resp = await axios.get<DisciplinaComProfessor[]>(
-        `${
-          import.meta.env.VITE_API_URL
+        `${import.meta.env.VITE_API_URL
         }/api/turmas/${id}/disciplinas-com-professor`
       );
       // Ordenar alfabeticamente por nome
@@ -491,11 +490,11 @@ const VisualizarTurmaPage = () => {
                     onClick={() =>
                       isProfessor
                         ? navigate(
-                            `/professor/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`
-                          )
+                          `/professor/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`
+                        )
                         : navigate(
-                            `/gestor/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`
-                          )
+                          `/gestor/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`
+                        )
                     }
                     disabled={!selectedMateriaId}
                     className="px-4 py-2 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm disabled:opacity-50"
@@ -508,11 +507,11 @@ const VisualizarTurmaPage = () => {
                     onClick={() =>
                       isProfessor
                         ? navigate(
-                            `/professor/turmas/${id}/materias/${selectedMateriaId}/diario`
-                          )
+                          `/professor/turmas/${id}/materias/${selectedMateriaId}/diario`
+                        )
                         : navigate(
-                            `/gestor/turmas/${id}/materias/${selectedMateriaId}/diario`
-                          )
+                          `/gestor/turmas/${id}/materias/${selectedMateriaId}/diario`
+                        )
                     }
                     disabled={!selectedMateriaId}
                     className="bg-orange-600 text-white px-4 py-2 rounded-lg shadow hover:bg-orange-700 transition duration-200 disabled:opacity-50"
@@ -521,12 +520,6 @@ const VisualizarTurmaPage = () => {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  <p>
-                    <strong>Série:</strong> {turma.serie}
-                  </p>
-                  <p>
-                    <strong>Turno:</strong> {turma.turno}
-                  </p>
                   <p>
                     <strong>Ano Letivo:</strong> {turma.ano_letivo}
                   </p>
@@ -577,9 +570,8 @@ const VisualizarTurmaPage = () => {
                                 );
                                 return segura ? (
                                   <img
-                                    src={`${
-                                      import.meta.env.VITE_API_URL
-                                    }${segura}`}
+                                    src={`${import.meta.env.VITE_API_URL
+                                      }${segura}`}
                                     alt={aluno.nome}
                                     className="w-8 h-8 rounded-full object-cover"
                                   />
@@ -615,212 +607,6 @@ const VisualizarTurmaPage = () => {
                   </div>
                 </div>
 
-                {/* ─── Seção “Disciplinas” ────────────────────────────────────────── */}
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
-                    Disciplinas
-                  </h2>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-indigo-400">
-                      <thead>
-                        <tr className="bg-indigo-50">
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Disciplina
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Aulas/semana
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Professor
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-center w-24">
-                            Editar
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-center w-10">
-                            Excluir
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {disciplinas.map((disc) => (
-                          <tr key={disc.materiaId} className="hover:bg-indigo-50">
-                            {/* Coluna 1: Nome da matéria */}
-                            <td className="border border-indigo-400 p-2">
-                              {disc.nome}
-                            </td>
-
-                            {/* Coluna 2: Aulas/semana */}
-                            <td className="border border-indigo-400 p-2">
-                              {disc.aulasSemana}
-                            </td>
-
-                            {/* Coluna 3: Professor */}
-                            <td className="border border-indigo-400 p-2">
-                              {disc.professorNome &&
-                              editingMateriaId !== disc.materiaId ? (
-                                <span className="text-gray-700">
-                                  {disc.professorNome}
-                                </span>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <select
-                                    className="border border-indigo-400 rounded-lg p-1 focus:outline-none focus:ring-2 focus:ring-indigo-700"
-                                    value={selecoes[disc.materiaId] || ''}
-                                    onChange={(e) => {
-                                      const novoProfId = Number(e.target.value);
-                                      handleChangeSelecaoProfessor(
-                                        disc.materiaId,
-                                        novoProfId
-                                      );
-                                    }}
-                                    onFocus={() => {
-                                      fetchProfessoresParaMateria(
-                                        disc.materiaId
-                                      );
-                                    }}
-                                  >
-                                    <option value="">
-                                      Selecionar professor...
-                                    </option>
-                                    {professoresPorMateria[disc.materiaId]?.map(
-                                      (prof) => (
-                                        <option key={prof.id} value={prof.id}>
-                                          {prof.nome}
-                                        </option>
-                                      )
-                                    )}
-                                  </select>
-                                </div>
-                              )}
-                            </td>
-
-                            {/* Coluna 4: Botão Editar / Salvar / Cancelar */}
-                            <td className="border border-indigo-400 p-2 text-center">
-                              {disc.professorNome &&
-                              editingMateriaId !== disc.materiaId ? (
-                                <button
-                                  onClick={() => {
-                                    setEditingMateriaId(disc.materiaId);
-                                    if (disc.professorId) {
-                                      setSelecoes((prev) => ({
-                                        ...prev,
-                                        [disc.materiaId]: disc.professorId!,
-                                      }));
-                                    }
-                                    fetchProfessoresParaMateria(disc.materiaId);
-                                  }}
-                                  className="px-3 py-1 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm"
-                                  title="Editar Professor"
-                                >
-                                  Editar
-                                </button>
-                              ) : (
-                                <div className="flex justify-center gap-2">
-                                  <button
-                                    onClick={() =>
-                                      handleSalvarProfessor(disc.materiaId)
-                                    }
-                                    className="px-3 py-1 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm"
-                                    title="Salvar Professor"
-                                  >
-                                    Salvar
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingMateriaId(null);
-                                      setSelecoes((prev) => {
-                                        const copia = { ...prev };
-                                        delete copia[disc.materiaId];
-                                        return copia;
-                                      });
-                                    }}
-                                    className="px-3 py-1 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm"
-                                    title="Cancelar Edição"
-                                  >
-                                    Cancelar
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-
-                            {/* Coluna 5: Ícone de Lixeira para Excluir Disciplina */}
-                            <td className="border border-indigo-400 p-2 w-10 text-center">
-                              <button
-                                onClick={() =>
-                                  handleRemoverDisciplina(disc.materiaId)
-                                }
-                                className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                                title="Excluir Disciplina"
-                              >
-                                <Trash size={18} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* ─── Seção “Adicionar Disciplinas” ───────────────────────────────── */}
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
-                    Adicionar Disciplinas
-                  </h2>
-
-                  {/* Campo de busca */}
-                  <input
-                    type="text"
-                    placeholder="Buscar matérias..."
-                    className="w-full mb-2 px-3 py-2 border border-indigo-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-700"
-                    value={filtroMaterias}
-                    onChange={(e) => setFiltroMaterias(e.target.value)}
-                  />
-
-                  {/* Lista rolável, estilo “alunos” */}
-                  <div className="max-h-48 overflow-y-auto border border-indigo-400 rounded-md p-1">
-                    {materiasFiltradas.length === 0 && (
-                      <div className="p-2 text-gray-500">
-                        Nenhuma matéria encontrada.
-                      </div>
-                    )}
-                    {materiasFiltradas.map((mat) => (
-                      <label
-                        key={mat.id}
-                        className={`flex items-center gap-3 p-2 cursor-pointer rounded-lg transition-colors
-                          ${
-                            materiasSelecionadas.includes(mat.id)
-                              ? 'bg-indigo-400'
-                              : 'hover:bg-indigo-50'
-                          }`}
-                        onClick={() => toggleSelecionarMateria(mat.id)}
-                        style={{ userSelect: 'none' }}
-                      >
-                        {/* Checkbox escondido */}
-                        <input
-                          type="checkbox"
-                          checked={materiasSelecionadas.includes(mat.id)}
-                          onChange={() => toggleSelecionarMateria(mat.id)}
-                          className="hidden"
-                        />
-                        {/* Avatar de duas letras */}
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-300 text-indigo-900 font-bold">
-                          {mat.nome.substring(0, 2).toUpperCase()}
-                        </span>
-                        <span className="text-gray-800">{mat.nome}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  {/* Botão “Vincular Selecionadas” com espaçamento acima */}
-                  <button
-                    onClick={handleVincularMaterias}
-                    className="mt-3 bg-indigo-800 text-white px-4 py-2 rounded-lg hover:bg-indigo-900"
-                  >
-                    Vincular Selecionadas
-                  </button>
-                </div>
-
                 {/* ─── Seção “Vincular Aluno” ─────────────────────────────────────── */}
                 <div className="mt-8">
                   <h2 className="text-xl font-semibold text-indigo-900 mb-4">
@@ -843,10 +629,9 @@ const VisualizarTurmaPage = () => {
                       <label
                         key={aluno.id}
                         className={`flex items-center gap-3 p-2 cursor-pointer rounded-lg transition-colors
-                          ${
-                            alunosSelecionados.includes(aluno.id)
-                              ? 'bg-indigo-400'
-                              : 'hover:bg-indigo-50'
+                          ${alunosSelecionados.includes(aluno.id)
+                            ? 'bg-indigo-400'
+                            : 'hover:bg-indigo-50'
                           }`}
                         onClick={() => handleSelecionarAluno(aluno.id)}
                         style={{ userSelect: 'none' }}

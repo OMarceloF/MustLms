@@ -25,8 +25,6 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
   const { user, loading: authLoading } = useAuth();  // ← pega o usuário
   const isProfessor = user.role === 'professor';     // ← flag de professor
 
-
-
   // As funções getCursoNome e getProfessorNome foram removidas pois agora
   // os nomes vêm diretamente do objeto 'turma' da API.
 
@@ -59,9 +57,9 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
 
   const handleVisualizar = (id: number) => {
     if (isProfessor) {
-      navigate(`/professor/turmas/${id}/visualizar`)
+      navigate(`/professor/gestao-turma/${id}`)
     } else {
-      navigate(`/gestor/${id}/visualizar`)
+      navigate(`/gestor/gestao-turma/${id}`)
     }
   }
 
