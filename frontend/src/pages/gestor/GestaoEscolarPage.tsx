@@ -102,7 +102,7 @@ const GestaoEscolarPage: React.FC = () => {
               className="flex items-center gap-2 bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg shadow-lg transition-all"
             >
               <Plus size={20} />
-              <span>Gerenciar Cursos</span>
+              <span>Gerenciar Disciplinas</span>
             </button>
           </div>
         )}
