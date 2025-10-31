@@ -13,7 +13,14 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "../components/ui/accordion"
 import { Button } from "../components/ui/button"
-import { Pencil, Trash2, Loader2, BookCopy } from "lucide-react"
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "../components/ui/dialog"
+import { Input } from "../components/ui/input"
+import { Label } from "../components/ui/label"
+import { Textarea } from "../components/ui/textarea"
+import { Plus, Pencil, Trash2, Loader2, BookCopy } from "lucide-react"
+
 
 // --- Interfaces ---
 interface Turma {
@@ -109,6 +116,34 @@ export function MatrizCurricularTab() {
     }
   }
 
+  const handleSave = async () => {
+    if (!editingDisciplina) return
+
+    const payload = {
+      nome: editingDisciplina.nome,
+      codigo: editingDisciplina.codigo,
+      creditos: editingDisciplina.creditos,
+      carga_horaria: editingDisciplina.cargaHoraria,
+      semestre: editingDisciplina.semestre,
+      ementa: editingDisciplina.ementa,
+    };
+
+    try {
+      if (editingDisciplina.id) {
+        await axios.put(`/api/cursos/disciplinas/${editingDisciplina.id}`, payload)
+        toast.success("Disciplina atualizada com sucesso!")
+      } else {
+        await axios.post(`/api/cursos/${cursoId}/disciplinas`, payload)
+        toast.success("Disciplina adicionada com sucesso!")
+      }
+      setIsDialogOpen(false)
+      fetchDisciplinas()
+    } catch (error) {
+      console.error("Erro ao salvar disciplina:", error)
+      toast.error("Ocorreu um erro ao salvar a disciplina.")
+    }
+  }
+
   const handleFormChange = (field: keyof DisciplinaFormData, value: string | number) => {
     if (editingDisciplina) {
       setEditingDisciplina({ ...editingDisciplina, [field]: value });
@@ -198,7 +233,48 @@ export function MatrizCurricularTab() {
           </Card>
         )
       })}
-
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl bg-card">
+          <DialogHeader>
+            <DialogTitle>{editingDisciplina?.id ? "Editar Disciplina" : "Nova Disciplina"}</DialogTitle>
+            <DialogDescription>Preencha as informações da disciplina.</DialogDescription>
+          </DialogHeader>
+          {editingDisciplina && (
+            <div className="grid gap-6 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="nome">Nome da Disciplina</Label>
+                <Input id="nome" value={editingDisciplina.nome} onChange={(e) => handleFormChange('nome', e.target.value)} className="bg-background" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="codigo">Código</Label>
+                <Input id="codigo" value={editingDisciplina.codigo} onChange={(e) => handleFormChange('codigo', e.target.value)} className="bg-background" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="cargaHoraria">Carga Horária (h)</Label>
+                  <Input id="cargaHoraria" type="number" value={editingDisciplina.cargaHoraria} onChange={(e) => handleFormChange('cargaHoraria', Number(e.target.value))} className="bg-background" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="creditos">Créditos</Label>
+                  <Input id="creditos" type="number" value={editingDisciplina.creditos} onChange={(e) => handleFormChange('creditos', Number(e.target.value))} className="bg-background" />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="semestre">Semestre</Label>
+                  <Input id="semestre" type="number" value={editingDisciplina.semestre} onChange={(e) => handleFormChange('semestre', Number(e.target.value))} className="bg-background" />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="ementa">Ementa</Label>
+                <Textarea id="ementa" value={editingDisciplina.ementa} onChange={(e) => handleFormChange('ementa', e.target.value)} rows={4} className="bg-background" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} className="bg-primary text-primary-foreground">Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   )
