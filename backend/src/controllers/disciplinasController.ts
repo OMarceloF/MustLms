@@ -2,56 +2,70 @@
 
 import { Request, Response } from 'express';
 import pool from '../config/db';
-import { ResultSetHeader } from 'mysql2';
-
-//==============================================================================
-// NOVA FUNÇÃO - Para a página de Gestão Escolar
-//==============================================================================
-
-/**
- * @description Lista TODAS as disciplinas de pós-graduação para a página de gestão.
- * @route GET /api/disciplinas-posgraduacao
- */
-export const listarTodasDisciplinasPosGraduacao = async (req: Request, res: Response) => {
-  try {
-    const query = `
-      SELECT 
-        d.id, 
-        d.nome, 
-        c.nome AS breve_descricao 
-      FROM cursos_disciplinas AS d
-      JOIN cursos_posgraduacao AS c ON d.curso_id = c.id
-      ORDER BY d.nome ASC;
-    `;
-    const [rows] = await pool.query(query);
-    res.status(200).json(rows);
-  } catch (error) {
-    console.error("Erro ao listar todas as disciplinas de pós-graduação:", error);
-    res.status(500).json({ message: "Erro interno ao buscar as disciplinas." });
-  }
-};
-
+import { ResultSetHeader, RowDataPacket } from 'mysql2';
 
 //==============================================================================
 // CRUD para Matriz Curricular (Disciplinas de um CURSO ESPECÍFICO)
 //==============================================================================
 
 /**
- * @description Lista as disciplinas de um curso específico.
+ * @description Lista as disciplinas de um curso específico, incluindo as turmas vinculadas.
  * @route GET /api/cursos/:cursoId/disciplinas
  */
 export const listarDisciplinasCurso = async (req: Request, res: Response) => {
-  const { cursoId } = req.params; 
+  const { cursoId } = req.params;
 
   if (!cursoId) {
     return res.status(400).json({ message: "ID do curso não fornecido na URL." });
   }
 
   try {
-    const [rows] = await pool.query("SELECT * FROM cursos_disciplinas WHERE curso_id = ? ORDER BY semestre, nome", [cursoId]);
-    res.json(rows);
+    // ALTERAÇÃO: Substituído JSON_ARRAYAGG por GROUP_CONCAT para compatibilidade
+    const query = `
+      SELECT 
+        d.*,
+        CONCAT('[', 
+          GROUP_CONCAT(
+            IF(t.id IS NULL, '', 
+              CONCAT(
+                '{"id":', t.id, 
+                ', "nome":"', t.nome_turma, 
+                '", "ano_letivo":', IFNULL(t.ano_letivo, 'null'), 
+                '}'
+              )
+            )
+          ),
+        ']') AS turmas
+      FROM cursos_disciplinas d
+      LEFT JOIN disciplinas_turmas dt ON d.id = dt.disciplina_id
+      LEFT JOIN turmas t ON dt.turma_id = t.id
+      WHERE d.curso_id = ?
+      GROUP BY d.id
+      ORDER BY d.semestre, d.nome;
+    `;
+    
+    const [rows] = await pool.query<RowDataPacket[]>(query, [cursoId]);
+
+    // O GROUP_CONCAT retorna uma string, então precisamos fazer o parse para JSON
+    const disciplinas = rows.map(row => {
+      try {
+        // Se 'turmas' for '[]' ou '[{...}]', o parse funciona.
+        // Se for '[null]' (caso de disciplina sem turma), o parse também funciona.
+        const parsedTurmas = JSON.parse(row.turmas);
+        
+        // Remove o 'null' se a disciplina não tiver turmas vinculadas
+        row.turmas = parsedTurmas.filter((t: any) => t !== null);
+
+      } catch (e) {
+        // Em caso de erro no parse, define como um array vazio para segurança
+        row.turmas = [];
+      }
+      return row;
+    });
+
+    res.json(disciplinas);
   } catch (error) {
-    console.error("Erro ao listar disciplinas:", error);
+    console.error("Erro ao listar disciplinas com turmas:", error);
     res.status(500).json({ message: "Erro interno ao buscar as disciplinas." });
   }
 };
@@ -144,5 +158,32 @@ export const deletarDisciplinaCurso = async (req: Request, res: Response) => {
   } catch (error) {
       console.error("Erro ao deletar disciplina:", error);
       res.status(500).json({ message: "Erro interno ao deletar a disciplina." });
+  }
+};
+
+//==============================================================================
+// FUNÇÃO para a página de Gestão Escolar
+//==============================================================================
+
+/**
+ * @description Lista TODAS as disciplinas de pós-graduação para a página de gestão.
+ * @route GET /api/disciplinas-posgraduacao
+ */
+export const listarTodasDisciplinasPosGraduacao = async (req: Request, res: Response) => {
+  try {
+    const query = `
+      SELECT 
+        d.id, 
+        d.nome, 
+        c.nome AS breve_descricao 
+      FROM cursos_disciplinas AS d
+      JOIN cursos_posgraduacao AS c ON d.curso_id = c.id
+      ORDER BY d.nome ASC;
+    `;
+    const [rows] = await pool.query(query);
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Erro ao listar todas as disciplinas de pós-graduação:", error);
+    res.status(500).json({ message: "Erro interno ao buscar as disciplinas." });
   }
 };

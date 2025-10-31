@@ -4,51 +4,79 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 
-//==============================================================================
-// CRUD para Cursos de Pós-Graduação (Tabela: cursos_posgraduacao)
-//==============================================================================
-
 /**
- * @description Cria um novo curso de pós-graduação no banco de dados.
+ * @description Adiciona um novo curso de pós-graduação.
  * @route POST /api/cursos/adicionar
  */
 export const adicionarCurso = async (req: Request, res: Response) => {
-  const {
-    nome, tipo, area, cargaHoraria, duracao, modalidade, coordenador,
-    viceCoordenador, unidade, objetivos, perfilEgresso, justificativa,
-    anoInicio, status, linkDivulgacao,
-  } = req.body;
-
-  if (!nome || !tipo || !area || !cargaHoraria || !duracao || !modalidade || !coordenador || !unidade || !objetivos || !perfilEgresso || !justificativa || !anoInicio || !status) {
-    return res.status(400).json({ message: "Erro de validação: Todos os campos obrigatórios devem ser preenchidos." });
-  }
-
-  try {
-    const query = `
-      INSERT INTO cursos_posgraduacao (
+    const {
         nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
         coordenador_id, vice_coordenador_id, unidade_id, objetivos, perfil_egresso,
         justificativa, ano_inicio, status, link_divulgacao
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-    `;
-    const values = [
-      nome, tipo, area, parseInt(cargaHoraria, 10), parseInt(duracao, 10),
-      modalidade, parseInt(coordenador, 10), viceCoordenador ? parseInt(viceCoordenador, 10) : null,
-      parseInt(unidade, 10), objetivos, perfilEgresso, justificativa, anoInicio,
-      status, linkDivulgacao || null,
-    ];
+    } = req.body;
 
-    const [result] = await pool.query<ResultSetHeader>(query, values);
+    try {
+        const query = `
+            INSERT INTO cursos_posgraduacao (
+                nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+                coordenador_id, vice_coordenador_id, unidade_id, objetivos, perfil_egresso,
+                justificativa, ano_inicio, status, link_divulgacao
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        `;
+        const values = [
+            nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+            coordenador_id, vice_coordenador_id || null, unidade_id, objetivos, perfil_egresso,
+            justificativa, ano_inicio, status, link_divulgacao
+        ];
 
-    if (result.affectedRows > 0) {
-      res.status(201).json({ message: "Curso cadastrado com sucesso!", cursoId: result.insertId });
-    } else {
-      throw new Error("A inserção no banco de dados falhou.");
+        const [result] = await pool.query<ResultSetHeader>(query, values);
+        res.status(201).json({ id: result.insertId, message: 'Curso adicionado com sucesso!' });
+    } catch (error) {
+        console.error("Erro ao adicionar curso:", error);
+        res.status(500).json({ message: 'Erro interno ao adicionar o curso.' });
     }
-  } catch (error) {
-    console.error("Erro ao salvar curso no banco de dados:", error);
-    res.status(500).json({ message: "Erro interno do servidor ao tentar salvar o curso." });
-  }
+};
+
+/**
+ * @description Lista todos os cursos de pós-graduação com informações adicionais.
+ * @route GET /api/cursos-posgraduacao
+ */
+export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
+    try {
+        const query = `
+            SELECT 
+                c.id, c.nome, c.tipo, c.status, c.modalidade, c.ano_inicio,
+                coord.nome AS coordenador_nome,
+                (SELECT COUNT(*) FROM cursos_disciplinas WHERE curso_id = c.id) as disciplinas_count,
+                (SELECT COUNT(*) FROM turmas WHERE curso_id = c.id) as turmas_count
+            FROM cursos_posgraduacao c
+            LEFT JOIN users coord ON c.coordenador_id = coord.id
+            ORDER BY c.nome;
+        `;
+        const [rows] = await pool.query(query);
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("Erro ao listar cursos:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar os cursos.' });
+    }
+};
+
+/**
+ * @description Exclui um curso de pós-graduação.
+ * @route DELETE /api/cursos/:id
+ */
+export const excluirCurso = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const [result] = await pool.query<ResultSetHeader>('DELETE FROM cursos_posgraduacao WHERE id = ?', [id]);
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Curso não encontrado.' });
+        }
+        res.status(200).json({ message: 'Curso excluído com sucesso.' });
+    } catch (error) {
+        console.error("Erro ao excluir curso:", error);
+        res.status(500).json({ message: 'Erro interno ao excluir o curso.' });
+    }
 };
 
 /**
@@ -58,207 +86,181 @@ export const adicionarCurso = async (req: Request, res: Response) => {
 export const atualizarCurso = async (req: Request, res: Response) => {
     const { id } = req.params;
     const {
-        nome, tipo, area, cargaHoraria, duracao, modalidade, coordenador,
-        viceCoordenador, unidade, objetivos, perfilEgresso, justificativa,
-        anoInicio, status, linkDivulgacao,
+        nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+        coordenador_id, vice_coordenador_id, unidade_id, objetivos, perfil_egresso,
+        justificativa, ano_inicio, status, link_divulgacao
     } = req.body;
-
-    if (!id) {
-        return res.status(400).json({ message: "ID do curso não fornecido." });
-    }
-
-    if (!nome || !tipo || !area || !cargaHoraria || !duracao || !modalidade || !coordenador || !unidade || !objetivos || !perfilEgresso || !justificativa || !anoInicio || !status) {
-        return res.status(400).json({ message: "Erro de validação: Todos os campos obrigatórios devem ser preenchidos." });
-    }
 
     try {
         const query = `
             UPDATE cursos_posgraduacao SET
-                nome = ?, tipo = ?, area_conhecimento = ?, carga_horaria = ?, duracao_semestres = ?,
-                modalidade = ?, coordenador_id = ?, vice_coordenador_id = ?, unidade_id = ?,
-                objetivos = ?, perfil_egresso = ?, justificativa = ?, ano_inicio = ?,
+                nome = ?, tipo = ?, area_conhecimento = ?, carga_horaria = ?, duracao_semestres = ?, 
+                modalidade = ?, coordenador_id = ?, vice_coordenador_id = ?, unidade_id = ?, 
+                objetivos = ?, perfil_egresso = ?, justificativa = ?, ano_inicio = ?, 
                 status = ?, link_divulgacao = ?
             WHERE id = ?;
         `;
         const values = [
-            nome, tipo, area, parseInt(cargaHoraria, 10), parseInt(duracao, 10),
-            modalidade, parseInt(coordenador, 10), viceCoordenador ? parseInt(viceCoordenador, 10) : null,
-            parseInt(unidade, 10), objetivos, perfilEgresso, justificativa, anoInicio,
-            status, linkDivulgacao || null, id
+            nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+            coordenador_id, vice_coordenador_id || null, unidade_id, objetivos, perfil_egresso,
+            justificativa, ano_inicio, status, link_divulgacao, id
         ];
 
         const [result] = await pool.query<ResultSetHeader>(query, values);
-
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Curso não encontrado para atualização." });
+            return res.status(404).json({ message: 'Curso não encontrado.' });
         }
-
-        res.status(200).json({ message: "Curso atualizado com sucesso!" });
-
+        res.status(200).json({ message: 'Curso atualizado com sucesso!' });
     } catch (error) {
-        console.error("Erro ao atualizar curso no banco de dados:", error);
-        res.status(500).json({ message: "Erro interno do servidor ao tentar atualizar o curso." });
+        console.error("Erro ao atualizar curso:", error);
+        res.status(500).json({ message: 'Erro interno ao atualizar o curso.' });
     }
 };
 
 /**
- * @description Lista todos os cursos de pós-graduação cadastrados.
- * @route GET /api/cursos-posgraduacao
- */
-export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
-  try {
-    const query = `
-      SELECT
-        c.id, c.nome, c.objetivos, c.duracao_semestres
-      FROM cursos_posgraduacao AS c
-      ORDER BY c.nome ASC;
-    `;
-    const [rows] = await pool.query(query);
-    res.status(200).json(rows);
-  } catch (error) {
-    console.error("Erro ao listar cursos de pós-graduação:", error);
-    res.status(500).json({ message: "Erro interno ao buscar os cursos." });
-  }
-};
-
-/**
- * @description Exclui um curso de pós-graduação.
- * @route DELETE /api/cursos/:id
- */
-export const excluirCurso = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "ID do curso não fornecido." });
-  }
-
-  try {
-    await pool.query('DELETE FROM cursos_disciplinas WHERE curso_id = ?', [id]);
-    const [result] = await pool.query<ResultSetHeader>('DELETE FROM cursos_posgraduacao WHERE id = ?', [id]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Curso não encontrado." });
-    }
-
-    res.status(200).json({ message: "Curso e suas disciplinas foram excluídos com sucesso." });
-
-  } catch (error) {
-    console.error("Erro ao excluir curso:", error);
-    
-    if (error && typeof error === 'object' && 'code' in error) {
-      const mysqlError = error as { code: string };
-      if (mysqlError.code === 'ER_ROW_IS_REFERENCED_2') {
-        return res.status(409).json({ message: "Não é possível excluir este curso, pois ele possui outros dados vinculados." });
-      }
-    }
-    
-    res.status(500).json({ message: "Erro interno do servidor ao tentar excluir o curso." });
-  }
-};
-
-/**
- * @description Obtém os detalhes de um curso específico.
+ * @description Obtém os detalhes de um curso específico para edição ou visualização.
  * @route GET /api/cursos/:id
  */
 export const obterDetalhesCurso = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  try {
-    const [rows] = await pool.query<RowDataPacket[]>("SELECT * FROM cursos_posgraduacao WHERE id = ?", [id]);
-    if (rows.length === 0) {
-      return res.status(404).json({ message: "Curso não encontrado." });
+    const { id } = req.params;
+    try {
+        const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM cursos_posgraduacao WHERE id = ?', [id]);
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Curso não encontrado.' });
+        }
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        console.error("Erro ao obter detalhes do curso:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar o curso.' });
     }
-    res.json(rows[0]);
-  } catch (error) {
-    console.error("Erro ao obter detalhes do curso:", error);
-    res.status(500).json({ message: "Erro interno ao buscar o curso." });
-  }
 };
-
-//==============================================================================
-// Funções para Outras Abas (Calendário, PPC, etc.)
-//==============================================================================
 
 /**
  * @description Lista os eventos do calendário de um curso.
  * @route GET /api/cursos/:cursoId/calendario
  */
 export const listarEventosCalendario = async (req: Request, res: Response) => {
-  const { cursoId } = req.params;
-  try {
-      const [rows] = await pool.query("SELECT * FROM cursos_eventos WHERE curso_id = ? ORDER BY data_inicio ASC", [cursoId]);
-      res.json(rows);
-  } catch (error) {
-      console.error("Erro ao listar eventos do calendário:", error);
-      res.status(500).json({ message: "Erro interno ao buscar os eventos." });
-  }
+    // Implementação futura
+    res.status(200).json([]);
 };
 
 /**
- * @description Adiciona um novo evento ao calendário de um curso.
+ * @description Adiciona um evento ao calendário de um curso.
  * @route POST /api/cursos/:cursoId/calendario
  */
 export const adicionarEventoCalendario = async (req: Request, res: Response) => {
-  const { cursoId } = req.params;
-  const { titulo, descricao, data_inicio, data_fim, tipo } = req.body;
-
-  if (!titulo || !data_inicio || !data_fim || !tipo) {
-      return res.status(400).json({ message: "Campos obrigatórios não foram preenchidos." });
-  }
-
-  try {
-      const query = "INSERT INTO cursos_eventos (curso_id, titulo, descricao, data_inicio, data_fim, tipo) VALUES (?, ?, ?, ?, ?, ?)";
-      const [result] = await pool.query<ResultSetHeader>(query, [cursoId, titulo, descricao, data_inicio, data_fim, tipo]);
-      res.status(201).json({ id: result.insertId, ...req.body });
-  } catch (error) {
-      console.error("Erro ao adicionar evento:", error);
-      res.status(500).json({ message: "Erro interno ao adicionar o evento." });
-  }
+    // Implementação futura
+    res.status(201).json({ message: 'Evento adicionado (simulado).' });
 };
 
 /**
- * @description Obtém o conteúdo do PPC de um curso.
+ * @description Obtém o PPC de um curso.
  * @route GET /api/cursos/:cursoId/ppc
  */
 export const obterPPC = async (req: Request, res: Response) => {
-  const { cursoId } = req.params;
-  try {
-      const [rows] = await pool.query<RowDataPacket[]>("SELECT conteudo FROM cursos_ppc WHERE curso_id = ?", [cursoId]);
-      res.json(rows.length > 0 ? rows[0] : { conteudo: "" });
-  } catch (error) {
-      console.error("Erro ao obter PPC:", error);
-      res.status(500).json({ message: "Erro interno ao buscar o PPC." });
-  }
+    const { cursoId } = req.params;
+    try {
+        const [rows] = await pool.query<RowDataPacket[]>('SELECT conteudo FROM cursos_ppc WHERE curso_id = ?', [cursoId]);
+        if (rows.length > 0) {
+            res.json(rows[0]);
+        } else {
+            res.json({ conteudo: '' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao buscar PPC.' });
+    }
 };
 
 /**
- * @description Salva ou atualiza o conteúdo do PPC de um curso.
+ * @description Salva ou atualiza o PPC de um curso.
  * @route POST /api/cursos/:cursoId/ppc
  */
 export const salvarPPC = async (req: Request, res: Response) => {
-  const { cursoId } = req.params;
-  const { conteudo } = req.body;
-  try {
-      const query = `INSERT INTO cursos_ppc (curso_id, conteudo) VALUES (?, ?) ON DUPLICATE KEY UPDATE conteudo = VALUES(conteudo)`;
-      await pool.query(query, [cursoId, conteudo]);
-      res.status(200).json({ message: "PPC salvo com sucesso." });
-  } catch (error) {
-      console.error("Erro ao salvar PPC:", error);
-      res.status(500).json({ message: "Erro interno ao salvar o PPC." });
-  }
+    const { cursoId } = req.params;
+    const { conteudo } = req.body;
+    try {
+        await pool.query(
+            'INSERT INTO cursos_ppc (curso_id, conteudo) VALUES (?, ?) ON DUPLICATE KEY UPDATE conteudo = ?',
+            [cursoId, conteudo, conteudo]
+        );
+        res.status(200).json({ message: 'PPC salvo com sucesso.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Erro ao salvar PPC.' });
+    }
 };
 
 /**
- * @description Obtém os usuários (alunos e professores) vinculados a um curso.
+ * @description Obtém os professores e turmas vinculados a um curso específico.
  * @route GET /api/cursos/:cursoId/vinculados
  */
 export const obterVinculadosCurso = async (req: Request, res: Response) => {
-  try {
-      // Mock de dados, substitua pela sua lógica real de consulta
-      const mockAlunos = [{ id: 101, nome: "Ana Beatriz", tipo: "aluno" }];
-      const mockProfessores = [{ id: 201, nome: "Dr. Ricardo Neves", tipo: "professor" }];
-      res.json({ alunos: mockAlunos, professores: mockProfessores });
-  } catch (error) {
-      console.error("Erro ao obter vinculados do curso:", error);
-      res.status(500).json({ message: "Erro interno ao buscar os vinculados." });
-  }
+    const { cursoId } = req.params;
+
+    if (!cursoId) {
+        return res.status(400).json({ message: "ID do curso não fornecido." });
+    }
+
+    try {
+        // Query para buscar professores (esta query já estava correta)
+        const [professores] = await pool.query<RowDataPacket[]>(`
+            SELECT DISTINCT
+                f.id,
+                f.nome,
+                f.departamento,
+                (SELECT COUNT(*) FROM alunos_turmas at2 WHERE at2.turma_id IN (SELECT id FROM turmas WHERE professor_responsavel = f.id)) AS orientandos
+            FROM funcionarios f
+            JOIN turmas t ON f.id = t.professor_responsavel
+            WHERE t.curso_id = ? AND f.cargo LIKE '%Professor%'
+            ORDER BY f.nome;
+        `, [cursoId]);
+
+        // Query CORRIGIDA para buscar turmas (sem JSON_TABLE)
+        // Etapa 1: Buscar as turmas e os IDs das suas disciplinas
+        const [turmasBase] = await pool.query<RowDataPacket[]>(`
+            SELECT 
+                t.id,
+                t.nome_turma AS codigo,
+                cpl.nome AS periodo,
+                t.quantidade_alunos AS alunos,
+                t.materias_ids
+            FROM turmas t
+            LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
+            WHERE t.curso_id = ?
+            ORDER BY cpl.data_inicio DESC, t.nome_turma;
+        `, [cursoId]);
+
+        // Etapa 2: Processar os resultados no Node.js para buscar os nomes das disciplinas
+        const turmas = await Promise.all(turmasBase.map(async (turma) => {
+            let disciplinaNomes = 'N/A';
+            // Verifica se materias_ids existe e não está vazio
+            if (turma.materias_ids && turma.materias_ids.length > 2) { // > 2 para ignorar '[]'
+                try {
+                    const ids = JSON.parse(turma.materias_ids);
+                    if (ids.length > 0) {
+                        const placeholders = ids.map(() => '?').join(',');
+                        const [disciplinas] = await pool.query<RowDataPacket[]>(
+                            `SELECT nome FROM cursos_disciplinas WHERE id IN (${placeholders})`,
+                            ids
+                        );
+                        disciplinaNomes = disciplinas.map(d => d.nome).join(', ');
+                    }
+                } catch (e) {
+                    console.error("Erro ao fazer parse dos IDs de matérias:", e);
+                }
+            }
+            return {
+                id: turma.id,
+                codigo: turma.codigo,
+                periodo: turma.periodo,
+                alunos: turma.alunos || 0,
+                disciplina: disciplinaNomes
+            };
+        }));
+
+        res.status(200).json({ professores, turmas });
+
+    } catch (error) {
+        console.error("Erro ao buscar vinculados do curso:", error);
+        res.status(500).json({ message: "Erro interno ao buscar professores e turmas." });
+    }
 };

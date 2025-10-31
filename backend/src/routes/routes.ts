@@ -935,6 +935,9 @@ router.get('/api/cursos-posgraduacao', listarCursosPosGraduacao);
 // ROTAS DE MATRÍCULA / VÍNCULO
 router.post('/api/matriculas/vincular-aluno-curso', vincularAlunoCursoPosGraduacao);
 
+// --- Aba "Vinculados" ---
+router.get('/api/cursos/:cursoId/vinculados', obterVinculadosCurso);
+
 // ==============================================================================
 // ROTAS PARA A NOVA GESTÃO DE TURMAS (PÓS-GRADUAÇÃO)
 // ==============================================================================
