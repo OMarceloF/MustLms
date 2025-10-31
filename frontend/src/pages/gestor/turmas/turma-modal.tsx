@@ -22,7 +22,7 @@ export function TurmaModal({ open, onOpenChange, turma, onSave }: TurmaModalProp
           </DialogDescription>
         </DialogHeader>
         <TurmaForm turma={turma} onSave={onSave} onCancel={() => onOpenChange(false)} />
-      </DialogContent>
+      </DialogContent>  
     </Dialog>
   )
 }
