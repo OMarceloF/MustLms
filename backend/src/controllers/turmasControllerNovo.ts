@@ -363,3 +363,34 @@ export const removerAlunoDaTurma = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Erro interno ao remover o aluno.' });
     }
 };
+
+/**
+ * @description Atualiza o status do VÍNCULO de um aluno com uma turma específica.
+ * @route   PATCH /api/turmas-novo/:turmaId/alunos/:alunoId/status
+ */
+export const updateAlunoTurmaStatus = async (req: Request, res: Response) => {
+    const { vinculoId } = req.params; // Recebe o ID do vínculo da URL
+    const { status } = req.body;
+
+    const allowedStatus = ['ativo', 'inativo', 'trancado'];
+    if (!status || !allowedStatus.includes(status)) {
+        return res.status(400).json({ message: 'Status inválido ou não fornecido.' });
+    }
+
+    try {
+        const [result] = await pool.query<ResultSetHeader>(
+            "UPDATE alunos_turmas SET status_vinculo = ? WHERE id = ?", // Usa o ID do vínculo (chave primária)
+            [status, vinculoId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Vínculo não encontrado.' });
+        }
+
+        res.status(200).json({ message: 'Status do vínculo do aluno atualizado com sucesso.' });
+
+    } catch (error) {
+        console.error('Erro ao atualizar status do vínculo do aluno:', error);
+        res.status(500).json({ message: 'Erro interno ao atualizar o status do vínculo.' });
+    }
+};

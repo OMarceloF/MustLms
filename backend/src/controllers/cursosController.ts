@@ -249,14 +249,13 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
             };
         }));
 
-        // ================== MODIFICAÇÃO APLICADA AQUI ==================
-        // Nova query para buscar os alunos vinculados ao curso através das turmas
         const [alunos] = await pool.query<RowDataPacket[]>(`
             SELECT DISTINCT
                 u.id,
                 u.nome,
                 a.matricula,
-                a.status
+                at.status_vinculo AS status,
+                at.id AS vinculoId 
             FROM users u
             JOIN alunos a ON u.id = a.id
             JOIN alunos_turmas at ON u.id = at.aluno_id
@@ -264,6 +263,7 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
             WHERE t.curso_id = ? AND u.role = 'aluno'
             ORDER BY u.nome ASC;
         `, [cursoId]);
+        // ===============================================================
 
         res.status(200).json({ professores, turmas, alunos });
 
