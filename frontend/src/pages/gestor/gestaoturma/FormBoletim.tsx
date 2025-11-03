@@ -13,53 +13,67 @@ export function FormBoletim({ turmaId }: { turmaId: string }) {
   useEffect(() => {
     axios.get(`/api/turmas/${turmaId}`)
       .then(res => setAlunos(res.data.alunos || []))
+      .catch(() => toast.error('Erro ao carregar alunos.'))
+
     axios.get('/api/listarMaterias')
       .then(res => setMaterias(res.data))
+      .catch(() => toast.error('Erro ao carregar matérias.'))
   }, [turmaId])
 
   useEffect(() => {
     if (!selectedMateria) return
-    Promise.all(
-      alunos.map(a => axios.get(`/api/boletim/${a.id}`))
-    ).then(resps => {
-      const temp: Record<number, number[]> = {}
-      resps.forEach((res, i) => {
-        const materia = res.data.materias.find((m: any) => m.id === Number(selectedMateria))
-        temp[alunos[i].id] = materia ? materia.grades : Array(4).fill(null)
+    Promise.all(alunos.map(a => axios.get(`/api/boletim/${a.id}`)))
+      .then(resps => {
+        const temp: Record<number, number[]> = {}
+        resps.forEach((res, i) => {
+          const materia = res.data.materias.find((m: any) => m.id === Number(selectedMateria))
+          temp[alunos[i].id] = materia ? materia.grades : Array(4).fill(null)
+        })
+        setNotasMap(temp)
       })
-      setNotasMap(temp)
-    }).catch(() => toast.error('Erro ao carregar notas.'))
+      .catch(() => toast.error('Erro ao carregar notas.'))
   }, [selectedMateria, alunos])
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h2 className="text-xl font-semibold text-indigo-900 mb-4">Boletim</h2>
+    <div className="bg-card rounded-xl shadow-sm border border-border p-6">
+      <h2 className="text-2xl font-semibold text-foreground mb-6">
+        Boletim da Turma
+      </h2>
 
-      <select
-        value={selectedMateria}
-        onChange={(e) => setSelectedMateria(e.target.value)}
-        className="mb-4 px-3 py-2 border rounded-md"
-      >
-        <option value="">Selecione a Matéria</option>
-        {materias.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-      </select>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-indigo-400">
+      <div className="overflow-x-auto rounded-lg border border-border bg-muted/20">
+        <table className="w-full border-collapse">
           <thead>
-            <tr className="bg-indigo-50">
-              <th className="border p-2 text-left">Aluno</th>
+            <tr className="bg-muted/40 text-foreground">
+              <th className="border border-border p-3 text-left font-semibold">Aluno</th>
               {periodos.map((p, i) => (
-                <th key={i} className="border p-2 text-center">{p}</th>
+                <th
+                  key={i}
+                  className="border border-border p-3 text-center font-semibold"
+                >
+                  {p}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {alunos.map(a => (
-              <tr key={a.id}>
-                <td className="border p-2">{a.nome}</td>
+              <tr
+                key={a.id}
+                className="hover:bg-muted/30 transition-colors"
+              >
+                <td className="border border-border p-3 text-foreground font-medium">
+                  {a.nome}
+                </td>
                 {notasMap[a.id]?.map((n, i) => (
-                  <td key={i} className="border p-2 text-center">{n ?? '—'}</td>
+                  <td
+                    key={i}
+                    className="border border-border p-3 text-center text-muted-foreground"
+                  >
+                    {n ?? '—'}
+                  </td>
                 ))}
               </tr>
             ))}

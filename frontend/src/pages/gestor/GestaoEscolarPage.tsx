@@ -1,9 +1,9 @@
 // src/pages/GestaoEscolarPage.tsx
 
 import React, { useState, useRef, useEffect } from 'react';
-// Importa o componente Link para navegação
 import { Link, useNavigate } from 'react-router-dom';
-import { Book, MoreVertical, Plus } from 'lucide-react';
+// <<--- PASSO 1: Importar o ícone de busca --->>
+import { Book, MoreVertical, Plus, Search } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../hooks/useAuth';
 import { useParams } from "react-router-dom"
@@ -16,15 +16,12 @@ import { Input } from "./components/ui/input"
 import { Label } from "./components/ui/label"
 import { Textarea } from "./components/ui/textarea"
 
-
-// Interface para os dados da disciplina
-
+// Interfaces
 interface Turma {
   id: number;
   nome: string;
   ano_letivo?: number;
 }
-
 
 interface Disciplina {
   id: number
@@ -48,8 +45,7 @@ interface DisciplinaFormData {
   ementa: string
 }
 
-
-// Componente de Layout para manter a estrutura da página
+// Componente de Layout
 const Layout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-gray-50 flex flex-col">
     <main className="flex-1 container mx-auto py-6 px-4">
@@ -70,15 +66,15 @@ const GestaoEscolarPage: React.FC = () => {
   const { id: cursoId } = useParams<{ id: string }>()
   const [isLoading, setIsLoading] = useState(true)
 
-
-
-
+  // <<--- PASSO 2: Adicionar estado para o termo de busca --->>
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Efeito para carregar as disciplinas da API
   useEffect(() => {
     async function carregarDisciplinas() {
       if (!user?.id) return;
       try {
+        setIsLoading(true); // Inicia o carregamento
         const response = await axios.get('/api/disciplinas-posgraduacao');
         const lista: Disciplina[] = Array.isArray(response.data) ? response.data : [];
         const ordenada = [...lista].sort((a, b) =>
@@ -89,6 +85,8 @@ const GestaoEscolarPage: React.FC = () => {
         console.error('Erro ao buscar disciplinas de pós-graduação:', error);
         toast.error('Erro ao carregar as disciplinas do banco de dados.');
         setDisciplinas([]);
+      } finally {
+        setIsLoading(false); // Finaliza o carregamento
       }
     }
 
@@ -107,6 +105,15 @@ const GestaoEscolarPage: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // <<--- PASSO 3: Criar a lista de disciplinas filtradas --->>
+  const filteredDisciplinas = disciplinas.filter(disciplina => {
+    const searchLower = searchTerm.toLowerCase();
+    const nomeMatch = disciplina.nome.toLowerCase().includes(searchLower);
+    // Busca também pelo nome do curso associado
+    const cursoMatch = disciplina.breve_descricao.toLowerCase().includes(searchLower);
+    return nomeMatch || cursoMatch;
+  });
 
   // Função para deletar uma disciplina
   const handleExcluirDisciplina = async (disciplinaId: number) => {
@@ -171,8 +178,6 @@ const GestaoEscolarPage: React.FC = () => {
     }
   }
 
-
-
   const handleOpenDialog = (disciplina: Disciplina | null) => {
     if (disciplina) {
       setEditingDisciplina({
@@ -199,8 +204,8 @@ const GestaoEscolarPage: React.FC = () => {
   };
 
   // Exibe mensagem de carregamento
-  if (loading) {
-    return <p>Carregando...</p>;
+  if (isLoading) { // Alterado de `loading` para `isLoading` para refletir o estado de busca de dados
+    return <p>Carregando disciplinas...</p>;
   }
 
   return (
@@ -214,7 +219,6 @@ const GestaoEscolarPage: React.FC = () => {
         </div>
         {user.role !== 'Professor' && (
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-
             <Button onClick={() => handleOpenDialog(null)} className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="mr-2 h-4 w-4" />
               Adicionar Disciplina
@@ -223,10 +227,22 @@ const GestaoEscolarPage: React.FC = () => {
         )}
       </div>
 
+      {/* <<--- PASSO 4: Adicionar o campo de busca --->> */}
+      <div className="mb-6 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar por nome da disciplina ou curso..."
+          className="w-full max-w-md pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+        />
+      </div>
+
+      {/* <<--- PASSO 5: Usar a lista FILTRADA para renderização --->> */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {disciplinas.length > 0 ? (
-          disciplinas.map((d) => (
-            // Envolve o card com o componente Link para torná-lo navegável
+        {filteredDisciplinas.length > 0 ? (
+          filteredDisciplinas.map((d) => (
             <Link key={d.id} to={`/gestor/materiasgestor/${d.id}`} className="block">
               <div
                 className="relative transform transition-transform hover:scale-105 border rounded-lg shadow-sm bg-white h-full flex flex-col"
@@ -239,13 +255,12 @@ const GestaoEscolarPage: React.FC = () => {
                   <p className="text-gray-600 text-sm">Curso: {d.breve_descricao}</p>
                 </div>
 
-                {/* Botão de "Mais Opções" */}
                 <button
                   type="button"
                   className="absolute top-2 right-2 p-1 rounded-full hover:bg-gray-200 z-20"
                   aria-label="Mais opções"
                   onClick={(e) => {
-                    e.preventDefault(); // Impede a navegação ao clicar no botão
+                    e.preventDefault();
                     e.stopPropagation();
                     setOpenMenuId((prev) => (prev === d.id ? null : d.id));
                   }}
@@ -253,7 +268,6 @@ const GestaoEscolarPage: React.FC = () => {
                   <MoreVertical className="w-5 h-5 text-gray-600" />
                 </button>
 
-                {/* Menu de Opções (Editar/Excluir) */}
                 {openMenuId === d.id && user.role !== 'Professor' && (
                   <div
                     className="absolute top-10 right-2 bg-white border rounded-md shadow-lg w-36 z-30 overflow-hidden"
@@ -263,7 +277,7 @@ const GestaoEscolarPage: React.FC = () => {
                     <button
                       className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-md"
                       onClick={(e) => {
-                        e.preventDefault(); // Impede a navegação
+                        e.preventDefault();
                         alert('Para editar, acesse a página do curso e a aba "Matriz Curricular".');
                       }}
                     >
@@ -272,7 +286,7 @@ const GestaoEscolarPage: React.FC = () => {
                     <button
                       className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-b-md text-red-600"
                       onClick={(e) => {
-                        e.preventDefault(); // Impede a navegação
+                        e.preventDefault();
                         handleExcluirDisciplina(d.id);
                       }}
                     >
@@ -284,10 +298,13 @@ const GestaoEscolarPage: React.FC = () => {
             </Link>
           ))
         ) : (
-          <p className="text-gray-500 col-span-full">Nenhuma disciplina de pós-graduação encontrada.</p>
+          <p className="text-gray-500 col-span-full">
+            {disciplinas.length > 0 ? 'Nenhuma disciplina encontrada com este termo.' : 'Nenhuma disciplina de pós-graduação encontrada.'}
+          </p>
         )}
       </div>
 
+      {/* O Dialog para adicionar/editar permanece o mesmo */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl bg-card">
           <DialogHeader>
@@ -331,7 +348,6 @@ const GestaoEscolarPage: React.FC = () => {
         </DialogContent>
       </Dialog>
     </Layout>
-
   );
 };
 

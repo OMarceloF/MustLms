@@ -8,6 +8,8 @@ import { FormBoletim } from './FormBoletim';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useAuth } from '../../../hooks/useAuth';
+import { Button } from '../components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 // Interface para um único aluno, conforme a API
 interface Aluno {
@@ -92,10 +94,10 @@ export default function GestorTurma() {
     // Renderização de estados de carregamento e erro
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <div className="flex items-center justify-center min-h-screen bg-muted/30">
                 <div className="text-center">
-                    <div className="animate-spin w-10 h-10 border-4 border-indigo-700 border-t-transparent rounded-full mx-auto mb-4" />
-                    <p className="text-indigo-900 font-medium">Carregando turma...</p>
+                    <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+                    <p className="mt-2 font-medium text-muted-foreground">Carregando turma...</p>
                 </div>
             </div>
         );
@@ -103,23 +105,23 @@ export default function GestorTurma() {
 
     if (erro) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                <p className="text-red-600 text-lg font-semibold">{erro}</p>
+            <div className="flex items-center justify-center min-h-screen bg-muted/30">
+                <p className="text-lg font-semibold text-destructive">{erro}</p>
             </div>
         );
     }
 
     if (!turma) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-100">
-                <p className="text-gray-600 text-lg">Turma não encontrada.</p>
+            <div className="flex items-center justify-center min-h-screen bg-muted/30">
+                <p className="text-lg text-muted-foreground">Turma não encontrada.</p>
             </div>
         );
     }
 
     // Renderização principal
     return (
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex min-h-screen bg-muted/30">
             <SidebarGestor
                 isMenuOpen={sidebarAberta}
                 setActivePage={(page: string) => navigate('/gestor', { state: { activePage: page } })}
@@ -130,41 +132,41 @@ export default function GestorTurma() {
             <div className="flex-1 min-w-0 flex flex-col">
                 <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
 
+                {/* Estrutura de layout original mantida */}
                 <div className="p-6 mt-20 max-w-6xl mx-auto w-full space-y-10">
-                    {/* Cabeçalho */}
-                    <div className="bg-white rounded-xl shadow p-6">
+                    {/* Cabeçalho com novas cores */}
+                    <div className="bg-card rounded-xl shadow-sm p-6">
                         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                             <div>
-                                <h1 className="text-3xl font-bold text-indigo-900 mb-2">{turma.nome}</h1>
-                                <p className="text-gray-700"><strong>Ano Letivo:</strong> {turma.ano_letivo}</p>
-                                <p className="text-gray-700"><strong>Qtd. de Alunos:</strong> {turma.alunos.length}</p>
+                                <h1 className="text-3xl font-bold text-foreground mb-2">{turma.nome}</h1>
+                                <p className="text-muted-foreground"><strong>Ano Letivo:</strong> {turma.ano_letivo}</p>
+                                <p className="text-muted-foreground"><strong>Qtd. de Alunos:</strong> {turma.alunos.length}</p>
                                 {turma.professor_responsavel && (
-                                    <p className="text-gray-700"><strong>Professor Responsável:</strong> {turma.professor_responsavel}</p>
+                                    <p className="text-muted-foreground"><strong>Professor Responsável:</strong> {turma.professor_responsavel}</p>
                                 )}
                             </div>
 
-                            {/* Botões de ação direta */}
+                            {/* Botões de ação com o novo componente Button */}
                             <div className="flex flex-col sm:flex-row items-center gap-3">
-                                <button
+                                <Button
                                     onClick={handleNotas}
                                     disabled={!materiaId}
-                                    className="px-4 py-2 bg-indigo-700 text-white rounded-lg hover:bg-indigo-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Avaliações & Notas
-                                </button>
+                                </Button>
 
-                                <button
+                                <Button
+                                    variant="secondary"
                                     onClick={handleDiario}
                                     disabled={!materiaId}
-                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Ver Diário
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Forms principais */}
+                    {/* Forms principais (a estrutura que os envolve é a mesma) */}
                     <FormVisualizarAlunos
                         turmaId={id!}
                         initialAlunos={turma.alunos}
@@ -176,14 +178,14 @@ export default function GestorTurma() {
                     />
                     <FormBoletim turmaId={id!} />
 
-                    {/* Botão voltar */}
+                    {/* Botão voltar com o novo componente Button */}
                     <div className="flex justify-end mt-10">
-                        <button
+                        <Button
+                            variant="outline"
                             onClick={() => navigate('/gestor', { state: { activePage: 'turmas' } })}
-                            className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                         >
                             Voltar
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

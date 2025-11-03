@@ -6,15 +6,13 @@ import { Input } from "../components/ui/input"
 import { Plus, Search } from "lucide-react"
 import { TurmaTable } from "./turma-table"
 import { TurmaModal } from "./turma-modal"
-import type { Turma } from "../../lib/types"
+import type { Turma } from "../../lib/types" // Seu tipo está correto
 import { useToast } from "../hooks/use-toast"
 
-// <<--- CORREÇÃO AQUI --->>
-// URL base da sua API. Como este é um componente de cliente,
-// definimos a URL diretamente.
+// URL base da sua API
 const API_BASE_URL = 'http://localhost:3001/api';
 
-export default function TurmasPage( ) {
+export default function TurmasPage() {
     const [turmas, setTurmas] = useState<Turma[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -46,9 +44,23 @@ export default function TurmasPage( ) {
         fetchTurmas();
     }, [toast]);
 
+    // <<--- CORREÇÃO FINAL APLICADA AQUI --->>
     const filteredTurmas = turmas.filter((turma) => {
         const searchLower = searchTerm.toLowerCase();
-        return turma.nomeTurma.toLowerCase().includes(searchLower) || (turma.status && turma.status.toLowerCase().includes(searchLower));
+
+        // 1. Busca nos campos principais (sempre existentes)
+        const nomeTurmaMatch = turma.nomeTurma.toLowerCase().includes(searchLower);
+        const statusMatch = turma.status.toLowerCase().includes(searchLower);
+
+        // 2. Busca nos campos de nomes relacionados (verificando se existem)
+        const cursoMatch = turma.cursoNome?.toLowerCase().includes(searchLower) ?? false;
+        const professorMatch = turma.responsavelNome?.toLowerCase().includes(searchLower) ?? false;
+
+        // 3. Busca no array de nomes de matérias
+        const materiaMatch =
+            turma.materiasNomes?.some(nome => nome.toLowerCase().includes(searchLower)) ?? false;
+
+        return nomeTurmaMatch || statusMatch || cursoMatch || professorMatch || materiaMatch;
     });
 
     const refreshTurmas = async () => {
@@ -66,14 +78,17 @@ export default function TurmasPage( ) {
 
     const handleSaveTurma = async (turmaData: Turma) => {
         const isEditing = !!editingTurma;
-        const url = isEditing ? `${API_BASE_URL}/turmas-novo/${turmaData.id}` : `${API_BASE_URL}/turmas-novo`;
+        // Removendo os campos de nomes para não enviá-los de volta para a API
+        const { cursoNome, responsavelNome, materiasNomes, ...payload } = turmaData;
+
+        const url = isEditing ? `${API_BASE_URL}/turmas-novo/${payload.id}` : `${API_BASE_URL}/turmas-novo`;
         const method = isEditing ? 'PUT' : 'POST';
 
         try {
             const response = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(turmaData),
+                body: JSON.stringify(payload), // Enviando apenas os dados necessários
             });
 
             if (!response.ok) {
@@ -84,7 +99,7 @@ export default function TurmasPage( ) {
                 title: isEditing ? "Turma atualizada!" : "Turma criada!",
                 description: `A turma "${turmaData.nomeTurma}" foi salva com sucesso.`,
             });
-            
+
             refreshTurmas();
             closeModal();
 
@@ -112,7 +127,7 @@ export default function TurmasPage( ) {
                 title: "Turma excluída!",
                 description: "A turma foi removida com sucesso.",
             });
-            
+
             refreshTurmas();
 
         } catch (error) {
@@ -152,7 +167,7 @@ export default function TurmasPage( ) {
                         <div className="relative flex-1 sm:max-w-sm">
                             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
-                                placeholder="Buscar por nome da turma ou status..."
+                                placeholder="Buscar por turma, curso, matéria..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-9"

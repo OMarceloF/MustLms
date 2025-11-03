@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Book, MoreVertical, Loader2, AlertTriangle, PlusCircle } from 'lucide-react';
+// <<--- PASSO 1: Importar o ícone de busca --->>
+import { Book, MoreVertical, Loader2, AlertTriangle, PlusCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import axios, { isAxiosError } from 'axios';
 
@@ -30,6 +31,9 @@ const CursosPage: React.FC = () => {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // <<--- PASSO 2: Adicionar estado para o termo de busca --->>
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Efeito para buscar os cursos da API quando o componente é montado
   useEffect(() => {
@@ -78,13 +82,16 @@ const CursosPage: React.FC = () => {
       }
     }
   };
-  
-  // *** ALTERAÇÃO PRINCIPAL AQUI ***
-  // A função agora navega para a rota do formulário unificado, passando o ID do curso.
+
   const handleEditarCurso = (cursoId: number) => {
     navigate(`/adicionar-curso/${cursoId}`);
-    setOpenMenuId(null); // Fecha o menu após o clique
+    setOpenMenuId(null);
   };
+
+  // <<--- PASSO 3: Criar a lista de cursos filtrados --->>
+  const filteredCursos = cursos.filter(curso =>
+    curso.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Função para renderizar o conteúdo principal da página
   const renderContent = () => {
@@ -100,20 +107,24 @@ const CursosPage: React.FC = () => {
         </div>
       );
     }
-    if (cursos.length === 0) {
+    // <<--- PASSO 5: Verificar se a lista FILTRADA está vazia --->>
+    if (filteredCursos.length === 0) {
       return (
         <div className="text-center py-20 bg-white p-6 rounded-lg shadow-sm">
           <h3 className="text-2xl font-semibold text-gray-800">Nenhum curso encontrado</h3>
-          <p className="text-gray-500 mt-2">Clique em "Adicionar Curso" para começar.</p>
+          <p className="text-gray-500 mt-2">
+            {cursos.length > 0 ? 'Tente um termo de busca diferente.' : 'Clique em "Adicionar Curso" para começar.'}
+          </p>
         </div>
       );
     }
 
     return (
+      // <<--- PASSO 6: Mapear a lista FILTRADA --->>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {cursos.map((curso) => (
+        {filteredCursos.map((curso) => (
           <div key={curso.id} className="relative group">
-            <div 
+            <div
               onClick={() => navigate(`/gestaocurso/${curso.id}/matriz-curricular`)}
               className="cursor-pointer transform transition-transform group-hover:scale-105 border-2 border-transparent group-hover:border-blue-600 rounded-lg shadow-sm bg-white flex flex-col h-full"
             >
@@ -136,15 +147,14 @@ const CursosPage: React.FC = () => {
             </button>
             {openMenuId === curso.id && (
               <div ref={menuRef} className="absolute top-10 right-2 bg-white border rounded-md shadow-lg w-32 z-30 overflow-hidden">
-                {/* O onClick agora chama a função handleEditarCurso atualizada */}
-                <button 
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100" 
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-gray-100"
                   onClick={() => handleEditarCurso(curso.id)}
                 >
                   Editar
                 </button>
-                <button 
-                  className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50" 
+                <button
+                  className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
                   onClick={() => handleExcluirCurso(curso.id)}
                 >
                   Excluir
@@ -172,6 +182,19 @@ const CursosPage: React.FC = () => {
           <span>Adicionar Curso</span>
         </button>
       </div>
+
+      {/* <<--- PASSO 4: Adicionar o campo de busca --->> */}
+      <div className="mb-6 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Buscar por nome do curso..."
+          className="w-full max-w-md pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+        />
+      </div>
+
       {renderContent()}
     </Layout>
   );
