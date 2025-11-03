@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 31/10/2025 às 20:03
+-- Tempo de geração: 03/11/2025 às 15:26
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -631,6 +631,13 @@ CREATE TABLE `cursos_ppc` (
   `conteudo` longtext DEFAULT NULL,
   `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `cursos_ppc`
+--
+
+INSERT INTO `cursos_ppc` (`id`, `curso_id`, `conteudo`, `atualizado_em`) VALUES
+(1, 4, '# Projeto Pedagógico do Curso (PPC)\n\n## 1. Apresentação\n\nO Programa de Pós-Graduação em [Nome do Curso] tem como objetivo formar pesquisadores e profissionais de alto nível, capazes de contribuir para o avanço do conhecimento científico e tecnológico em suas áreas de atuação.\n\n## 2. Objetivos\n\n### 2.1 Objetivo Geral\nFormar mestres e doutores com sólida formação teórica e metodológica, capazes de desenvolver pesquisas originais e relevantes para a sociedade.\n\n### 2.2 Objetivos Específicos\n- Desenvolver competências em metodologia de pesquisa científica\n- Promover a produção de conhecimento inovador\n- Estimular a publicação em periódicos de alto impacto\n- Formar docentes qualificados para o ensino superior\n\n## 3. Perfil do Egresso\n\nO egresso do programa deverá ser capaz de:\n- Conduzir pesquisas científicas de forma autônoma\n- Publicar resultados em periódicos qualificados\n- Orientar trabalhos de conclusão de curso\n- Atuar como docente no ensino superior\n\n## 4. Estrutura Curricular\n\nO programa está organizado em disciplinas obrigatórias e eletivas, totalizando [X] créditos para o mestrado e [Y] créditos para o doutorado.\n\n## 5. Linhas de Pesquisa\n\n[Descrever as linhas de pesquisa do programa]\n\n## 6. Corpo Docente\n\nO programa conta com [X] docentes permanentes, todos com título de doutor e produção científica regular.\n\n## 7. Infraestrutura\n\n[Descrever laboratórios, bibliotecas e demais recursos disponíveis]\n\n## 8. Avaliação\n\nO programa é avaliado periodicamente pela CAPES, tendo obtido conceito [X] na última avaliação.', '2025-11-03 14:20:02');
 
 -- --------------------------------------------------------
 
@@ -1796,7 +1803,12 @@ INSERT INTO `transacoes` (`id`, `descricao`, `id_pessoa`, `valor`, `desconto_per
 (18, 'Mensalidade - Marcelo Ferreira', 10, 1200.00, 0.00, 1200.00, 'receita', 'mensalidades', '2025-10-01', NULL, '2025-10-11', NULL, NULL, 'sistema', 'atrasado', NULL),
 (19, 'Mensalidade - 232eqweewasdas', 12, 1232.00, 0.00, 1232.00, 'receita', 'mensalidades', '2025-10-01', NULL, '2025-10-11', NULL, NULL, 'sistema', 'atrasado', NULL),
 (20, 'Mensalidade - usuarioteste', 16, 1111.00, 0.00, 1111.00, 'receita', 'mensalidades', '2025-10-01', NULL, '2025-10-11', NULL, NULL, 'sistema', 'atrasado', NULL),
-(21, 'Pagamento de Salário - jose', 6, 3500.00, 0.00, 3500.00, 'despesa', 'salarios dos funcionarios', '2025-10-01', NULL, '2025-10-11', NULL, NULL, 'sistema', 'atrasado', NULL);
+(21, 'Pagamento de Salário - jose', 6, 3500.00, 0.00, 3500.00, 'despesa', 'salarios dos funcionarios', '2025-10-01', NULL, '2025-10-11', NULL, NULL, 'sistema', 'atrasado', NULL),
+(22, 'Mensalidade - Marcelo Ferreira', 8, 1200.00, 5.00, 1140.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL),
+(23, 'Mensalidade - Marcelo Ferreira', 10, 1200.00, 0.00, 1200.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL),
+(24, 'Mensalidade - 232eqweewasdas', 12, 1232.00, 0.00, 1232.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL),
+(25, 'Mensalidade - usuarioteste', 16, 1111.00, 0.00, 1111.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL),
+(26, 'Pagamento de Salário - jose', 6, 3500.00, 0.00, 3500.00, 'despesa', 'salarios dos funcionarios', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL);
 
 -- --------------------------------------------------------
 
@@ -1879,7 +1891,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-10-31 17:48:00'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-03 12:39:44'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2528,7 +2540,7 @@ ALTER TABLE `cursos_posgraduacao`
 -- AUTO_INCREMENT de tabela `cursos_ppc`
 --
 ALTER TABLE `cursos_ppc`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de tabela `descontos`
@@ -2696,7 +2708,7 @@ ALTER TABLE `responsaveis`
 -- AUTO_INCREMENT de tabela `transacoes`
 --
 ALTER TABLE `transacoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT de tabela `turmas`
@@ -2829,7 +2841,7 @@ ALTER TABLE `cursos_posgraduacao`
 -- Restrições para tabelas `cursos_ppc`
 --
 ALTER TABLE `cursos_ppc`
-  ADD CONSTRAINT `cursos_ppc_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_ppc_curso_posgraduacao` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `cursos_professores`

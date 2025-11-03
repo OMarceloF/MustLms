@@ -200,6 +200,52 @@ export const salvarPPC = async (req: Request, res: Response) => {
     }
 };
 
+// =======================================================================
+// NOVA FUNÇÃO PARA LISTAR TURMAS POR DISCIPLINA
+// =======================================================================
+/**
+ * @description Lista todas as turmas vinculadas a uma disciplina específica.
+ * @route GET /api/disciplinas/:disciplinaId/turmas
+ */
+export const listarTurmasPorDisciplina = async (req: Request, res: Response) => {
+    const { disciplinaId } = req.params;
+
+    if (!disciplinaId) {
+        return res.status(400).json({ message: "O ID da disciplina é obrigatório." });
+    }
+
+    try {
+        // CORREÇÃO: Adicionamos um LEFT JOIN para buscar o nome do semestre
+        const query = `
+            SELECT 
+                t.id, 
+                t.nome_turma, 
+                cpl.nome AS semestre_nome 
+            FROM turmas t
+            LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
+            WHERE JSON_CONTAINS(t.materias_ids, ?, '$');
+        `;
+
+        const valorParaBusca = `"${disciplinaId}"`;
+
+        const [turmas] = await pool.query<RowDataPacket[]>(query, [valorParaBusca]);
+
+        // Renomeia as colunas para corresponder à interface 'Turma' do frontend
+        const turmasFormatadas = turmas.map(turma => ({
+            id: turma.id,
+            nome: turma.nome_turma,
+            semestre_nome: turma.semestre_nome || 'N/A' // Retorna o nome do semestre ou 'N/A'
+        }));
+
+        res.status(200).json(turmasFormatadas);
+
+    } catch (error) {
+        console.error("Erro ao buscar turmas por disciplina:", error);
+        res.status(500).json({ message: "Erro interno ao buscar as turmas." });
+    }
+};
+
+
 /**
  * @description Obtém os professores, turmas e alunos vinculados a um curso específico.
  * @route GET /api/cursos/:cursoId/vinculados
