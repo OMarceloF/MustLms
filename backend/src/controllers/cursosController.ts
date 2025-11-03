@@ -177,14 +177,26 @@ export const obterPPC = async (req: Request, res: Response) => {
 export const salvarPPC = async (req: Request, res: Response) => {
     const { cursoId } = req.params;
     const { conteudo } = req.body;
+
+    // Validação de entrada
+    if (!cursoId) {
+        return res.status(400).json({ message: 'O ID do curso é obrigatório.' });
+    }
+    if (conteudo === undefined || conteudo === null) {
+        return res.status(400).json({ message: 'O conteúdo do PPC é obrigatório.' });
+    }
+
     try {
-        await pool.query(
-            'INSERT INTO cursos_ppc (curso_id, conteudo) VALUES (?, ?) ON DUPLICATE KEY UPDATE conteudo = ?',
-            [cursoId, conteudo, conteudo]
-        );
+        // A query ON DUPLICATE KEY UPDATE é perfeita para "criar ou atualizar"
+        const query = 'INSERT INTO cursos_ppc (curso_id, conteudo) VALUES (?, ?) ON DUPLICATE KEY UPDATE conteudo = ?';
+        
+        await pool.query(query, [cursoId, conteudo, conteudo]);
+        
         res.status(200).json({ message: 'PPC salvo com sucesso.' });
     } catch (error) {
-        res.status(500).json({ message: 'Erro ao salvar PPC.' });
+        // Log detalhado do erro no servidor para depuração
+        console.error(`[ERRO AO SALVAR PPC] Curso ID: ${cursoId}`, error);
+        res.status(500).json({ message: 'Erro interno no servidor ao salvar o PPC.' });
     }
 };
 

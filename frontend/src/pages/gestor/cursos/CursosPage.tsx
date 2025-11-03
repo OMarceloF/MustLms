@@ -1,9 +1,7 @@
-// src/pages/gestor/cursos/CursosPage.tsx
-
 "use client"
 
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom'; // Removido 'Link' que não estava sendo usado
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Importações dos seus componentes
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
@@ -19,8 +17,9 @@ import { useAuth } from '../../../hooks/useAuth';
 
 export default function CursoConfigPage() {
     // --- HOOKS ---
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate(); // <<-- ESSA LINHA ESTAVA FALTANDO
+    // A variável 'id' dos parâmetros da URL é renomeada para 'cursoId' para maior clareza.
+    const { id: cursoId } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const { user: currentUser } = useAuth();
 
     // --- ESTADOS ---
@@ -28,14 +27,14 @@ export default function CursoConfigPage() {
 
     // --- VARIÁVEIS DE CONTROLE DE UI ---
     const isGestor = currentUser?.role === 'gestor';
-    const isPerfilPrincipal = String(currentUser?.id) === id;
+    // A verificação do perfil principal agora usa 'cursoId'
+    const isPerfilPrincipal = String(currentUser?.id) === cursoId;
     const podeVisualizarInfoPrivada = isPerfilPrincipal || isGestor || currentUser?.role === 'professor';
     const showSidebar = !['responsavel', 'aluno'].includes(currentUser?.role ?? '');
     const showSidebarAluno = currentUser?.role === 'aluno';
 
     return (
         <div className={`dashboard-container flex min-h-screen w-full overflow-x-hidden pl-4 ${showSidebar || showSidebarAluno ? 'md:pl-15' : 'md:pl-0'}`}>
-            {/* Agora 'navigate' está definida e pode ser passada como prop */}
             {showSidebar && (
                 <SidebarGestor
                     isMenuOpen={sidebarAberta}
@@ -100,7 +99,7 @@ export default function CursoConfigPage() {
                                 </TabsTrigger>
                             </TabsList>
 
-                            {/* As TabsContent permanecem as mesmas */}
+                            {/* Conteúdo das Abas */}
                             <TabsContent value="matriz" className="mt-0">
                                 <MatrizCurricularTab />
                             </TabsContent>
@@ -111,7 +110,7 @@ export default function CursoConfigPage() {
                                 <RelatoriosTab />
                             </TabsContent>
                             <TabsContent value="ppc" className="mt-0">
-                                <PpcTab />
+                                <PpcTab cursoId={cursoId} />
                             </TabsContent>
                             <TabsContent value="calendario" className="mt-0">
                                 <CalendarioTab />
