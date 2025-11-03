@@ -23,7 +23,7 @@ import { Plus, Pencil, Trash2, Loader2, BookCopy, Eye } from "lucide-react"
 interface Turma {
   id: number;
   nome: string; // Corresponde a 'nome_turma' no backend
- semestre_nome?: string;
+  semestre_nome?: string;
 }
 
 interface Disciplina {
@@ -66,7 +66,7 @@ export function MatrizCurricularTab() {
     try {
       setIsLoading(true);
       const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas`);
-      
+
       // Para cada disciplina, buscar suas turmas vinculadas
       const disciplinasComTurmas = await Promise.all(
         response.data.map(async (disciplina) => {
@@ -162,10 +162,9 @@ export function MatrizCurricularTab() {
   };
 
   // Ação de visualizar turma agora navega para a página de detalhes da turma
-  const handleViewTurma = (turmaId: number) => {
-    event?.stopPropagation();
-    // Navega para a rota de detalhes da turma, que você já tem implementada
-    navigate(`/turmas-novo/${turmaId}`);
+  const handleViewTurma = (turmaId: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    navigate(`/gestor/gestao-turma/${turmaId}`);
   };
 
   if (isLoading) {
@@ -239,19 +238,24 @@ export function MatrizCurricularTab() {
                           </h4>
                           {disciplina.turmas && disciplina.turmas.length > 0 ? (
                             <ul className="space-y-2">
-                            {disciplina.turmas.map(turma => (
-                              <li key={turma.id} className="flex items-center justify-between rounded-md bg-background p-2 px-3 border">
-                                <div className="text-sm">
-                                  <span className="font-medium">{turma.nome}</span>
-                                  {turma.semestre_nome && <span className="text-muted-foreground ml-2">({turma.semestre_nome})</span>}
-                                </div>
-                                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleViewTurma(turma.id)}>
-                                  <Eye className="h-4 w-4" />
-                                  <span className="sr-only">Visualizar Turma</span>
-                                </Button>
-                              </li>
-                            ))}
-                          </ul>
+                              {disciplina.turmas.map(turma => (
+                                <li key={turma.id} className="flex items-center justify-between rounded-md bg-background p-2 px-3 border">
+                                  <div className="text-sm">
+                                    <span className="font-medium">{turma.nome}</span>
+                                    {turma.semestre_nome && <span className="text-muted-foreground ml-2">({turma.semestre_nome})</span>}
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={(e) => handleViewTurma(turma.id, e)} // Passe o evento 'e' aqui
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                    <span className="sr-only">Visualizar Turma</span>
+                                  </Button>
+                                </li>
+                              ))}
+                            </ul>
                           ) : (
                             <p className="text-sm text-muted-foreground">Nenhuma turma vinculada a esta disciplina.</p>
                           )}
@@ -267,7 +271,7 @@ export function MatrizCurricularTab() {
           </Card>
         )
       })}
-      
+
       {/* O Dialog de edição permanece o mesmo */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl bg-card">
