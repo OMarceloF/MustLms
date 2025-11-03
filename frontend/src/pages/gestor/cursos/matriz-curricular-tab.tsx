@@ -1,9 +1,7 @@
-// frontend/src/pages/gestor/cursos/matriz-curricular-tab.tsx
-
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom" // Adicionar useNavigate
 import axios from "axios"
 import { toast } from "sonner"
 import {
@@ -19,15 +17,13 @@ import {
 import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
 import { Textarea } from "../components/ui/textarea"
-// Ícones importados, incluindo o novo ícone 'Eye'
 import { Plus, Pencil, Trash2, Loader2, BookCopy, Eye } from "lucide-react"
-
 
 // --- Interfaces ---
 interface Turma {
   id: number;
-  nome: string;
-  ano_letivo?: number;
+  nome: string; // Corresponde a 'nome_turma' no backend
+ semestre_nome?: string;
 }
 
 interface Disciplina {
@@ -38,7 +34,7 @@ interface Disciplina {
   carga_horaria: number
   semestre: number
   ementa: string
-  turmas?: Turma[] // A interface já suportava turmas
+  turmas?: Turma[] // Armazenará as turmas buscadas da API
 }
 
 interface DisciplinaFormData {
@@ -51,15 +47,12 @@ interface DisciplinaFormData {
   ementa: string
 }
 
-// --- Dados Mock para as Turmas ---
-const mockTurmas: Turma[] = [
-  { id: 101, nome: "Turma A", ano_letivo: 2025 },
-  { id: 102, nome: "Turma B", ano_letivo: 2025 },
-  { id: 103, nome: "Turma C - Noturno", ano_letivo: 2024 },
-];
+// --- O mockTurmas não é mais necessário e pode ser removido ---
+// const mockTurmas: Turma[] = [ ... ];
 
 export function MatrizCurricularTab() {
   const { id: cursoId } = useParams<{ id: string }>()
+  const navigate = useNavigate(); // Hook para navegação
 
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -69,31 +62,39 @@ export function MatrizCurricularTab() {
   const semestres = [...new Set(disciplinas.map(d => d.semestre))].sort((a, b) => a - b);
 
   const fetchDisciplinas = async () => {
-    if (!cursoId) return
+    if (!cursoId) return;
     try {
-      setIsLoading(true)
-      // Simula a busca de dados reais
-      const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas`)
+      setIsLoading(true);
+      const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas`);
+      
+      // Para cada disciplina, buscar suas turmas vinculadas
+      const disciplinasComTurmas = await Promise.all(
+        response.data.map(async (disciplina) => {
+          try {
+            const turmasResponse = await axios.get<Turma[]>(`/api/disciplinas/${disciplina.id}/turmas`);
+            return { ...disciplina, turmas: turmasResponse.data };
+          } catch (error) {
+            console.error(`Erro ao buscar turmas para a disciplina ${disciplina.id}:`, error);
+            return { ...disciplina, turmas: [] }; // Retorna array vazio em caso de erro
+          }
+        })
+      );
 
-      // **MODIFICAÇÃO**: Adiciona os dados mock de turmas a cada disciplina
-      const disciplinasComTurmas = response.data.map(d => ({
-        ...d,
-        turmas: mockTurmas // Atribui a lista mock a cada disciplina
-      }));
       setDisciplinas(disciplinasComTurmas);
 
     } catch (error) {
-      console.error("Erro ao buscar disciplinas:", error)
-      toast.error("Não foi possível carregar a matriz curricular.")
+      console.error("Erro ao buscar disciplinas:", error);
+      toast.error("Não foi possível carregar a matriz curricular.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchDisciplinas()
-  }, [cursoId])
+    fetchDisciplinas();
+  }, [cursoId]);
 
+  // ... (funções handleOpenDialog, handleDelete, handleSave, handleFormChange permanecem as mesmas) ...
   const handleOpenDialog = (disciplina: Disciplina | null) => {
     if (disciplina) {
       setEditingDisciplina({
@@ -160,14 +161,12 @@ export function MatrizCurricularTab() {
     }
   };
 
-  // **NOVA FUNÇÃO**: Placeholder para a ação de visualizar turma
+  // Ação de visualizar turma agora navega para a página de detalhes da turma
   const handleViewTurma = (turmaId: number) => {
-    // Evita que o Accordion feche ao clicar no botão
     event?.stopPropagation();
-    toast.info(`Visualizando detalhes da turma ID: ${turmaId}`);
-    // Aqui você pode implementar a lógica para abrir um modal ou navegar para outra página
+    // Navega para a rota de detalhes da turma, que você já tem implementada
+    navigate(`/turmas-novo/${turmaId}`);
   };
-
 
   if (isLoading) {
     return <div className="flex justify-center items-center p-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -182,7 +181,10 @@ export function MatrizCurricularTab() {
               <CardTitle>Gestão da Matriz Curricular</CardTitle>
               <CardDescription>Adicione, edite ou remova as disciplinas do curso.</CardDescription>
             </div>
-            {/* O botão de adicionar disciplina pode ser colocado aqui se desejado */}
+            <Button onClick={() => handleOpenDialog(null)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Adicionar Disciplina
+            </Button>
           </div>
         </CardHeader>
       </Card>
@@ -229,29 +231,31 @@ export function MatrizCurricularTab() {
                           <p className="text-sm leading-relaxed text-muted-foreground">{disciplina.ementa || "Nenhuma ementa cadastrada."}</p>
                         </div>
 
-                        {/* --- SEÇÃO DE TURMAS MODIFICADA --- */}
-                        {disciplina.turmas && disciplina.turmas.length > 0 && (
-                          <div className="border-t border-border/50 pt-4">
-                            <h4 className="mb-3 font-semibold flex items-center">
-                              <BookCopy className="mr-2 h-4 w-4" />
-                              Turmas Vinculadas
-                            </h4>
+                        {/* --- SEÇÃO DE TURMAS COM DADOS REAIS --- */}
+                        <div className="border-t border-border/50 pt-4">
+                          <h4 className="mb-3 font-semibold flex items-center">
+                            <BookCopy className="mr-2 h-4 w-4" />
+                            Turmas Vinculadas
+                          </h4>
+                          {disciplina.turmas && disciplina.turmas.length > 0 ? (
                             <ul className="space-y-2">
-                              {disciplina.turmas.map(turma => (
-                                <li key={turma.id} className="flex items-center justify-between rounded-md bg-background p-2 px-3 border">
-                                  <div className="text-sm">
-                                    <span className="font-medium">{turma.nome}</span>
-                                    {turma.ano_letivo && <span className="text-muted-foreground ml-2">({turma.ano_letivo})</span>}
-                                  </div>
-                                  <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleViewTurma(turma.id)}>
-                                    <Eye className="h-4 w-4" />
-                                    <span className="sr-only">Visualizar Turma</span>
-                                  </Button>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                            {disciplina.turmas.map(turma => (
+                              <li key={turma.id} className="flex items-center justify-between rounded-md bg-background p-2 px-3 border">
+                                <div className="text-sm">
+                                  <span className="font-medium">{turma.nome}</span>
+                                  {turma.semestre_nome && <span className="text-muted-foreground ml-2">({turma.semestre_nome})</span>}
+                                </div>
+                                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleViewTurma(turma.id)}>
+                                  <Eye className="h-4 w-4" />
+                                  <span className="sr-only">Visualizar Turma</span>
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">Nenhuma turma vinculada a esta disciplina.</p>
+                          )}
+                        </div>
                         {/* --- FIM DA SEÇÃO DE TURMAS --- */}
 
                       </div>
@@ -263,6 +267,8 @@ export function MatrizCurricularTab() {
           </Card>
         )
       })}
+      
+      {/* O Dialog de edição permanece o mesmo */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl bg-card">
           <DialogHeader>

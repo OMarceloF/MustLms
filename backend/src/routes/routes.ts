@@ -353,7 +353,8 @@ import {
   adicionarEventoCalendario,
   obterPPC,
   salvarPPC,
-  obterVinculadosCurso
+  obterVinculadosCurso,
+  listarTurmasPorDisciplina
 } from '../controllers/cursosController';
 
 import {
@@ -965,5 +966,8 @@ router.get('/api/form-data/cursos', getCursosParaForm);
 router.get('/api/form-data/materias/:cursoId', getMateriasPorCursoParaForm);
 router.get('/api/form-data/semestres', getSemestresParaForm);
 router.get('/api/form-data/professores', getProfessoresParaForm);
+
+// ROTA PARA BUSCAR TURMAS VINCULADAS A UMA DISCIPLINA
+router.get('/api/disciplinas/:disciplinaId/turmas', listarTurmasPorDisciplina);
 
 export default router;
