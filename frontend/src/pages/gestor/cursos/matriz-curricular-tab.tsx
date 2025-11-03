@@ -276,7 +276,8 @@ export function MatrizCurricularTab() {
                 <Input id="nome" value={editingDisciplina.nome} onChange={(e) => handleFormChange('nome', e.target.value)} className="bg-background" />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="codigo">Código</Label>                <Input id="codigo" value={editingDisciplina.codigo} onChange={(e) => handleFormChange('codigo', e.target.value)} className="bg-background" />
+                <Label htmlFor="codigo">Código</Label>
+                <Input id="codigo" value={editingDisciplina.codigo} onChange={(e) => handleFormChange('codigo', e.target.value)} className="bg-background" />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
