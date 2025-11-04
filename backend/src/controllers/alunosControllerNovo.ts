@@ -1,6 +1,9 @@
+// src/controllers/alunosControllerNovo.ts
+
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import pool from '../config/db';
+import { RowDataPacket } from 'mysql2'; // <--- ADICIONE ESTA IMPORTAÇÃO
 
 // =======================================================================
 // FUNÇÃO AUXILIAR PARA GERAR MATRÍCULA
@@ -330,6 +333,120 @@ export const getResponsaveisByAluno = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
+
+/**
+ * @route   GET /api/alunos/:id/detalhes-completos
+ * @desc    Busca todos os dados agregados de um aluno para a página de visualização.
+ */
+export const getDetalhesCompletosAluno = async (req: Request, res: Response) => {
+    const { id: alunoId } = req.params;
+    if (!alunoId) {
+        return res.status(400).json({ message: 'O ID do aluno é obrigatório.' });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+        // ======================= CORREÇÃO 1: BUSCA DE DADOS DO ALUNO E CURSO =======================
+        // A query foi ajustada para buscar o curso a partir da tabela de turmas (alunos_turmas).
+        // Isso garante que, se o aluno estiver em qualquer turma de um curso, o curso será encontrado.
+        const [alunoRows] = await connection.query<RowDataPacket[]>(`
+            SELECT 
+                a.id, a.nome, a.cpf, a.rg, a.matricula, a.email, a.foto, a.biografia,
+                a.telefone, a.endereco, a.data_nascimento, a.genero, a.status,
+                cpg.id as curso_id, cpg.nome as curso_nome
+            FROM alunos a
+            LEFT JOIN alunos_turmas at ON a.id = at.aluno_id
+            LEFT JOIN turmas t ON at.turma_id = t.id
+            LEFT JOIN cursos_posgraduacao cpg ON t.curso_id = cpg.id
+            WHERE a.id = ?
+            ORDER BY at.id DESC -- Pega o vínculo mais recente em caso de múltiplas turmas
+            LIMIT 1;
+        `, [alunoId]);
+
+        if (alunoRows.length === 0) {
+            return res.status(404).json({ message: 'Aluno não encontrado.' });
+        }
+        const aluno = alunoRows[0];
+        aluno.endereco = aluno.endereco ? JSON.parse(aluno.endereco) : null;
+
+        // ======================= CORREÇÃO 2: BUSCA DE DISCIPLINAS E NOTAS =======================
+        // A query foi ajustada para buscar todas as disciplinas do CURSO do aluno,
+        // e não apenas as disciplinas das turmas em que ele está. Isso mostra a grade completa.
+        const [disciplinasRows] = await connection.query<RowDataPacket[]>(`
+            SELECT 
+                d.id as disciplina_id,
+                d.nome as disciplina_nome,
+                d.semestre,
+                n.tipo as avaliacao_tipo,
+                n.valor as avaliacao_valor,
+                n.nota,
+                n.recuperacao,
+                n.nota_rec
+            FROM cursos_disciplinas d
+            LEFT JOIN notas n ON n.aluno_id = ? AND n.materia_id = d.id
+            WHERE d.curso_id = ?
+            ORDER BY d.semestre, d.nome, n.data;
+        `, [alunoId, aluno.curso_id]); // Usamos o curso_id encontrado na primeira query
+
+        const academico = disciplinasRows.reduce((acc, row) => {
+            const { semestre, disciplina_id, disciplina_nome, avaliacao_tipo, avaliacao_valor, nota, recuperacao, nota_rec } = row;
+            const semestreKey = `Semestre ${semestre}`;
+
+            if (!acc[semestreKey]) {
+                acc[semestreKey] = [];
+            }
+
+            let disciplina = acc[semestreKey].find(d => d.id === disciplina_id);
+            if (!disciplina) {
+                disciplina = { id: disciplina_id, nome: disciplina_nome, notas: [] };
+                acc[semestreKey].push(disciplina);
+            }
+
+            if (avaliacao_tipo) {
+                disciplina.notas.push({
+                    tipo: avaliacao_tipo,
+                    valor: avaliacao_valor,
+                    nota: nota,
+                    recuperacao: recuperacao,
+                    nota_rec: nota_rec
+                });
+            }
+            return acc;
+        }, {} as Record<string, any[]>);
+
+        // 3. Documentos do Aluno (sem alteração)
+        const [documentos] = await connection.query<RowDataPacket[]>(`
+            SELECT tipo_documento, caminho_arquivo, nome_original, data_upload 
+            FROM documentos_alunos 
+            WHERE aluno_id = ?;
+        `, [alunoId]);
+
+        // 4. Contratos do Aluno (sem alteração)
+        const [contratos] = await connection.query<RowDataPacket[]>(`
+            SELECT 
+                cp.id, c.nome as nome_contrato, c.tipo, cp.situacao_contrato, 
+                cp.contrato_url, cp.criado_em
+            FROM contratos_preenchidos cp
+            JOIN contratos c ON cp.contrato_id = c.id
+            WHERE cp.aluno_id = ?
+            ORDER BY cp.criado_em DESC;
+        `, [alunoId]);
+
+        res.status(200).json({
+            aluno,
+            academico,
+            documentos,
+            contratos
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar detalhes completos do aluno:", error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 
 // Funções stub
 export const getMensalidadeByAluno = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });

@@ -34,6 +34,7 @@ import {
   getPerfilUsuario,
   criarOuAtualizarAluno,
   buscarAlunoPorCPF,
+  getDetalhesCompletosAluno,
   
 } from '../controllers/alunosControllerNovo';
 // import { criarAluno } from '../controllers/criarAlunoController';
@@ -969,5 +970,8 @@ router.get('/api/form-data/professores', getProfessoresParaForm);
 
 // ROTA PARA BUSCAR TURMAS VINCULADAS A UMA DISCIPLINA
 router.get('/api/disciplinas/:disciplinaId/turmas', listarTurmasPorDisciplina);
+
+//PÁGINA DE VISUALIZAÇÃO COMPLETA
+router.get('/api/alunos/:id/detalhes-completos', getDetalhesCompletosAluno);
 
 export default router;
