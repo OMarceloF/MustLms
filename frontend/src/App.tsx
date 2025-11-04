@@ -101,6 +101,7 @@ import Grade from './pages/gestor/grade/grade';
 import CriarGrade from './pages/gestor/grade/criarGrade';
 import MateriasGestor from './pages/gestor/materias/materias';
 import GestaoTurma from './pages/gestor/gestaoturma/GestaoTurma';
+import Trancamento from './pages/gestor/Trancamento';
 
 const queryClient = new QueryClient();
 
@@ -159,6 +160,7 @@ const App: React.FC = () => {
               <Route path="/gestor/grade" element={<Grade />} />
               <Route path="/gestor/grade/nova" element={<CriarGrade />} />
               <Route path="/gestor/gestao-turma/:id" element={<GestaoTurma />} />
+              <Route path="/gestor/trancamento" element={<Trancamento />} />
               
               {/* === ESTA É A LINHA ESSENCIAL PARA A FUNCIONALIDADE === */}
               <Route path="/gestor/materiasgestor/:id" element={<MateriasGestor />} />

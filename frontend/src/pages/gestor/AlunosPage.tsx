@@ -169,9 +169,10 @@ const AlunosPage = () => {
                   Adicionar Novo Aluno
                 </Button>
               )}
+
             </div>
             <div className="flex flex-col gap-4 sm:flex-row">
-              {/* 4. Filtro de Curso atualizado */}
+              {/* Filtro de Curso */}
               <div className="relative flex-1 sm:max-w-xs">
                 <Filter className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <select
@@ -180,9 +181,15 @@ const AlunosPage = () => {
                   className="w-full appearance-none rounded-lg border bg-background py-2 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="">Filtrar por Curso</option>
-                  {uniqueCursos.map((curso) => <option key={curso} value={curso}>{curso}</option>)}
+                  {uniqueCursos.map((curso) => (
+                    <option key={curso} value={curso}>
+                      {curso}
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              {/* Filtro de Turma */}
               <div className="relative flex-1 sm:max-w-xs">
                 <Filter className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <select
@@ -191,9 +198,22 @@ const AlunosPage = () => {
                   className="w-full appearance-none rounded-lg border bg-background py-2 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="">Filtrar por Turma</option>
-                  {uniqueTurmas.map((turma) => <option key={turma} value={turma}>{turma}</option>)}
+                  {uniqueTurmas.map((turma) => (
+                    <option key={turma} value={turma}>
+                      {turma}
+                    </option>
+                  ))}
                 </select>
               </div>
+
+              {/* Botão alinhado à direita */}
+              <Button
+                onClick={() => navigate('/gestor/trancamento')}
+                className="gap-2 ml-auto"
+              >
+                <UserPlus className="size-4" />
+                Trancamento de Matrícula
+              </Button>
             </div>
           </div>
 
