@@ -245,168 +245,162 @@ export default function GradeCurricularPage() {
     }
 
     return (
-        <div className={`dashboard-container flex min-h-screen w-full overflow-x-hidden pl-4 ${showSidebar ? 'md:pl-15' : 'md:pl-0'}`}>
-            {/* Agora 'navigate' está definida e pode ser passada como prop */}
+        <div className="min-h-screen bg-slate-50">
+            <div className="container mx-auto max-w-7xl">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold tracking-tight text-balance">Gestão de Grades Curriculares</h1>
+                    <p className="mt-2 text-muted-foreground text-pretty">
+                        Pesquise, visualize e gerencie as grades curriculares da instituição.
+                    </p>
+                </div>
 
-            <div className="flex-1 px-4">
-                <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
-                <div className="min-h-screen bg-slate-50">
-                    <div className="container mx-auto max-w-7xl">
-                        <div className="mb-8">
-                            <h1 className="text-3xl font-bold tracking-tight text-balance">Gestão de Grades Curriculares</h1>
-                            <p className="mt-2 text-muted-foreground text-pretty">
-                                Pesquise, visualize e gerencie as grades curriculares da instituição.
-                            </p>
-                        </div>
+                {/* Search and Filters */}
+                <div className="bg-white rounded-lg border p-6 mb-6">
+                    <div className="flex flex-col gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Curso</label>
+                                <Select value={cursoFilter} onValueChange={setCursoFilter}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione um curso" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos os cursos</SelectItem>
+                                        {cursos.map((curso) => (
+                                            <SelectItem key={curso.id} value={curso.id.toString()}>
+                                                {curso.nome}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                        {/* Search and Filters */}
-                        <div className="bg-white rounded-lg border p-6 mb-6">
-                            <div className="flex flex-col gap-4">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Curso</label>
-                                        <Select value={cursoFilter} onValueChange={setCursoFilter}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecione um curso" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">Todos os cursos</SelectItem>
-                                                {cursos.map((curso) => (
-                                                    <SelectItem key={curso.id} value={curso.id.toString()}>
-                                                        {curso.nome}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Período</label>
+                                <Select value={periodoFilter} onValueChange={setPeriodoFilter}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecione um período" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos os períodos</SelectItem>
+                                        <SelectItem value="2024.1">2024.1</SelectItem>
+                                        <SelectItem value="2024.2">2024.2</SelectItem>
+                                        <SelectItem value="2025.1">2025.1</SelectItem>
+                                        <SelectItem value="2025.2">2025.2</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium">Período</label>
-                                        <Select value={periodoFilter} onValueChange={setPeriodoFilter}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecione um período" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">Todos os períodos</SelectItem>
-                                                <SelectItem value="2024.1">2024.1</SelectItem>
-                                                <SelectItem value="2024.2">2024.2</SelectItem>
-                                                <SelectItem value="2025.1">2025.1</SelectItem>
-                                                <SelectItem value="2025.2">2025.2</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="flex items-end gap-2">
-                                        <Button onClick={handleSearch} className="flex-1">
-                                            <Search className="mr-2 h-4 w-4" />
-                                            Pesquisar
-                                        </Button>
-                                        <Button onClick={handleClearFilters} variant="outline">
-                                            Limpar
-                                        </Button>
-                                    </div>
-                                </div>
+                            <div className="flex items-end gap-2">
+                                <Button onClick={handleSearch} className="flex-1">
+                                    <Search className="mr-2 h-4 w-4" />
+                                    Pesquisar
+                                </Button>
+                                <Button onClick={handleClearFilters} variant="outline">
+                                    Limpar
+                                </Button>
                             </div>
                         </div>
-
-                        {/* Action Button */}
-                        <div className="flex justify-end mb-4">
-                            <Button onClick={() => navigate("/gestor/grade/nova")}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Nova Grade Curricular
-                            </Button>
-                        </div>
-
-                        {/* Table */}
-                        <div className="bg-white rounded-lg border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Curso</TableHead>
-                                        <TableHead>Período</TableHead>
-                                        <TableHead>Quantidade de Matérias</TableHead>
-                                        <TableHead>Carga Horária Total</TableHead>
-                                        <TableHead className="text-right">Ações</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {loading ? (
-                                        <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                                Carregando...
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : grades.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                                Nenhuma grade encontrada
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        grades.map((grade) => (
-                                            <TableRow key={grade.id}>
-                                                <TableCell className="font-medium">{grade.curso.nome}</TableCell>
-                                                <TableCell>{grade.periodoAcademico}</TableCell>
-                                                <TableCell>{getTotalMaterias(grade)}</TableCell>
-                                                <TableCell>{getTotalCargaHoraria(grade)}h</TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button variant="ghost" size="icon" onClick={() => setViewGrade(grade)}>
-                                                            <Eye className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" onClick={() => setEditGrade(grade)}>
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(grade)}>
-                                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-
-                        {/* View Modal */}
-                        {viewGrade && <ViewGradeModal grade={viewGrade} open={!!viewGrade} onClose={() => setViewGrade(null)} />}
-
-                        {/* Edit Modal */}
-                        {editGrade && (
-                            <EditGradeModal
-                                grade={editGrade}
-                                open={!!editGrade}
-                                onClose={() => setEditGrade(null)}
-                                onSuccess={() => {
-                                    setEditGrade(null)
-                                    loadData()
-                                }}
-                            />
-                        )}
-
-                        {/* Delete Confirmation */}
-                        <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Confirmar Exclusão</DialogTitle>
-                                    <DialogDescription>
-                                        Tem certeza que deseja excluir a grade curricular de <strong>{deleteConfirm?.curso.nome}</strong> (
-                                        {deleteConfirm?.periodoAcademico})? Esta ação não pode ser desfeita.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <DialogFooter>
-                                    <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
-                                        Cancelar
-                                    </Button>
-                                    <Button variant="destructive" onClick={handleDelete}>
-                                        Excluir
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
                     </div>
                 </div>
-            </div></div>
+
+                {/* Action Button */}
+                <div className="flex justify-end mb-4">
+                    <Button onClick={() => navigate("/gestor/grade/nova")}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Nova Grade Curricular
+                    </Button>
+                </div>
+
+                {/* Table */}
+                <div className="bg-white rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Curso</TableHead>
+                                <TableHead>Período</TableHead>
+                                <TableHead>Quantidade de Matérias</TableHead>
+                                <TableHead>Carga Horária Total</TableHead>
+                                <TableHead className="text-right">Ações</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                        Carregando...
+                                    </TableCell>
+                                </TableRow>
+                            ) : grades.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                        Nenhuma grade encontrada
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                grades.map((grade) => (
+                                    <TableRow key={grade.id}>
+                                        <TableCell className="font-medium">{grade.curso.nome}</TableCell>
+                                        <TableCell>{grade.periodoAcademico}</TableCell>
+                                        <TableCell>{getTotalMaterias(grade)}</TableCell>
+                                        <TableCell>{getTotalCargaHoraria(grade)}h</TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <Button variant="ghost" size="icon" onClick={() => setViewGrade(grade)}>
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => setEditGrade(grade)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" onClick={() => setDeleteConfirm(grade)}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+
+                {/* View Modal */}
+                {viewGrade && <ViewGradeModal grade={viewGrade} open={!!viewGrade} onClose={() => setViewGrade(null)} />}
+
+                {/* Edit Modal */}
+                {editGrade && (
+                    <EditGradeModal
+                        grade={editGrade}
+                        open={!!editGrade}
+                        onClose={() => setEditGrade(null)}
+                        onSuccess={() => {
+                            setEditGrade(null)
+                            loadData()
+                        }}
+                    />
+                )}
+
+                {/* Delete Confirmation */}
+                <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Confirmar Exclusão</DialogTitle>
+                            <DialogDescription>
+                                Tem certeza que deseja excluir a grade curricular de <strong>{deleteConfirm?.curso.nome}</strong> (
+                                {deleteConfirm?.periodoAcademico})? Esta ação não pode ser desfeita.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+                                Cancelar
+                            </Button>
+                            <Button variant="destructive" onClick={handleDelete}>
+                                Excluir
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        </div>
     )
 }
