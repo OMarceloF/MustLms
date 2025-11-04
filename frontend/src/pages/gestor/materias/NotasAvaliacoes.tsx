@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/materias/NotasAvaliacoes.tsx
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -141,194 +143,169 @@ export default function NotasAvaliacoes() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      {/* Cabeçalho: flex-wrap para mobile, sem wrap para desktop */}
+      <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Notas e Avaliações</h2>
-          <p className="text-muted-foreground mt-1">Gerencie avaliações e lançamento de notas</p>
+          {/* Fontes responsivas */}
+          <h2 className="text-xl md:text-2xl font-bold text-foreground">Notas e Avaliações</h2>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">Gerencie avaliações e lançamento de notas</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingAvaliacao(null)} className="gap-2">
+            {/* Botão com largura total em mobile, automática em desktop */}
+            <Button onClick={() => setEditingAvaliacao(null)} className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               Nova Avaliação
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-md md:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingAvaliacao ? "Editar Avaliação" : "Nova Avaliação"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
                 <Label htmlFor="titulo">Título</Label>
-                <Input
-                  id="titulo"
-                  value={formData.titulo}
-                  onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
-                  placeholder="Ex: Prova 1 - Cálculo"
-                />
+                <Input id="titulo" value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} placeholder="Ex: Prova 1 - Cálculo" />
               </div>
               <div>
                 <Label htmlFor="descricao">Descrição</Label>
-                <Textarea
-                  id="descricao"
-                  value={formData.descricao}
-                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  placeholder="Descreva o conteúdo da avaliação"
-                />
+                <Textarea id="descricao" value={formData.descricao} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} placeholder="Descreva o conteúdo da avaliação" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              {/* Grid do formulário: 1 coluna em mobile, 2 em desktop */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="peso">Peso</Label>
-                  <Input
-                    id="peso"
-                    type="number"
-                    value={formData.peso}
-                    onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
-                    placeholder="Ex: 3"
-                  />
+                  <Input id="peso" type="number" value={formData.peso} onChange={(e) => setFormData({ ...formData, peso: e.target.value })} placeholder="Ex: 3" />
                 </div>
                 <div>
                   <Label htmlFor="data">Data</Label>
-                  <Input
-                    id="data"
-                    type="date"
-                    value={formData.data}
-                    onChange={(e) => setFormData({ ...formData, data: e.target.value })}
-                  />
+                  <Input id="data" type="date" value={formData.data} onChange={(e) => setFormData({ ...formData, data: e.target.value })} />
                 </div>
               </div>
               <div>
                 <Label htmlFor="turma">Turma</Label>
                 <Select value={formData.turma} onValueChange={(value) => setFormData({ ...formData, turma: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a turma" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecione a turma" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Turma A">Turma A</SelectItem>
                     <SelectItem value="Turma B">Turma B</SelectItem>
-                    <SelectItem value="Turma C">Turma C</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label htmlFor="arquivo">Arquivo (opcional)</Label>
-                <Input
-                  id="arquivo"
-                  type="file"
-                  onChange={(e) => setFormData({ ...formData, arquivo: e.target.value })}
-                />
+                <Input id="arquivo" type="file" onChange={(e) => setFormData({ ...formData, arquivo: e.target.value })} />
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={resetForm}>
-                  Cancelar
-                </Button>
-                <Button onClick={editingAvaliacao ? handleEdit : handleCreate}>
-                  {editingAvaliacao ? "Salvar" : "Criar"}
-                </Button>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={resetForm}>Cancelar</Button>
+                <Button onClick={editingAvaliacao ? handleEdit : handleCreate}>{editingAvaliacao ? "Salvar" : "Criar"}</Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Avaliacoes Table */}
-      <Card className="shadow-md rounded-2xl">
-        <CardHeader>
-          <CardTitle>Avaliações Cadastradas</CardTitle>
+      {/* Tabela de Avaliações */}
+      <Card className="shadow-md rounded-2xl overflow-hidden">
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Avaliações Cadastradas</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead className="text-center">Peso</TableHead>
-                <TableHead className="text-center">Data</TableHead>
-                <TableHead>Turma</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {avaliacoes.map((avaliacao) => (
-                <TableRow key={avaliacao.id}>
-                  <TableCell className="font-medium">{avaliacao.titulo}</TableCell>
-                  <TableCell>{avaliacao.descricao}</TableCell>
-                  <TableCell className="text-center">{avaliacao.peso}</TableCell>
-                  <TableCell className="text-center">{new Date(avaliacao.data).toLocaleDateString("pt-BR")}</TableCell>
-                  <TableCell>{avaliacao.turma}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedAvaliacao(avaliacao.id)}>
-                        <FileText className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => openEditDialog(avaliacao)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(avaliacao.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-4 md:px-6">Título</TableHead>
+                  <TableHead className="px-4 md:px-6 hidden sm:table-cell">Descrição</TableHead>
+                  <TableHead className="px-4 md:px-6 text-center">Peso</TableHead>
+                  <TableHead className="px-4 md:px-6 text-center hidden md:table-cell">Data</TableHead>
+                  <TableHead className="px-4 md:px-6">Turma</TableHead>
+                  <TableHead className="px-4 md:px-6 text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {avaliacoes.map((avaliacao) => (
+                  <TableRow key={avaliacao.id} className={selectedAvaliacao === avaliacao.id ? "bg-muted/50" : ""}>
+                    <TableCell className="px-4 md:px-6 py-3 font-medium">{avaliacao.titulo}</TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 hidden sm:table-cell max-w-xs truncate">{avaliacao.descricao}</TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 text-center">{avaliacao.peso}</TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 text-center hidden md:table-cell">{new Date(avaliacao.data).toLocaleDateString("pt-BR")}</TableCell>
+                    <TableCell className="px-4 md:px-6 py-3">{avaliacao.turma}</TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 text-right">
+                      <div className="flex justify-end gap-1 md:gap-2">
+                        {/* Botões responsivos: ícone em mobile, normal em desktop */}
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedAvaliacao(avaliacao.id === selectedAvaliacao ? null : avaliacao.id)}>
+                          <FileText className="h-4 w-4" />
+                          <span className="hidden lg:inline ml-2">Ver Notas</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(avaliacao)}>
+                          <Edit className="h-4 w-4" />
+                          <span className="hidden lg:inline ml-2">Editar</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(avaliacao.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Notas Section */}
+      {/* Seção de Notas */}
       {selectedAvaliacao && (
-        <>
-          <Card className="shadow-md rounded-2xl">
-            <CardHeader>
-              <CardTitle>Notas - {avaliacoes.find((a) => a.id === selectedAvaliacao)?.titulo}</CardTitle>
+        <div className="space-y-4 md:space-y-6 animate-in fade-in-50">
+          <Card className="shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-base md:text-lg">Notas - {avaliacoes.find((a) => a.id === selectedAvaliacao)?.titulo}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Aluno</TableHead>
-                    <TableHead className="text-center">Nota</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {notas
-                    .filter((n) => n.avaliacaoId === selectedAvaliacao)
-                    .map((nota) => (
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="px-4 md:px-6">Aluno</TableHead>
+                      <TableHead className="px-4 md:px-6 text-center">Nota</TableHead>
+                      <TableHead className="px-4 md:px-6 text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {notas.filter((n) => n.avaliacaoId === selectedAvaliacao).map((nota) => (
                       <TableRow key={nota.id}>
-                        <TableCell className="font-medium">{nota.aluno}</TableCell>
-                        <TableCell className="text-center font-semibold">{nota.nota.toFixed(1)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                        <TableCell className="px-4 md:px-6 py-3 font-medium">{nota.aluno}</TableCell>
+                        <TableCell className="px-4 md:px-6 py-3 text-center font-semibold">{nota.nota.toFixed(1)}</TableCell>
+                        <TableCell className="px-4 md:px-6 py-3 text-right">
+                          <Button variant="ghost" size="sm"><Edit className="h-4 w-4" /></Button>
                         </TableCell>
                       </TableRow>
                     ))}
-                </TableBody>
-              </Table>
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-md rounded-2xl">
-            <CardHeader>
-              <CardTitle>Distribuição de Notas</CardTitle>
+          <Card className="shadow-md rounded-2xl overflow-hidden">
+            <CardHeader className="p-4 md:p-6">
+              <CardTitle className="text-base md:text-lg">Distribuição de Notas</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-2 md:p-4">
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={getNotasDistribution()}>
+                <BarChart data={getNotasDistribution()} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="faixa" />
-                  <YAxis />
+                  <XAxis dataKey="faixa" fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis fontSize={12} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
                   <Tooltip />
                   <Bar dataKey="quantidade" fill="#3b82f6" name="Quantidade de Alunos" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-        </>
+        </div>
       )}
     </div>
   )

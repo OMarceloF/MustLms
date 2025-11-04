@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/materias/Relatorios.tsx
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -37,7 +39,7 @@ export default function Relatorios() {
 
   useEffect(() => {
     fetchMockData()
-  }, [ selectedTurma, selectedPeriodo])
+  }, [selectedTurma, selectedPeriodo])
 
   const fetchMockData = async () => {
     setLoading(true)
@@ -77,19 +79,16 @@ export default function Relatorios() {
   }
 
   const MetricCard = ({ title, value, icon: Icon, trend }: any) => (
-    <Card className="shadow-md rounded-2xl">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
+    // overflow-hidden é uma garantia de que o conteúdo interno não vai vazar
+    <Card className="shadow-sm rounded-lg overflow-hidden">
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold mt-2">{value}</p>
+            <p className="text-xs text-muted-foreground">{title}</p>
+            <p className="text-xl font-bold mt-1">{value}</p>
           </div>
-          <div
-            className={`p-3 rounded-full ${trend === "up" ? "bg-green-100" : trend === "down" ? "bg-red-100" : "bg-blue-100"}`}
-          >
-            <Icon
-              className={`h-6 w-6 ${trend === "up" ? "text-green-600" : trend === "down" ? "text-red-600" : "text-blue-600"}`}
-            />
+          <div className={`p-2 rounded-lg flex-shrink-0 ${trend === "up" ? "bg-green-100" : trend === "down" ? "bg-red-100" : "bg-blue-100"}`}>
+            <Icon className={`h-5 w-5 ${trend === "up" ? "text-green-600" : trend === "down" ? "text-red-600" : "text-blue-600"}`} />
           </div>
         </div>
       </CardContent>
@@ -97,27 +96,24 @@ export default function Relatorios() {
   )
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Carregando relatórios...</div>
+    return <div className="flex items-center justify-center h-64">Carregando...</div>
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Relatórios e Indicadores</h2>
-        <p className="text-muted-foreground mt-1">Visão geral do desempenho acadêmico</p>
+        <h2 className="text-lg font-bold text-foreground">Relatórios e Indicadores</h2>
+        <p className="text-muted-foreground text-sm">Visão geral do desempenho.</p>
       </div>
 
       {/* Filters */}
-      <Card className="shadow-md rounded-2xl">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
+      <Card className="shadow-sm rounded-lg overflow-hidden">
+        <CardContent className="p-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium mb-2 block">Turma</label>
+              <label className="text-xs font-medium mb-1 block">Turma</label>
               <Select value={selectedTurma} onValueChange={setSelectedTurma}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a turma" />
-                </SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas as Turmas</SelectItem>
                   <SelectItem value="a">Turma A</SelectItem>
@@ -128,11 +124,9 @@ export default function Relatorios() {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Período</label>
+              <label className="text-xs font-medium mb-1 block">Período</label>
               <Select value={selectedPeriodo} onValueChange={setSelectedPeriodo}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o período" />
-                </SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="2024.1">2024.1</SelectItem>
                   <SelectItem value="2023.2">2023.2</SelectItem>
@@ -145,26 +139,26 @@ export default function Relatorios() {
       </Card>
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard title="Total de Alunos" value={metrics.totalAlunos} icon={Users} trend="neutral" />
-        <MetricCard title="Taxa de Aprovação" value={`${metrics.taxaAprovacao}%`} icon={TrendingUp} trend="up" />
-        <MetricCard title="Taxa de Reprovação" value={`${metrics.taxaReprovacao}%`} icon={TrendingDown} trend="down" />
-        <MetricCard title="Total de Professores" value={metrics.totalProfessores} icon={UserCheck} trend="neutral" />
+      <div className="grid grid-cols-2 gap-3">
+        <MetricCard title="Alunos" value={metrics.totalAlunos} icon={Users} trend="neutral" />
+        <MetricCard title="Aprovação" value={`${metrics.taxaAprovacao}%`} icon={TrendingUp} trend="up" />
+        <MetricCard title="Reprovação" value={`${metrics.taxaReprovacao}%`} icon={TrendingDown} trend="down" />
+        <MetricCard title="Professores" value={metrics.totalProfessores} icon={UserCheck} trend="neutral" />
       </div>
 
       {/* Chart */}
-      <Card className="shadow-md rounded-2xl">
-        <CardHeader>
-          <CardTitle>Desempenho Comparativo por Turma</CardTitle>
+      <Card className="shadow-sm rounded-lg overflow-hidden">
+        <CardHeader className="p-3">
+          <CardTitle className="text-sm font-semibold">Desempenho Comparativo</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
+        <CardContent className="p-0">
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="turma" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
+              <XAxis dataKey="turma" fontSize={10} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+              <YAxis fontSize={10} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+              <Tooltip contentStyle={{ fontSize: '10px' }} labelStyle={{ fontWeight: 'bold' }} />
+              <Legend wrapperStyle={{ fontSize: '10px' }} />
               <Bar dataKey="aprovados" fill="#22c55e" name="Aprovados" />
               <Bar dataKey="reprovados" fill="#ef4444" name="Reprovados" />
             </BarChart>
@@ -173,33 +167,35 @@ export default function Relatorios() {
       </Card>
 
       {/* Table */}
-      <Card className="shadow-md rounded-2xl">
-        <CardHeader>
-          <CardTitle>Resumo por Turma</CardTitle>
+      <Card className="shadow-sm rounded-lg overflow-hidden">
+        <CardHeader className="p-3">
+          <CardTitle className="text-sm font-semibold">Resumo por Turma</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Turma</TableHead>
-                <TableHead>Professor</TableHead>
-                <TableHead className="text-center">Aprovados</TableHead>
-                <TableHead className="text-center">Reprovados</TableHead>
-                <TableHead className="text-center">Média Geral</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {turmas.map((turma, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{turma.turma}</TableCell>
-                  <TableCell>{turma.professor}</TableCell>
-                  <TableCell className="text-center text-green-600 font-semibold">{turma.aprovados}</TableCell>
-                  <TableCell className="text-center text-red-600 font-semibold">{turma.reprovados}</TableCell>
-                  <TableCell className="text-center font-semibold">{turma.mediaGeral.toFixed(1)}</TableCell>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-3 text-xs">Turma</TableHead>
+                  <TableHead className="px-3 text-xs">Professor</TableHead>
+                  <TableHead className="px-3 text-xs text-center">Aprovados</TableHead>
+                  <TableHead className="px-3 text-xs text-center">Reprovados</TableHead>
+                  <TableHead className="px-3 text-xs text-center">Média</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {turmas.map((turma, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="px-3 py-2 text-xs font-medium">{turma.turma}</TableCell>
+                    <TableCell className="px-3 py-2 text-xs">{turma.professor}</TableCell>
+                    <TableCell className="px-3 py-2 text-xs text-center font-semibold text-green-600">{turma.aprovados}</TableCell>
+                    <TableCell className="px-3 py-2 text-xs text-center font-semibold text-red-600">{turma.reprovados}</TableCell>
+                    <TableCell className="px-3 py-2 text-xs text-center font-semibold">{turma.mediaGeral.toFixed(1)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
