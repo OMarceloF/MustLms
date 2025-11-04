@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/materias/NotasAvaliacoes.tsx
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -95,19 +97,20 @@ export default function ProducaoAcademica() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
+      {/* Cabeçalho */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Produção Acadêmica</h2>
-        <p className="text-muted-foreground mt-1">Visualize e corrija trabalhos dos alunos</p>
+        <h2 className="text-xl md:text-2xl font-bold text-foreground">Produção Acadêmica</h2>
+        <p className="text-sm md:text-base text-muted-foreground mt-1">Visualize e corrija trabalhos dos alunos</p>
       </div>
 
-      {/* Search */}
+      {/* Card de Busca */}
       <Card className="shadow-md rounded-2xl">
-        <CardContent className="p-6">
+        <CardContent className="p-4 md:p-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por aluno ou título do trabalho..."
+              placeholder="Buscar por aluno ou título..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -116,51 +119,54 @@ export default function ProducaoAcademica() {
         </CardContent>
       </Card>
 
-      {/* Producoes Table */}
-      <Card className="shadow-md rounded-2xl">
-        <CardHeader>
-          <CardTitle>Trabalhos Submetidos</CardTitle>
+      {/* Tabela de Produções */}
+      <Card className="shadow-md rounded-2xl overflow-hidden">
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Trabalhos Submetidos</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Aluno</TableHead>
-                <TableHead>Título</TableHead>
-                <TableHead className="text-center">Data</TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-center">Nota</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducoes.map((producao) => (
-                <TableRow key={producao.id}>
-                  <TableCell className="font-medium">{producao.aluno}</TableCell>
-                  <TableCell>{producao.titulo}</TableCell>
-                  <TableCell className="text-center">{new Date(producao.data).toLocaleDateString("pt-BR")}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant={producao.status === "Corrigido" ? "default" : "secondary"}>{producao.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-center font-semibold">
-                    {producao.nota ? producao.nota.toFixed(1) : "-"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => openCorrecaoDialog(producao)} className="gap-2">
-                      <FileCheck className="h-4 w-4" />
-                      {producao.status === "Pendente" ? "Corrigir" : "Ver Correção"}
-                    </Button>
-                  </TableCell>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-4 md:px-6">Aluno</TableHead>
+                  <TableHead className="px-4 md:px-6 hidden md:table-cell">Título</TableHead>
+                  <TableHead className="px-4 md:px-6 text-center hidden sm:table-cell">Data</TableHead>
+                  <TableHead className="px-4 md:px-6 text-center">Status</TableHead>
+                  <TableHead className="px-4 md:px-6 text-center">Nota</TableHead>
+                  <TableHead className="px-4 md:px-6 text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredProducoes.map((producao) => (
+                  <TableRow key={producao.id}>
+                    <TableCell className="px-4 md:px-6 py-3 font-medium">{producao.aluno}</TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 hidden md:table-cell max-w-sm truncate">{producao.titulo}</TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 text-center hidden sm:table-cell">{new Date(producao.data).toLocaleDateString("pt-BR")}</TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 text-center">
+                      <Badge variant={producao.status === "Corrigido" ? "default" : "secondary"}>{producao.status}</Badge>
+                    </TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 text-center font-semibold">
+                      {producao.nota ? producao.nota.toFixed(1) : "-"}
+                    </TableCell>
+                    <TableCell className="px-4 md:px-6 py-3 text-right">
+                      {/* Botão responsivo: ícone em mobile, texto em desktop */}
+                      <Button variant="outline" size="sm" onClick={() => openCorrecaoDialog(producao)} className="gap-2">
+                        <FileCheck className="h-4 w-4" />
+                        <span className="hidden sm:inline">{producao.status === "Pendente" ? "Corrigir" : "Ver"}</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Correcao Dialog */}
+      {/* Modal de Correção */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md md:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {selectedProducao?.status === "Pendente" ? "Corrigir Trabalho" : "Visualizar Correção"}
@@ -195,7 +201,7 @@ export default function ProducaoAcademica() {
                 value={correcaoData.feedback}
                 onChange={(e) => setCorrecaoData({ ...correcaoData, feedback: e.target.value })}
                 placeholder="Escreva suas observações sobre o trabalho..."
-                rows={6}
+                rows={4}
                 disabled={selectedProducao?.status === "Corrigido"}
               />
             </div>
