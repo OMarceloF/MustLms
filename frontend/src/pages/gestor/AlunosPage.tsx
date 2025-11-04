@@ -206,7 +206,6 @@ const AlunosPage = () => {
                 </select>
               </div>
 
-              {/* Botão alinhado à direita */}
               <Button
                 onClick={() => navigate('/gestor/trancamento')}
                 className="gap-2 ml-auto"

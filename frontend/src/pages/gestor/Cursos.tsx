@@ -174,13 +174,15 @@ const CursosPage: React.FC = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-black">Cursos Disponíveis</h1>
           <p className="text-gray-600 text-sm sm:text-base">Explore nossa lista de cursos. Clique em um para ver mais detalhes.</p>
         </div>
-        <button
-          onClick={() => navigate('/adicionar-curso')}
-          className="flex items-center justify-center gap-2 bg-indigo-800 hover:bg-indigo-900 text-white px-4 py-2 rounded-lg shadow-lg transition-all"
-        >
-          <PlusCircle size={20} />
-          <span>Adicionar Curso</span>
-        </button>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => navigate('/adicionar-curso')}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          >
+            <PlusCircle className="h-4 w-4" />
+            <span>Adicionar Curso</span>
+          </button>
+        </div>
       </div>
 
       {/* <<--- PASSO 4: Adicionar o campo de busca --->> */}
