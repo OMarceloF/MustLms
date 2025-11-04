@@ -1,886 +1,263 @@
-// src/pages/VisualizarTurmasPage.tsx
+// src/pages/VisualizarAlunoPage.tsx
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { useNavigate, useParams } from 'react-router-dom';
-import SidebarGestor from './components/Sidebar';
-import TopbarGestorAuto from './components/TopbarGestorAuto';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Trash } from 'lucide-react';
 import { toast } from 'sonner';
+import { User, FileText, BookOpen, Briefcase, Download } from 'lucide-react';
 
-// ... (interfaces Aluno, DisciplinaComProfessor, etc. permanecem as mesmas)
-interface Aluno {
-  id: number;
-  nome: string;
-  role: string;
-  foto_url?: string;
-  matricula: string;
+// --- Interfaces para tipagem dos dados da API ---
+interface AlunoDetalhes {
+    id: number;
+    nome: string;
+    cpf: string;
+    matricula: string;
+    email: string;
+    foto: string | null;
+    biografia: string | null;
+    telefone: string | null;
+    endereco: {
+        logradouro: string;
+        numero: string;
+        bairro: string;
+        cidade: string;
+        uf: string;
+        cep: string;
+    } | null;
+    data_nascimento: string;
+    genero: string;
+    status: string;
+    curso_nome: string | null;
 }
 
-interface DisciplinaComProfessor {
-  materiaId: number;
-  nome: string;
-  aulasSemana: number;
-  professorId: number | null;
-  professorNome: string | null;
+interface Nota {
+    tipo: string;
+    valor: number;
+    nota: number;
+    recuperacao: 'Sim' | 'Não';
+    nota_rec: number;
 }
 
-interface Turma {
-  id: number;
-  nome: string;
-  serie: string;
-  turno: string;
-  ano_letivo: string;
-  qtd_alunos: number;
-  professor_responsavel?: string;
-  alunos?: Aluno[];
+interface Disciplina {
+    id: number;
+    nome: string;
+    notas: Nota[];
 }
 
-interface MateriaItem {
-  id: number;
-  nome: string;
+interface DadosAcademicos {
+    [semestre: string]: Disciplina[];
 }
 
-
-function getSafeImagePath(path: string): string | null {
-  const regex = /^\/uploads\/[a-zA-Z0-9_\-\.]+\.(jpg|jpeg|png|webp)$/i;
-  return regex.test(path) ? path : null;
+interface Documento {
+    tipo_documento: string;
+    caminho_arquivo: string;
+    nome_original: string;
+    data_upload: string;
 }
 
-function getSafeImagePathOne(path: string): string | null {
-  const regex = /^\/uploads\/[a-zA-Z0-9_\-\.]+\.(jpg|jpeg|png|webp)$/i;
-  return regex.test(path) ? `/${path}` : null;
+interface Contrato {
+    id: number;
+    nome_contrato: string;
+    tipo: string;
+    situacao_contrato: string;
+    contrato_url: string | null;
+    criado_em: string;
 }
 
-const VisualizarTurmaPage = () => {
-  const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  const { user, loading: authLoading } = useAuth();
-  const isProfessor = user.role === 'professor';
+interface AlunoCompleto {
+    aluno: AlunoDetalhes;
+    academico: DadosAcademicos;
+    documentos: Documento[];
+    contratos: Contrato[];
+}
 
-  const [turma, setTurma] = useState<Turma | null>(null);
-  const [disciplinas, setDisciplinas] = useState<DisciplinaComProfessor[]>([]);
-  const materiasParaSelecao = useMemo(() => {
-    if (isProfessor) {
-      return disciplinas.filter((d) => d.professorId === user.id);
-    }
-    return disciplinas;
-  }, [disciplinas, isProfessor, user.id]);
-  const [professoresPorMateria, setProfessoresPorMateria] = useState<{
-    [materiaId: number]: { id: number; nome: string }[];
-  }>({});
-  const [selecoes, setSelecoes] = useState<{ [materiaId: number]: number }>({});
-  const [editingMateriaId, setEditingMateriaId] = useState<number | null>(null);
+const VisualizarAlunoPage = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const [alunoCompleto, setAlunoCompleto] = useState<AlunoCompleto | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'geral' | 'academico' | 'documentos' | 'contratos'>('geral');
 
-  // Alunos
-  const [alunosDisponiveis, setAlunosDisponiveis] = useState<Aluno[]>([]);
-  const [alunosSelecionados, setAlunosSelecionados] = useState<number[]>([]);
-  const [buscaAluno, setBuscaAluno] = useState('');
-  const [selectedMateriaId, setSelectedMateriaId] = useState<number | ''>('');
-  const [periodos] = useState<string[]>([
-    '1º Bimestre',
-    '2º Bimestre',
-    '3º Bimestre',
-    '4º Bimestre',
-  ]);
-  const [notasMap, setNotasMap] = useState<{
-    [alunoId: number]: (number | null)[];
-  }>({});
-  const [mediaMap, setMediaMap] = useState<{
-    [alunoId: number]: number | null;
-  }>({});
-
-  const alunosParaBoletim = turma?.alunos || [];
-
-  // Adicionar Disciplinas
-  const [listaMaterias, setListaMaterias] = useState<MateriaItem[]>([]);
-  const [filtroMaterias, setFiltroMaterias] = useState('');
-  const [materiasSelecionadas, setMateriasSelecionadas] = useState<number[]>(
-    []
-  );
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [sidebarAberta, setSidebarAberta] = useState(false);
-
-  // 1) Buscar dados gerais da turma (incluindo alunos)
-  useEffect(() => {
-    const fetchTurma = async () => {
-      if (!id) return; // Garante que o ID existe antes de fazer a chamada
-      try {
-        setIsLoading(true);
-        
-        // <<--- CORREÇÃO PRINCIPAL APLICADA AQUI --- >>
-        // A URL foi alterada para buscar os dados da nova rota de turmas de pós-graduação.
-        const response = await axios.get<Turma>(
-          `/api/turmas-novo/${id}`
-        );
-        
-        if (response.data.alunos) {
-          response.data.alunos.sort((a, b) => a.nome.localeCompare(b.nome));
-        }
-        setTurma(response.data);
-      } catch (err) {
-        console.error('Erro ao buscar turma:', err);
-        toast.error('Erro ao carregar os dados da turma.');
-        setError('Não foi possível carregar os dados da turma.'); // Define um erro para exibição
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchTurma();
-  }, [id]);
-
-  // 2) Buscar disciplinas + professor vinculado para esta turma
-  const fetchDisciplinasComProfessor = async () => {
-    if (!id) return;
-    try {
-      // Esta rota parece ser genérica e pode funcionar para ambos os tipos de turma.
-      // Se também precisar ser adaptada, o padrão seria criar uma nova.
-      const resp = await axios.get<DisciplinaComProfessor[]>(
-        `${import.meta.env.VITE_API_URL}/api/turmas/${id}/disciplinas-com-professor`
-      );
-      const ordenadas = resp.data.slice().sort((a, b) => a.nome.localeCompare(b.nome));
-      setDisciplinas(ordenadas);
-    } catch (err) {
-      console.error('Erro ao buscar disciplinas com professor:', err);
-      setError('Erro ao carregar disciplinas.');
-    }
-  };
-
-  useEffect(() => {
-    if (turma) {
-      fetchDisciplinasComProfessor();
-    }
-  }, [turma]);
-
-  // ... (o restante do arquivo continua igual, pois a lógica interna da página
-  // já foi projetada para lidar com os dados que a nova API retorna)
-
-  // 3) Buscar alunos disponíveis (não vinculados)
-  const atualizarAlunosDisponiveis = async () => {
-    try {
-      const response = await axios.get<Aluno[]>(
-        `/api/turmas/alunos/disponiveis`
-      );
-      const ordenados = response.data
-        .slice()
-        .sort((a, b) => a.nome.localeCompare(b.nome));
-      setAlunosDisponiveis(ordenados);
-    } catch (err) {
-      console.error('Erro ao buscar alunos disponíveis:', err);
-      setError('Erro ao carregar os alunos disponíveis.');
-    }
-  };
-
-  useEffect(() => {
-    atualizarAlunosDisponiveis();
-  }, []);
-
-  const alunosFiltrados = alunosDisponiveis.filter((aluno) =>
-    aluno.nome.toLowerCase().includes(buscaAluno.toLowerCase())
-  );
-
-  const handleSelecionarAluno = (alunoId: number) => {
-    setAlunosSelecionados((prev) =>
-      prev.includes(alunoId)
-        ? prev.filter((a) => a !== alunoId)
-        : [...prev, alunoId]
-    );
-  };
-
-  const handleVincularAluno = async () => {
-    if (alunosSelecionados.length === 0) {
-      toast.error('Por favor, selecione pelo menos um aluno para vincular.');
-      return;
-    }
-    try {
-      await axios.post(`/api/turmas/${id}/adicionar-alunos`, {
-        alunos: alunosSelecionados,
-      });
-      toast.success('Alunos vinculados com sucesso!');
-      setAlunosSelecionados([]);
-      const response = await axios.get<Turma>(
-        `/api/turmas-novo/${id}` // Recarrega da rota correta
-      );
-      if (response.data.alunos) {
-        response.data.alunos.sort((a, b) => a.nome.localeCompare(b.nome));
-      }
-      setTurma(response.data);
-      await atualizarAlunosDisponiveis();
-    } catch (err) {
-      console.error('Erro ao vincular alunos:', err);
-      setError('Erro ao vincular os alunos à turma.');
-    }
-  };
-
-  const handleRemoverAluno = async (alunoId: number) => {
-    if (!window.confirm('Tem certeza que deseja remover este aluno da turma?'))
-      return;
-    try {
-      await axios.delete(`/api/turmas/${id}/alunos/${alunoId}`);
-      const response = await axios.get<Turma>(
-        `/api/turmas-novo/${id}` // Recarrega da rota correta
-      );
-      if (response.data.alunos) {
-        response.data.alunos.sort((a, b) => a.nome.localeCompare(b.nome));
-      }
-      setTurma(response.data);
-      await atualizarAlunosDisponiveis();
-      toast.success('Aluno removido com sucesso!');
-    } catch (err) {
-      console.error('Erro ao remover aluno:', err);
-      toast.error('Erro ao remover aluno da turma.');
-    }
-  };
-
-  // ... (o restante do seu código, como handleSalvarProfessor, fetchMaterias, etc., continua aqui)
-  
-  const fetchProfessoresParaMateria = async (materiaId: number) => {
-    if (professoresPorMateria[materiaId]) {
-      return;
-    }
-    try {
-      const resp = await axios.get<{ id: number; nome: string }[]>(
-        `/api/materias/${materiaId}/professores`
-      );
-      setProfessoresPorMateria((prev) => ({
-        ...prev,
-        [materiaId]: resp.data,
-      }));
-    } catch (err) {
-      console.error(
-        `Erro ao buscar professores para matéria ${materiaId}:`,
-        err
-      );
-    }
-  };
-
-  useEffect(() => {
-    disciplinas.forEach((disc) => {
-      if (!disc.professorNome && !professoresPorMateria[disc.materiaId]) {
-        fetchProfessoresParaMateria(disc.materiaId);
-      }
-    });
-  }, [disciplinas]);
-
-  const handleChangeSelecaoProfessor = (
-    materiaId: number,
-    novoProfessorId: number
-  ) => {
-    setSelecoes((prev) => ({
-      ...prev,
-      [materiaId]: novoProfessorId,
-    }));
-  };
-
-  const handleSalvarProfessor = async (materiaId: number) => {
-    const professorId = selecoes[materiaId];
-    if (!professorId) {
-      toast.error('Selecione um professor primeiro.');
-      return;
-    }
-    try {
-      await axios.post(`/api/turmas/${id}/professores`, {
-        materiaId,
-        professorId,
-      });
-      await fetchDisciplinasComProfessor();
-      setEditingMateriaId(null);
-      toast.success('Professor atribuído/atualizado com sucesso.');
-    } catch (err) {
-      console.error('Erro ao salvar professor:', err);
-      toast.error('Falha ao salvar professor.');
-    }
-  };
-
-  useEffect(() => {
-    const fetchMaterias = async () => {
-      try {
-        const resp = await axios.get<MateriaItem[]>(
-          `/api/listarMaterias`
-        );
-        const ordenadas = resp.data.slice().sort((a, b) => a.nome.localeCompare(b.nome));
-        setListaMaterias(ordenadas);
-      } catch (err) {
-        console.error('Erro ao buscar lista de matérias:', err);
-      }
-    };
-    fetchMaterias();
-  }, []);
-
-  useEffect(() => {
-    if (selectedMateriaId && turma?.alunos?.length) {
-      const alunos = turma.alunos;
-      Promise.all(
-        alunos.map((a) =>
-          axios.get<{ tipoAvaliacao: string; materias: any[] }>(
-            `/api/boletim/${a.id}`
-          )
-        )
-      )
-        .then((resps) => {
-          const tempNotas: Record<number, (number | null)[]> = {};
-          const tempMedia: Record<number, number | null> = {};
-
-          resps.forEach((res, i) => {
-            const aluno = alunos[i];
-            const mat = res.data.materias.find(
-              (m) => m.id === selectedMateriaId
-            );
-            if (mat) {
-              tempNotas[aluno.id] = mat.grades.map((g: number) =>
-                typeof g === 'number' ? Number(g.toFixed(1)) : null
-              );
-              tempMedia[aluno.id] = mat.finalGrade;
-            } else {
-              tempNotas[aluno.id] = Array(periodos.length).fill(null);
-              tempMedia[aluno.id] = null;
+    useEffect(() => {
+        const fetchAlunoData = async () => {
+            if (!id) return;
+            try {
+                setIsLoading(true);
+                const response = await axios.get<AlunoCompleto>(`/api/alunos/${id}/detalhes-completos`);
+                setAlunoCompleto(response.data);
+            } catch (error) {
+                console.error("Erro ao buscar detalhes do aluno:", error);
+                toast.error("Não foi possível carregar os dados do aluno.");
+                navigate('/gestor/alunos'); // Redireciona em caso de erro
+            } finally {
+                setIsLoading(false);
             }
-          });
+        };
 
-          setNotasMap(tempNotas);
-          setMediaMap(tempMedia);
-        })
-        .catch((err) => {
-          console.error('Erro ao buscar boletim por aluno:', err);
-          setNotasMap({});
-          setMediaMap({});
-        });
-    } else {
-      setNotasMap({});
-      setMediaMap({});
-    }
-  }, [selectedMateriaId, turma]);
+        fetchAlunoData();
+    }, [id, navigate]);
 
-  const materiasDisponiveisParaVinculo = useMemo(() => {
-    const vinculadasIds = new Set(disciplinas.map((d) => d.materiaId));
-    return listaMaterias.filter((mat) => !vinculadasIds.has(mat.id));
-  }, [listaMaterias, disciplinas]);
+    const renderEndereco = (endereco: AlunoDetalhes['endereco']) => {
+        if (!endereco) return "Não informado";
+        return `${endereco.logradouro}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade}/${endereco.uf}, CEP: ${endereco.cep}`;
+    };
 
-  const materiasFiltradas = materiasDisponiveisParaVinculo.filter((mat) =>
-    mat.nome.toLowerCase().includes(filtroMaterias.toLowerCase())
-  );
-
-  const toggleSelecionarMateria = (matId: number) => {
-    setMateriasSelecionadas((prev) =>
-      prev.includes(matId) ? prev.filter((m) => m !== matId) : [...prev, matId]
+    const TabButton = ({ tabName, label, icon: Icon }: { tabName: typeof activeTab, label: string, icon: React.ElementType }) => (
+        <button
+            onClick={() => setActiveTab(tabName)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg transition-colors duration-200 ${
+                activeTab === tabName
+                    ? 'bg-white text-indigo-600 border-b-2 border-indigo-600'
+                    : 'text-gray-500 hover:text-indigo-600 hover:bg-gray-50'
+            }`}
+        >
+            <Icon size={18} />
+            {label}
+        </button>
     );
-  };
 
-  const handleVincularMaterias = async () => {
-    if (materiasSelecionadas.length === 0) {
-      toast.error('Selecione ao menos uma matéria para vincular.');
-      return;
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
+            </div>
+        );
     }
-    try {
-      await axios.post(`/api/turmas/${id}/materias`, {
-        materias: materiasSelecionadas,
-      });
-      toast.success('Matérias vinculadas com sucesso!');
-      setMateriasSelecionadas([]);
-      await fetchDisciplinasComProfessor();
-    } catch (err) {
-      console.error('Erro ao vincular matérias:', err);
-      toast.error('Falha ao vincular matérias.');
-    }
-  };
 
-  const handleRemoverDisciplina = async (materiaId: number) => {
-    if (!window.confirm('Remover esta disciplina da turma?')) return;
-    try {
-      await axios.delete(`/api/turmas/${id}/materias/${materiaId}`);
-      await fetchDisciplinasComProfessor();
-    } catch (err) {
-      console.error('Erro ao remover disciplina:', err);
-      toast.error('Falha ao remover disciplina.');
+    if (!alunoCompleto) {
+        return (
+            <div className="text-center mt-10">
+                <p className="text-red-500">Dados do aluno não encontrados.</p>
+            </div>
+        );
     }
-  };
 
-  const handleEditar = () => {
-    if (isProfessor) {
-      navigate(`/professor/turmas/${id}/editar`);
-    } else {
-      navigate(`/gestor/turmas/${id}/editar`);
-    }
-  };
+    const { aluno, academico, documentos, contratos } = alunoCompleto;
 
-  const handleVoltar = () => {
-    if (isProfessor) {
-      navigate('/professor', { state: { activePage: 'turmas' } });
-    } else {
-      navigate('/gestor', { state: { activePage: 'turmas' } });
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 w-full min-w-0 overflow-x-hidden">
-      <div className="flex flex-col md:flex-row w-full min-w-0 md:flex">
-        <SidebarGestor
-          isMenuOpen={sidebarAberta}
-          setActivePage={(page: string) =>
-            navigate('/gestor', { state: { activePage: page } })
-          }
-          handleMouseEnter={() => setSidebarAberta(true)}
-          handleMouseLeave={() => setSidebarAberta(false)}
-        />
-        <div className="flex-1 min-w-0 flex flex-col">
-          <TopbarGestorAuto
-            isMenuOpen={sidebarAberta}
-            setIsMenuOpen={setSidebarAberta}
-          />
-          <div className="w-full min-w-0 max-w-7xl mx-auto p-2 sm:p-6 mt-20 my-10">
-            {isLoading ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin w-10 h-10 border-4 border-indigo-700 border-t-transparent rounded-full mx-auto mb-4" />
-                <p className="text-indigo-900">Carregando turma...</p>
-              </div>
-            ) : error ? (
-              <div className="p-8 text-center">
-                <p className="text-red-500">{error}</p>
-              </div>
-            ) : turma ? (
-              <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 mt-4 md:mt-0 md:ml-16">
-                <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center mb-6">
-                  <h1 className="text-3xl font-bold text-indigo-900">
-                    {turma.nome}
-                  </h1>
-                  <div className="flex items-center gap-2 mb-4">
-                    <label className="font-medium">Matéria:</label>
-                    <select
-                      value={selectedMateriaId}
-                      onChange={(e) =>
-                        setSelectedMateriaId(Number(e.target.value))
-                      }
-                      className="px-2 py-1 border rounded focus:ring-indigo-700 focus:outline-none"
-                    >
-                      <option value={''} disabled>
-                        Selecione...
-                      </option>
-                      {materiasParaSelecao.map((d) => (
-                        <option key={d.materiaId} value={d.materiaId}>
-                          {d.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    onClick={() =>
-                      isProfessor
-                        ? navigate(
-                            `/professor/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`
-                          )
-                        : navigate(
-                            `/gestor/turmas/${id}/materias/${selectedMateriaId}/avaliacoes-notas`
-                          )
-                    }
-                    disabled={!selectedMateriaId}
-                    className="px-4 py-2 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm disabled:opacity-50"
-                  >
-                    Avaliações &amp; Notas
-                  </button>
-                  <button
-                    onClick={() =>
-                      isProfessor
-                        ? navigate(
-                            `/professor/turmas/${id}/materias/${selectedMateriaId}/diario`
-                          )
-                        : navigate(
-                            `/gestor/turmas/${id}/materias/${selectedMateriaId}/diario`
-                          )
-                    }
-                    disabled={!selectedMateriaId}
-                    className="bg-orange-600 text-white px-4 py-2 rounded-lg shadow hover:bg-orange-700 transition duration-200 disabled:opacity-50"
-                  >
-                    Ver Diário
-                  </button>
+    return (
+        <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+            <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
+                {/* --- Cabeçalho do Aluno --- */}
+                <div className="p-6 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row items-center gap-6">
+                    <img
+                        src={aluno.foto ? `${import.meta.env.VITE_API_URL}${aluno.foto}` : `https://ui-avatars.com/api/?name=${aluno.nome.replace(' ', '+' )}&background=e0e7ff&color=4f46e5`}
+                        alt={`Foto de ${aluno.nome}`}
+                        className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
+                    />
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800">{aluno.nome}</h1>
+                        <p className="text-md text-gray-500">Matrícula: {aluno.matricula}</p>
+                        <p className="text-md text-indigo-600 font-semibold">{aluno.curso_nome || "Curso não vinculado"}</p>
+                    </div>
                 </div>
-                <div className="space-y-4">
-                  <p>
-                    <strong>Série:</strong> {turma.serie}
-                  </p>
-                  <p>
-                    <strong>Turno:</strong> {turma.turno}
-                  </p>
-                  <p>
-                    <strong>Ano Letivo:</strong> {turma.ano_letivo}
-                  </p>
-                  <p>
-                    <strong>Qtd. de Alunos:</strong> {turma.qtd_alunos}
-                  </p>
-                  {turma.professor_responsavel && (
-                    <p>
-                      <strong>Professor Responsável:</strong>{' '}
-                      {turma.professor_responsavel}
-                    </p>
-                  )}
+
+                {/* --- Abas de Navegação --- */}
+                <div className="border-b border-gray-200 px-6">
+                    <nav className="-mb-px flex space-x-4" aria-label="Tabs">
+                        <TabButton tabName="geral" label="Dados Gerais" icon={User} />
+                        <TabButton tabName="academico" label="Acadêmico" icon={BookOpen} />
+                        <TabButton tabName="documentos" label="Documentos" icon={FileText} />
+                        <TabButton tabName="contratos" label="Contratos" icon={Briefcase} />
+                    </nav>
                 </div>
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
-                    Alunos
-                  </h2>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-indigo-400">
-                      <thead>
-                        <tr className="bg-indigo-50">
-                          <th className="border border-indigo-400 p-2 text-left w-12">
-                            Foto
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Nome
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Matrícula
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Status
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-left w-10">
-                            Excluir
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {turma.alunos?.map((aluno) => (
-                          <tr key={aluno.id} className="hover:bg-indigo-50">
-                            <td className="border border-indigo-400 p-2">
-                              {(() => {
-                                const segura = getSafeImagePath(
-                                  aluno.foto_url || ''
-                                );
-                                return segura ? (
-                                  <img
-                                    src={`${
-                                      import.meta.env.VITE_API_URL
-                                    }${segura}`}
-                                    alt={aluno.nome}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                  />
-                                ) : (
-                                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-300 text-indigo-900 font-bold">
-                                    {aluno.nome.substring(0, 2).toUpperCase()}
-                                  </span>
-                                );
-                              })()}
-                            </td>
-                            <td className="border border-indigo-400 p-2">
-                              {aluno.nome}
-                            </td>
-                            <td className="border border-indigo-400 p-2">
-                              {aluno.matricula}
-                            </td>
-                            <td className="border border-indigo-400 p-2">
-                              {aluno.role}
-                            </td>
-                            <td className="border border-indigo-400 p-2 w-10 text-center">
-                              <button
-                                onClick={() => handleRemoverAluno(aluno.id)}
-                                className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                                title="Excluir"
-                              >
-                                <Trash size={18} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
-                    Disciplinas
-                  </h2>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-indigo-400">
-                      <thead>
-                        <tr className="bg-indigo-50">
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Disciplina
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Aulas/semana
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Professor
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-center w-24">
-                            Editar
-                          </th>
-                          <th className="border border-indigo-400 p-2 text-center w-10">
-                            Excluir
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {disciplinas.map((disc) => (
-                          <tr key={disc.materiaId} className="hover:bg-indigo-50">
-                            <td className="border border-indigo-400 p-2">
-                              {disc.nome}
-                            </td>
-                            <td className="border border-indigo-400 p-2">
-                              {disc.aulasSemana}
-                            </td>
-                            <td className="border border-indigo-400 p-2">
-                              {disc.professorNome &&
-                              editingMateriaId !== disc.materiaId ? (
-                                <span className="text-gray-700">
-                                  {disc.professorNome}
-                                </span>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <select
-                                    className="border border-indigo-400 rounded-lg p-1 focus:outline-none focus:ring-2 focus:ring-indigo-700"
-                                    value={selecoes[disc.materiaId] || ''}
-                                    onChange={(e) => {
-                                      const novoProfId = Number(e.target.value);
-                                      handleChangeSelecaoProfessor(
-                                        disc.materiaId,
-                                        novoProfId
-                                      );
-                                    }}
-                                    onFocus={() => {
-                                      fetchProfessoresParaMateria(
-                                        disc.materiaId
-                                      );
-                                    }}
-                                  >
-                                    <option value="">
-                                      Selecionar professor...
-                                    </option>
-                                    {professoresPorMateria[disc.materiaId]?.map(
-                                      (prof) => (
-                                        <option key={prof.id} value={prof.id}>
-                                          {prof.nome}
-                                        </option>
-                                      )
-                                    )}
-                                  </select>
-                                </div>
-                              )}
-                            </td>
-                            <td className="border border-indigo-400 p-2 text-center">
-                              {disc.professorNome &&
-                              editingMateriaId !== disc.materiaId ? (
-                                <button
-                                  onClick={() => {
-                                    setEditingMateriaId(disc.materiaId);
-                                    if (disc.professorId) {
-                                      setSelecoes((prev) => ({
-                                        ...prev,
-                                        [disc.materiaId]: disc.professorId!,
-                                      }));
-                                    }
-                                    fetchProfessoresParaMateria(disc.materiaId);
-                                  }}
-                                  className="px-3 py-1 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm"
-                                  title="Editar Professor"
-                                >
-                                  Editar
-                                </button>
-                              ) : (
-                                <div className="flex justify-center gap-2">
-                                  <button
-                                    onClick={() =>
-                                      handleSalvarProfessor(disc.materiaId)
-                                    }
-                                    className="px-3 py-1 bg-indigo-800 text-white rounded-lg hover:bg-indigo-900 text-sm"
-                                    title="Salvar Professor"
-                                  >
-                                    Salvar
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingMateriaId(null);
-                                      setSelecoes((prev) => {
-                                        const copia = { ...prev };
-                                        delete copia[disc.materiaId];
-                                        return copia;
-                                      });
-                                    }}
-                                    className="px-3 py-1 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 text-sm"
-                                    title="Cancelar Edição"
-                                  >
-                                    Cancelar
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-                            <td className="border border-indigo-400 p-2 w-10 text-center">
-                              <button
-                                onClick={() =>
-                                  handleRemoverDisciplina(disc.materiaId)
-                                }
-                                className="p-1 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
-                                title="Excluir Disciplina"
-                              >
-                                <Trash size={18} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div className="mt-8">
-                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
-                    Adicionar Disciplinas
-                  </h2>
-                  <input
-                    type="text"
-                    placeholder="Buscar matérias..."
-                    className="w-full mb-2 px-3 py-2 border border-indigo-500 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-700"
-                    value={filtroMaterias}
-                    onChange={(e) => setFiltroMaterias(e.target.value)}
-                  />
-                  <div className="max-h-48 overflow-y-auto border border-indigo-400 rounded-md p-1">
-                    {materiasFiltradas.length === 0 && (
-                      <div className="p-2 text-gray-500">
-                        Nenhuma matéria encontrada.
-                      </div>
+
+                {/* --- Conteúdo das Abas --- */}
+                <div className="p-6">
+                    {activeTab === 'geral' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Informações Pessoais</h3>
+                                <p><strong>CPF:</strong> {aluno.cpf}</p>
+                                <p><strong>Email:</strong> {aluno.email}</p>
+                                <p><strong>Telefone:</strong> {aluno.telefone || "Não informado"}</p>
+                                <p><strong>Data de Nascimento:</strong> {new Date(aluno.data_nascimento).toLocaleDateString('pt-BR')}</p>
+                                <p><strong>Gênero:</strong> {aluno.genero}</p>
+                                <p><strong>Status:</strong> <span className={`px-2 py-1 text-xs font-semibold rounded-full ${aluno.status === 'regular' || aluno.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{aluno.status}</span></p>
+                            </div>
+                            <div className="space-y-4">
+                                <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Endereço e Biografia</h3>
+                                <p><strong>Endereço:</strong> {renderEndereco(aluno.endereco)}</p>
+                                <p><strong>Biografia:</strong> {aluno.biografia || "Nenhuma biografia fornecida."}</p>
+                            </div>
+                        </div>
                     )}
-                    {materiasFiltradas.map((mat) => (
-                      <label
-                        key={mat.id}
-                        className={`flex items-center gap-3 p-2 cursor-pointer rounded-lg transition-colors
-                          ${
-                            materiasSelecionadas.includes(mat.id)
-                              ? 'bg-indigo-400'
-                              : 'hover:bg-indigo-50'
-                          }`}
-                        onClick={() => toggleSelecionarMateria(mat.id)}
-                        style={{ userSelect: 'none' }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={materiasSelecionadas.includes(mat.id)}
-                          onChange={() => toggleSelecionarMateria(mat.id)}
-                          className="hidden"
-                        />
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-300 text-indigo-900 font-bold">
-                          {mat.nome.substring(0, 2).toUpperCase()}
-                        </span>
-                        <span className="text-gray-800">{mat.nome}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <button
-                    onClick={handleVincularMaterias}
-                    className="mt-3 bg-indigo-800 text-white px-4 py-2 rounded-lg hover:bg-indigo-900"
-                  >
-                                        Vincular Selecionados
-                  </button>
+
+                    {activeTab === 'academico' && (
+                        <div>
+                            {Object.keys(academico).length > 0 ? Object.entries(academico).map(([semestre, disciplinas]) => (
+                                <div key={semestre} className="mb-8">
+                                    <h3 className="text-xl font-bold text-indigo-700 mb-4">{semestre}</h3>
+                                    <div className="space-y-6">
+                                        {disciplinas.map(disciplina => (
+                                            <div key={disciplina.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                                                <h4 className="font-semibold text-gray-800">{disciplina.nome}</h4>
+                                                {disciplina.notas.length > 0 ? (
+                                                    <table className="mt-2 w-full text-sm">
+                                                        <thead className="text-left text-gray-500">
+                                                            <tr>
+                                                                <th className="py-1">Avaliação</th>
+                                                                <th className="py-1 text-center">Nota</th>
+                                                                <th className="py-1 text-center">Recuperação</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {disciplina.notas.map((n, index) => (
+                                                                <tr key={index} className="border-t">
+                                                                    <td className="py-2">{n.tipo} (Valor: {n.valor})</td>
+                                                                    <td className="py-2 text-center font-medium">{n.nota}</td>
+                                                                    <td className="py-2 text-center">{n.recuperacao === 'Sim' ? n.nota_rec : '—'}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                ) : <p className="text-sm text-gray-500 mt-2">Nenhuma nota lançada para esta disciplina.</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )) : <p>Nenhuma informação acadêmica encontrada.</p>}
+                        </div>
+                    )}
+
+                    {activeTab === 'documentos' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {documentos.length > 0 ? documentos.map((doc, index) => (
+                                <div key={index} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
+                                    <div>
+                                        <p className="font-semibold text-gray-700">{doc.tipo_documento.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
+                                        <p className="text-xs text-gray-500 truncate" title={doc.nome_original}>{doc.nome_original}</p>
+                                    </div>
+                                    <a href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800">
+                                        <Download size={20} />
+                                    </a>
+                                </div>
+                            )) : <p>Nenhum documento encontrado.</p>}
+                        </div>
+                    )}
+
+                    {activeTab === 'contratos' && (
+                         <div className="space-y-4">
+                            {contratos.length > 0 ? contratos.map(contrato => (
+                                <div key={contrato.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
+                                    <div>
+                                        <p className="font-semibold text-gray-700">{contrato.nome_contrato}</p>
+                                        <p className="text-sm text-gray-500">
+                                            Situação: <span className="font-medium">{contrato.situacao_contrato}</span>
+                                        </p>
+                                    </div>
+                                    {contrato.contrato_url && (
+                                        <a href={`${import.meta.env.VITE_API_URL}${contrato.contrato_url}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800">
+                                            <Download size={20} />
+                                        </a>
+                                    )}
+                                </div>
+                            )) : <p>Nenhum contrato encontrado.</p>}
+                        </div>
+                    )}
                 </div>
-
-                {/* ─── Seção “Boletim da Turma” ────────────────────────────────────────── */}
-                <div className="mt-8 bg-white rounded-xl shadow p-6">
-                  <h2 className="text-xl font-semibold text-indigo-900 mb-4">
-                    Boletim da Turma
-                  </h2>
-
-                  {/* Filtro de Matéria */}
-                  <div className="mb-4 flex items-center gap-2">
-                    <label htmlFor="filtroMateria" className="font-medium">
-                      Filtrar Matéria:
-                    </label>
-                    <select
-                      id="filtroMateria"
-                      value={selectedMateriaId}
-                      onChange={(e) =>
-                        setSelectedMateriaId(
-                          e.target.value === '' ? '' : Number(e.target.value)
-                        )
-                      }
-                      className="border border-indigo-500 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-indigo-700"
-                    >
-                      <option value="">Todas as Matérias</option>
-                      {listaMaterias.map((mat) => (
-                        <option key={mat.id} value={mat.id}>
-                          {mat.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Tabela de Boletim */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-indigo-400">
-                      <thead>
-                        <tr className="bg-indigo-50">
-                          <th className="border border-indigo-400 p-2 text-left">
-                            Aluno
-                          </th>
-                          {periodos.map((p, i) => (
-                            <th
-                              key={i}
-                              className="border border-indigo-400 p-2 text-center"
-                            >
-                              {p}
-                            </th>
-                          ))}
-                          <th className="border border-indigo-400 p-2 text-center">
-                            Média Geral
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {alunosParaBoletim.map((aluno) => {
-                          const notasArr =
-                            notasMap[aluno.id] ||
-                            Array(periodos.length).fill(null);
-                          const media = mediaMap[aluno.id];
-                          return (
-                            <tr key={aluno.id} className="hover:bg-indigo-50">
-                              <td className="border border-indigo-400 p-2">
-                                {aluno.nome}
-                              </td>
-                              {notasArr.map((n, i) => (
-                                <td
-                                  key={i}
-                                  className="border border-indigo-400 p-2 text-center"
-                                >
-                                  {n != null ? n.toFixed(1) : '—'}
-                                </td>
-                              ))}
-                              <td className="border border-indigo-400 p-2 text-center">
-                                {media != null ? media.toFixed(1) : '—'}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* ─── Botões “Editar Turma” / “Voltar” ─────────────────────────────── */}
-                <div className="flex justify-end gap-4 mt-8">
-                  <button
-                    onClick={handleEditar}
-                    className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
-                  >
-                    Editar Turma
-                  </button>
-                  <button
-                    onClick={handleVoltar}
-                    className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                  >
-                    Voltar
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center">
-                <p className="text-gray-500">Turma não encontrada.</p>
-              </div>
-            )}
-          </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
-export default VisualizarTurmaPage;
+export default VisualizarAlunoPage;
