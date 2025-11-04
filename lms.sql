@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 03/11/2025 às 15:26
+-- Tempo de geração: 04/11/2025 às 14:18
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -169,7 +169,10 @@ INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VAL
 (19, 26, 7, 'ativo'),
 (20, 24, 7, 'ativo'),
 (21, 28, 7, 'ativo'),
-(22, 29, 7, 'ativo');
+(22, 29, 7, 'ativo'),
+(23, 24, 5, 'ativo'),
+(24, 26, 5, 'ativo'),
+(25, 27, 5, 'ativo');
 
 -- --------------------------------------------------------
 
@@ -1891,7 +1894,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-03 12:39:44'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-04 03:29:14'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2426,7 +2429,7 @@ ALTER TABLE `alunos_responsaveis`
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
