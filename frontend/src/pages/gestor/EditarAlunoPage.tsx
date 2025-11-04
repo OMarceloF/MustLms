@@ -7,9 +7,9 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import SidebarGestor from './components/Sidebar';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
-import { 
-  User, Mail, Phone, BadgeCheck, ShieldCheck, Home, Calendar, Fingerprint, 
-  KeyRound, UserSquare, Users, Edit, Loader2, Save, XCircle, FileText, Download, FileSignature 
+import {
+  User, Mail, Phone, BadgeCheck, ShieldCheck, Home, Calendar, Fingerprint,
+  KeyRound, UserSquare, Users, Edit, Loader2, Save, XCircle, FileText, Download, FileSignature
 } from 'lucide-react';
 
 // --- INTERFACES E TIPOS ---
@@ -49,19 +49,19 @@ interface Responsavel {
 }
 
 interface Documento {
-    id: number;
-    tipo_documento: string;
-    caminho_arquivo: string;
-    nome_original: string;
-    data_upload: string;
+  id: number;
+  tipo_documento: string;
+  caminho_arquivo: string;
+  nome_original: string;
+  data_upload: string;
 }
 
 interface Contrato {
-    id: number;
-    nome_contrato: string;
-    situacao_contrato: string;
-    contrato_url: string | null;
-    criado_em: string;
+  id: number;
+  nome_contrato: string;
+  situacao_contrato: string;
+  contrato_url: string | null;
+  criado_em: string;
 }
 
 // --- FUNÇÕES DE FORMATAÇÃO ---
@@ -81,28 +81,28 @@ const formatDate = (dateString: string) => {
   return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString('pt-BR');
 };
 const formatDateForInput = (dateString: string) => {
-    if (!dateString) return '';
-    try {
-        const date = new Date(dateString);
-        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        return new Date(date.getTime() + userTimezoneOffset).toISOString().split('T')[0];
-    } catch (e) {
-        return '';
-    }
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() + userTimezoneOffset).toISOString().split('T')[0];
+  } catch (e) {
+    return '';
+  }
 };
 const formatDocumentType = (type: string) => {
-    const formatted = type.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-    const typeMap: { [key: string]: string } = {
-        'Foto3x4': 'Foto 3x4',
-        'Comprovante Residencia': 'Comprovante de Residência',
-        'Documento Aluno': 'Documento do Aluno',
-        'Documento Responsavel': 'Documento do Responsável',
-        'Certidao Nascimento': 'Certidão de Nascimento',
-        'Historico Escolar': 'Histórico Escolar',
-        'Laudo Medico': 'Laudo Médico',
-        'Adicionais': 'Adicional'
-    };
-    return typeMap[formatted] || formatted;
+  const formatted = type.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+  const typeMap: { [key: string]: string } = {
+    'Foto3x4': 'Foto 3x4',
+    'Comprovante Residencia': 'Comprovante de Residência',
+    'Documento Aluno': 'Documento do Aluno',
+    'Documento Responsavel': 'Documento do Responsável',
+    'Certidao Nascimento': 'Certidão de Nascimento',
+    'Historico Escolar': 'Histórico Escolar',
+    'Laudo Medico': 'Laudo Médico',
+    'Adicionais': 'Adicional'
+  };
+  return typeMap[formatted] || formatted;
 };
 
 // --- SCHEMA DE VALIDAÇÃO ---
@@ -140,31 +140,31 @@ const CardSection = ({ title, children }: { title: string, children: React.React
   </div>
 );
 const FormInput = ({ label, id, error, ...props }: any) => (
-    <div>
-        <label htmlFor={id} className="block text-xs font-medium text-gray-600">{label}</label>
-        <input id={id} className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" {...props} />
-        {error && <p className="mt-1 text-xs text-red-600">{error.message}</p>}
-    </div>
+  <div>
+    <label htmlFor={id} className="block text-xs font-medium text-gray-600">{label}</label>
+    <input id={id} className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" {...props} />
+    {error && <p className="mt-1 text-xs text-red-600">{error.message}</p>}
+  </div>
 );
 const FileItem = ({ icon: Icon, label, fileName, filePath }: { icon: React.ElementType, label: string, fileName: string, filePath: string }) => (
-    <div className="border border-gray-200 rounded-lg p-3 flex items-center justify-between gap-4 hover:bg-gray-50">
-        <div className="flex items-center gap-3 overflow-hidden">
-            <Icon className="h-6 w-6 text-gray-500 flex-shrink-0" />
-            <div className="overflow-hidden">
-                <p className="text-sm font-semibold text-gray-700 truncate">{label}</p>
-                <p className="text-xs text-gray-500 truncate">{fileName}</p>
-            </div>
-        </div>
-        <a 
-            href={filePath} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition flex-shrink-0"
-        >
-            <Download className="h-3.5 w-3.5" />
-            Ver
-        </a>
+  <div className="border border-gray-200 rounded-lg p-3 flex items-center justify-between gap-4 hover:bg-gray-50">
+    <div className="flex items-center gap-3 overflow-hidden">
+      <Icon className="h-6 w-6 text-gray-500 flex-shrink-0" />
+      <div className="overflow-hidden">
+        <p className="text-sm font-semibold text-gray-700 truncate">{label}</p>
+        <p className="text-xs text-gray-500 truncate">{fileName}</p>
+      </div>
     </div>
+    <a
+      href={filePath}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 transition flex-shrink-0"
+    >
+      <Download className="h-3.5 w-3.5" />
+      Ver
+    </a>
+  </div>
 );
 
 // --- COMPONENTE PRINCIPAL ---
@@ -234,7 +234,7 @@ const EditarAlunoPage = () => {
     if (!aluno) return;
     setIsSaving(true);
     const formPayload = new FormData();
-    
+
     const endereco = { cep: data["endereco.cep"], logradouro: data["endereco.logradouro"], numero: data["endereco.numero"], complemento: data["endereco.complemento"], bairro: data["endereco.bairro"], cidade: data["endereco.cidade"], estado: data["endereco.estado"] };
     formPayload.append('endereco', JSON.stringify(endereco));
 
@@ -249,7 +249,7 @@ const EditarAlunoPage = () => {
 
     try {
       const response = await axios.put(`/api/alunos/${id}`, formPayload, { headers: { 'Content-Type': 'multipart/form-data' } });
-      
+
       const updatedAlunoData = {
         ...aluno,
         ...data,
@@ -260,7 +260,7 @@ const EditarAlunoPage = () => {
       };
       setAluno(updatedAlunoData);
       setPreviewUrl(response.data.fotoUrl || previewUrl);
-      
+
       toast.success('Dados atualizados com sucesso!');
       setIsEditing(false);
     } catch (err: any) {
@@ -274,89 +274,103 @@ const EditarAlunoPage = () => {
   if (error || !aluno) return <div className="m-6 p-6 text-center text-red-700 bg-red-100 rounded-lg">{error || 'Aluno não encontrado.'}</div>;
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <SidebarGestor isMenuOpen={sidebarAberta} setActivePage={(page) => navigate(`/gestor/${page}`)} />
-      <div className="flex-1 flex flex-col min-w-0">
-        <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
-        <main className="flex-1 p-4 md:p-6 mt-16">
-          <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-6xl mx-auto space-y-8">
-            
-            {/* CABEÇALHO */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col sm:flex-row items-center gap-6">
-              <div className="relative">
-                <img src={previewUrl || '/placeholder-avatar.png'} alt={`Foto de ${aluno.nome}`} className="h-28 w-28 object-cover rounded-full border-4 border-white shadow-md" />
-                {isEditing && (
+    <div className="min-h-screen bg-gray-100 w-full min-w-0 overflow-x-hidden">
+      <div className="flex flex-col md:flex-row w-full min-w-0 md:flex">
+        {/* Sidebar */}
+        <SidebarGestor
+          isMenuOpen={sidebarAberta}
+          setActivePage={(page: string) =>
+            navigate('/gestor', { state: { activePage: page } })
+          }
+          handleMouseEnter={() => setSidebarAberta(true)}
+          handleMouseLeave={() => setSidebarAberta(false)}
+        />
+
+        <div className="flex-1 min-w-0 flex flex-col">
+          {/* Topbar */}
+          <TopbarGestorAuto
+            isMenuOpen={sidebarAberta}
+            setIsMenuOpen={setSidebarAberta}
+          />
+          <main className="flex-1 p-4 md:p-6 mt-16">
+            <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-6xl mx-auto space-y-8">
+
+              {/* CABEÇALHO */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative">
+                  <img src={previewUrl || '/placeholder-avatar.png'} alt={`Foto de ${aluno.nome}`} className="h-28 w-28 object-cover rounded-full border-4 border-white shadow-md" />
+                  {isEditing && (
                     <label className="absolute -bottom-2 -right-2 cursor-pointer bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition">
-                        <Edit className="h-4 w-4" />
-                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) { setFotoFile(file); setPreviewUrl(URL.createObjectURL(file)); }
-                        }} />
+                      <Edit className="h-4 w-4" />
+                      <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) { setFotoFile(file); setPreviewUrl(URL.createObjectURL(file)); }
+                      }} />
                     </label>
+                  )}
+                </div>
+                <div className="text-center sm:text-left flex-1">
+                  <h1 className="text-3xl font-bold text-gray-900">{isEditing ? 'Editando Perfil' : aluno.nome}</h1>
+                  <p className="text-md text-gray-500 mt-1">Matrícula: {aluno.matricula}</p>
+                </div>
+                {!isEditing ? (
+                  <button type="button" onClick={handleEditToggle} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+                    <Edit className="h-4 w-4" /> Editar Cadastro
+                  </button>
+                ) : (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button type="button" onClick={handleEditToggle} className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+                      <XCircle className="h-4 w-4" /> Cancelar
+                    </button>
+                    <button type="submit" disabled={isSaving} className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:opacity-50">
+                      {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar
+                    </button>
+                  </div>
                 )}
               </div>
-              <div className="text-center sm:text-left flex-1">
-                <h1 className="text-3xl font-bold text-gray-900">{isEditing ? 'Editando Perfil' : aluno.nome}</h1>
-                <p className="text-md text-gray-500 mt-1">Matrícula: {aluno.matricula}</p>
-              </div>
-              {!isEditing ? (
-                <button type="button" onClick={handleEditToggle} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">
-                  <Edit className="h-4 w-4" /> Editar Cadastro
-                </button>
-              ) : (
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <button type="button" onClick={handleEditToggle} className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
-                    <XCircle className="h-4 w-4" /> Cancelar
-                  </button>
-                  <button type="submit" disabled={isSaving} className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition disabled:opacity-50">
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Salvar
-                  </button>
-                </div>
-              )}
-            </div>
 
-            {/* SEÇÕES DE DADOS */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8">
-                {/* INFORMAÇÕES PESSOAIS */}
-                <CardSection title="Informações Pessoais">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    {isEditing ? (
-                      <>
-                        <div className="md:col-span-3"><FormInput label="Nome Completo" id="nome" {...register("nome")} error={errors.nome} /></div>
-                        <FormInput label="Data de Nascimento" id="data_nascimento" type="date" {...register("data_nascimento")} error={errors.data_nascimento} />
-                        <FormInput label="CPF" id="cpf" {...register("cpf", { onChange: (e) => e.target.value = formatCPF(e.target.value) })} error={errors.cpf} />
-                        <FormInput label="RG" id="rg" {...register("rg")} />
-                        <FormInput label="Email" id="email" type="email" {...register("email")} error={errors.email} />
-                        <FormInput label="Telefone" id="telefone" {...register("telefone", { onChange: (e) => e.target.value = formatTelefone(e.target.value) })} />
-                        <div>
+              {/* SEÇÕES DE DADOS */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                  {/* INFORMAÇÕES PESSOAIS */}
+                  <CardSection title="Informações Pessoais">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                      {isEditing ? (
+                        <>
+                          <div className="md:col-span-3"><FormInput label="Nome Completo" id="nome" {...register("nome")} error={errors.nome} /></div>
+                          <FormInput label="Data de Nascimento" id="data_nascimento" type="date" {...register("data_nascimento")} error={errors.data_nascimento} />
+                          <FormInput label="CPF" id="cpf" {...register("cpf", { onChange: (e) => e.target.value = formatCPF(e.target.value) })} error={errors.cpf} />
+                          <FormInput label="RG" id="rg" {...register("rg")} />
+                          <FormInput label="Email" id="email" type="email" {...register("email")} error={errors.email} />
+                          <FormInput label="Telefone" id="telefone" {...register("telefone", { onChange: (e) => e.target.value = formatTelefone(e.target.value) })} />
+                          <div>
                             <label htmlFor="genero" className="block text-xs font-medium text-gray-600">Gênero</label>
                             <select id="genero" {...register("genero")} className="mt-1 w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="Masculino">Masculino</option>
-                                <option value="Feminino">Feminino</option>
-                                <option value="Outro">Outro</option>
+                              <option value="Masculino">Masculino</option>
+                              <option value="Feminino">Feminino</option>
+                              <option value="Outro">Outro</option>
                             </select>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <InfoItem icon={User} label="Nome Completo" value={aluno.nome} />
-                        <InfoItem icon={Calendar} label="Data de Nascimento" value={formatDate(aluno.data_nascimento)} />
-                        <InfoItem icon={UserSquare} label="Gênero" value={aluno.genero} />
-                        <InfoItem icon={Fingerprint} label="CPF" value={formatCPF(aluno.cpf)} />
-                        <InfoItem icon={Fingerprint} label="RG" value={aluno.rg} />
-                        <InfoItem icon={BadgeCheck} label="Matrícula" value={aluno.matricula} />
-                        <InfoItem icon={Mail} label="Email" value={aluno.email} />
-                        <InfoItem icon={Phone} label="Telefone" value={formatTelefone(aluno.telefone)} />
-                      </>
-                    )}
-                  </div>
-                </CardSection>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <InfoItem icon={User} label="Nome Completo" value={aluno.nome} />
+                          <InfoItem icon={Calendar} label="Data de Nascimento" value={formatDate(aluno.data_nascimento)} />
+                          <InfoItem icon={UserSquare} label="Gênero" value={aluno.genero} />
+                          <InfoItem icon={Fingerprint} label="CPF" value={formatCPF(aluno.cpf)} />
+                          <InfoItem icon={Fingerprint} label="RG" value={aluno.rg} />
+                          <InfoItem icon={BadgeCheck} label="Matrícula" value={aluno.matricula} />
+                          <InfoItem icon={Mail} label="Email" value={aluno.email} />
+                          <InfoItem icon={Phone} label="Telefone" value={formatTelefone(aluno.telefone)} />
+                        </>
+                      )}
+                    </div>
+                  </CardSection>
 
-                {/* ENDEREÇO */}
-                <CardSection title="Endereço">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    {isEditing ? (
+                  {/* ENDEREÇO */}
+                  <CardSection title="Endereço">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                      {isEditing ? (
                         <>
                           <FormInput label="CEP" id="endereco.cep" {...register("endereco.cep")} />
                           <div className="md:col-span-2"><FormInput label="Logradouro" id="endereco.logradouro" {...register("endereco.logradouro")} /></div>
@@ -366,7 +380,7 @@ const EditarAlunoPage = () => {
                           <FormInput label="UF" id="endereco.estado" {...register("endereco.estado")} />
                           <div className="md:col-span-3"><FormInput label="Complemento" id="endereco.complemento" {...register("endereco.complemento")} /></div>
                         </>
-                    ) : (
+                      ) : (
                         <>
                           <InfoItem icon={Home} label="CEP" value={aluno.endereco?.cep} />
                           <div className="sm:col-span-2"><InfoItem icon={Home} label="Logradouro" value={aluno.endereco?.logradouro} /></div>
@@ -376,101 +390,102 @@ const EditarAlunoPage = () => {
                           <InfoItem icon={Home} label="UF" value={aluno.endereco?.estado} />
                           {aluno.endereco?.complemento && <div className="sm:col-span-3"><InfoItem icon={Home} label="Complemento" value={aluno.endereco.complemento} /></div>}
                         </>
-                    )}
-                  </div>
-                </CardSection>
-              </div>
-
-              {/* COLUNA DIREITA */}
-              <div className="space-y-8">
-                {/* ACESSO AO SISTEMA */}
-                <CardSection title="Acesso ao Sistema">
-                    <div className="space-y-6">
-                        {isEditing ? (
-                            <>
-                                <FormInput label="Login de Acesso" id="login" {...register("login")} error={errors.login} />
-                                <FormInput label="Nova Senha" id="senha" type="password" placeholder="Deixe em branco para não alterar" {...register("senha")} error={errors.senha} />
-                            </>
-                        ) : (
-                            <>
-                                <InfoItem icon={User} label="Login de Acesso" value={aluno.login} />
-                                <InfoItem icon={KeyRound} label="Senha" value="•••••••• (oculta por segurança)" />
-                            </>
-                        )}
+                      )}
                     </div>
-                </CardSection>
+                  </CardSection>
+                </div>
 
-                {/* ======================================================================= */}
-                {/* MODIFICAÇÃO 5: Nova seção para exibir documentos */}
-                {/* ======================================================================= */}
-                <CardSection title="Documentos Enviados">
+                {/* COLUNA DIREITA */}
+                <div className="space-y-8">
+                  {/* ACESSO AO SISTEMA */}
+                  <CardSection title="Acesso ao Sistema">
+                    <div className="space-y-6">
+                      {isEditing ? (
+                        <>
+                          <FormInput label="Login de Acesso" id="login" {...register("login")} error={errors.login} />
+                          <FormInput label="Nova Senha" id="senha" type="password" placeholder="Deixe em branco para não alterar" {...register("senha")} error={errors.senha} />
+                        </>
+                      ) : (
+                        <>
+                          <InfoItem icon={User} label="Login de Acesso" value={aluno.login} />
+                          <InfoItem icon={KeyRound} label="Senha" value="•••••••• (oculta por segurança)" />
+                        </>
+                      )}
+                    </div>
+                  </CardSection>
+
+                  {/* ======================================================================= */}
+                  {/* MODIFICAÇÃO 5: Nova seção para exibir documentos */}
+                  {/* ======================================================================= */}
+                  <CardSection title="Documentos Enviados">
                     {aluno.documentos.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {aluno.documentos.map(doc => (
-                                <FileItem 
-                                    key={doc.id}
-                                    icon={FileText}
-                                    label={formatDocumentType(doc.tipo_documento)}
-                                    fileName={doc.nome_original}
-                                    filePath={doc.caminho_arquivo}
-                                />
-                            ))}
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {aluno.documentos.map(doc => (
+                          <FileItem
+                            key={doc.id}
+                            icon={FileText}
+                            label={formatDocumentType(doc.tipo_documento)}
+                            fileName={doc.nome_original}
+                            filePath={doc.caminho_arquivo}
+                          />
+                        ))}
+                      </div>
                     ) : (
-                        <p className="text-center text-sm text-gray-500 py-4">Nenhum documento encontrado.</p>
+                      <p className="text-center text-sm text-gray-500 py-4">Nenhum documento encontrado.</p>
                     )}
-                </CardSection>
+                  </CardSection>
+                </div>
               </div>
-            </div>
-            
-            {/* RESPONSÁVEIS VINCULADOS */}
-            <CardSection title="Responsáveis Vinculados">
-              {aluno.responsaveis.length > 0 ? (
-                <div className="space-y-4">
-                  {aluno.responsaveis.map((resp) => (
-                    <div key={resp.id} className="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row items-start gap-4">
-                      <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-6 w-6 text-gray-500" /></div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-900">{resp.nome}</p>
-                          {resp.responsavel_financeiro === 'Sim' && <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium"><ShieldCheck className="h-3 w-3" /> Financeiro</span>}
-                        </div>
-                        <p className="text-sm text-gray-600">{resp.grau_parentesco}</p>
-                        <div className="mt-2 flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
-                          <span className="flex items-center gap-1.5"><Mail className="h-4 w-4" /> {resp.email || 'N/A'}</span>
-                          <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" /> {formatTelefone(resp.telefone)}</span>
-                          <span className="flex items-center gap-1.5"><BadgeCheck className="h-4 w-4" /> CPF: {formatCPF(resp.cpf)}</span>
+
+              {/* RESPONSÁVEIS VINCULADOS */}
+              <CardSection title="Responsáveis Vinculados">
+                {aluno.responsaveis.length > 0 ? (
+                  <div className="space-y-4">
+                    {aluno.responsaveis.map((resp) => (
+                      <div key={resp.id} className="border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row items-start gap-4">
+                        <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center"><User className="h-6 w-6 text-gray-500" /></div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900">{resp.nome}</p>
+                            {resp.responsavel_financeiro === 'Sim' && <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium"><ShieldCheck className="h-3 w-3" /> Financeiro</span>}
+                          </div>
+                          <p className="text-sm text-gray-600">{resp.grau_parentesco}</p>
+                          <div className="mt-2 flex flex-col sm:flex-row flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+                            <span className="flex items-center gap-1.5"><Mail className="h-4 w-4" /> {resp.email || 'N/A'}</span>
+                            <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" /> {formatTelefone(resp.telefone)}</span>
+                            <span className="flex items-center gap-1.5"><BadgeCheck className="h-4 w-4" /> CPF: {formatCPF(resp.cpf)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : <p className="text-center text-gray-500 py-4">Nenhum responsável vinculado a este aluno.</p>}
-            </CardSection>
+                    ))}
+                  </div>
+                ) : <p className="text-center text-gray-500 py-4">Nenhum responsável vinculado a este aluno.</p>}
+              </CardSection>
 
-            {/* ======================================================================= */}
-            {/* MODIFICAÇÃO 6: Nova seção para exibir contratos */}
-            {/* ======================================================================= */}
-            <CardSection title="Contratos Vinculados">
+              {/* ======================================================================= */}
+              {/* MODIFICAÇÃO 6: Nova seção para exibir contratos */}
+              {/* ======================================================================= */}
+              <CardSection title="Contratos Vinculados">
                 {aluno.contratos.length > 0 ? (
-                    <div className="space-y-3">
-                        {aluno.contratos.map(cont => (
-                            <FileItem
-                                key={cont.id}
-                                icon={FileSignature}
-                                label={cont.nome_contrato}
-                                fileName={`Situação: ${cont.situacao_contrato} - Criado em: ${formatDate(cont.criado_em)}`}
-                                filePath={cont.contrato_url || '#'}
-                            />
-                        ))}
-                    </div>
+                  <div className="space-y-3">
+                    {aluno.contratos.map(cont => (
+                      <FileItem
+                        key={cont.id}
+                        icon={FileSignature}
+                        label={cont.nome_contrato}
+                        fileName={`Situação: ${cont.situacao_contrato} - Criado em: ${formatDate(cont.criado_em)}`}
+                        filePath={cont.contrato_url || '#'}
+                      />
+                    ))}
+                  </div>
                 ) : (
-                    <p className="text-center text-sm text-gray-500 py-4">Nenhum contrato encontrado.</p>
+                  <p className="text-center text-sm text-gray-500 py-4">Nenhum contrato encontrado.</p>
                 )}
-            </CardSection>
+              </CardSection>
 
-          </form>
-        </main>
+            </form>
+          </main>
+        </div>
       </div>
     </div>
   );
