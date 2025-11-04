@@ -96,10 +96,7 @@ const VisualizarTurmaPage = () => {
   // Adicionar Disciplinas
   const [listaMaterias, setListaMaterias] = useState<MateriaItem[]>([]);
   const [filtroMaterias, setFiltroMaterias] = useState('');
-  const [materiasSelecionadas, setMateriasSelecionadas] = useState<number[]>(
-    []
-  );
-
+  const [materiasSelecionadas, setMateriasSelecionadas] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [sidebarAberta, setSidebarAberta] = useState(false);

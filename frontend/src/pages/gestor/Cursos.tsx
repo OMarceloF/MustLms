@@ -183,6 +183,7 @@ const CursosPage: React.FC = () => {
             <span>Adicionar Curso</span>
           </button>
         </div>
+
       </div>
 
       {/* <<--- PASSO 4: Adicionar o campo de busca --->> */}
