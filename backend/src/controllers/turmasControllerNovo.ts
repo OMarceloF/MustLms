@@ -223,16 +223,18 @@ export const getProfessoresParaForm = async (req: Request, res: Response) => {
 
 /**
  * [GET] /api/turmas-novo/:id - Busca uma turma pelo ID com todos os detalhes.
- * MELHORADO: Agora inclui a lista de matérias e alunos.
+ * VERSÃO CORRIGIDA: Garante que o nome do curso seja sempre incluído.
  */
 export const getTurmaByIdNovo = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        const [turmaRows] = await pool.query<TurmaFromDB[]>(`
+        const [turmaRows] = await pool.query<RowDataPacket[]>(`
             SELECT 
                 t.id, t.nome_turma, t.ano_letivo, t.modalidade, t.status, t.descricao,
-                t.materias_ids, cp.nome AS curso_nome, cpl.nome AS semestre_nome,
+                t.materias_ids, t.semestre_id,
+                cp.nome AS curso_nome,
+                cpl.nome AS semestre_nome, -- <-- Este campo é a chave
                 f.nome AS professor_nome
             FROM turmas t
             LEFT JOIN cursos_posgraduacao cp ON t.curso_id = cp.id
@@ -246,7 +248,6 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
         }
         const turma = turmaRows[0];
 
-        // Busca as matérias vinculadas
         const materiasIds = turma.materias_ids ? JSON.parse(turma.materias_ids) : [];
         let materias: { materiaId: number; nome: string }[] = [];
         if (materiasIds.length > 0) {
@@ -258,31 +259,26 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
             materias = disciplinasRows.map(d => ({ materiaId: d.id, nome: d.nome }));
         }
 
-        // Busca os alunos vinculados
         const [alunosRows] = await pool.query<RowDataPacket[]>(`
-            SELECT u.id, u.nome, u.foto_url, u.role, a.matricula
+            SELECT u.id, u.nome, u.foto_url, a.matricula
             FROM alunos_turmas at
             JOIN users u ON at.aluno_id = u.id
             JOIN alunos a ON u.id = a.id
-            WHERE at.turma_id = ?
-            ORDER BY u.nome ASC
+            WHERE at.turma_id = ? ORDER BY u.nome ASC
         `, [id]);
         
-        const alunos = alunosRows.map((row: any) => ({
-            id: row.id, nome: row.nome, foto_url: row.foto_url, role: row.role, matricula: row.matricula,
-        }));
-
-        // Monta o objeto de resposta final
         const responseData = {
             id: turma.id,
             nome: turma.nome_turma,
             ano_letivo: turma.ano_letivo,
-            qtd_alunos: alunos.length,
             professor_responsavel: turma.professor_nome,
-            alunos: alunos,
+            alunos: alunosRows,
             materias: materias,
-            serie: turma.curso_nome || 'Não vinculado',
-            turno: turma.modalidade || 'Não definido',
+            curso_nome: turma.curso_nome,
+            modalidade: turma.modalidade,
+            materiaId: materias.length > 0 ? materias[0].materiaId : null,
+            semestreId: turma.semestre_id,
+            semestre_nome: turma.semestre_nome, // <-- GARANTINDO QUE O CAMPO SEJA ENVIADO
         };
 
         return res.status(200).json(responseData);

@@ -198,7 +198,7 @@ import {
     getAlunosDisponiveisParaTurma,
     adicionarAlunosTurma,
     removerAlunoDaTurma,
-    updateAlunoTurmaStatus
+    updateAlunoTurmaStatus,
 } from '../controllers/turmasControllerNovo';
 
 import {
@@ -207,8 +207,7 @@ import {
   updateAvaliacao,
   deleteAvaliacao,
   upsertNotas,
-  updateStatusAvaliacao,
-  concluirAvaliacoes,
+  getDadosAcademicosCompletos,
 } from '../controllers/avaliacoesNotasController';
 import { getPeriodosCalendarioGestor } from '../controllers/calendarioGestorController';
 import {
@@ -622,8 +621,6 @@ router.post('/api/avaliacoes', createAvaliacao);
 router.put('/api/avaliacoes/:id', updateAvaliacao);
 router.delete('/api/avaliacoes/:id', deleteAvaliacao);
 router.post('/api/notas/batch', upsertNotas);
-router.put('/api/avaliacoes/:id/status', updateStatusAvaliacao);
-router.put('/api/avaliacoes/status/batch', concluirAvaliacoes);
 router.get('/api/calendario_gestor', getPeriodosCalendarioGestor);
 
 // Rotas para a configuração do calendário da aba "Calendário"
@@ -973,5 +970,22 @@ router.get('/api/disciplinas/:disciplinaId/turmas', listarTurmasPorDisciplina);
 
 //PÁGINA DE VISUALIZAÇÃO COMPLETA
 router.get('/api/alunos/:id/detalhes-completos', getDetalhesCompletosAluno);
+
+// ==============================================================================
+// ROTAS PARA O NOVO MÓDULO DE NOTAS E APROVAÇÃO
+// ==============================================================================
+
+// Rota para o CRUD de Avaliações
+router.get('/api/turmas/:turmaId/materias/:materiaId/periodos/:calendarioId/avaliacoes', getAvaliacoesByTurmaMateria);
+router.post('/api/avaliacoes', createAvaliacao);
+router.put('/api/avaliacoes/:id', updateAvaliacao);
+router.delete('/api/avaliacoes/:id', deleteAvaliacao);
+
+// Rota principal que busca todos os dados de notas, médias e status para a tela do professor
+// A rota que o frontend está chamando
+router.get('/api/turmas/:turmaId/disciplinas/:materiaId/periodos/:calendarioId/dados-academicos', getDadosAcademicosCompletos);
+
+// Rota para salvar uma nota individual (regular ou de recuperação)
+router.post('/api/notas/salvar', upsertNotas);
 
 export default router;

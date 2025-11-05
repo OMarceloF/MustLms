@@ -1,13 +1,13 @@
+// src/pages/FormVincularAluno.tsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { getSafeImagePath } from './utils';
-// <<--- PASSO 1: Importar componentes de UI e ícones --->>
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Loader2 } from 'lucide-react';
 
-// ... (Interfaces e props permanecem as mesmas) ...
 interface AlunoDisponivel {
     id: number;
     nome: string;
@@ -62,20 +62,18 @@ export function FormVincularAluno({ turmaId, onAlunosVinculados }: FormVincularA
             await axios.post(`/api/turmas-novo/${turmaId}/adicionar-alunos`, { alunos: selecionados });
             toast.success('Alunos vinculados com sucesso!');
             setSelecionados([]);
-            onAlunosVinculados();
-            fetchAlunosDisponiveis();
+            onAlunosVinculados(); // Atualiza a página principal
+            fetchAlunosDisponiveis(); // Atualiza a lista de disponíveis
         } catch (error) {
             toast.error('Ocorreu um erro ao vincular os alunos.');
             console.error('Erro ao vincular alunos:', error);
         }
     };
 
-    // <<--- PASSO 2: Aplicar novo design ao JSX --->>
     return (
         <div className="bg-card rounded-xl shadow-sm p-6">
             <h2 className="text-xl font-semibold text-foreground mb-4">Vincular Alunos</h2>
 
-            {/* Input de busca com novo estilo */}
             <Input
                 type="text"
                 placeholder="Buscar aluno para vincular..."
@@ -84,7 +82,6 @@ export function FormVincularAluno({ turmaId, onAlunosVinculados }: FormVincularA
                 className="mb-3"
             />
 
-            {/* Lista de alunos com novo estilo */}
             <div className="max-h-52 overflow-y-auto rounded-md border p-2 space-y-1">
                 {loading ? (
                     <div className="flex items-center justify-center p-4 text-muted-foreground">
@@ -98,7 +95,7 @@ export function FormVincularAluno({ turmaId, onAlunosVinculados }: FormVincularA
                         <label
                             key={a.id}
                             className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${selecionados.includes(a.id)
-                                    ? 'bg-primary/10 ring-1 ring-primary' // Estilo para item selecionado
+                                    ? 'bg-primary/10 ring-1 ring-primary'
                                     : 'hover:bg-muted'
                                 }`}
                             onClick={() => toggleSelect(a.id)}
@@ -120,7 +117,6 @@ export function FormVincularAluno({ turmaId, onAlunosVinculados }: FormVincularA
                 )}
             </div>
 
-            {/* Botão de vincular com novo estilo */}
             <Button
                 onClick={handleVincular}
                 disabled={selecionados.length === 0 || loading}
