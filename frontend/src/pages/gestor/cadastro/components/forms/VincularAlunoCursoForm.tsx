@@ -9,28 +9,27 @@ import { Button } from '../../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Label } from '../../../components/ui/label';
-import { ArrowLeft, ArrowRight, Loader2, BookOpen, Users, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Loader2, BookOpen, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
-// --- Tipagem para os dados da API ---
+// --- Tipagens ---
 interface Curso {
     id: number;
     nome: string;
-    // Adicione outros campos se a API retornar, como 'descricao', etc.
+    sigla: string;
 }
 
-interface Turma {
+interface TurmaIngresso {
     id: number;
     nome: string;
-    anoLetivo: number;
-    // Adicione outros campos se a API retornar, como 'vagas', etc.
+    curso_posgraduacao_id: number;
 }
 
-// --- Schema de Validação com Zod ---
+// --- Schema de Validação ---
 const vincularSchema = z.object({
-    cursoId: z.number({ required_error: "Selecione um curso." }),
-    turmaId: z.number({ required_error: "Selecione uma turma." }),
-    grade: z.enum(['2025.1', '2025.2', '2026.1'], { required_error: "Selecione uma grade." }),
+    cursoId: z.coerce.number({ required_error: "Selecione um curso." }).min(1, "Selecione um curso."),
+    turmaId: z.coerce.number({ required_error: "Selecione uma turma." }).min(1, "Selecione uma turma."),
+    grade: z.string({ required_error: "Selecione uma grade." }),
 });
 
 type VincularFormData = z.infer<typeof vincularSchema>;
@@ -39,85 +38,80 @@ export function VincularAlunoCursoForm() {
     const { state, setCurrentStep, completeStep } = useRegistration();
     const { student } = state.data;
 
-    // --- Estados do Componente ---
     const [cursos, setCursos] = useState<Curso[]>([]);
-    const [turmas, setTurmas] = useState<Turma[]>([]);
-    const [loading, setLoading] = useState({ cursos: false, turmas: false, submit: false });
+    const [todasTurmasIngresso, setTodasTurmasIngresso] = useState<TurmaIngresso[]>([]);
+    const [turmasFiltradas, setTurmasFiltradas] = useState<TurmaIngresso[]>([]);
+    const [loading, setLoading] = useState({ cursos: true, turmas: true, submit: false });
     const [error, setError] = useState<string | null>(null);
 
     const form = useForm<VincularFormData>({
         resolver: zodResolver(vincularSchema),
-        defaultValues: {
-           grade: undefined
-        }
     });
     
     const { watch, setValue } = form;
     const selectedCursoId = watch('cursoId');
 
-    // --- Efeitos para buscar dados da API ---
     useEffect(() => {
-        const fetchCursos = async () => {
-            setLoading(prev => ({ ...prev, cursos: true }));
+        const fetchData = async () => {
+            setLoading({ cursos: true, turmas: true, submit: false });
             setError(null);
             try {
-                // Substitua pela sua rota de API real
-                const response = await fetch('/api/cursos'); 
-                if (!response.ok) throw new Error('Falha ao carregar os cursos.');
-                const data = await response.json();
-                setCursos(data);
+                const [cursosResponse, turmasResponse] = await Promise.all([
+                    fetch('/api/cursos-posgraduacao'),
+                    fetch('/api/turmas-ingresso')
+                ]);
+
+                if (!cursosResponse.ok) throw new Error('Falha ao carregar os cursos.');
+                if (!turmasResponse.ok) throw new Error('Falha ao carregar as turmas de ingresso.');
+
+                const cursosData = await cursosResponse.json();
+                const turmasData = await turmasResponse.json();
+
+                setCursos(cursosData);
+                setTodasTurmasIngresso(turmasData);
+
             } catch (err: any) {
                 setError(err.message);
-                toast.error("Erro ao buscar cursos", { description: "Tente recarregar a página." });
+                toast.error("Erro ao buscar dados iniciais", { description: err.message });
             } finally {
-                setLoading(prev => ({ ...prev, cursos: false }));
+                setLoading(prev => ({ ...prev, cursos: false, turmas: false }));
             }
         };
-        fetchCursos();
+        fetchData();
     }, []);
 
     useEffect(() => {
-        if (!selectedCursoId) {
-            setTurmas([]);
-            setValue('turmaId', undefined as any); // Limpa a seleção de turma
-            return;
+        // Abre o console do navegador (F12) para ver estas mensagens
+        console.log('ID do curso selecionado:', selectedCursoId, '| Tipo:', typeof selectedCursoId);
+        if (todasTurmasIngresso.length > 0) {
+            console.log('Dados da primeira turma na lista completa:', todasTurmasIngresso[0]);
+            console.log('Tipo do ID do curso na lista de turmas:', typeof todasTurmasIngresso[0].curso_posgraduacao_id);
         }
 
-        const fetchTurmas = async () => {
-            setLoading(prev => ({ ...prev, turmas: true }));
-            try {
-                // Substitua pela sua rota de API real
-                const response = await fetch(`/api/cursos/${selectedCursoId}/turmas`);
-                if (!response.ok) throw new Error('Falha ao carregar as turmas para este curso.');
-                const data = await response.json();
-                setTurmas(data);
-            } catch (err: any) {
-                toast.error("Erro ao buscar turmas.");
-            } finally {
-                setLoading(prev => ({ ...prev, turmas: false }));
-            }
-        };
+        if (selectedCursoId) {
+            // GARANTIA DE COMPARAÇÃO CORRETA: Converte ambos os valores para número.
+            const cursoIdNumerico = Number(selectedCursoId);
+            const filtradas = todasTurmasIngresso.filter(
+                (turma) => Number(turma.curso_posgraduacao_id) === cursoIdNumerico
+            );
+            console.log('Turmas encontradas para este curso:', filtradas);
+            setTurmasFiltradas(filtradas);
+        } else {
+            setTurmasFiltradas([]);
+        }
+        setValue('turmaId', undefined as any);
+    }, [selectedCursoId, todasTurmasIngresso, setValue]);
 
-        fetchTurmas();
-    }, [selectedCursoId, setValue]);
-
-    // --- Funções de Navegação e Submissão ---
-    const goBack = () => {
-        // Verifica se o aluno é o próprio responsável para pular as etapas corretas
-        const isSelfResponsible = state.completedSteps.includes('responsible');
-        setCurrentStep(isSelfResponsible ? 'student' : 'documents');
-    };
+    const goBack = () => setCurrentStep('documents');
 
     const onSubmit = async (data: VincularFormData) => {
         if (!student.id) {
-            toast.error("ID do aluno não encontrado.", { description: "Por favor, retorne à etapa de dados do aluno." });
+            toast.error("ID do aluno não encontrado.");
             return;
         }
-
         setLoading(prev => ({ ...prev, submit: true }));
         try {
-            // Substitua pela sua rota de API real para vincular o aluno
-            const response = await fetch(`/api/matriculas/vincular-curso`, {
+            const response = await fetch(`/api/matriculas/vincular-aluno-curso`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -127,14 +121,11 @@ export function VincularAlunoCursoForm() {
                     grade: data.grade,
                 }),
             });
-
             const result = await response.json();
-            if (!response.ok) throw new Error(result.message || 'Falha ao vincular aluno ao curso.');
-
-            toast.success("Aluno vinculado com sucesso!", { description: `Aluno(a) ${student.nomeCompleto.split(' ')[0]} foi matriculado(a).` });
+            if (!response.ok) throw new Error(result.message || 'Falha ao vincular aluno.');
+            toast.success("Aluno vinculado com sucesso!");
             completeStep('vincularAluno');
             setCurrentStep('contract');
-
         } catch (err: any) {
             toast.error("Erro na Matrícula", { description: err.message });
         } finally {
@@ -151,7 +142,7 @@ export function VincularAlunoCursoForm() {
                         Vincular Aluno ao Curso
                     </CardTitle>
                     <CardDescription>
-                        Selecione o curso, a turma e o turno para o aluno(a) <span className="font-semibold text-primary">{student.nomeCompleto || "..."}</span>.
+                        Selecione o curso, a turma e a grade para o aluno(a) <span className="font-semibold text-primary">{student.nomeCompleto || "..."}</span>.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -162,16 +153,15 @@ export function VincularAlunoCursoForm() {
                         </div>
                     )}
 
-                    {/* Campo Curso */}
                     <div>
                         <Label htmlFor="cursoId">Curso *</Label>
                         <Controller
                             name="cursoId"
                             control={form.control}
                             render={({ field }) => (
-                                <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || '')} disabled={loading.cursos}>
+                                <Select onValueChange={field.onChange} value={String(field.value || '')} disabled={loading.cursos}>
                                     <SelectTrigger id="cursoId" className="mt-1">
-                                        <SelectValue placeholder={loading.cursos ? "Carregando cursos..." : "Selecione o curso"} />
+                                        <SelectValue placeholder={loading.cursos ? "Carregando..." : "Selecione o curso"} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {cursos.map(curso => (
@@ -184,20 +174,21 @@ export function VincularAlunoCursoForm() {
                         {form.formState.errors.cursoId && <p className="text-destructive text-sm mt-1">{form.formState.errors.cursoId.message}</p>}
                     </div>
 
-                    {/* Campo Turma */}
                     <div>
                         <Label htmlFor="turmaId">Turma de Ingresso *</Label>
                         <Controller
                             name="turmaId"
                             control={form.control}
                             render={({ field }) => (
-                                <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || '')} disabled={!selectedCursoId || loading.turmas}>
+                                <Select onValueChange={field.onChange} value={String(field.value || '')} disabled={!selectedCursoId || loading.turmas}>
                                     <SelectTrigger id="turmaId" className="mt-1">
-                                        <SelectValue placeholder={loading.turmas ? "Carregando turmas..." : "Selecione a turma"} />
+                                        <SelectValue placeholder={!selectedCursoId ? "Selecione um curso primeiro" : (loading.turmas ? "Carregando..." : "Selecione a turma")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {turmas.map(turma => (
-                                            <SelectItem key={turma.id} value={String(turma.id)}>{turma.nome} ({turma.anoLetivo})</SelectItem>
+                                        {turmasFiltradas.map(turma => (
+                                            <SelectItem key={turma.id} value={String(turma.id)}>
+                                                {turma.nome}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -206,7 +197,6 @@ export function VincularAlunoCursoForm() {
                         {form.formState.errors.turmaId && <p className="text-destructive text-sm mt-1">{form.formState.errors.turmaId.message}</p>}
                     </div>
 
-                    {/* Campo Turno */}
                     <div>
                         <Label htmlFor="grade">Grade *</Label>
                         <Controller
@@ -218,9 +208,9 @@ export function VincularAlunoCursoForm() {
                                         <SelectValue placeholder="Selecione a grade" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Manha">2025.1</SelectItem>
-                                        <SelectItem value="Tarde">2025.2</SelectItem>
-                                        <SelectItem value="Noite">2026.1</SelectItem>
+                                        <SelectItem value="2025.1">2025.1</SelectItem>
+                                        <SelectItem value="2025.2">2025.2</SelectItem>
+                                        <SelectItem value="2026.1">2026.1</SelectItem>
                                     </SelectContent>
                                 </Select>
                             )}
@@ -243,3 +233,5 @@ export function VincularAlunoCursoForm() {
         </form>
     );
 }
+
+

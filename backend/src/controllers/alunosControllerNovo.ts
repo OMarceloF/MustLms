@@ -285,13 +285,35 @@ export const getAlunoById = async (req: Request, res: Response) => {
 
 export const listarAlunos = async (req: Request, res: Response) => {
     try {
-        const [rows] = await pool.execute(
-            `SELECT a.id, u.nome, a.matricula, a.serie, a.turma, u.email, u.telefone, a.status 
-             FROM alunos a
-             JOIN users u ON a.id = u.id
-             WHERE u.status = 'ativo'
-             ORDER BY u.nome ASC`
-        );
+        // Consulta SQL CORRIGIDA para buscar o nome do curso e da turma
+        const [rows] = await pool.execute(`
+            SELECT 
+                u.id, 
+                u.nome, 
+                u.email,
+                u.foto_url as foto,
+                a.matricula, 
+                a.status,
+                -- Subconsulta para buscar o nome do curso mais recente do aluno
+                (SELECT cpg.nome 
+                 FROM cursos_posgraduacao cpg
+                 JOIN turmas t ON cpg.id = t.curso_id
+                 JOIN alunos_turmas at ON t.id = at.turma_id
+                 WHERE at.aluno_id = u.id AND at.status_vinculo = 'ativo'
+                 ORDER BY t.ano_letivo DESC, t.semestre_id DESC
+                 LIMIT 1) AS curso_nome,
+                -- Subconsulta para buscar o nome da turma mais recente do aluno
+                (SELECT t.nome_turma
+                 FROM turmas t
+                 JOIN alunos_turmas at ON t.id = at.turma_id
+                 WHERE at.aluno_id = u.id AND at.status_vinculo = 'ativo'
+                 ORDER BY t.ano_letivo DESC, t.semestre_id DESC
+                 LIMIT 1) AS turma_nome
+            FROM users u
+            JOIN alunos a ON u.id = a.id
+            WHERE u.role = 'aluno' AND u.status = 'ativo'
+            ORDER BY u.nome ASC
+        `);
         res.status(200).json(rows);
     } catch (error) {
         console.error('Erro ao listar alunos:', error);

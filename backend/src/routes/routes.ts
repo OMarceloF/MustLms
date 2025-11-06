@@ -261,7 +261,9 @@ import {
   getUltimoArquivoEnviado,
 } from '../controllers/enviosDeProfessorAlunoController';
 
-import { vincularAlunoCursoPosGraduacao } from '../controllers/vincularAlunoCursoController';
+import { vincularAlunoCursoPosGraduacao,
+         updateStatusVinculo,
+ } from '../controllers/vincularAlunoCursoController';
 
 // import {
 //   criarGrupo,
@@ -354,7 +356,9 @@ import {
   obterPPC,
   salvarPPC,
   obterVinculadosCurso,
-  listarTurmasPorDisciplina
+  listarTurmasPorDisciplina,
+  listarTurmasDeIngresso,
+  listarAlunosVinculados,
 } from '../controllers/cursosController';
 
 import {
@@ -933,9 +937,6 @@ router.post('/api/alunos/vincular-responsavel', vincularResponsavel);
 // Desvincula um responsável de um aluno (pelo ID do vínculo)
 router.delete('/api/alunos-responsaveis/:vinculoId', desvincularResponsavel);
 
-// --- Rota para LISTAR os cursos de pós-graduação cadastrados ---
-router.get('/api/cursos-posgraduacao', listarCursosPosGraduacao);
-
 // ROTAS DE MATRÍCULA / VÍNCULO
 router.post('/api/matriculas/vincular-aluno-curso', vincularAlunoCursoPosGraduacao);
 
@@ -987,5 +988,14 @@ router.get('/api/turmas/:turmaId/disciplinas/:materiaId/periodos/:calendarioId/d
 
 // Rota para salvar uma nota individual (regular ou de recuperação)
 router.post('/api/notas/salvar', upsertNotas);
+
+// Lista de Turmas de Ingresso
+router.get('/api/turmas-ingresso', listarTurmasDeIngresso);
+
+//Listar alunos vinculados ao curso
+router.get('/api/cursos/:cursoId/alunos-vinculados', listarAlunosVinculados);
+
+//Update Vinculo
+router.patch('/api/vincular-aluno-curso/:vinculoId/status', updateStatusVinculo);
 
 export default router;

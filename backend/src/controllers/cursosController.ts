@@ -8,7 +8,7 @@ import { ResultSetHeader, RowDataPacket } from 'mysql2';
  */
 export const adicionarCurso = async (req: Request, res: Response) => {
     const {
-        nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+        nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
         coordenador_id, vice_coordenador_id, unidade_id, objetivos, perfil_egresso,
         justificativa, ano_inicio, status, link_divulgacao
     } = req.body;
@@ -16,13 +16,13 @@ export const adicionarCurso = async (req: Request, res: Response) => {
     try {
         const query = `
             INSERT INTO cursos_posgraduacao (
-                nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+                nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
                 coordenador_id, vice_coordenador_id, unidade_id, objetivos, perfil_egresso,
                 justificativa, ano_inicio, status, link_divulgacao
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
         const values = [
-            nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+            nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
             coordenador_id, vice_coordenador_id || null, unidade_id, objetivos, perfil_egresso,
             justificativa, ano_inicio, status, link_divulgacao
         ];
@@ -35,21 +35,22 @@ export const adicionarCurso = async (req: Request, res: Response) => {
     }
 };
 
+
 /**
  * @description Lista todos os cursos de pós-graduação com informações adicionais.
  * @route GET /api/cursos-posgraduacao
  */
 export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
     try {
+        // ATUALIZAÇÃO: Adicionado o campo 'duracao_semestres' à consulta SQL.
         const query = `
             SELECT 
-                c.id, c.nome, c.tipo, c.status, c.modalidade, c.ano_inicio,
-                c.duracao_semestres,
-                coord.nome AS coordenador_nome,
-                (SELECT COUNT(*) FROM cursos_disciplinas WHERE curso_id = c.id) as disciplinas_count,
-                (SELECT COUNT(*) FROM turmas WHERE curso_id = c.id) as turmas_count
+                c.id, 
+                c.nome, 
+                c.sigla,
+                c.duracao_semestres 
             FROM cursos_posgraduacao c
-            LEFT JOIN users coord ON c.coordenador_id = coord.id
+            WHERE c.status = 'Ativo'
             ORDER BY c.nome;
         `;
         const [rows] = await pool.query(query);
@@ -59,6 +60,96 @@ export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Erro interno ao buscar os cursos.' });
     }
 };
+
+/**
+ * @description Lista as turmas de ingresso, opcionalmente filtrando por curso.
+ * @route GET /api/turmas-ingresso
+ * @route GET /api/turmas-ingresso/:cursoId
+ */
+export const listarTurmasDeIngresso = async (req: Request, res: Response) => {
+    try {
+        const query = `
+            SELECT id, nome, curso_posgraduacao_id 
+            FROM turmas_ingresso 
+            ORDER BY nome ASC;
+        `;
+        const [rows] = await pool.query<RowDataPacket[]>(query);
+        
+        // =======================================================================
+        // LOG DE DEPURAÇÃO (MUITO IMPORTANTE)
+        // =======================================================================
+        if (rows.length > 0) {
+            console.log('Backend: Retornando turmas de ingresso. Exemplo da primeira linha:', rows[0]);
+            console.log('Tipo do ID da turma:', typeof rows[0].id);
+            console.log('Tipo do ID do curso:', typeof rows[0].curso_posgraduacao_id);
+        } else {
+            console.log('Backend: Nenhuma turma de ingresso encontrada no banco de dados.');
+        }
+        // =======================================================================
+
+        res.status(200).json(rows);
+    } catch (error: any) {
+        console.error("Erro ao listar turmas de ingresso:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar as turmas de ingresso: ' + error.message });
+    }
+};
+
+/**
+ * @description Lista os alunos vinculados a um curso de pós-graduação pela tabela de vínculo.
+ * @route GET /api/cursos/:cursoId/alunos-vinculados
+ */
+export const listarAlunosVinculados = async (req: Request, res: Response) => {
+    const { cursoId } = req.params;
+
+    if (!cursoId) {
+        return res.status(400).json({ message: "O ID do curso é obrigatório." });
+    }
+
+    try {
+        const query = `
+            SELECT 
+                u.id,
+                u.nome,
+                a.matricula,
+                vac.id AS vinculoId,
+                vac.status_matricula AS status
+            FROM vincular_aluno_curso vac
+            JOIN users u ON vac.aluno_id = u.id
+            JOIN alunos a ON vac.aluno_id = a.id
+            WHERE vac.curso_posgraduacao_id = ?
+            ORDER BY u.nome ASC;
+        `;
+
+        const [alunos] = await pool.query<RowDataPacket[]>(query, [cursoId]);
+
+        res.status(200).json(alunos);
+
+    } catch (error: any) {
+        console.error("Erro ao buscar alunos vinculados:", error);
+        res.status(500).json({ message: "Erro interno ao buscar os alunos vinculados: " + error.message });
+    }
+};
+
+/**
+ * @description Lista todos os períodos letivos ativos.
+ * @route GET /api/configuracoes/periodos-letivos
+ */
+export const listarPeriodosLetivos = async (req: Request, res: Response) => {
+    try {
+        const query = `
+            SELECT id, nome 
+            FROM configuracoes_periodos_letivos 
+            WHERE status = 'Ativo' 
+            ORDER BY data_inicio DESC;
+        `;
+        const [rows] = await pool.query(query);
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("Erro ao listar períodos letivos:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar os períodos letivos.' });
+    }
+};
+
 
 /**
  * @description Exclui um curso de pós-graduação.
@@ -85,7 +176,7 @@ export const excluirCurso = async (req: Request, res: Response) => {
 export const atualizarCurso = async (req: Request, res: Response) => {
     const { id } = req.params;
     const {
-        nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+        nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
         coordenador_id, vice_coordenador_id, unidade_id, objetivos, perfil_egresso,
         justificativa, ano_inicio, status, link_divulgacao
     } = req.body;
@@ -93,14 +184,14 @@ export const atualizarCurso = async (req: Request, res: Response) => {
     try {
         const query = `
             UPDATE cursos_posgraduacao SET
-                nome = ?, tipo = ?, area_conhecimento = ?, carga_horaria = ?, duracao_semestres = ?, 
+                nome = ?, sigla = ?, tipo = ?, area_conhecimento = ?, carga_horaria = ?, duracao_semestres = ?, 
                 modalidade = ?, coordenador_id = ?, vice_coordenador_id = ?, unidade_id = ?, 
                 objetivos = ?, perfil_egresso = ?, justificativa = ?, ano_inicio = ?, 
                 status = ?, link_divulgacao = ?
             WHERE id = ?;
         `;
         const values = [
-            nome, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
+            nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
             coordenador_id, vice_coordenador_id || null, unidade_id, objetivos, perfil_egresso,
             justificativa, ano_inicio, status, link_divulgacao, id
         ];
