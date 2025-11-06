@@ -9,58 +9,15 @@ interface SidebarProps {
     className?: string;
 }
 
-// =================================================================
-// INÍCIO DA CORREÇÃO: Adicionando a nova etapa no início
-// =================================================================
 const steps: { id: WizardStep; title: string; description: string; icon: React.ElementType }[] = [
-    {
-        id: 'searchCpfAluno', // Nova etapa
-        title: 'Busca por CPF do Aluno',
-        description: 'Verificar cadastro existente',
-        icon: SearchIcon,
-    },
-    {
-        id: 'student',
-        title: 'Dados do Aluno',
-        description: 'Informações pessoais',
-        icon: User,
-    },
-    {
-        id: 'searchCpf',
-        title: 'Busca por Responsável',
-        description: 'Localizar e vincular',
-        icon: SearchIcon,
-    },
-    {
-        id: 'responsible',
-        title: 'Cadastrar Responsáveis',
-        description: 'Vínculos e dados financeiros',
-        icon: Users,
-    },
-    {
-        id: 'documents',
-        title: 'Documentos',
-        description: 'Upload de arquivos',
-        icon: FileText,
-    },
-
-    {
-        id: "vincularAluno", // se você realmente quiser com espaço: "vincular aluno"
-        title: "Vincular Aluno",
-        description: "Vincular aluno ao curso",
-        icon: LinkIcon,
-    },
-
-    {
-        id: 'contract',
-        title: 'Contrato',
-        description: 'Configurações finais',
-        icon: FileCheck,
-    },
+    { id: 'searchCpfAluno', title: 'Busca por CPF do Aluno', description: 'Verificar cadastro existente', icon: SearchIcon },
+    { id: 'student', title: 'Dados do Aluno', description: 'Informações pessoais', icon: User },
+    { id: 'searchCpf', title: 'Busca por Responsável', description: 'Localizar e vincular', icon: SearchIcon },
+    { id: 'responsible', title: 'Cadastrar Responsáveis', description: 'Vínculos e dados financeiros', icon: Users },
+    { id: 'documents', title: 'Documentos', description: 'Upload de arquivos', icon: FileText },
+    { id: "vincularAluno", title: "Vincular Aluno", description: "Vincular aluno ao curso", icon: LinkIcon },
+    { id: 'contract', title: 'Contrato', description: 'Configurações finais', icon: FileCheck },
 ];
-// =================================================================
-// FIM DA CORREÇÃO
-// =================================================================
 
 export function Sidebar({ className }: SidebarProps) {
     const { state, setCurrentStep, canNavigateToStep } = useRegistration();
@@ -74,7 +31,13 @@ export function Sidebar({ className }: SidebarProps) {
 
     return (
         <div className={cn(
-            "w-80 bg-card border-r border-border flex flex-col",
+            "w-80 bg-card border-r border-border flex-col",
+            // =================================================================
+            // AJUSTE DE RESPONSIVIDADE:
+            // - 'hidden': Oculta a sidebar por padrão (em telas mobile).
+            // - 'lg:flex': Exibe a sidebar como um container flex a partir de telas grandes (1024px).
+            // =================================================================
+            "hidden lg:flex",
             className
         )}>
             <div className="p-6 border-b border-border">
