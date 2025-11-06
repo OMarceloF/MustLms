@@ -3,7 +3,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import pool from '../config/db';
-import { RowDataPacket } from 'mysql2'; // <--- ADICIONE ESTA IMPORTAÇÃO
+import { RowDataPacket } from 'mysql2';
 
 // =======================================================================
 // FUNÇÃO AUXILIAR PARA GERAR MATRÍCULA
@@ -285,8 +285,10 @@ export const getAlunoById = async (req: Request, res: Response) => {
 
 export const listarAlunos = async (req: Request, res: Response) => {
     try {
-        // Consulta SQL CORRIGIDA para buscar o nome do curso e da turma
-        const [rows] = await pool.execute(`
+        // =======================================================================
+        // CONSULTA SQL ATUALIZADA
+        // =======================================================================
+        const query = `
             SELECT 
                 u.id, 
                 u.nome, 
@@ -294,27 +296,27 @@ export const listarAlunos = async (req: Request, res: Response) => {
                 u.foto_url as foto,
                 a.matricula, 
                 a.status,
-                -- Subconsulta para buscar o nome do curso mais recente do aluno
-                (SELECT cpg.nome 
-                 FROM cursos_posgraduacao cpg
-                 JOIN turmas t ON cpg.id = t.curso_id
-                 JOIN alunos_turmas at ON t.id = at.turma_id
-                 WHERE at.aluno_id = u.id AND at.status_vinculo = 'ativo'
-                 ORDER BY t.ano_letivo DESC, t.semestre_id DESC
-                 LIMIT 1) AS curso_nome,
-                -- Subconsulta para buscar o nome da turma mais recente do aluno
-                (SELECT t.nome_turma
-                 FROM turmas t
-                 JOIN alunos_turmas at ON t.id = at.turma_id
-                 WHERE at.aluno_id = u.id AND at.status_vinculo = 'ativo'
-                 ORDER BY t.ano_letivo DESC, t.semestre_id DESC
-                 LIMIT 1) AS turma_nome
+                -- Busca o nome do curso vinculado na tabela de vínculo
+                cpg.nome AS curso_nome,
+                -- Busca o nome da turma de ingresso vinculada
+                ti.nome AS turma_ingresso_nome
             FROM users u
             JOIN alunos a ON u.id = a.id
+            -- Junta com a tabela de vínculo para encontrar a matrícula mais recente do aluno
+            LEFT JOIN vincular_aluno_curso vac ON u.id = vac.aluno_id
+            -- A partir do vínculo, encontra o nome do curso
+            LEFT JOIN cursos_posgraduacao cpg ON vac.curso_posgraduacao_id = cpg.id
+            -- A partir do vínculo, encontra o nome da turma de ingresso
+            LEFT JOIN turmas_ingresso ti ON vac.turmas_ingresso_id = ti.id
             WHERE u.role = 'aluno' AND u.status = 'ativo'
-            ORDER BY u.nome ASC
-        `);
+            -- Agrupamos por aluno para evitar duplicatas se um aluno tiver múltiplos vínculos (embora a tabela tenha uma restrição)
+            GROUP BY u.id
+            ORDER BY u.nome ASC;
+        `;
+
+        const [rows] = await pool.execute(query);
         res.status(200).json(rows);
+
     } catch (error) {
         console.error('Erro ao listar alunos:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
