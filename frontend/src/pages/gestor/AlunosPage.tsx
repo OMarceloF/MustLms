@@ -163,13 +163,13 @@ const AlunosPage = () => {
                   className="w-full rounded-lg border bg-background py-2 pl-9 pr-4 focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-              {!isProfessor && (
-                <Button onClick={() => navigate('/gestor/criarAluno')} className="gap-2">
-                  <UserPlus className="size-4" />
-                  Adicionar Novo Aluno
-                </Button>
-              )}
-
+              <Button
+                onClick={() => navigate('/gestor/trancamento')}
+                className="gap-2 ml-auto"
+              >
+                <UserPlus className="size-4" />
+                Trancamento de Matrícula
+              </Button>
             </div>
             <div className="flex flex-col gap-4 sm:flex-row">
               {/* Filtro de Curso */}
@@ -205,14 +205,6 @@ const AlunosPage = () => {
                   ))}
                 </select>
               </div>
-
-              <Button
-                onClick={() => navigate('/gestor/trancamento')}
-                className="gap-2 ml-auto"
-              >
-                <UserPlus className="size-4" />
-                Trancamento de Matrícula
-              </Button>
             </div>
           </div>
 

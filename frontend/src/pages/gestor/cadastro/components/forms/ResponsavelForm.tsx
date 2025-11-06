@@ -41,7 +41,6 @@ const responsibleSchema = z.object({
 
 type ResponsibleFormData = z.infer<typeof responsibleSchema>;
 
-// Tipo para os dados do responsável vindos do backend
 type BackendResponsavel = {
   id: number;
   nome: string;
@@ -126,11 +125,11 @@ export function ResponsibleForm() {
       toast.warning("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
-    
+
     const alunoId = state.data.student.id;
     if (!alunoId) {
-        toast.error("ID do Aluno não encontrado. Por favor, volte para a etapa de 'Dados do Aluno' e salve novamente.");
-        return;
+      toast.error("ID do Aluno não encontrado. Por favor, volte para a etapa de 'Dados do Aluno' e salve novamente.");
+      return;
     }
 
     setSaving(true);
@@ -174,15 +173,15 @@ export function ResponsibleForm() {
       }
 
       toast.success(result.message || "Operação realizada com sucesso!");
-      
+
       if (editingId) {
         setEditingId(null);
       }
-      
+
       if (keepOnForm) {
         resetFormToEmpty();
       }
-      
+
       fetchResponsaveis();
 
     } catch (e: any) {
@@ -212,7 +211,7 @@ export function ResponsibleForm() {
   }
 
   const goBack = () => setCurrentStep('searchCpf');
-  
+
   function startEdit(r: BackendResponsavel) {
     setEditingId(r.id);
     form.reset({
@@ -240,31 +239,24 @@ export function ResponsibleForm() {
   function cancelEdit() {
     resetFormToEmpty();
   }
-  
-  // =======================================================================
-  // CORREÇÃO APLICADA AQUI
-  // A lógica de validação foi movida para esta função.
-  // =======================================================================
+
   const handleContinue = () => {
-    // 1. Conta quantos responsáveis financeiros existem na lista.
     const financialResponsibleCount = list.filter(r => r.responsavel_financeiro === 'Sim').length;
 
-    // 2. Verifica a condição: deve ser exatamente 1.
     if (financialResponsibleCount === 0) {
       toast.error("Nenhum responsável financeiro foi definido.", {
         description: "Por favor, edite um responsável e marque-o como financeiro para continuar.",
       });
-      return; // Bloqueia o avanço
+      return;
     }
 
     if (financialResponsibleCount > 1) {
       toast.error("Há mais de um responsável financeiro definido.", {
         description: "Apenas um responsável pode ser o financeiro. Por favor, corrija a lista.",
       });
-      return; // Bloqueia o avanço
+      return;
     }
 
-    // 3. Se a validação passar, permite o avanço.
     completeStep('responsible');
     setCurrentStep('documents');
   };
@@ -278,15 +270,81 @@ export function ResponsibleForm() {
   }, [list, query]);
 
   return (
-    <form onSubmit={form.handleSubmit((data) => save(data, false))} className="space-y-6">
+    <form onSubmit={form.handleSubmit((data) => save(data, false))} className="space-y-8">
       {errorMsg && (
         <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm flex items-center gap-2">
           <Info className="h-4 w-4" /> {errorMsg}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-6">
+      {/* AJUSTE: O grid agora é flex-col em mobile e grid-cols-2 em desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        {/* AJUSTE: A lista de responsáveis agora vem primeiro em mobile (order-2) e segunda em desktop (lg:order-1) */}
+        <div className="space-y-6 lg:sticky lg:top-6 h-fit order-2 lg:order-1">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center justify-between">
+                <span>Responsáveis vinculados</span>
+                <span className="text-xs text-muted-foreground">{list.length} registro(s)</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nome ou parentesco..." className="pl-10 h-10" />
+              </div>
+
+              {loadingList ? (
+                <div className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center p-8 rounded-2xl border bg-card">
+                  <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User2 className="h-6 w-6 text-primary" />
+                  </div>
+                  <p className="font-medium">Nenhum responsável cadastrado</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Cadastre pelo menos um responsável para prosseguir.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                  {filtered.map((r) => (
+                    <div key={r.id} className={cn('flex items-center justify-between gap-4 rounded-2xl border px-4 py-4 transition-all', r.responsavel_financeiro === 'Sim' ? 'border-primary/40 bg-primary/5' : 'border-border bg-card hover:bg-muted/40')}>
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className={cn('h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0', r.responsavel_financeiro === 'Sim' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground')}>
+                          {(r.nome || 'R').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-base truncate">{r.nome}</p>
+                            {r.responsavel_financeiro === 'Sim' && (
+                              <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
+                                <Crown className="h-3 w-3" /> Financeiro
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">{r.grau_parentesco || 'Parentesco não informado'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button type="button" variant="ghost" size="icon" onClick={() => startEdit(r)} title="Editar"><Pencil className="h-5 w-5" /></Button>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeResponsavel(r.vinculo_id)} title="Remover"><Trash2 className="h-5 w-5 text-destructive" /></Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Button type="button" onClick={handleContinue} className="w-full bg-blue-600 text-white hover:bg-blue-700 px-8" disabled={saving}>
+            Continuar para Documentos
+          </Button>
+        </div>
+
+        {/* AJUSTE: O formulário agora é o primeiro em mobile (order-1) e o primeiro em desktop (lg:order-2) */}
+        <div className="space-y-6 order-1 lg:order-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -311,6 +369,7 @@ export function ResponsibleForm() {
             </CardHeader>
 
             <CardContent className="space-y-6">
+              {/* AJUSTE: Grid de campos agora é sempre 1 coluna em mobile e 2 a partir de 'md' */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <Label htmlFor="nomeResponsavel">Nome Completo *</Label>
@@ -387,8 +446,9 @@ export function ResponsibleForm() {
                 </div>
               </div>
 
-              <div className="pt-2 border-t">
-                <h3 className="text-sm font-semibold mb-3">Endereço Completo</h3>
+              <div className="pt-4 border-t">
+                <h3 className="text-lg font-semibold mb-3">Endereço Completo</h3>
+                {/* AJUSTE: Grid de endereço agora é 1 coluna em mobile e 3 a partir de 'md' */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2">
                     <Label htmlFor="logradouro">Logradouro *</Label>
@@ -417,98 +477,39 @@ export function ResponsibleForm() {
                   </div>
                 </div>
               </div>
+
+              <div className="pt-4 border-t">
+                <CardTitle className="text-lg">Configurações Financeiras</CardTitle>
+                <div className="flex items-start gap-3 mt-3 p-4 rounded-lg bg-muted/50 border">
+                  <Checkbox id="responsavelFinanceiro" className="mt-1" checked={responsible.responsavelFinanceiro} onCheckedChange={(checked) => updateResponsible({ responsavelFinanceiro: Boolean(checked) })} />
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="responsavelFinanceiro" className="text-sm font-medium leading-none">
+                      Este responsável é o responsável financeiro
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      O responsável financeiro receberá todas as comunicações sobre pagamentos e faturas.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
-          <div className="flex justify-between">
-            <Button type="button" variant="outline" onClick={goBack} className="px-6" disabled={saving}>
+          {/* AJUSTE: Botões agora se empilham em mobile e ficam em linha a partir de 'sm' */}
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
+            <Button type="button" variant="outline" onClick={goBack} className="w-full sm:w-auto" disabled={saving}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
             </Button>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" onClick={form.handleSubmit(onSubmitAndAddAnother)} disabled={saving || editingId !== null}>
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <Button type="button" variant="outline" onClick={form.handleSubmit(onSubmitAndAddAnother)} disabled={saving || editingId !== null} className="w-full sm:w-auto">
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Salvar e Adicionar Outro'}
               </Button>
-              
-              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700 px-8" disabled={saving}>
+
+              <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto" disabled={saving}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (editingId ? 'Salvar Alterações' : 'Adicionar à Lista')}
               </Button>
             </div>
           </div>
-        </div>
-
-        <div className="space-y-6 lg:sticky lg:top-6 h-fit">
-          <Card>
-            <CardHeader><CardTitle>Configurações Financeiras</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Checkbox id="responsavelFinanceiro" checked={responsible.responsavelFinanceiro} onCheckedChange={(checked) => updateResponsible({ responsavelFinanceiro: Boolean(checked) })} />
-                <Label htmlFor="responsavelFinanceiro" className="text-sm font-medium">Este responsável é o responsável financeiro</Label>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
-                <ShieldCheck className="h-4 w-4" /> O responsável financeiro receberá todas as comunicações sobre pagamentos e faturas.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center justify-between">
-                <span>Responsáveis vinculados</span>
-                <span className="text-xs text-muted-foreground">{list.length} registro(s)</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nome ou parentesco..." className="pl-10 h-10" />
-              </div>
-
-              {loadingList ? (
-                <div className="text-center py-8"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
-              ) : filtered.length === 0 ? (
-                <div className="text-center p-8 rounded-2xl border bg-card">
-                    <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User2 className="h-6 w-6 text-primary" />
-                    </div>
-                    <p className="font-medium">Nenhum responsável cadastrado</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Cadastre pelo menos um responsável para prosseguir.
-                    </p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-                  {filtered.map((r) => (
-                      <div key={r.id} className={cn('flex items-center justify-between gap-4 rounded-2xl border px-4 py-4 transition-all', r.responsavel_financeiro === 'Sim' ? 'border-primary/40 bg-primary/5' : 'border-border bg-card hover:bg-muted/40')}>
-                        <div className="flex items-center gap-4 min-w-0">
-                          <div className={cn('h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0', r.responsavel_financeiro === 'Sim' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground')}>
-                            {(r.nome || 'R').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-semibold text-base truncate">{r.nome}</p>
-                              {r.responsavel_financeiro === 'Sim' && (
-                                <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
-                                  <Crown className="h-3 w-3" /> Financeiro
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground truncate">{r.grau_parentesco || 'Parentesco não informado'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button type="button" variant="ghost" size="icon" onClick={() => startEdit(r)} title="Editar"><Pencil className="h-5 w-5" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => removeResponsavel(r.vinculo_id)} title="Remover"><Trash2 className="h-5 w-5 text-destructive" /></Button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          
-          <Button type="button" onClick={handleContinue} className="w-full bg-blue-600 text-white hover:bg-blue-700 px-8" disabled={saving}>
-            Continuar para Documentos
-          </Button>
         </div>
       </div>
     </form>
