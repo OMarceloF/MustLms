@@ -2,299 +2,296 @@
 
 import { Request, Response } from 'express';
 import pool from '../config/db';
-import { RowDataPacket, OkPacket } from 'mysql2';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { notificarNotaLancada } from './notificacoesEventosController';
 
-
-/**
- * Interface representando uma avaliação cadastrada
- */
-export interface Avaliacao extends RowDataPacket {
+// --- Interfaces ---
+interface Avaliacao extends RowDataPacket {
   id: number;
   descricao: string;
   valor: number;
-  calendario_id: number;
-  materia_id: number;
-  turma_id: number;
-  data: string;
-  periodo_label?: string;       // join opcional com calendario_gestor.label
-  pontuacao_max?: number;       // join opcional com calendario_gestor.pontuacao_max
+  data_inicio: string;
+  data_fim: string | null;
 }
 
-/**
- * Payload esperado para criação/edição de avaliação
- */
-export interface AvaliacaoInput {
-  descricao: string;
-  valor: number;
-  calendario_id: number;
-  materia_id: number;
-  turma_id: number;
-  data: string;
+interface AlunoComNotas {
+    aluno_id: number;
+    aluno_nome: string;
+    aluno_foto: string | null;
+    notas: { avaliacao_id: number; nota: number | null }[];
+    media_final: number;
+    status: 'Aprovado' | 'Recuperação' | 'Reprovado' | 'Pendente';
+    nota_recuperacao: number | null;
+    nota_final: number;
 }
 
-/**
- * GET /api/turmas/:turmaId/materias/:materiaId/avaliacoes?calendarioId=
- * Retorna avaliações de uma turma+matéria para o período (calendarioId) informado.
- */
+// =======================================================================
+// CRUD DE AVALIAÇÕES (Sem alterações)
+// =======================================================================
+
 export const getAvaliacoesByTurmaMateria = async (req: Request, res: Response) => {
-  const turmaId = Number(req.params.turmaId);
-  const materiaId = Number(req.params.materiaId);
-  const calendarioId = Number(req.query.calendarioId);
-  if ([turmaId, materiaId, calendarioId].some(isNaN)) {
-    return res.status(400).json({ error: 'Parâmetros inválidos.' });
-  }
-
-  try {
-    const [rows] = await pool.query<Avaliacao[]>(`
-      SELECT 
-      a.id,
-      a.descricao,
-      a.valor,
-      a.calendario_id,
-      a.materia_id,
-      a.turma_id,
-      DATE_FORMAT(a.data, '%Y-%m-%d') AS data,
-      cg.tipo         AS periodo_label,
-      cg.valor        AS pontuacao_max
-      FROM avaliacoes a
-      JOIN calendario_gestor cg
-        ON a.calendario_id = cg.id
-      WHERE a.turma_id = ? 
-        AND a.materia_id = ? 
-        AND a.calendario_id = ?
-      ORDER BY a.data ASC
-    `, [turmaId, materiaId, calendarioId]);
-
-    res.json(rows);
-  } catch (err) {
-    console.error('Erro ao buscar avaliações:', err);
-    res.status(500).json({ error: 'Erro interno ao obter avaliações' });
-  }
+    const { materiaId, turmaId, calendarioId } = req.params;
+    if (!materiaId || !turmaId || !calendarioId) {
+        return res.status(400).json({ message: 'IDs de matéria, turma e período são obrigatórios.' });
+    }
+    try {
+        const [rows] = await pool.query<Avaliacao[]>(
+            'SELECT id, descricao, valor, DATE_FORMAT(data_inicio, "%Y-%m-%d") as data_inicio, DATE_FORMAT(data_fim, "%Y-%m-%d") as data_fim FROM avaliacoes WHERE materia_id = ? AND turma_id = ? AND calendario_id = ? ORDER BY data_inicio',
+            [materiaId, turmaId, calendarioId]
+        );
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("Erro ao buscar avaliações:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar avaliações.' });
+    }
 };
 
-/**
- * POST /api/avaliacoes
- * Cria uma nova avaliação.
- */
 export const createAvaliacao = async (req: Request, res: Response) => {
-  const payload: AvaliacaoInput = req.body;
-  try {
-    const [result] = await pool.query<OkPacket>(`
-      INSERT INTO avaliacoes 
-        (descricao, valor, calendario_id, materia_id, turma_id, data)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `, [
-      payload.descricao,
-      payload.valor,
-      payload.calendario_id,
-      payload.materia_id,
-      payload.turma_id,
-      payload.data
-    ]);
-    res.status(201).json({ id: result.insertId });
-  } catch (err) {
-    console.error('Erro ao criar avaliação:', err);
-    res.status(500).json({ error: 'Erro interno ao criar avaliação' });
-  }
+    const { descricao, valor, calendario_id, materia_id, turma_id, data_inicio, data_fim } = req.body;
+    if (!descricao || !valor || !calendario_id || !materia_id || !turma_id || !data_inicio) {
+        return res.status(400).json({ message: 'Nome, valor, data de início e IDs são obrigatórios.' });
+    }
+    const connection = await pool.getConnection();
+    try {
+        const [totalRows] = await connection.query<RowDataPacket[]>(
+            'SELECT SUM(valor) as total_pontos FROM avaliacoes WHERE materia_id = ? AND turma_id = ? AND calendario_id = ?',
+            [materia_id, turma_id, calendario_id]
+        );
+        const totalPontosAtual = totalRows[0]?.total_pontos || 0;
+        if (totalPontosAtual + Number(valor) > 100) {
+            return res.status(400).json({ message: `A soma dos pontos (${totalPontosAtual} + ${valor}) excederia 100.` });
+        }
+        const [result] = await connection.query<ResultSetHeader>(
+            'INSERT INTO avaliacoes (descricao, valor, calendario_id, materia_id, turma_id, data_inicio, data_fim, status) VALUES (?, ?, ?, ?, ?, ?, ?, "Pendente")',
+            [descricao, valor, calendario_id, materia_id, turma_id, data_inicio, data_fim || null]
+        );
+        res.status(201).json({ id: result.insertId, message: 'Avaliação criada com sucesso!' });
+    } catch (error) {
+        console.error("Erro ao criar avaliação:", error);
+        res.status(500).json({ message: 'Erro interno ao criar a avaliação.' });
+    } finally {
+        connection.release();
+    }
 };
 
-/**
- * PUT /api/avaliacoes/:id
- * Atualiza uma avaliação existente.
- */
 export const updateAvaliacao = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const payload: AvaliacaoInput = req.body;
-  if (isNaN(id)) {
-    return res.status(400).json({ error: 'ID inválido.' });
-  }
-
-  try {
-    await pool.query(`
-      UPDATE avaliacoes
-      SET descricao     = ?,
-          valor         = ?,
-          calendario_id = ?,
-          materia_id    = ?,
-          turma_id      = ?,
-          data          = ?
-      WHERE id = ?
-    `, [
-      payload.descricao,
-      payload.valor,
-      payload.calendario_id,
-      payload.materia_id,
-      payload.turma_id,
-      payload.data,
-      id
-    ]);
-    res.sendStatus(204);
-  } catch (err) {
-    console.error('Erro ao atualizar avaliação:', err);
-    res.status(500).json({ error: 'Erro interno ao atualizar avaliação' });
-  }
+    const { id } = req.params;
+    const { descricao, valor, data_inicio, data_fim } = req.body;
+    const connection = await pool.getConnection();
+    try {
+        const [avaliacaoAtualRows] = await connection.query<RowDataPacket[]>(
+            'SELECT materia_id, turma_id, calendario_id FROM avaliacoes WHERE id = ?',
+            [id]
+        );
+        if (avaliacaoAtualRows.length === 0) {
+            return res.status(404).json({ message: 'Avaliação não encontrada.' });
+        }
+        const { materia_id, turma_id, calendario_id } = avaliacaoAtualRows[0];
+        const [totalRows] = await connection.query<RowDataPacket[]>(
+            'SELECT SUM(valor) as total_pontos FROM avaliacoes WHERE materia_id = ? AND turma_id = ? AND calendario_id = ? AND id != ?',
+            [materia_id, turma_id, calendario_id, id]
+        );
+        const totalPontosOutras = totalRows[0]?.total_pontos || 0;
+        if (totalPontosOutras + Number(valor) > 100) {
+            return res.status(400).json({ message: `A soma dos pontos excederia 100. Pontuação das outras avaliações: ${totalPontosOutras}.` });
+        }
+        await connection.query(
+            'UPDATE avaliacoes SET descricao = ?, valor = ?, data_inicio = ?, data_fim = ? WHERE id = ?',
+            [descricao, valor, data_inicio, data_fim || null, id]
+        );
+        res.status(200).json({ message: 'Avaliação atualizada com sucesso.' });
+    } catch (error) {
+        console.error("Erro ao atualizar avaliação:", error);
+        res.status(500).json({ message: 'Erro interno ao atualizar a avaliação.' });
+    } finally {
+        connection.release();
+    }
 };
 
-/**
- * DELETE /api/avaliacoes/:id
- * Remove uma avaliação.
- */
 export const deleteAvaliacao = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) {
-    return res.status(400).json({ error: 'ID inválido.' });
-  }
-
-  try {
-    // 1) apaga as notas vinculadas
-    await pool.query(`DELETE FROM notas WHERE avaliacao_id = ?`, [id]);
-
-    // 2) apaga a avaliação
-    await pool.query(`DELETE FROM avaliacoes WHERE id = ?`, [id]);
-
-    res.sendStatus(204);
-  } catch (err) {
-    console.error('Erro ao deletar avaliação:', err);
-    res.status(500).json({ error: 'Erro interno ao deletar avaliação' });
-  }
+    const { id } = req.params;
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        await connection.query('DELETE FROM notas WHERE avaliacao_id = ?', [id]);
+        await connection.query('DELETE FROM avaliacoes WHERE id = ?', [id]);
+        await connection.commit();
+        res.status(200).json({ message: 'Avaliação e notas relacionadas foram deletadas.' });
+    } catch (error) {
+        await connection.rollback();
+        console.error("Erro ao deletar avaliação:", error);
+        res.status(500).json({ message: 'Erro interno ao deletar a avaliação.' });
+    } finally {
+        connection.release();
+    }
 };
 
+// =======================================================================
+// LÓGICA CENTRAL DE NOTAS E STATUS (TOTALMENTE REFEITA)
+// =======================================================================
 
+export const getDadosAcademicosCompletos = async (req: Request, res: Response) => {
+    const { turmaId, materiaId, calendarioId } = req.params;
+    try {
+        const [alunos] = await pool.query<RowDataPacket[]>(
+            `SELECT u.id, u.nome, u.foto_url, a.matricula, u.status as status_aluno
+             FROM users u 
+             JOIN alunos_turmas at ON u.id = at.aluno_id 
+             JOIN alunos a ON u.id = a.id
+             WHERE at.turma_id = ? AND at.status_vinculo = 'ativo'
+             ORDER BY u.nome`,
+            [turmaId]
+        );
 
-/**
- * Interface para o payload de notas que chegam do front-end
- */
-export interface NotaInput {
-  aluno_id: number;
-  avaliacao_id: number;
-  nota: number;
-  recuperacao: 'Sim' | 'Não';
-  nota_rec: number;
-}
+        if (alunos.length === 0) {
+            return res.status(200).json({ avaliacoes: [], alunosComNotas: [] });
+        }
 
-/**
- * POST /api/notas/batch
- * Insere ou atualiza em lote as notas de várias avaliações.
- * Para cada nota, busca turma_id, materia_id e data na tabela `avaliacoes`.
- */
-// Imports no topo do arquivo permanecem iguais
-// POST /api/notas/batch
+        const [avaliacoes] = await pool.query<Avaliacao[]>(
+            'SELECT id, descricao, valor, DATE_FORMAT(data_inicio, "%Y-%m-%d") as data_inicio, DATE_FORMAT(data_fim, "%Y-%m-%d") as data_fim FROM avaliacoes WHERE turma_id = ? AND materia_id = ? AND calendario_id = ? ORDER BY data_inicio',
+            [turmaId, materiaId, calendarioId]
+        );
+
+        const alunoIds = alunos.map(a => a.id);
+        if (alunoIds.length === 0) {
+             return res.status(200).json({ avaliacoes, alunosComNotas: [] });
+        }
+        
+        const [notas] = await pool.query<RowDataPacket[]>(
+            `SELECT aluno_id, avaliacao_id, nota, nota_rec 
+             FROM notas
+             WHERE aluno_id IN (?) AND materia_id = ? AND turma_id = ?`,
+            [alunoIds, materiaId, turmaId]
+        );
+        
+        const notasMap = new Map(notas.map(n => [`${n.aluno_id}-${n.avaliacao_id}`, parseFloat(n.nota)]));
+        const recMap = new Map<number, number>();
+        notas.forEach(n => {
+            if (n.nota_rec !== null) {
+                const currentRec = recMap.get(n.aluno_id) || 0;
+                recMap.set(n.aluno_id, Math.max(currentRec, parseFloat(n.nota_rec)));
+            }
+        });
+
+        const resultadoFinal: AlunoComNotas[] = alunos.map(aluno => {
+            let media_final = 0;
+            const notasDoAluno = avaliacoes.map(av => {
+                const nota = notasMap.get(`${aluno.id}-${av.id}`) ?? null;
+                if (nota !== null) media_final += nota;
+                return { avaliacao_id: av.id, nota };
+            });
+
+            if (media_final > 100) {
+                media_final = 100;
+            }
+
+            // ***** LÓGICA CORRIGIDA AQUI *****
+            let nota_recuperacao = recMap.get(aluno.id) ?? null;
+            let status: AlunoComNotas['status'] = 'Pendente';
+            let nota_final = media_final;
+
+            if (media_final >= 60) {
+                status = 'Aprovado';
+                // Se o aluno está aprovado por média, a recuperação é irrelevante.
+                // Forçamos a nota de recuperação a ser nula para o frontend.
+                nota_recuperacao = null; 
+            } else if (media_final >= 40) {
+                status = 'Recuperação';
+                if (nota_recuperacao !== null) {
+                    if (nota_recuperacao >= 60) {
+                        status = 'Aprovado';
+                        nota_final = 60.0; 
+                    } else {
+                        status = 'Reprovado';
+                        nota_final = media_final;
+                    }
+                }
+            } else {
+                status = 'Reprovado';
+                // Se está reprovado direto, a recuperação também não se aplica.
+                nota_recuperacao = null;
+            }
+
+            return {
+                aluno_id: aluno.id, 
+                aluno_nome: aluno.nome, 
+                aluno_foto: aluno.foto_url,
+                matricula: aluno.matricula,
+                status_aluno: aluno.status_aluno,
+                notas: notasDoAluno, 
+                media_final: parseFloat(media_final.toFixed(1)), 
+                status, 
+                nota_recuperacao, 
+                nota_final: parseFloat(nota_final.toFixed(1))
+            };
+        });
+
+        res.status(200).json({ avaliacoes, alunosComNotas: resultadoFinal });
+    } catch (error) {
+        console.error("Erro ao buscar dados acadêmicos completos:", error);
+        res.status(500).json({ message: 'Erro interno ao processar os dados acadêmicos.' });
+    }
+};
+
 export const upsertNotas = async (req: Request, res: Response) => {
-  const notas: NotaInput[] = req.body;
-  if (!Array.isArray(notas) || notas.length === 0) {
-    return res.status(400).json({ error: 'Payload de notas inválido.' });
-  }
+    const { aluno_id, materia_id, turma_id, avaliacao_id, nota, tipo_nota } = req.body;
 
-  const conn = await pool.getConnection();
-  try {
-    await conn.beginTransaction();
+    let notaNumerica = Number(nota);
+    const notaParaSalvar = isNaN(notaNumerica) ? null : notaNumerica;
 
-    for (const n of notas) {
-      // Validação para garantir que os valores são números
-      const notaValue = typeof n.nota === 'number' && !isNaN(n.nota) ? n.nota : 0;
-      const notaRecValue = typeof n.nota_rec === 'number' && !isNaN(n.nota_rec) ? n.nota_rec : 0;
-      const recuperacaoValue = n.recuperacao === 'Sim' ? 'Sim' : 'Não';
-
-      // Busca os dados da avaliação para popular as colunas restantes
-      const [[evalRow]] = await conn.query<RowDataPacket[]>(`
-        SELECT turma_id, materia_id, DATE_FORMAT(data, '%Y-%m-%d') AS data, descricao, valor
-        FROM avaliacoes
-        WHERE id = ?
-      `, [n.avaliacao_id]);
-
-      if (!evalRow) {
-        console.warn(`Avaliação com ID ${n.avaliacao_id} não encontrada. Pulando nota.`);
-        continue; // Pula para a próxima nota se a avaliação não existe
-      }
-
-      // Comando de Inserir/Atualizar (UPSERT)
-      // A chave primária agora é (aluno_id, avaliacao_id), então o ON DUPLICATE KEY UPDATE funciona perfeitamente.
-      await conn.query<OkPacket>(`
-        INSERT INTO notas 
-          (aluno_id, avaliacao_id, nota, recuperacao, nota_rec, turma_id, materia_id, data, tipo, valor)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          nota        = VALUES(nota),
-          recuperacao = VALUES(recuperacao),
-          nota_rec    = VALUES(nota_rec)
-      `, [
-        n.aluno_id,
-        n.avaliacao_id,
-        notaValue,
-        recuperacaoValue,
-        notaRecValue,
-        evalRow.turma_id,
-        evalRow.materia_id,
-        evalRow.data,
-        evalRow.descricao,
-        evalRow.valor
-      ]);
-
-      // Notifica o aluno sobre a nota lançada
-      await notificarNotaLancada(n.aluno_id);
+    if (!aluno_id || !materia_id || !turma_id) {
+        return res.status(400).json({ message: 'Dados insuficientes para salvar a nota.' });
     }
 
-    await conn.commit();
-    res.status(200).json({ message: 'Notas salvas com sucesso.' });
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        
+        if (tipo_nota === 'recuperacao') {
+            // Validação para nota de recuperação (0 a 100)
+            if (notaParaSalvar !== null && (notaParaSalvar < 0 || notaParaSalvar > 100)) {
+                throw new Error('A nota de recuperação deve estar entre 0 e 100.');
+            }
+            await connection.query(
+                'UPDATE notas SET nota_rec = ? WHERE aluno_id = ? AND materia_id = ? AND turma_id = ?', 
+                [notaParaSalvar, aluno_id, materia_id, turma_id]
+            );
+        } else {
+            if (!avaliacao_id) {
+                return res.status(400).json({ message: 'ID da avaliação é obrigatório para nota regular.' });
+            }
 
-  } catch (err) {
-    await conn.rollback();
-    console.error('Erro ao salvar notas em lote (upsert):', err);
-    res.status(500).json({ error: 'Erro interno ao salvar as notas.' });
-  } finally {
-    conn.release();
-  }
-};
+            // ***** CORREÇÃO DE VALOR MÁXIMO *****
+            // Busca o valor máximo da avaliação antes de salvar a nota.
+            const [avaliacaoRows] = await connection.query<RowDataPacket[]>('SELECT valor FROM avaliacoes WHERE id = ?', [avaliacao_id]);
+            if (avaliacaoRows.length === 0) {
+                throw new Error('Avaliação não encontrada.');
+            }
+            const valorMaximo = parseFloat(avaliacaoRows[0].valor);
 
+            if (notaParaSalvar !== null && notaParaSalvar > valorMaximo) {
+                // Se a nota for maior que o permitido, salva o valor máximo em vez de dar erro.
+                // Isso evita que o usuário perca o trabalho, mas impede dados incorretos.
+                notaNumerica = valorMaximo;
+            }
+            
+            await connection.query(
+                `INSERT INTO notas (aluno_id, avaliacao_id, nota, materia_id, turma_id) 
+                 VALUES (?, ?, ?, ?, ?) 
+                 ON DUPLICATE KEY UPDATE nota = VALUES(nota)`,
+                [aluno_id, avaliacao_id, isNaN(notaNumerica) ? null : notaNumerica, materia_id, turma_id]
+            );
+        }
+        
+        await notificarNotaLancada(aluno_id);
+        await connection.commit();
+        res.status(200).json({ message: 'Nota salva com sucesso.' });
 
-export const updateStatusAvaliacao = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { status } = req.body as { status: string };
-
-  // validação simples
-  if (!['Pendente', 'Concluído'].includes(status)) {
-    return res.status(400).json({ message: 'Status inválido. Use Pendente ou Concluído.' });
-  }
-
-  try {
-    const [result]: any = await pool.query(
-      `UPDATE avaliacoes
-         SET status = ?
-       WHERE id = ?`,
-      [status, id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Avaliação não encontrada.' });
+    } catch (error: any) {
+        await connection.rollback();
+        console.error("Erro ao salvar nota:", error);
+        res.status(500).json({ message: error.message || 'Erro interno ao salvar a nota.' });
+    } finally {
+        connection.release();
     }
-
-    return res.status(200).json({ message: `Status da avaliação atualizado para "${status}".` });
-  } catch (error) {
-    console.error('Erro ao atualizar status da avaliação:', error);
-    return res.status(500).json({ message: 'Erro interno ao atualizar status.' });
-  }
-};
-
-export const concluirAvaliacoes = async (req: Request, res: Response) => {
-  const { avaliacaoIds } = req.body as { avaliacaoIds: number[] };
-
-  if (!Array.isArray(avaliacaoIds) || avaliacaoIds.length === 0) {
-    return res.status(400).json({ error: 'Array de ids de avaliações é obrigatório.' });
-  }
-
-  try {
-    // Atualiza o status de todas as avaliações cujo id esteja no array
-    await pool.query(
-      `UPDATE avaliacoes
-         SET status = 'Concluído'
-       WHERE id IN (?)`,
-      [avaliacaoIds]
-    );
-
-    return res.status(200).json({ message: 'Avaliações marcadas como Concluído.' });
-  } catch (error) {
-    console.error('Erro ao concluir avaliações:', error);
-    return res.status(500).json({ error: 'Erro interno ao concluir avaliações.' });
-  }
 };

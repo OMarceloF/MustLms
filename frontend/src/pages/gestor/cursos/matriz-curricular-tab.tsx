@@ -238,23 +238,33 @@ export function MatrizCurricularTab() {
                           </h4>
                           {disciplina.turmas && disciplina.turmas.length > 0 ? (
                             <ul className="space-y-2">
-                              {disciplina.turmas.map(turma => (
-                                <li key={turma.id} className="flex items-center justify-between rounded-md bg-background p-2 px-3 border">
-                                  <div className="text-sm">
-                                    <span className="font-medium">{turma.nome}</span>
-                                    {turma.semestre_nome && <span className="text-muted-foreground ml-2">({turma.semestre_nome})</span>}
-                                  </div>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={(e) => handleViewTurma(turma.id, e)} // Passe o evento 'e' aqui
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                    <span className="sr-only">Visualizar Turma</span>
-                                  </Button>
-                                </li>
-                              ))}
+                              {disciplina.turmas
+                                .sort((a, b) => {
+                                  // Primeiro, ordena pelo nome do semestre (ex: "2025.1" vem antes de "2025.2")
+                                  const semestreCompare = (a.semestre_nome || '').localeCompare(b.semestre_nome || '');
+                                  if (semestreCompare !== 0) {
+                                    return semestreCompare;
+                                  }
+                                  // Se os semestres forem iguais, ordena pelo nome da turma (ex: "Turma 1" vem antes de "Turma 2")
+                                  return a.nome.localeCompare(b.nome);
+                                })
+                                .map(turma => (
+                                  <li key={turma.id} className="flex items-center justify-between rounded-md bg-background p-2 px-3 border">
+                                    <div className="text-sm">
+                                      <span className="font-medium">{turma.nome}</span>
+                                      {turma.semestre_nome && <span className="text-muted-foreground ml-2">({turma.semestre_nome})</span>}
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-8 w-8"
+                                      onClick={(e) => handleViewTurma(turma.id, e)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      <span className="sr-only">Visualizar Turma</span>
+                                    </Button>
+                                  </li>
+                                ))}
                             </ul>
                           ) : (
                             <p className="text-sm text-muted-foreground">Nenhuma turma vinculada a esta disciplina.</p>
