@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 04/11/2025 às 14:18
+-- Tempo de geração: 05/11/2025 às 21:03
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -158,7 +158,6 @@ CREATE TABLE `alunos_turmas` (
 --
 
 INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VALUES
-(9, 24, 3, 'ativo'),
 (10, 29, 3, 'ativo'),
 (11, 28, 3, 'ativo'),
 (12, 26, 3, 'ativo'),
@@ -167,12 +166,14 @@ INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VAL
 (17, 18, 7, 'ativo'),
 (18, 27, 7, 'ativo'),
 (19, 26, 7, 'ativo'),
-(20, 24, 7, 'ativo'),
 (21, 28, 7, 'ativo'),
 (22, 29, 7, 'ativo'),
-(23, 24, 5, 'ativo'),
 (24, 26, 5, 'ativo'),
-(25, 27, 5, 'ativo');
+(25, 27, 5, 'ativo'),
+(32, 27, 8, 'ativo'),
+(34, 26, 8, 'ativo'),
+(35, 29, 8, 'ativo'),
+(36, 2, 8, 'ativo');
 
 -- --------------------------------------------------------
 
@@ -233,9 +234,19 @@ CREATE TABLE `avaliacoes` (
   `calendario_id` int(11) NOT NULL,
   `materia_id` int(11) NOT NULL,
   `turma_id` int(11) NOT NULL,
-  `data` date NOT NULL,
+  `data_inicio` date NOT NULL,
+  `data_fim` date DEFAULT NULL,
   `status` enum('Pendente','Concluído') NOT NULL DEFAULT 'Pendente'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `avaliacoes`
+--
+
+INSERT INTO `avaliacoes` (`id`, `descricao`, `valor`, `calendario_id`, `materia_id`, `turma_id`, `data_inicio`, `data_fim`, `status`) VALUES
+(24, 'Prova 1', 40.00, 17, 17, 8, '2025-11-05', '2025-11-12', 'Pendente'),
+(26, 'Prova 2', 50.00, 17, 17, 8, '2025-11-13', '2025-11-29', 'Pendente'),
+(27, 'Trabalho 1', 10.00, 17, 17, 8, '2025-12-01', '2025-12-18', 'Pendente');
 
 -- --------------------------------------------------------
 
@@ -1178,17 +1189,31 @@ INSERT INTO `mensalidades` (`id`, `aluno_id`, `valor`, `data_inicial`) VALUES
 
 CREATE TABLE `notas` (
   `id` int(11) NOT NULL,
-  `tipo` varchar(255) NOT NULL,
-  `valor` int(11) NOT NULL,
-  `nota` int(11) NOT NULL,
-  `recuperacao` enum('Sim','Não') NOT NULL DEFAULT 'Não',
-  `nota_rec` int(11) NOT NULL,
-  `turma_id` int(11) NOT NULL,
   `aluno_id` int(11) NOT NULL,
+  `avaliacao_id` int(11) NOT NULL,
+  `nota` decimal(5,2) DEFAULT NULL,
   `materia_id` int(11) NOT NULL,
-  `data` date NOT NULL,
-  `avaliacao_id` int(11) DEFAULT NULL
+  `turma_id` int(11) NOT NULL,
+  `nota_rec` decimal(5,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `notas`
+--
+
+INSERT INTO `notas` (`id`, `aluno_id`, `avaliacao_id`, `nota`, `materia_id`, `turma_id`, `nota_rec`) VALUES
+(1, 27, 24, 40.00, 17, 8, NULL),
+(2, 27, 26, 40.00, 17, 8, NULL),
+(7, 26, 24, 40.00, 17, 8, NULL),
+(9, 26, 26, 50.00, 17, 8, NULL),
+(13, 29, 24, 30.00, 17, 8, 50.00),
+(14, 29, 26, 10.00, 17, 8, 50.00),
+(15, 2, 24, 25.00, 17, 8, 60.00),
+(16, 2, 26, 20.00, 17, 8, 60.00),
+(24, 27, 27, 10.00, 17, 8, NULL),
+(25, 26, 27, 10.00, 17, 8, NULL),
+(26, 29, 27, 10.00, 17, 8, 50.00),
+(28, 2, 27, 10.00, 17, 8, 60.00);
 
 -- --------------------------------------------------------
 
@@ -1535,7 +1560,74 @@ INSERT INTO `notificacoes_eventos` (`id`, `tipo`, `conteudo`, `titulo`, `data`, 
 (269, 'envio_material', 'Um novo material foi enviado para sua turma.', 'Novo material disponível', '2025-09-23 11:20:06', 3, 0),
 (270, 'envio_material', 'Um novo material foi enviado para sua turma.', 'Novo material disponível', '2025-09-23 11:20:06', 5, 0),
 (271, 'envio_material', 'Um novo material foi enviado para sua turma.', 'Novo material disponível', '2025-09-23 11:20:06', 4, 0),
-(272, 'envio_material', 'Um novo material foi enviado para sua turma.', 'Novo material disponível', '2025-09-23 11:20:06', 7, 0);
+(272, 'envio_material', 'Um novo material foi enviado para sua turma.', 'Novo material disponível', '2025-09-23 11:20:06', 7, 0),
+(273, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 01:09:45', 27, 0),
+(274, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 01:09:49', 27, 0),
+(275, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 01:09:52', 26, 0),
+(276, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 01:09:54', 26, 0),
+(277, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 10:53:17', 28, 0),
+(278, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 10:53:20', 28, 0),
+(279, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 10:56:41', 29, 0),
+(280, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 10:56:42', 29, 0),
+(281, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 11:17:51', 28, 0),
+(282, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 11:17:54', 28, 0),
+(283, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 11:22:00', 27, 0),
+(284, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 11:22:03', 27, 0),
+(285, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 11:22:05', 28, 0),
+(286, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 11:22:08', 28, 0),
+(287, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:04:54', 27, 0),
+(288, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:04:56', 27, 0),
+(291, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:33:14', 27, 0),
+(292, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:33:18', 27, 0),
+(293, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:01', 26, 0),
+(294, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:07', 26, 0),
+(295, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:11', 26, 0),
+(296, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:15', 26, 0),
+(297, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:22', 26, 0),
+(298, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:27', 26, 0),
+(299, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:33', 29, 0),
+(300, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:35', 29, 0),
+(301, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:40', 29, 0),
+(302, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:47', 2, 0),
+(303, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:48', 2, 0),
+(304, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:40:55', 2, 0),
+(305, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:41:00', 2, 0),
+(306, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:45:19', 26, 0),
+(307, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:45:23', 26, 0),
+(308, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:45:25', 26, 0),
+(309, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:45:28', 26, 0),
+(310, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:45:34', 26, 0),
+(311, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:46:18', 26, 0),
+(312, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:47:02', 27, 0),
+(313, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:47:04', 26, 0),
+(314, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:47:06', 29, 0),
+(315, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:47:07', 29, 0),
+(316, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:47:10', 2, 0),
+(317, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:47:24', 2, 0),
+(318, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:47:28', 2, 0),
+(319, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:47:37', 2, 0),
+(320, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:50:40', 29, 0),
+(321, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:50:43', 29, 0),
+(322, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:50:49', 2, 0),
+(323, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:50:55', 2, 0),
+(324, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:50:57', 2, 0),
+(325, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:51:24', 2, 0),
+(326, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:51:31', 2, 0),
+(327, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:51:37', 2, 0),
+(328, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:52:58', 2, 0),
+(329, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:59:17', 2, 0),
+(330, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:59:49', 2, 0),
+(331, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:59:53', 2, 0),
+(332, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 14:59:57', 2, 0),
+(333, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:00:01', 2, 0),
+(334, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:00:05', 2, 0),
+(335, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:00:08', 2, 0),
+(336, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:00:13', 2, 0),
+(337, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:00:23', 2, 0),
+(338, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:00:25', 2, 0),
+(339, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:01:52', 2, 0),
+(340, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:01:59', 2, 0),
+(341, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:02:02', 2, 0);
 
 -- --------------------------------------------------------
 
@@ -1749,7 +1841,6 @@ INSERT INTO `stats_seguidores` (`user_id`, `qtd_seguidores`, `qtd_seguindo`) VAL
 (21, 0, 0),
 (22, 0, 0),
 (23, 0, 0),
-(24, 0, 0),
 (26, 0, 0),
 (27, 0, 0),
 (28, 0, 0),
@@ -1845,9 +1936,10 @@ CREATE TABLE `turmas` (
 
 INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `materias_ids`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
 (3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 2, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkkkkkkkkkkk'),
-(5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '[\"19\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, '[\"27\"]', 16, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk');
+(5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '[\"19\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, '[\"27\"]', 17, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk'),
+(8, 'Turma 1', '2025', '2025-11-05 03:29:37', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk');
 
 -- --------------------------------------------------------
 
@@ -1860,13 +1952,6 @@ CREATE TABLE `turmas_materias` (
   `turma_id` int(11) NOT NULL,
   `materia_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `turmas_materias`
---
-
-INSERT INTO `turmas_materias` (`id`, `turma_id`, `materia_id`) VALUES
-(15, 3, 5);
 
 -- --------------------------------------------------------
 
@@ -1894,7 +1979,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-04 03:29:14'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-05 19:59:54'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -1917,7 +2002,6 @@ INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, 
 (21, 'lucas@gmail.com', '$2b$10$dsRwmxL8H9lb5k7Y/JaqWOTpqsT0wBlJADyhA8ERvOcrUwQIaZqru', 'lucas@gmail.com', 'responsavel', 'ativo', 'Lucas Fonseca', '52351241243', '54634632754', '2025-09-29 16:13:13', NULL, NULL),
 (22, 'lela', '$2b$10$6oTF70xLe.OeASx74luWxu9JjE/4ARBDHME6Ubt2bYbcaUtFOPAy2', 'lela@gmail.com', 'professor', 'ativo', 'Lela', '54378793223', '52376832341', '2025-09-30 12:28:16', '/uploads/1759235296926-718355380.png', NULL),
 (23, 'OMarceloFuncionario', '$2b$10$qQol/APCBRHsj8B7KaVv8.LJtkD2YO/y2XqZ3lsWkSzc9jo6q65b6', 'marcelofuncionarionovo@gmail.com', 'gestor', 'ativo', 'Marcelo Funcionario ', '12629680232', '31989371121', '2025-09-30 16:21:53', '/uploads/1759249857291-37726123.jpg', NULL),
-(24, 'arthurlsaraiva@gmail.com', '$2b$10$U4K1dfAoM/lm1kUpks/pbueozdT01h0xqI4CPwdrxPM63naxu3vDq', 'arthursaraiva@gmail.com', 'aluno', 'ativo', 'Arthur Lopes Saraiva', '11111111111', '31982471122', '2025-10-28 17:00:31', '/uploads/download-1761670831528.jpg', NULL),
 (26, 'arthurlsaraiva@gmail.com', '$2b$10$pU0wPsr3SJYr67FA/WBaH.JNaFKLhx7doucvDIvkZHQlPSmdP.NZ2', 'arthurlsaraiva@gmail.com', 'aluno', 'ativo', 'Arthur Lopes Saraiva', '22222222222', '(31) 98247-1144', '2025-10-28 17:37:05', NULL, NULL),
 (27, 'arthurlsaraiva1@gmail.com', '$2b$10$fZ8q6mMsfMzdanFnAgL06ONstWB1yyPXyp3mNjTkOuBz89yqhnCNm', 'Joaovv@gmail.com', 'aluno', 'ativo', 'Arthur L. Saraiva', '99999999999', '(31) 98247-1144', '2025-10-28 17:59:54', '/uploads/download-1761674394496.jpg', NULL),
 (28, 'arthurlsaraiva1h@gmail.com', '$2b$10$8NuHVqMJfQUwIMx9a1lRI.aRwMHsrUP7FoFxvj8nY2QKzKGxJyAq.', 'arthur11@gmail.com', 'aluno', 'ativo', 'Arthur Teste', '77777777777', '(31) 98247-1144', '2025-10-28 20:31:25', '/uploads/download-1761683485087.jpg', NULL),
@@ -2286,11 +2370,11 @@ ALTER TABLE `mensalidades`
 --
 ALTER TABLE `notas`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `aluno_id` (`aluno_id`,`avaliacao_id`),
-  ADD KEY `fk_notas_alunos` (`aluno_id`),
-  ADD KEY `fk_notas_materias` (`materia_id`),
-  ADD KEY `fk_notas_turmas` (`turma_id`),
-  ADD KEY `fk_notas_avaliacoes` (`avaliacao_id`);
+  ADD UNIQUE KEY `idx_aluno_avaliacao_unique` (`aluno_id`,`avaliacao_id`),
+  ADD KEY `fk_notas_aluno` (`aluno_id`),
+  ADD KEY `fk_notas_avaliacao` (`avaliacao_id`),
+  ADD KEY `fk_notas_materia` (`materia_id`),
+  ADD KEY `fk_notas_turma` (`turma_id`);
 
 --
 -- Índices de tabela `notificacoes`
@@ -2429,7 +2513,7 @@ ALTER TABLE `alunos_responsaveis`
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
@@ -2453,7 +2537,7 @@ ALTER TABLE `aulas`
 -- AUTO_INCREMENT de tabela `avaliacoes`
 --
 ALTER TABLE `avaliacoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT de tabela `calendario_gestor`
@@ -2657,7 +2741,7 @@ ALTER TABLE `mensalidades`
 -- AUTO_INCREMENT de tabela `notas`
 --
 ALTER TABLE `notas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=234;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT de tabela `notificacoes`
@@ -2669,7 +2753,7 @@ ALTER TABLE `notificacoes`
 -- AUTO_INCREMENT de tabela `notificacoes_eventos`
 --
 ALTER TABLE `notificacoes_eventos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=273;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=342;
 
 --
 -- AUTO_INCREMENT de tabela `pagamentos_funcionarios`
@@ -2717,7 +2801,7 @@ ALTER TABLE `transacoes`
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de tabela `turmas_materias`
@@ -2779,8 +2863,8 @@ ALTER TABLE `aulas`
 -- Restrições para tabelas `avaliacoes`
 --
 ALTER TABLE `avaliacoes`
+  ADD CONSTRAINT `FK_avaliacoes_cursos_disciplinas` FOREIGN KEY (`materia_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_avaliacoes_calendario` FOREIGN KEY (`calendario_id`) REFERENCES `calendario_gestor` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_avaliacoes_materias` FOREIGN KEY (`materia_id`) REFERENCES `materias` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_avaliacoes_turma` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
@@ -2944,10 +3028,10 @@ ALTER TABLE `mensalidades`
 -- Restrições para tabelas `notas`
 --
 ALTER TABLE `notas`
-  ADD CONSTRAINT `fk_notas_alunos` FOREIGN KEY (`aluno_id`) REFERENCES `alunos` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_notas_avaliacoes` FOREIGN KEY (`avaliacao_id`) REFERENCES `avaliacoes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_notas_materias` FOREIGN KEY (`materia_id`) REFERENCES `materias` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_notas_turmas` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fk_notas_aluno` FOREIGN KEY (`aluno_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_notas_avaliacao` FOREIGN KEY (`avaliacao_id`) REFERENCES `avaliacoes` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_notas_materia` FOREIGN KEY (`materia_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_notas_turma` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `notificacoes`

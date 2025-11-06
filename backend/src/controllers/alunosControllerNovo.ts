@@ -346,20 +346,19 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
 
     const connection = await pool.getConnection();
     try {
-        // ======================= CORREÇÃO 1: BUSCA DE DADOS DO ALUNO E CURSO =======================
-        // A query foi ajustada para buscar o curso a partir da tabela de turmas (alunos_turmas).
-        // Isso garante que, se o aluno estiver em qualquer turma de um curso, o curso será encontrado.
+        // 1. Busca de dados do aluno e seu curso mais recente
         const [alunoRows] = await connection.query<RowDataPacket[]>(`
             SELECT 
-                a.id, a.nome, a.cpf, a.rg, a.matricula, a.email, a.foto, a.biografia,
-                a.telefone, a.endereco, a.data_nascimento, a.genero, a.status,
+                a.id, u.nome, a.cpf, a.rg, a.matricula, u.email, u.foto_url as foto, a.biografia,
+                u.telefone, a.endereco, a.data_nascimento, a.genero, a.status,
                 cpg.id as curso_id, cpg.nome as curso_nome
             FROM alunos a
-            LEFT JOIN alunos_turmas at ON a.id = at.aluno_id
+            JOIN users u ON a.id = u.id
+            LEFT JOIN alunos_turmas at ON a.id = at.aluno_id AND at.status_vinculo = 'ativo'
             LEFT JOIN turmas t ON at.turma_id = t.id
             LEFT JOIN cursos_posgraduacao cpg ON t.curso_id = cpg.id
             WHERE a.id = ?
-            ORDER BY at.id DESC -- Pega o vínculo mais recente em caso de múltiplas turmas
+            ORDER BY t.ano_letivo DESC, t.semestre_id DESC
             LIMIT 1;
         `, [alunoId]);
 
@@ -369,27 +368,32 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
         const aluno = alunoRows[0];
         aluno.endereco = aluno.endereco ? JSON.parse(aluno.endereco) : null;
 
-        // ======================= CORREÇÃO 2: BUSCA DE DISCIPLINAS E NOTAS =======================
-        // A query foi ajustada para buscar todas as disciplinas do CURSO do aluno,
-        // e não apenas as disciplinas das turmas em que ele está. Isso mostra a grade completa.
+        // Se o aluno não estiver em nenhum curso, retorna os dados básicos.
+        if (!aluno.curso_id) {
+            const [documentos] = await connection.query('SELECT * FROM documentos_alunos WHERE aluno_id = ?', [alunoId]);
+            const [contratos] = await connection.query('SELECT * FROM contratos_preenchidos WHERE aluno_id = ?', [alunoId]);
+            return res.status(200).json({ aluno, academico: {}, documentos, contratos });
+        }
+
+        // ======================= CONSULTA ACADÊMICA CORRIGIDA =======================
         const [disciplinasRows] = await connection.query<RowDataPacket[]>(`
             SELECT 
                 d.id as disciplina_id,
                 d.nome as disciplina_nome,
                 d.semestre,
-                n.tipo as avaliacao_tipo,
-                n.valor as avaliacao_valor,
+                av.descricao as avaliacao_tipo,  -- Corrigido
+                av.valor as avaliacao_valor,      -- Corrigido
                 n.nota,
-                n.recuperacao,
                 n.nota_rec
             FROM cursos_disciplinas d
             LEFT JOIN notas n ON n.aluno_id = ? AND n.materia_id = d.id
+            LEFT JOIN avaliacoes av ON n.avaliacao_id = av.id
             WHERE d.curso_id = ?
-            ORDER BY d.semestre, d.nome, n.data;
-        `, [alunoId, aluno.curso_id]); // Usamos o curso_id encontrado na primeira query
+            ORDER BY d.semestre, d.nome, av.data_inicio;
+        `, [alunoId, aluno.curso_id]);
 
         const academico = disciplinasRows.reduce((acc, row) => {
-            const { semestre, disciplina_id, disciplina_nome, avaliacao_tipo, avaliacao_valor, nota, recuperacao, nota_rec } = row;
+            const { semestre, disciplina_id, disciplina_nome, avaliacao_tipo, avaliacao_valor, nota, nota_rec } = row;
             const semestreKey = `Semestre ${semestre}`;
 
             if (!acc[semestreKey]) {
@@ -407,21 +411,22 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
                     tipo: avaliacao_tipo,
                     valor: avaliacao_valor,
                     nota: nota,
-                    recuperacao: recuperacao,
-                    nota_rec: nota_rec
+                    nota_rec: nota_rec,
+                    // Adicionando o campo 'recuperacao' que o frontend espera
+                    recuperacao: nota_rec !== null ? 'Sim' : 'Não' 
                 });
             }
             return acc;
         }, {} as Record<string, any[]>);
 
-        // 3. Documentos do Aluno (sem alteração)
+        // 3. Documentos do Aluno
         const [documentos] = await connection.query<RowDataPacket[]>(`
             SELECT tipo_documento, caminho_arquivo, nome_original, data_upload 
             FROM documentos_alunos 
             WHERE aluno_id = ?;
         `, [alunoId]);
 
-        // 4. Contratos do Aluno (sem alteração)
+        // 4. Contratos do Aluno
         const [contratos] = await connection.query<RowDataPacket[]>(`
             SELECT 
                 cp.id, c.nome as nome_contrato, c.tipo, cp.situacao_contrato, 
