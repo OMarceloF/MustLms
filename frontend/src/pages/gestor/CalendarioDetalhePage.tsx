@@ -285,7 +285,7 @@ const CalendarioDetalhePage: React.FC = ( ) => {
         <SidebarGestor isMenuOpen={sidebarAberta} setActivePage={(page: string) => navigate('/gestor', { state: { activePage: page } })} handleMouseEnter={() => setSidebarAberta(true)} handleMouseLeave={() => setSidebarAberta(false)} />
       </div>
 
-      <div className="flex-1 flex flex-col pt-20 px-2 sm:px-6 md:ml-16 pl-16 min-w-0 transition-all duration-300">
+      <div className="flex-1 flex flex-col pt-20 px-2 sm:px-6 md:ml-16 min-w-0 transition-all duration-300">
         <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
 
         <main className="flex-1 px-0 sm:px-4 py-8 max-w-7xl mx-auto w-full">
