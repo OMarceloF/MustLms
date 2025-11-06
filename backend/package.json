@@ -4,8 +4,10 @@
     "description": "Backend do LMS",
     "main": "dist/index.js",
     "scripts": {
-        "start": "ts-node-dev --respawn src/index.ts",
-        "build": "tsc"
+       "start": "ts-node-dev --respawn src/index.ts",
+        "start:dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules --watch src src/index.ts",
+        "build": "tsc",
+        "dev": "npm run start:dev"
     },
     "dependencies": {
         "axios": "^1.8.4",
