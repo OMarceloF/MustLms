@@ -5,7 +5,7 @@ import pool from '../config/db';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { notificarNotaLancada } from './notificacoesEventosController';
 
-// --- Interfaces ---
+// --- Interfaces (sem alterações) ---
 interface Avaliacao extends RowDataPacket {
   id: number;
   descricao: string;
@@ -18,6 +18,8 @@ interface AlunoComNotas {
     aluno_id: number;
     aluno_nome: string;
     aluno_foto: string | null;
+    matricula?: string;
+    status_aluno?: 'ativo' | 'inativo';
     notas: { avaliacao_id: number; nota: number | null }[];
     media_final: number;
     status: 'Aprovado' | 'Recuperação' | 'Reprovado' | 'Pendente';
@@ -28,7 +30,6 @@ interface AlunoComNotas {
 // =======================================================================
 // CRUD DE AVALIAÇÕES (Sem alterações)
 // =======================================================================
-
 export const getAvaliacoesByTurmaMateria = async (req: Request, res: Response) => {
     const { materiaId, turmaId, calendarioId } = req.params;
     if (!materiaId || !turmaId || !calendarioId) {
@@ -127,9 +128,8 @@ export const deleteAvaliacao = async (req: Request, res: Response) => {
 };
 
 // =======================================================================
-// LÓGICA CENTRAL DE NOTAS E STATUS (TOTALMENTE REFEITA)
+// LÓGICA CENTRAL DE NOTAS E STATUS (COM CORREÇÃO)
 // =======================================================================
-
 export const getDadosAcademicosCompletos = async (req: Request, res: Response) => {
     const { turmaId, materiaId, calendarioId } = req.params;
     try {
@@ -185,31 +185,30 @@ export const getDadosAcademicosCompletos = async (req: Request, res: Response) =
                 media_final = 100;
             }
 
-            // ***** LÓGICA CORRIGIDA AQUI *****
-            let nota_recuperacao = recMap.get(aluno.id) ?? null;
+            const nota_recuperacao = recMap.get(aluno.id) ?? null;
             let status: AlunoComNotas['status'] = 'Pendente';
             let nota_final = media_final;
 
-            if (media_final >= 60) {
-                status = 'Aprovado';
-                // Se o aluno está aprovado por média, a recuperação é irrelevante.
-                // Forçamos a nota de recuperação a ser nula para o frontend.
-                nota_recuperacao = null; 
-            } else if (media_final >= 40) {
-                status = 'Recuperação';
-                if (nota_recuperacao !== null) {
-                    if (nota_recuperacao >= 60) {
-                        status = 'Aprovado';
-                        nota_final = 60.0; 
-                    } else {
-                        status = 'Reprovado';
-                        nota_final = media_final;
+            const MEDIA_APROVACAO = 60;
+            const MEDIA_RECUPERACAO = 40;
+
+            const temAvaliacoes = avaliacoes.length > 0;
+            const temNotasLancadas = notasDoAluno.some(n => n.nota !== null);
+
+            if (temAvaliacoes && temNotasLancadas) {
+                if (media_final >= MEDIA_APROVACAO) {
+                    status = 'Aprovado';
+                } else if (media_final >= MEDIA_RECUPERACAO) {
+                    status = 'Recuperação';
+                    if (nota_recuperacao !== null) {
+                        if (nota_recuperacao > media_final) {
+                            nota_final = nota_recuperacao;
+                        }
+                        status = nota_final >= MEDIA_APROVACAO ? 'Aprovado' : 'Reprovado';
                     }
+                } else {
+                    status = 'Reprovado';
                 }
-            } else {
-                status = 'Reprovado';
-                // Se está reprovado direto, a recuperação também não se aplica.
-                nota_recuperacao = null;
             }
 
             return {
@@ -236,7 +235,7 @@ export const getDadosAcademicosCompletos = async (req: Request, res: Response) =
 export const upsertNotas = async (req: Request, res: Response) => {
     const { aluno_id, materia_id, turma_id, avaliacao_id, nota, tipo_nota } = req.body;
 
-    let notaNumerica = Number(nota);
+    const notaNumerica = Number(nota);
     const notaParaSalvar = isNaN(notaNumerica) ? null : notaNumerica;
 
     if (!aluno_id || !materia_id || !turma_id) {
@@ -248,38 +247,41 @@ export const upsertNotas = async (req: Request, res: Response) => {
         await connection.beginTransaction();
         
         if (tipo_nota === 'recuperacao') {
-            // Validação para nota de recuperação (0 a 100)
             if (notaParaSalvar !== null && (notaParaSalvar < 0 || notaParaSalvar > 100)) {
                 throw new Error('A nota de recuperação deve estar entre 0 e 100.');
             }
-            await connection.query(
-                'UPDATE notas SET nota_rec = ? WHERE aluno_id = ? AND materia_id = ? AND turma_id = ?', 
-                [notaParaSalvar, aluno_id, materia_id, turma_id]
-            );
+            const [existingNote] = await connection.query<RowDataPacket[]>('SELECT id FROM notas WHERE aluno_id = ? AND materia_id = ? AND turma_id = ? LIMIT 1', [aluno_id, materia_id, turma_id]);
+            if (existingNote.length > 0) {
+                 await connection.query(
+                    'UPDATE notas SET nota_rec = ? WHERE aluno_id = ? AND materia_id = ? AND turma_id = ?', 
+                    [notaParaSalvar, aluno_id, materia_id, turma_id]
+                );
+            } else {
+                 await connection.query(
+                    'INSERT INTO notas (aluno_id, materia_id, turma_id, nota_rec) VALUES (?, ?, ?, ?)',
+                    [aluno_id, materia_id, turma_id, notaParaSalvar]
+                );
+            }
         } else {
             if (!avaliacao_id) {
                 return res.status(400).json({ message: 'ID da avaliação é obrigatório para nota regular.' });
             }
-
-            // ***** CORREÇÃO DE VALOR MÁXIMO *****
-            // Busca o valor máximo da avaliação antes de salvar a nota.
             const [avaliacaoRows] = await connection.query<RowDataPacket[]>('SELECT valor FROM avaliacoes WHERE id = ?', [avaliacao_id]);
-            if (avaliacaoRows.length === 0) {
-                throw new Error('Avaliação não encontrada.');
-            }
+            if (avaliacaoRows.length === 0) throw new Error('Avaliação não encontrada.');
+            
             const valorMaximo = parseFloat(avaliacaoRows[0].valor);
+            let notaFinalParaSalvar = notaParaSalvar;
 
             if (notaParaSalvar !== null && notaParaSalvar > valorMaximo) {
-                // Se a nota for maior que o permitido, salva o valor máximo em vez de dar erro.
-                // Isso evita que o usuário perca o trabalho, mas impede dados incorretos.
-                notaNumerica = valorMaximo;
+                notaFinalParaSalvar = valorMaximo;
+                // A linha do toast foi removida daqui
             }
             
             await connection.query(
                 `INSERT INTO notas (aluno_id, avaliacao_id, nota, materia_id, turma_id) 
                  VALUES (?, ?, ?, ?, ?) 
                  ON DUPLICATE KEY UPDATE nota = VALUES(nota)`,
-                [aluno_id, avaliacao_id, isNaN(notaNumerica) ? null : notaNumerica, materia_id, turma_id]
+                [aluno_id, avaliacao_id, notaFinalParaSalvar, materia_id, turma_id]
             );
         }
         

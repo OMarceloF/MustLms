@@ -370,19 +370,27 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
 
     const connection = await pool.getConnection();
     try {
-        // 1. Busca de dados do aluno e seu curso mais recente
+        // =======================================================================
+        // CONSULTA PRINCIPAL ATUALIZADA
+        // =======================================================================
         const [alunoRows] = await connection.query<RowDataPacket[]>(`
             SELECT 
                 a.id, u.nome, a.cpf, a.rg, a.matricula, u.email, u.foto_url as foto, a.biografia,
                 u.telefone, a.endereco, a.data_nascimento, a.genero, a.status,
-                cpg.id as curso_id, cpg.nome as curso_nome
+                cpg.id as curso_id, 
+                cpg.nome as curso_nome,
+                ti.nome as turma_ingresso_nome  -- <<< NOVA INFORMAÇÃO ADICIONADA
             FROM alunos a
             JOIN users u ON a.id = u.id
-            LEFT JOIN alunos_turmas at ON a.id = at.aluno_id AND at.status_vinculo = 'ativo'
-            LEFT JOIN turmas t ON at.turma_id = t.id
-            LEFT JOIN cursos_posgraduacao cpg ON t.curso_id = cpg.id
+            -- Junta com a tabela de vínculo para encontrar a matrícula do aluno
+            LEFT JOIN vincular_aluno_curso vac ON a.id = vac.aluno_id
+            -- A partir do vínculo, encontra o nome do curso
+            LEFT JOIN cursos_posgraduacao cpg ON vac.curso_posgraduacao_id = cpg.id
+            -- A partir do vínculo, encontra o nome da turma de ingresso
+            LEFT JOIN turmas_ingresso ti ON vac.turmas_ingresso_id = ti.id
             WHERE a.id = ?
-            ORDER BY t.ano_letivo DESC, t.semestre_id DESC
+            -- Ordena para pegar o vínculo mais recente, caso haja mais de um
+            ORDER BY vac.data_vinculo DESC
             LIMIT 1;
         `, [alunoId]);
 
@@ -392,6 +400,9 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
         const aluno = alunoRows[0];
         aluno.endereco = aluno.endereco ? JSON.parse(aluno.endereco) : null;
 
+        // O restante da função para buscar dados acadêmicos, documentos e contratos permanece o mesmo.
+        // ... (código para buscar disciplinas, documentos e contratos) ...
+
         // Se o aluno não estiver em nenhum curso, retorna os dados básicos.
         if (!aluno.curso_id) {
             const [documentos] = await connection.query('SELECT * FROM documentos_alunos WHERE aluno_id = ?', [alunoId]);
@@ -399,16 +410,11 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
             return res.status(200).json({ aluno, academico: {}, documentos, contratos });
         }
 
-        // ======================= CONSULTA ACADÊMICA CORRIGIDA =======================
         const [disciplinasRows] = await connection.query<RowDataPacket[]>(`
             SELECT 
-                d.id as disciplina_id,
-                d.nome as disciplina_nome,
-                d.semestre,
-                av.descricao as avaliacao_tipo,  -- Corrigido
-                av.valor as avaliacao_valor,      -- Corrigido
-                n.nota,
-                n.nota_rec
+                d.id as disciplina_id, d.nome as disciplina_nome, d.semestre,
+                av.descricao as avaliacao_tipo, av.valor as avaliacao_valor,      
+                n.nota, n.nota_rec
             FROM cursos_disciplinas d
             LEFT JOIN notas n ON n.aluno_id = ? AND n.materia_id = d.id
             LEFT JOIN avaliacoes av ON n.avaliacao_id = av.id
@@ -419,47 +425,23 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
         const academico = disciplinasRows.reduce((acc, row) => {
             const { semestre, disciplina_id, disciplina_nome, avaliacao_tipo, avaliacao_valor, nota, nota_rec } = row;
             const semestreKey = `Semestre ${semestre}`;
-
-            if (!acc[semestreKey]) {
-                acc[semestreKey] = [];
-            }
-
+            if (!acc[semestreKey]) acc[semestreKey] = [];
             let disciplina = acc[semestreKey].find(d => d.id === disciplina_id);
             if (!disciplina) {
                 disciplina = { id: disciplina_id, nome: disciplina_nome, notas: [] };
                 acc[semestreKey].push(disciplina);
             }
-
             if (avaliacao_tipo) {
                 disciplina.notas.push({
-                    tipo: avaliacao_tipo,
-                    valor: avaliacao_valor,
-                    nota: nota,
-                    nota_rec: nota_rec,
-                    // Adicionando o campo 'recuperacao' que o frontend espera
+                    tipo: avaliacao_tipo, valor: avaliacao_valor, nota: nota, nota_rec: nota_rec,
                     recuperacao: nota_rec !== null ? 'Sim' : 'Não' 
                 });
             }
             return acc;
         }, {} as Record<string, any[]>);
 
-        // 3. Documentos do Aluno
-        const [documentos] = await connection.query<RowDataPacket[]>(`
-            SELECT tipo_documento, caminho_arquivo, nome_original, data_upload 
-            FROM documentos_alunos 
-            WHERE aluno_id = ?;
-        `, [alunoId]);
-
-        // 4. Contratos do Aluno
-        const [contratos] = await connection.query<RowDataPacket[]>(`
-            SELECT 
-                cp.id, c.nome as nome_contrato, c.tipo, cp.situacao_contrato, 
-                cp.contrato_url, cp.criado_em
-            FROM contratos_preenchidos cp
-            JOIN contratos c ON cp.contrato_id = c.id
-            WHERE cp.aluno_id = ?
-            ORDER BY cp.criado_em DESC;
-        `, [alunoId]);
+        const [documentos] = await connection.query<RowDataPacket[]>('SELECT tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_alunos WHERE aluno_id = ?;', [alunoId]);
+        const [contratos] = await connection.query<RowDataPacket[]>('SELECT cp.id, c.nome as nome_contrato, c.tipo, cp.situacao_contrato, cp.contrato_url, cp.criado_em FROM contratos_preenchidos cp JOIN contratos c ON cp.contrato_id = c.id WHERE cp.aluno_id = ? ORDER BY cp.criado_em DESC;', [alunoId]);
 
         res.status(200).json({
             aluno,
