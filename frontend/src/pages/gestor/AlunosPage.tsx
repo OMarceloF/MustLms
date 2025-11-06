@@ -18,29 +18,15 @@ import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';
 import { Button } from '../gestor/components/ui/button';
 
-// --- Interfaces (sem alterações) ---
-interface Turma {
-  id: number;
-  nome: string;
-  serie: string; // O nome do campo no backend permanece 'serie'
-  ano_letivo: string;
-  turno: string;
-  qtd_alunos: number;
-  etapa_ensino: string;
-  professor_responsavel?: string;
-}
-
+// --- Interfaces ATUALIZADAS ---
 interface Aluno {
   id: string;
   nome: string;
   email: string;
-  login: string;
-  role: string;
   matricula?: string;
   foto: string;
-  created_at: string;
   curso_nome?: string;
-  turma_nome?: string;
+  turma_ingresso_nome?: string; // MODIFICADO: de 'turma_nome' para 'turma_ingresso_nome'
 }
 
 const AlunosPage = () => {
@@ -52,7 +38,6 @@ const AlunosPage = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: keyof Aluno | null; direction: 'ascending' | 'descending' }>({ key: null, direction: 'ascending' });
 
-  // 1. Renomeado o estado para clareza
   const [filterCurso, setFilterCurso] = useState<string>('');
   const [filterTurma, setFilterTurma] = useState<string>('');
 
@@ -60,7 +45,7 @@ const AlunosPage = () => {
   const navigate = useNavigate();
   const isProfessor = user.role === 'professor';
 
-  // --- Lógica de Fetch ---
+  // --- Lógica de Fetch (sem alterações) ---
   useEffect(() => {
     if (authLoading) return;
     setIsLoading(true);
@@ -78,7 +63,7 @@ const AlunosPage = () => {
       .finally(() => setIsLoading(false));
   }, [user, authLoading]);
 
-  // --- Lógica de Filtro e Ordenação ---
+  // --- Lógica de Filtro e Ordenação ATUALIZADA ---
   useEffect(() => {
     let result = [...alunos];
     if (searchTerm) {
@@ -89,9 +74,10 @@ const AlunosPage = () => {
         (aluno.matricula?.toLowerCase() ?? '').includes(term)
       );
     }
-    // 2. A lógica de filtro continua usando o campo 'serie', mas o estado agora é 'filterCurso'
+    
     if (filterCurso) result = result.filter(aluno => aluno.curso_nome === filterCurso);
-    if (filterTurma) result = result.filter(aluno => aluno.turma_nome === filterTurma);
+    // MODIFICADO: Filtra pela nova propriedade 'turma_ingresso_nome'
+    if (filterTurma) result = result.filter(aluno => aluno.turma_ingresso_nome === filterTurma);
 
     if (sortConfig.key && sortConfig.key !== 'foto') {
       const key = sortConfig.key;
@@ -123,9 +109,9 @@ const AlunosPage = () => {
     }
   };
 
-  // 3. A lógica para obter valores únicos continua usando o campo 'serie'
+  // Lógica para obter valores únicos ATUALIZADA
   const uniqueCursos = [...new Set(alunos.map(aluno => aluno.curso_nome).filter(Boolean))];
-  const uniqueTurmas = [...new Set(alunos.map(aluno => aluno.turma_nome).filter(Boolean))];
+  const uniqueTurmas = [...new Set(alunos.map(aluno => aluno.turma_ingresso_nome).filter(Boolean))];
 
   if (authLoading) {
     return (
@@ -135,7 +121,6 @@ const AlunosPage = () => {
     );
   }
 
-  // --- ESTRUTURA E DESIGN ATUALIZADOS ---
   return (
     <div className="min-h-screen bg-muted/30 p-4 sm:p-8">
       <div className="mx-auto max-w-7xl">
@@ -197,7 +182,7 @@ const AlunosPage = () => {
                   onChange={(e) => setFilterTurma(e.target.value)}
                   className="w-full appearance-none rounded-lg border bg-background py-2 pl-9 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
-                  <option value="">Filtrar por Turma</option>
+                  <option value="">Filtrar por Turma de Ingresso</option>
                   {uniqueTurmas.map((turma) => (
                     <option key={turma} value={turma}>
                       {turma}
@@ -219,7 +204,7 @@ const AlunosPage = () => {
             </div>
           ) : (
             <>
-              {/* Tabela para telas grandes (lg e acima) */}
+              {/* Tabela para telas grandes */}
               <div className="hidden lg:block overflow-x-auto rounded-lg border">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50">
@@ -227,10 +212,9 @@ const AlunosPage = () => {
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground">Foto</th>
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('nome')}>Nome</th>
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('matricula')}>Matrícula</th>
-                      {/* 5. Cabeçalho da tabela atualizado */}
-                     {/* Cabeçalho da tabela ATUALIZADO */}
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('curso_nome')}>Curso</th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('turma_nome')}>Turma</th>
+                      {/* MODIFICADO: Cabeçalho da coluna */}
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('turma_ingresso_nome')}>Turma Ingresso</th>
                       <th className="px-4 py-3 text-right font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
@@ -248,9 +232,9 @@ const AlunosPage = () => {
                         </td>
                         <td className="p-4 font-medium text-foreground">{aluno.nome}</td>
                         <td className="p-4 text-muted-foreground">{aluno.matricula || '—'}</td>
-                        {/* O dado exibido ainda é 'aluno.serie', mas o cabeçalho é "Curso" */}
                         <td className="p-4 text-muted-foreground">{aluno.curso_nome || '—'}</td>
-                        <td className="p-4 text-muted-foreground">{aluno.turma_nome || '—'}</td>
+                        {/* MODIFICADO: Exibe a turma de ingresso */}
+                        <td className="p-4 text-muted-foreground">{aluno.turma_ingresso_nome || '—'}</td>
                         <td className="p-4 text-right">
                           <div className="flex justify-end gap-1">
                             {showDeleteConfirm === aluno.id ? (
@@ -277,7 +261,7 @@ const AlunosPage = () => {
                 </table>
               </div>
 
-              {/* Cards para telas pequenas (abaixo de lg) */}
+              {/* Cards para telas pequenas */}
               <div className="grid grid-cols-1 gap-4 lg:hidden">
                 {filteredAlunos.map((aluno) => (
                   <div key={aluno.id} className="rounded-lg border bg-card p-4 shadow-sm">
@@ -314,14 +298,14 @@ const AlunosPage = () => {
                         <p className="text-xs font-medium text-muted-foreground">Matrícula</p>
                         <p className="font-medium">{aluno.matricula || '—'}</p>
                       </div>
-                      {/* 6. Label do card atualizado */}
                       <div>
                         <p className="text-xs font-medium text-muted-foreground">Curso</p>
                         <p className="font-medium">{aluno.curso_nome || '—'}</p>
                       </div>
+                      {/* MODIFICADO: Label e dado do card */}
                       <div>
-                        <p className="text-xs font-medium text-muted-foreground">Turma</p>
-                        <p className="font-medium">{aluno.turma_nome || '—'}</p>
+                        <p className="text-xs font-medium text-muted-foreground">Turma Ingresso</p>
+                        <p className="font-medium">{aluno.turma_ingresso_nome || '—'}</p>
                       </div>
                     </div>
                   </div>
