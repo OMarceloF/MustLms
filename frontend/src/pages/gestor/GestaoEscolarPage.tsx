@@ -217,14 +217,6 @@ const GestaoEscolarPage: React.FC = () => {
             Lista de todas as disciplinas dos cursos de pós-graduação cadastrados no sistema.
           </p>
         </div>
-        {user.role !== 'Professor' && (
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-            <Button onClick={() => handleOpenDialog(null)} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Disciplina
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* <<--- PASSO 4: Adicionar o campo de busca --->> */}
