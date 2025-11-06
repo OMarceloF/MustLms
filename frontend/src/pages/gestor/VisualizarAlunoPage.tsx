@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { User, FileText, BookOpen, Briefcase, Download } from 'lucide-react';
+import { User, FileText, BookOpen, Briefcase, Download, RefreshCw } from 'lucide-react';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import SidebarGestor from "./components/Sidebar";
 
@@ -51,6 +51,7 @@ interface DadosAcademicos {
 }
 
 interface Documento {
+    id: number;
     tipo_documento: string;
     caminho_arquivo: string;
     nome_original: string;
@@ -83,6 +84,73 @@ const VisualizarAlunoPage = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
 
+    const fetchAlunoData = async () => {
+        if (!id) return;
+        try {
+            setIsLoading(true);
+            const response = await axios.get<AlunoCompleto>(`/api/alunos/${id}/detalhes-completos`);
+            setAlunoCompleto(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar detalhes do aluno:", error);
+            toast.error("Não foi possível carregar os dados do aluno.");
+            navigate('/gestor/alunos');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchAlunoData();
+    }, [id, navigate]);
+
+
+    const handleUpdateDocument = async (documentoId: number, file: File) => {
+        if (!file) {
+            toast.info("Nenhum arquivo selecionado.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('documento', file);
+
+        toast.loading("Atualizando documento...");
+
+        try {
+            // Ajuste a URL da API conforme necessário
+            await axios.post(`/api/alunos/${id}/documentos/${documentoId}/atualizar`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            toast.dismiss();
+            toast.success("Documento atualizado com sucesso!");
+
+            // Recarrega os dados para mostrar o documento atualizado
+            fetchAlunoData();
+
+        } catch (error) {
+            toast.dismiss();
+            console.error("Erro ao atualizar documento:", error);
+            toast.error("Falha ao atualizar o documento.");
+        }
+    };
+
+    const triggerFileInput = (documentoId: number) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        // Opcional: defina os tipos de arquivo aceitos
+        input.accept = ".pdf,.doc,.docx,.jpg,.jpeg,.png";
+        input.onchange = (e) => {
+            const target = e.target as HTMLInputElement;
+            if (target.files && target.files.length > 0) {
+                handleUpdateDocument(documentoId, target.files[0]);
+            }
+        };
+        input.click();
+    };
+
 
     useEffect(() => {
         const fetchAlunoData = async () => {
@@ -102,6 +170,8 @@ const VisualizarAlunoPage = () => {
 
         fetchAlunoData();
     }, [id, navigate]);
+
+
 
     const renderEndereco = (endereco: AlunoDetalhes['endereco']) => {
         if (!endereco) return "Não informado";
@@ -247,15 +317,31 @@ const VisualizarAlunoPage = () => {
 
                                     {activeTab === 'documentos' && (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {documentos.length > 0 ? documentos.map((doc, index) => (
-                                                <div key={index} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
-                                                    <div>
+                                            {documentos.length > 0 ? documentos.map((doc) => (
+                                                <div key={doc.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
+                                                    <div className="flex-1 min-w-0 mr-4">
                                                         <p className="font-semibold text-gray-700">{doc.tipo_documento.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
                                                         <p className="text-xs text-gray-500 truncate" title={doc.nome_original}>{doc.nome_original}</p>
                                                     </div>
-                                                    <a href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800">
-                                                        <Download size={20} />
-                                                    </a>
+                                                    {/* Agrupando os botões de ação */}
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => triggerFileInput(doc.id)}
+                                                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                            title="Atualizar Documento"
+                                                        >
+                                                            <RefreshCw size={20} />
+                                                        </button>
+                                                        <a
+                                                            href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                            title="Baixar Documento"
+                                                        >
+                                                            <Download size={20} />
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             )) : <p>Nenhum documento encontrado.</p>}
                                         </div>
