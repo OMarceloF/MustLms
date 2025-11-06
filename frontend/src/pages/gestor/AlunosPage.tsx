@@ -36,11 +36,11 @@ interface Aluno {
   email: string;
   login: string;
   role: string;
-  turma?: string;
-  serie?: string; // O nome do campo no backend permanece 'serie'
   matricula?: string;
   foto: string;
   created_at: string;
+  curso_nome?: string;
+  turma_nome?: string;
 }
 
 const AlunosPage = () => {
@@ -90,8 +90,8 @@ const AlunosPage = () => {
       );
     }
     // 2. A lógica de filtro continua usando o campo 'serie', mas o estado agora é 'filterCurso'
-    if (filterCurso) result = result.filter(aluno => aluno.serie === filterCurso);
-    if (filterTurma) result = result.filter(aluno => aluno.turma === filterTurma);
+    if (filterCurso) result = result.filter(aluno => aluno.curso_nome === filterCurso);
+    if (filterTurma) result = result.filter(aluno => aluno.turma_nome === filterTurma);
 
     if (sortConfig.key && sortConfig.key !== 'foto') {
       const key = sortConfig.key;
@@ -102,7 +102,7 @@ const AlunosPage = () => {
       });
     }
     setFilteredAlunos(result);
-  }, [alunos, searchTerm, filterCurso, filterTurma, sortConfig]); // Dependência atualizada
+  }, [alunos, searchTerm, filterCurso, filterTurma, sortConfig]);
 
   const handleSort = (key: keyof Aluno) => {
     setSortConfig(prev => ({
@@ -124,8 +124,8 @@ const AlunosPage = () => {
   };
 
   // 3. A lógica para obter valores únicos continua usando o campo 'serie'
-  const uniqueCursos = [...new Set(alunos.map(aluno => aluno.serie).filter(Boolean))];
-  const uniqueTurmas = [...new Set(alunos.map(aluno => aluno.turma).filter(Boolean))];
+  const uniqueCursos = [...new Set(alunos.map(aluno => aluno.curso_nome).filter(Boolean))];
+  const uniqueTurmas = [...new Set(alunos.map(aluno => aluno.turma_nome).filter(Boolean))];
 
   if (authLoading) {
     return (
@@ -228,8 +228,9 @@ const AlunosPage = () => {
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('nome')}>Nome</th>
                       <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('matricula')}>Matrícula</th>
                       {/* 5. Cabeçalho da tabela atualizado */}
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('serie')}>Curso</th>
-                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('turma')}>Turma</th>
+                     {/* Cabeçalho da tabela ATUALIZADO */}
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('curso_nome')}>Curso</th>
+                      <th className="px-4 py-3 text-left font-medium text-muted-foreground cursor-pointer hover:bg-muted" onClick={() => handleSort('turma_nome')}>Turma</th>
                       <th className="px-4 py-3 text-right font-medium text-muted-foreground">Ações</th>
                     </tr>
                   </thead>
@@ -248,8 +249,8 @@ const AlunosPage = () => {
                         <td className="p-4 font-medium text-foreground">{aluno.nome}</td>
                         <td className="p-4 text-muted-foreground">{aluno.matricula || '—'}</td>
                         {/* O dado exibido ainda é 'aluno.serie', mas o cabeçalho é "Curso" */}
-                        <td className="p-4 text-muted-foreground">{aluno.serie || '—'}</td>
-                        <td className="p-4 text-muted-foreground">{aluno.turma || '—'}</td>
+                        <td className="p-4 text-muted-foreground">{aluno.curso_nome || '—'}</td>
+                        <td className="p-4 text-muted-foreground">{aluno.turma_nome || '—'}</td>
                         <td className="p-4 text-right">
                           <div className="flex justify-end gap-1">
                             {showDeleteConfirm === aluno.id ? (
@@ -316,11 +317,11 @@ const AlunosPage = () => {
                       {/* 6. Label do card atualizado */}
                       <div>
                         <p className="text-xs font-medium text-muted-foreground">Curso</p>
-                        <p className="font-medium">{aluno.serie || '—'}</p>
+                        <p className="font-medium">{aluno.curso_nome || '—'}</p>
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground">Turma</p>
-                        <p className="font-medium">{aluno.turma || '—'}</p>
+                        <p className="font-medium">{aluno.turma_nome || '—'}</p>
                       </div>
                     </div>
                   </div>

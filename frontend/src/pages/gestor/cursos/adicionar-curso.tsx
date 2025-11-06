@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
-// Importações de UI e hooks (sem alterações)
+// Importações de UI e hooks
 import { Button } from "../components/ui/button"
 import { Card, CardContent } from "../components/ui/card"
 import { Input } from "../components/ui/input"
@@ -17,11 +17,14 @@ import TopbarGestorAuto from '../components/TopbarGestorAuto';
 import SidebarGestor from "../components/Sidebar";
 import { useAuth } from "../../../hooks/useAuth";
 
-// Interfaces e Mocks (sem alterações)
+// Interfaces e Mocks
 interface Professor { id: string; nome: string; }
 interface Unidade { id: string; nome: string; }
+
+// Interface do formulário atualizada com o campo 'sigla'
 interface CursoFormData {
     nome: string;
+    sigla: string; // <-- CAMPO ADICIONADO
     tipo: string;
     area: string;
     cargaHoraria: string;
@@ -37,6 +40,7 @@ interface CursoFormData {
     status: string;
     linkDivulgacao: string;
 }
+
 const mockProfessores: Professor[] = [
     { id: "1", nome: "Dr. João Silva" },
     { id: "2", nome: "Dra. Maria Santos" },
@@ -58,42 +62,56 @@ export default function AdicionarCursoPage() {
 
     const [isLoading, setIsLoading] = useState(isEditMode);
     const [errors, setErrors] = useState<Partial<Record<keyof CursoFormData, string>>>({});
+    
+    // Estado inicial do formulário atualizado com 'sigla'
     const [formData, setFormData] = useState<CursoFormData>({
-        nome: "", tipo: "", area: "", cargaHoraria: "", duracao: "",
-        modalidade: "", coordenador: "", viceCoordenador: "", unidade: "",
-        objetivos: "", perfilEgresso: "", justificativa: "", anoInicio: "",
-        status: "", linkDivulgacao: "",
+        nome: "",
+        sigla: "", // <-- CAMPO ADICIONADO
+        tipo: "",
+        area: "",
+        cargaHoraria: "",
+        duracao: "",
+        modalidade: "",
+        coordenador: "",
+        viceCoordenador: "",
+        unidade: "",
+        objetivos: "",
+        perfilEgresso: "",
+        justificativa: "",
+        anoInicio: "",
+        status: "",
+        linkDivulgacao: "",
     });
 
-    // Estados e Refs do Layout (sem alterações)
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    // Estados e Refs do Layout
     const [sidebarAberta, setSidebarAberta] = useState(false);
-
 
     useEffect(() => {
         if (isEditMode && id) {
             const fetchCursoData = async () => {
+                setIsLoading(true);
                 try {
                     const response = await axios.get(`/api/cursos/${id}`);
                     const curso = response.data;
 
-                    // Mapeia os nomes do banco de dados para os nomes do estado `formData`
+                    // Mapeia os dados do backend para o estado do formulário, incluindo 'sigla'
                     setFormData({
                         nome: curso.nome || "",
+                        sigla: curso.sigla || "", // <-- CAMPO ADICIONADO
                         tipo: curso.tipo || "",
-                        area: curso.area_conhecimento || "", // Correção: de 'area_conhecimento' para 'area'
-                        cargaHoraria: String(curso.carga_horaria || ""), // Correção: de 'carga_horaria' para 'cargaHoraria'
-                        duracao: String(curso.duracao_semestres || ""), // Correção: de 'duracao_semestres' para 'duracao'
+                        area: curso.area_conhecimento || "",
+                        cargaHoraria: String(curso.carga_horaria || ""),
+                        duracao: String(curso.duracao_semestres || ""),
                         modalidade: curso.modalidade || "",
-                        coordenador: String(curso.coordenador_id || ""), // Correção: de 'coordenador_id' para 'coordenador'
-                        viceCoordenador: String(curso.vice_coordenador_id || ""), // Correção: de 'vice_coordenador_id' para 'viceCoordenador'
-                        unidade: String(curso.unidade_id || ""), // Correção: de 'unidade_id' para 'unidade'
+                        coordenador: String(curso.coordenador_id || ""),
+                        viceCoordenador: String(curso.vice_coordenador_id || ""),
+                        unidade: String(curso.unidade_id || ""),
                         objetivos: curso.objetivos || "",
-                        perfilEgresso: curso.perfil_egresso || "", // Correção: de 'perfil_egresso' para 'perfilEgresso'
+                        perfilEgresso: curso.perfil_egresso || "",
                         justificativa: curso.justificativa || "",
-                        anoInicio: String(curso.ano_inicio || ""), // Correção: de 'ano_inicio' para 'anoInicio'
+                        anoInicio: String(curso.ano_inicio || ""),
                         status: curso.status || "",
-                        linkDivulgacao: curso.link_divulgacao || "", // Correção: de 'link_divulgacao' para 'linkDivulgacao'
+                        linkDivulgacao: curso.link_divulgacao || "",
                     });
                 } catch (error) {
                     console.error("Erro ao buscar dados do curso:", error);
@@ -117,7 +135,21 @@ export default function AdicionarCursoPage() {
     const validateForm = (): boolean => {
         const newErrors: Partial<Record<keyof CursoFormData, string>> = {};
         if (!formData.nome.trim()) newErrors.nome = "Nome do curso é obrigatório";
-        // Adicione outras validações conforme necessário
+        if (!formData.sigla.trim()) newErrors.sigla = "A sigla do curso é obrigatória"; // <-- VALIDAÇÃO ADICIONADA
+        // Adicione outras validações essenciais aqui
+        if (!formData.tipo) newErrors.tipo = "O tipo de curso é obrigatório";
+        if (!formData.area) newErrors.area = "A área de conhecimento é obrigatória";
+        if (!formData.cargaHoraria) newErrors.cargaHoraria = "A carga horária é obrigatória";
+        if (!formData.duracao) newErrors.duracao = "A duração é obrigatória";
+        if (!formData.modalidade) newErrors.modalidade = "A modalidade é obrigatória";
+        if (!formData.coordenador) newErrors.coordenador = "O coordenador é obrigatório";
+        if (!formData.unidade) newErrors.unidade = "A unidade é obrigatória";
+        if (!formData.objetivos) newErrors.objetivos = "Os objetivos são obrigatórios";
+        if (!formData.perfilEgresso) newErrors.perfilEgresso = "O perfil do egresso é obrigatório";
+        if (!formData.justificativa) newErrors.justificativa = "A justificativa é obrigatória";
+        if (!formData.anoInicio) newErrors.anoInicio = "O ano de início é obrigatório";
+        if (!formData.status) newErrors.status = "O status é obrigatório";
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -133,8 +165,10 @@ export default function AdicionarCursoPage() {
             return;
         }
 
+        // Payload para a API, incluindo 'sigla'
         const apiPayload = {
             nome: formData.nome,
+            sigla: formData.sigla, // <-- CAMPO ADICIONADO
             tipo: formData.tipo,
             area_conhecimento: formData.area,
             carga_horaria: Number(formData.cargaHoraria),
@@ -150,18 +184,15 @@ export default function AdicionarCursoPage() {
             status: formData.status,
             link_divulgacao: formData.linkDivulgacao,
         };
-        // *** FIM DA CORREÇÃO ***
 
         try {
             if (isEditMode) {
-                // Envia o payload corrigido para a API
                 await axios.put(`/api/cursos/${id}`, apiPayload);
                 toast({
                     title: "Curso atualizado com sucesso!",
                     description: `O curso "${formData.nome}" foi modificado.`,
                 });
             } else {
-                // Envia o payload corrigido também na criação
                 await axios.post('/api/cursos/adicionar', apiPayload);
                 toast({
                     title: "Curso cadastrado com sucesso!",
@@ -179,10 +210,9 @@ export default function AdicionarCursoPage() {
         }
     };
 
-    const handleCancel = () => navigate("/gestor");
-    const handleLogout = () => navigate('/');
+    const handleCancel = () => navigate("/gestaocurso");
 
-    if (!user) return <div>Carregando...</div>;
+    if (!user) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-screen bg-background">
@@ -194,27 +224,26 @@ export default function AdicionarCursoPage() {
     return (
         <div className="min-h-screen bg-gray-100 w-full min-w-0 overflow-x-hidden">
             <div className="flex flex-col md:flex-row w-full min-w-0 md:flex">
-                {/* Sidebar */}
                 <SidebarGestor
                     isMenuOpen={sidebarAberta}
-                    setActivePage={(page: string) =>
-                        navigate('/gestor', { state: { activePage: page } })
-                    }
+                    setActivePage={(page: string) => navigate('/gestor', { state: { activePage: page } })}
                     handleMouseEnter={() => setSidebarAberta(true)}
                     handleMouseLeave={() => setSidebarAberta(false)}
                 />
 
                 <div className="flex-1 min-w-0 flex flex-col">
-                    {/* Topbar */}
                     <TopbarGestorAuto
                         isMenuOpen={sidebarAberta}
                         setIsMenuOpen={setSidebarAberta}
                     />
 
-                    <main className={`flex-1 transition-all duration-500 pt-20 ${isMenuOpen ? 'sm:ml-[220px]' : 'sm:ml-[60px]'}`}>
+                    <main className={`flex-1 transition-all duration-500 pt-20 ${sidebarAberta ? 'sm:ml-[220px]' : 'sm:ml-[60px]'}`}>
                         <div className="mx-auto max-w-4xl p-8">
-
                             <div className="mb-8">
+                                <Button variant="ghost" onClick={handleCancel} className="mb-4">
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Voltar para Gestão de Cursos
+                                </Button>
                                 <h1 className="text-4xl font-bold tracking-tight text-foreground">
                                     {isEditMode ? "Editar Curso" : "Adicionar Novo Curso"}
                                 </h1>
@@ -229,16 +258,22 @@ export default function AdicionarCursoPage() {
                             <form onSubmit={handleSubmit}>
                                 <Card className="border-border bg-card shadow-sm">
                                     <CardContent className="p-8">
-                                        {/* O formulário abaixo permanece inalterado, pois ele lê do estado `formData`, que agora é preenchido corretamente. */}
-
                                         {/* Informações Básicas */}
                                         <div className="mb-8">
                                             <h2 className="mb-6 text-2xl font-semibold text-foreground">Informações Básicas</h2>
                                             <div className="grid gap-6">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="nome" className="text-foreground">Nome do Curso <span className="text-destructive">*</span></Label>
-                                                    <Input id="nome" value={formData.nome} onChange={(e) => handleInputChange("nome", e.target.value)} className="bg-background" placeholder="Ex: Mestrado em Ciência da Computação" />
-                                                    {errors.nome && <p className="text-sm text-destructive">{errors.nome}</p>}
+                                                {/* Layout atualizado para Nome e Sigla */}
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                    <div className="md:col-span-2 grid gap-2">
+                                                        <Label htmlFor="nome" className="text-foreground">Nome do Curso <span className="text-destructive">*</span></Label>
+                                                        <Input id="nome" value={formData.nome} onChange={(e) => handleInputChange("nome", e.target.value)} className="bg-background" placeholder="Ex: Mestrado em Ciência da Computação" />
+                                                        {errors.nome && <p className="text-sm text-destructive">{errors.nome}</p>}
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="sigla" className="text-foreground">Sigla <span className="text-destructive">*</span></Label>
+                                                        <Input id="sigla" value={formData.sigla} onChange={(e) => handleInputChange("sigla", e.target.value)} className="bg-background" placeholder="Ex: MCC" />
+                                                        {errors.sigla && <p className="text-sm text-destructive">{errors.sigla}</p>}
+                                                    </div>
                                                 </div>
 
                                                 <div className="grid gap-4 md:grid-cols-2">
@@ -252,6 +287,7 @@ export default function AdicionarCursoPage() {
                                                                 <SelectItem value="especializacao">Especialização</SelectItem>
                                                             </SelectContent>
                                                         </Select>
+                                                        {errors.tipo && <p className="text-sm text-destructive">{errors.tipo}</p>}
                                                     </div>
 
                                                     <div className="grid gap-2">
@@ -259,13 +295,14 @@ export default function AdicionarCursoPage() {
                                                         <Select value={formData.area} onValueChange={(value) => handleInputChange("area", value)}>
                                                             <SelectTrigger id="area" className="bg-background"><SelectValue placeholder="Selecione a área" /></SelectTrigger>
                                                             <SelectContent>
-                                                                <SelectItem value="ciencias-exatas">Ciências Exatas</SelectItem>
+                                                                <SelectItem value="ciencias-exatas">Ciências Exatas e da Terra</SelectItem>
                                                                 <SelectItem value="ciencias-humanas">Ciências Humanas</SelectItem>
-                                                                <SelectItem value="ciencias-biologicas">Ciências Biológicas</SelectItem>
+                                                                <SelectItem value="ciencias-da-saude">Ciências da Saúde</SelectItem>
                                                                 <SelectItem value="engenharias">Engenharias</SelectItem>
-                                                                <SelectItem value="ciencias-sociais">Ciências Sociais</SelectItem>
+                                                                <SelectItem value="ciencias-sociais-aplicadas">Ciências Sociais Aplicadas</SelectItem>
                                                             </SelectContent>
                                                         </Select>
+                                                        {errors.area && <p className="text-sm text-destructive">{errors.area}</p>}
                                                     </div>
                                                 </div>
 
@@ -273,11 +310,13 @@ export default function AdicionarCursoPage() {
                                                     <div className="grid gap-2">
                                                         <Label htmlFor="cargaHoraria" className="text-foreground">Carga Horária Total <span className="text-destructive">*</span></Label>
                                                         <Input id="cargaHoraria" type="number" value={formData.cargaHoraria} onChange={(e) => handleInputChange("cargaHoraria", e.target.value)} className="bg-background" placeholder="Ex: 360" />
+                                                        {errors.cargaHoraria && <p className="text-sm text-destructive">{errors.cargaHoraria}</p>}
                                                     </div>
 
                                                     <div className="grid gap-2">
                                                         <Label htmlFor="duracao" className="text-foreground">Duração (semestres) <span className="text-destructive">*</span></Label>
                                                         <Input id="duracao" type="number" value={formData.duracao} onChange={(e) => handleInputChange("duracao", e.target.value)} className="bg-background" placeholder="Ex: 4" />
+                                                        {errors.duracao && <p className="text-sm text-destructive">{errors.duracao}</p>}
                                                     </div>
 
                                                     <div className="grid gap-2">
@@ -290,6 +329,7 @@ export default function AdicionarCursoPage() {
                                                                 <SelectItem value="ead">EAD</SelectItem>
                                                             </SelectContent>
                                                         </Select>
+                                                        {errors.modalidade && <p className="text-sm text-destructive">{errors.modalidade}</p>}
                                                     </div>
                                                 </div>
                                             </div>
@@ -308,6 +348,7 @@ export default function AdicionarCursoPage() {
                                                                 {mockProfessores.map((prof) => (<SelectItem key={prof.id} value={prof.id}>{prof.nome}</SelectItem>))}
                                                             </SelectContent>
                                                         </Select>
+                                                        {errors.coordenador && <p className="text-sm text-destructive">{errors.coordenador}</p>}
                                                     </div>
 
                                                     <div className="grid gap-2">
@@ -329,6 +370,7 @@ export default function AdicionarCursoPage() {
                                                             {mockUnidades.map((unidade) => (<SelectItem key={unidade.id} value={unidade.id}>{unidade.nome}</SelectItem>))}
                                                         </SelectContent>
                                                     </Select>
+                                                    {errors.unidade && <p className="text-sm text-destructive">{errors.unidade}</p>}
                                                 </div>
                                             </div>
                                         </div>
@@ -340,16 +382,19 @@ export default function AdicionarCursoPage() {
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="objetivos" className="text-foreground">Objetivos do Curso <span className="text-destructive">*</span></Label>
                                                     <Textarea id="objetivos" value={formData.objetivos} onChange={(e) => handleInputChange("objetivos", e.target.value)} rows={5} className="bg-background" placeholder="Descreva os objetivos gerais e específicos do curso..." />
+                                                    {errors.objetivos && <p className="text-sm text-destructive">{errors.objetivos}</p>}
                                                 </div>
 
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="perfilEgresso" className="text-foreground">Perfil do Egresso <span className="text-destructive">*</span></Label>
                                                     <Textarea id="perfilEgresso" value={formData.perfilEgresso} onChange={(e) => handleInputChange("perfilEgresso", e.target.value)} rows={5} className="bg-background" placeholder="Descreva as competências e habilidades esperadas do egresso..." />
+                                                    {errors.perfilEgresso && <p className="text-sm text-destructive">{errors.perfilEgresso}</p>}
                                                 </div>
 
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="justificativa" className="text-foreground">Justificativa / Contexto <span className="text-destructive">*</span></Label>
                                                     <Textarea id="justificativa" value={formData.justificativa} onChange={(e) => handleInputChange("justificativa", e.target.value)} rows={5} className="bg-background" placeholder="Apresente a justificativa e o contexto de criação do curso..." />
+                                                    {errors.justificativa && <p className="text-sm text-destructive">{errors.justificativa}</p>}
                                                 </div>
                                             </div>
                                         </div>
@@ -362,6 +407,7 @@ export default function AdicionarCursoPage() {
                                                     <div className="grid gap-2">
                                                         <Label htmlFor="anoInicio" className="text-foreground">Ano de Início da Turma Atual <span className="text-destructive">*</span></Label>
                                                         <Input id="anoInicio" type="number" value={formData.anoInicio} onChange={(e) => handleInputChange("anoInicio", e.target.value)} className="bg-background" placeholder="Ex: 2024" min="2000" max="2100" />
+                                                        {errors.anoInicio && <p className="text-sm text-destructive">{errors.anoInicio}</p>}
                                                     </div>
 
                                                     <div className="grid gap-2">
@@ -374,6 +420,7 @@ export default function AdicionarCursoPage() {
                                                                 <SelectItem value="encerrado">Encerrado</SelectItem>
                                                             </SelectContent>
                                                         </Select>
+                                                        {errors.status && <p className="text-sm text-destructive">{errors.status}</p>}
                                                     </div>
                                                 </div>
 
@@ -390,8 +437,8 @@ export default function AdicionarCursoPage() {
                                     <Button type="button" variant="outline" onClick={handleCancel} className="min-w-32 bg-transparent">
                                         Cancelar
                                     </Button>
-                                    <Button type="submit" className="min-w-32 bg-primary text-primary-foreground hover:bg-primary/90">
-                                        {isEditMode ? "Salvar Alterações" : "Salvar Curso"}
+                                    <Button type="submit" className="min-w-32 bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
+                                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEditMode ? "Salvar Alterações" : "Salvar Curso" )}
                                     </Button>
                                 </div>
                             </form>

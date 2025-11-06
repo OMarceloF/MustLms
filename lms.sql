@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 05/11/2025 às 21:03
+-- Tempo de geração: 06/11/2025 às 19:14
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -67,7 +67,8 @@ INSERT INTO `alunos` (`id`, `nome`, `cpf`, `rg`, `matricula`, `serie`, `turma`, 
 (26, 'Arthur Lopes Saraiva', '22222222222', '0233450', '222222', NULL, NULL, 'arthurlsaraiva@gmail.com', NULL, 'kkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkk', NULL, '1988-10-20', 'Brasileira', 'Masculino', 'regular'),
 (27, 'Arthur L. Saraiva', '99999999999', '999999999', '2332221', NULL, NULL, 'Joaovv@gmail.com', '/uploads/download-1761674394496.jpg', 'kkkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkk', NULL, '1998-10-31', 'Brasileira', 'Masculino', 'regular'),
 (28, 'Arthur Teste', '77777777777', '111111111', '123456789', NULL, NULL, 'arthur11@gmail.com', '/uploads/download-1761683485087.jpg', 'kkkkkkkkkkkkkkkkkkkkk', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkkkkkk', NULL, '1996-10-24', 'Brasileira', 'Masculino', 'regular'),
-(29, 'Arthur Teste 2', '02036224544', '111112224', '2025000001', NULL, NULL, 'arthur123@gmail.com', NULL, '1111111111111111111111', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', '11111111111111111111111', NULL, '1996-10-01', 'Brasileira', 'Masculino', 'regular');
+(29, 'Arthur Teste 2', '02036224544', '111112224', '2025000001', NULL, NULL, 'arthur123@gmail.com', NULL, '1111111111111111111111', '31982471144', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', '11111111111111111111111', NULL, '1996-10-01', 'Brasileira', 'Masculino', 'regular'),
+(30, 'Usuario Teste', '55555555555', '123123123', '2025000002', NULL, NULL, 'userteste@gmail.com', '/uploads/logo_dru-1--1762448580573.png', 'kkkkkkkkkkkkkkk', '31982471122', '{\"cep\":\"36590000\",\"logradouro\":\"Rua Rio de Janeiro\",\"numero\":\"222\",\"bairro\":\"Centro\",\"cidade\":\"Viçosa\",\"estado\":\"MG\",\"complemento\":\"Casa\"}', 'kkkkkkkkkkkkkkkkkk', NULL, '1985-11-08', 'Brasileira', 'Masculino', 'regular');
 
 --
 -- Acionadores `alunos`
@@ -138,7 +139,15 @@ INSERT INTO `alunos_responsaveis` (`id`, `aluno_id`, `responsavel_id`, `parentes
 (35, 28, 5, 'Próprio Aluno'),
 (36, 27, 3, 'Mãe'),
 (37, 27, 4, 'Avô'),
-(38, 29, 7, 'Próprio Aluno');
+(38, 29, 7, 'Próprio Aluno'),
+(39, 26, 5, 'Próprio Aluno'),
+(40, 27, 5, 'Próprio Aluno'),
+(41, 27, 9, 'Próprio Aluno'),
+(42, 27, 5, 'Próprio Aluno'),
+(43, 27, 7, 'Próprio Aluno'),
+(44, 27, 7, 'Próprio Aluno'),
+(45, 26, 7, 'Próprio Aluno'),
+(47, 30, 3, 'Mãe');
 
 -- --------------------------------------------------------
 
@@ -548,7 +557,7 @@ INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `codigo`, `carga_hor
 (13, 3, 'Estatística Aplicada', 'POS-002', 64, 4, 1, NULL, 'kkkkkkkkkkkkkkkkkk'),
 (14, 3, 'Cálculo II', 'CALC-02', 64, 4, 2, NULL, 'kkkkkkkkkkkkk'),
 (16, 3, 'Cálculo I', 'CALC-01', 64, 4, 1, NULL, 'kkkkkkkkkkkkkkkkkk'),
-(17, 4, 'Fundamentos de Machine Learning Avançado', 'IAA-001', 60, 4, 1, 'Dr. Alan Turing', 'Estudo aprofundado de algoritmos de classificação, regressão e clustering. Tópicos em regularização, otimização e avaliação de modelos.'),
+(17, 4, 'Fundamentos de Machine Learning Avançado', 'IAA-001', 64, 4, 1, 'Dr. Alan Turing', 'Estudo aprofundado de algoritmos de classificação, regressão e clustering. Tópicos em regularização, otimização e avaliação de modelos.'),
 (19, 4, 'Processamento de Linguagem Natural', 'IAA-003', 60, 4, 3, 'Dr. Geoffrey Hinton', 'Modelagem de linguagem, análise sintática e semântica, tradução automática e sistemas de diálogo. Estudo de modelos como BERT e GPT.'),
 (20, 4, 'Seminários de Pesquisa em IA', 'IAA-004', 30, 2, 4, 'Dr. Alan Turing', 'Apresentação e discussão de artigos científicos de ponta na área de Inteligência Artificial.'),
 (21, 5, 'Gerenciamento de Projetos Tradicional (PMBOK)', 'GPA-001', 45, 3, 1, 'Prof. Peter Drucker', 'Introdução aos processos, áreas de conhecimento e boas práticas do PMBOK. Gerenciamento de escopo, tempo, custo e riscos.'),
@@ -597,6 +606,7 @@ INSERT INTO `cursos_eventos` (`id`, `curso_id`, `titulo`, `descricao`, `data_ini
 CREATE TABLE `cursos_posgraduacao` (
   `id` int(11) NOT NULL,
   `nome` varchar(255) NOT NULL,
+  `sigla` varchar(10) DEFAULT NULL,
   `tipo` varchar(50) NOT NULL COMMENT 'Ex: mestrado, doutorado',
   `area_conhecimento` varchar(100) NOT NULL,
   `carga_horaria` int(11) NOT NULL,
@@ -619,19 +629,19 @@ CREATE TABLE `cursos_posgraduacao` (
 -- Despejando dados para a tabela `cursos_posgraduacao`
 --
 
-INSERT INTO `cursos_posgraduacao` (`id`, `nome`, `tipo`, `area_conhecimento`, `carga_horaria`, `duracao_semestres`, `modalidade`, `coordenador_id`, `vice_coordenador_id`, `unidade_id`, `objetivos`, `perfil_egresso`, `justificativa`, `ano_inicio`, `status`, `link_divulgacao`, `criado_em`, `atualizado_em`) VALUES
-(1, 'Mestrado em Ciências da Computação', 'mestrado', 'ciencias-exatas', 240, 1, 'presencial', 1, 2, 2, 'oooooooooooooooo', 'ooooopppppppppppppp', 'lllllllllllllllllllllllllllllllllllllll', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 12:42:14', '2025-10-23 12:42:14'),
-(3, 'Engenharia Civil', 'doutorado', 'engenharias', 4000, 10, 'presencial', 1, 3, 1, 'kkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkk', '2025', 'planejamento', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 14:24:08', '2025-10-23 14:58:57'),
-(4, 'Doutorado em Inteligência Artificial Aplicada', 'doutorado', 'ciencias-exatas', 600, 8, 'hibrido', 1, 3, 1, 'Formar pesquisadores de alto nível capazes de desenvolver soluções inovadoras em IA para problemas complexos da indústria e da sociedade.', 'Pesquisador ou líder técnico em IA, com profundo conhecimento em machine learning, processamento de linguagem natural e visão computacional.', 'A crescente demanda por especialistas em IA justifica um programa de doutorado focado em aplicações práticas e pesquisa de ponta.', '2025', 'ativo', 'https://mustedu.com/pt/ia-aplicada/', '2025-10-24 12:03:55', '2025-10-31 17:46:05'),
-(5, 'MBA em Gestão de Projetos e Metodologias Ágeis', 'especializacao', 'ciencias-sociais-aplicadas', 360, 2, 'ead', 1, 6, 2, 'Capacitar profissionais para liderar projetos complexos utilizando frameworks ágeis como Scrum, Kanban e Lean, garantindo entregas de valor.', 'Gerente de projetos, Scrum Master, Product Owner ou Agile Coach, apto a otimizar processos e liderar equipes de alta performance.', 'O mercado de trabalho moderno exige profissionais que dominem tanto a gestão tradicional quanto as abordagens ágeis para se manterem competitivos.', '2025', 'ativo', 'https://mustedu.com/pt/mba-projetos/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
-(6, 'Especialização em Direito Digital e Proteção de Dados', 'especializacao', 'ciencias-sociais-aplicadas', 400, 3, 'ead', 1, NULL, 1, 'Aprofundar o conhecimento sobre a legislação de proteção de dados (LGPD/GDPR), crimes cibernéticos e os desafios jurídicos da era digital.', 'Advogado especialista em direito digital, Data Protection Officer (DPO) ou consultor em privacidade e proteção de dados.', 'Com a implementação da LGPD, a necessidade de profissionais especializados em proteção de dados tornou-se crítica para todas as organizações.', '2024', 'ativo', 'https://mustedu.com/pt/direito-digital/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
-(7, 'Mestrado em Neurociência e Educação', 'mestrado', 'ciencias-humanas', 480, 4, 'presencial', 22, 6, 1, 'Investigar a interface entre o funcionamento do cérebro e os processos de aprendizagem, desenvolvendo novas práticas pedagógicas baseadas em evidências científicas.', 'Pesquisador em neuroeducação, coordenador pedagógico ou professor especializado em dificuldades de aprendizagem.', 'Compreender como o cérebro aprende é fundamental para revolucionar a educação e criar métodos de ensino mais eficazes.', '2025', 'planejamento', 'https://mustedu.com/pt/neurociencia-edu/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
-(8, 'Doutorado em Sustentabilidade e Energias Renováveis', 'doutorado', 'engenharias', 620, 8, 'presencial', 1, 22, 2, 'Desenvolver pesquisa de ponta em tecnologias de energia limpa, políticas de sustentabilidade e gestão de recursos naturais para um futuro mais verde.', 'Cientista, consultor ou gestor em sustentabilidade, apto a criar soluções para os desafios energéticos e ambientais globais.', 'A transição energética é um dos maiores desafios do nosso tempo, demandando pesquisa e inovação constantes.', '2026', 'planejamento', 'https://mustedu.com/pt/sustentabilidade/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
-(9, 'MBA Executivo em Finanças, Investimentos e Banking', 'especializacao', 'ciencias-sociais-aplicadas', 380, 2, 'hibrido', 23, NULL, 1, 'Formar líderes para o mercado financeiro, com domínio sobre análise de investimentos, gestão de portfólios, banking digital e fintechs.', 'Analista de investimentos, gerente de banco, consultor financeiro ou CFO, preparado para tomar decisões estratégicas em um ambiente volátil.', 'A transformação digital do setor financeiro exige profissionais com uma visão moderna e integrada de finanças e tecnologia.', '2025', 'ativo', 'https://mustedu.com/pt/mba-financas/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
-(10, 'Mestrado em Design de Interação e Experiência do Usuário (UX)', 'mestrado', 'ciencias-sociais-aplicadas', 450, 4, 'hibrido', 6, 22, 2, 'Capacitar profissionais para projetar produtos e serviços digitais centrados no usuário, combinando pesquisa, design e tecnologia.', 'UX Designer, UX Researcher, Product Designer ou líder de equipes de design, focado em criar experiências digitais memoráveis e eficazes.', 'A experiência do usuário é um diferencial competitivo crucial no mercado digital, tornando este profissional indispensável.', '2025', 'ativo', 'https://mustedu.com/pt/mestrado-ux/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
-(11, 'Especialização em Psicologia Clínica e Terapia Cognitivo-Comportamental', 'especializacao', 'ciencias-da-saude', 420, 3, 'presencial', 22, NULL, 1, 'Oferecer formação teórica e prática aprofundada em Terapia Cognitivo-Comportamental (TCC) para o tratamento de diversos transtornos mentais.', 'Psicólogo clínico com especialização em TCC, apto a aplicar técnicas baseadas em evidências para promover a saúde mental.', 'A TCC é uma das abordagens terapêuticas mais eficazes e procuradas, havendo grande demanda por psicólogos com esta especialização.', '2024', 'ativo', 'https://mustedu.com/pt/psicologia-tcc/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
-(12, 'Mestrado Profissional em Saúde Pública', 'mestrado', 'ciencias-da-saude', 500, 4, 'presencial', 22, 1, 2, 'Formar gestores e profissionais para atuarem no planejamento, execução e avaliação de políticas e programas de saúde pública.', 'Gestor de saúde, epidemiologista, sanitarista ou pesquisador em políticas públicas de saúde.', 'Fortalecer o sistema de saúde e responder a emergências sanitárias requer profissionais com visão estratégica e técnica apurada.', '2025', 'ativo', 'https://mustedu.com/pt/saude-publica/', '2025-10-24 12:03:55', '2025-10-24 12:03:55'),
-(13, 'Especialização em Marketing Digital e Growth Hacking', 'especializacao', 'ciencias-sociais-aplicadas', 360, 2, 'ead', 23, 6, 1, 'Desenvolver competências em estratégias de marketing digital, análise de dados e técnicas de growth hacking para acelerar o crescimento de negócios.', 'Gerente de marketing digital, analista de growth, especialista em SEO/SEM ou empreendedor digital.', 'Em um mercado saturado, a capacidade de gerar crescimento rápido e escalável através de estratégias digitais é altamente valorizada.', '2025', 'ativo', 'https://mustedu.com/pt/mkt-growth/', '2025-10-24 12:03:55', '2025-10-24 12:03:55');
+INSERT INTO `cursos_posgraduacao` (`id`, `nome`, `sigla`, `tipo`, `area_conhecimento`, `carga_horaria`, `duracao_semestres`, `modalidade`, `coordenador_id`, `vice_coordenador_id`, `unidade_id`, `objetivos`, `perfil_egresso`, `justificativa`, `ano_inicio`, `status`, `link_divulgacao`, `criado_em`, `atualizado_em`) VALUES
+(1, 'Mestrado em Ciências da Computação', 'MCC', 'mestrado', 'ciencias-exatas', 240, 1, 'presencial', 1, 2, 2, 'oooooooooooooooo', 'ooooopppppppppppppp', 'lllllllllllllllllllllllllllllllllllllll', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 12:42:14', '2025-11-06 12:13:19'),
+(3, 'Engenharia Civil', 'ECIV', 'doutorado', 'engenharias', 4000, 10, 'presencial', 1, 3, 1, 'kkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkk', '2025', 'planejamento', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 14:24:08', '2025-11-06 12:13:19'),
+(4, 'Doutorado em Inteligência Artificial Aplicada', 'DIAA', 'doutorado', 'ciencias-exatas', 600, 8, 'hibrido', 1, 3, 1, 'Formar pesquisadores de alto nível capazes de desenvolver soluções inovadoras em IA para problemas complexos da indústria e da sociedade.', 'Pesquisador ou líder técnico em IA, com profundo conhecimento em machine learning, processamento de linguagem natural e visão computacional.', 'A crescente demanda por especialistas em IA justifica um programa de doutorado focado em aplicações práticas e pesquisa de ponta.', '2025', 'ativo', 'https://mustedu.com/pt/ia-aplicada/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(5, 'MBA em Gestão de Projetos e Metodologias Ágeis', 'MBA-GPA', 'especializacao', 'ciencias-sociais-aplicadas', 360, 2, 'ead', 1, 6, 2, 'Capacitar profissionais para liderar projetos complexos utilizando frameworks ágeis como Scrum, Kanban e Lean, garantindo entregas de valor.', 'Gerente de projetos, Scrum Master, Product Owner ou Agile Coach, apto a otimizar processos e liderar equipes de alta performance.', 'O mercado de trabalho moderno exige profissionais que dominem tanto a gestão tradicional quanto as abordagens ágeis para se manterem competitivos.', '2025', 'ativo', 'https://mustedu.com/pt/mba-projetos/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(6, 'Especialização em Direito Digital e Proteção de Dados', 'EDDPD', 'especializacao', 'ciencias-sociais-aplicadas', 400, 3, 'ead', 1, NULL, 1, 'Aprofundar o conhecimento sobre a legislação de proteção de dados (LGPD/GDPR), crimes cibernéticos e os desafios jurídicos da era digital.', 'Advogado especialista em direito digital, Data Protection Officer (DPO) ou consultor em privacidade e proteção de dados.', 'Com a implementação da LGPD, a necessidade de profissionais especializados em proteção de dados tornou-se crítica para todas as organizações.', '2024', 'ativo', 'https://mustedu.com/pt/direito-digital/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(7, 'Mestrado em Neurociência e Educação', 'MNE', 'mestrado', 'ciencias-humanas', 480, 4, 'presencial', 22, 6, 1, 'Investigar a interface entre o funcionamento do cérebro e os processos de aprendizagem, desenvolvendo novas práticas pedagógicas baseadas em evidências científicas.', 'Pesquisador em neuroeducação, coordenador pedagógico ou professor especializado em dificuldades de aprendizagem.', 'Compreender como o cérebro aprende é fundamental para revolucionar a educação e criar métodos de ensino mais eficazes.', '2025', 'planejamento', 'https://mustedu.com/pt/neurociencia-edu/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(8, 'Doutorado em Sustentabilidade e Energias Renováveis', 'DSER', 'doutorado', 'engenharias', 620, 8, 'presencial', 1, 22, 2, 'Desenvolver pesquisa de ponta em tecnologias de energia limpa, políticas de sustentabilidade e gestão de recursos naturais para um futuro mais verde.', 'Cientista, consultor ou gestor em sustentabilidade, apto a criar soluções para os desafios energéticos e ambientais globais.', 'A transição energética é um dos maiores desafios do nosso tempo, demandando pesquisa e inovação constantes.', '2026', 'planejamento', 'https://mustedu.com/pt/sustentabilidade/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(9, 'MBA Executivo em Finanças, Investimentos e Banking', 'MBA-FIN', 'especializacao', 'ciencias-sociais-aplicadas', 380, 2, 'hibrido', 23, NULL, 1, 'Formar líderes para o mercado financeiro, com domínio sobre análise de investimentos, gestão de portfólios, banking digital e fintechs.', 'Analista de investimentos, gerente de banco, consultor financeiro ou CFO, preparado para tomar decisões estratégicas em um ambiente volátil.', 'A transformação digital do setor financeiro exige profissionais com uma visão moderna e integrada de finanças e tecnologia.', '2025', 'ativo', 'https://mustedu.com/pt/mba-financas/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(10, 'Mestrado em Design de Interação e Experiência do Usuário (UX)', 'MDIUX', 'mestrado', 'ciencias-sociais-aplicadas', 450, 4, 'hibrido', 6, 22, 2, 'Capacitar profissionais para projetar produtos e serviços digitais centrados no usuário, combinando pesquisa, design e tecnologia.', 'UX Designer, UX Researcher, Product Designer ou líder de equipes de design, focado em criar experiências digitais memoráveis e eficazes.', 'A experiência do usuário é um diferencial competitivo crucial no mercado digital, tornando este profissional indispensável.', '2025', 'ativo', 'https://mustedu.com/pt/mestrado-ux/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(11, 'Especialização em Psicologia Clínica e Terapia Cognitivo-Comportamental', 'EPCTCC', 'especializacao', 'ciencias-da-saude', 420, 3, 'presencial', 22, NULL, 1, 'Oferecer formação teórica e prática aprofundada em Terapia Cognitivo-Comportamental (TCC) para o tratamento de diversos transtornos mentais.', 'Psicólogo clínico com especialização em TCC, apto a aplicar técnicas baseadas em evidências para promover a saúde mental.', 'A TCC é uma das abordagens terapêuticas mais eficazes e procuradas, havendo grande demanda por psicólogos com esta especialização.', '2024', 'ativo', 'https://mustedu.com/pt/psicologia-tcc/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(12, 'Mestrado Profissional em Saúde Pública', 'MPSP', 'mestrado', 'ciencias-da-saude', 500, 4, 'presencial', 22, 1, 2, 'Formar gestores e profissionais para atuarem no planejamento, execução e avaliação de políticas e programas de saúde pública.', 'Gestor de saúde, epidemiologista, sanitarista ou pesquisador em políticas públicas de saúde.', 'Fortalecer o sistema de saúde e responder a emergências sanitárias requer profissionais com visão estratégica e técnica apurada.', '2025', 'ativo', 'https://mustedu.com/pt/saude-publica/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
+(13, 'Especialização em Marketing Digital e Growth Hacking', 'EMDGH', 'especializacao', 'ciencias-sociais-aplicadas', 360, 2, 'ead', 23, 6, 1, 'Desenvolver competências em estratégias de marketing digital, análise de dados e técnicas de growth hacking para acelerar o crescimento de negócios.', 'Gerente de marketing digital, analista de growth, especialista em SEO/SEM ou empreendedor digital.', 'Em um mercado saturado, a capacidade de gerar crescimento rápido e escalável através de estratégias digitais é altamente valorizada.', '2025', 'ativo', 'https://mustedu.com/pt/mkt-growth/', '2025-10-24 12:03:55', '2025-11-06 12:13:19');
 
 -- --------------------------------------------------------
 
@@ -739,13 +749,13 @@ INSERT INTO `documentos_alunos` (`id`, `aluno_id`, `tipo_documento`, `caminho_ar
 (6, 7, 'historicoEscolar', '/uploads/documentos/download-1761656398205.jpg', 'download.jpg', '2025-10-28 12:59:58'),
 (7, 7, 'laudoMedico', '/uploads/documentos/download-1761656398206.jpg', 'download.jpg', '2025-10-28 12:59:58'),
 (8, 7, 'adicionais', '/uploads/documentos/download-1761656398209.jpg', 'download.jpg', '2025-10-28 12:59:58'),
-(9, 27, 'foto3x4', '/uploads/documentos/download-1761835245866.jpg', 'download.jpg', '2025-10-30 14:40:45'),
-(10, 27, 'comprovanteResidencia', '/uploads/documentos/download-1761835245866.jpg', 'download.jpg', '2025-10-30 14:40:45'),
-(11, 27, 'documentoAluno', '/uploads/documentos/download-1761835245866.jpg', 'download.jpg', '2025-10-30 14:40:45'),
-(12, 27, 'documentoResponsavel', '/uploads/documentos/download-1761835245867.jpg', 'download.jpg', '2025-10-30 14:40:45'),
-(13, 27, 'certidaoNascimento', '/uploads/documentos/download-1761835245867.jpg', 'download.jpg', '2025-10-30 14:40:45'),
-(14, 27, 'historicoEscolar', '/uploads/documentos/download-1761835245867.jpg', 'download.jpg', '2025-10-30 14:40:45'),
-(15, 27, 'laudoMedico', '/uploads/documentos/download-1761835245868.jpg', 'download.jpg', '2025-10-30 14:40:45'),
+(9, 27, 'foto3x4', '/uploads/documentos/logo_dru-2--1762447045747.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(10, 27, 'comprovanteResidencia', '/uploads/documentos/logo_dru-2--1762447045750.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(11, 27, 'documentoAluno', '/uploads/documentos/logo_dru-2--1762447045753.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(12, 27, 'documentoResponsavel', '/uploads/documentos/logo_dru-2--1762447045755.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(13, 27, 'certidaoNascimento', '/uploads/documentos/logo_dru-2--1762447045758.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(14, 27, 'historicoEscolar', '/uploads/documentos/download-1762430184354.jpg', 'download.jpg', '2025-11-06 11:56:24'),
+(15, 27, 'laudoMedico', '/uploads/documentos/download-1762430184354.jpg', 'download.jpg', '2025-11-06 11:56:24'),
 (16, 27, 'adicionais', '/uploads/documentos/download-1761683311156.jpg', 'download.jpg', '2025-10-28 20:28:31'),
 (17, 28, 'foto3x4', '/uploads/documentos/download-1761832955788.jpg', 'download.jpg', '2025-10-30 14:02:35'),
 (18, 28, 'comprovanteResidencia', '/uploads/documentos/download-1761832955789.jpg', 'download.jpg', '2025-10-30 14:02:35'),
@@ -761,7 +771,12 @@ INSERT INTO `documentos_alunos` (`id`, `aluno_id`, `tipo_documento`, `caminho_ar
 (50, 29, 'documentoResponsavel', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
 (51, 29, 'certidaoNascimento', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
 (52, 29, 'historicoEscolar', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
-(53, 29, 'laudoMedico', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06');
+(53, 29, 'laudoMedico', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
+(113, 30, 'foto3x4', '/uploads/documentos/logo_dru-2--1762448644960.png', 'logo_dru (2).png', '2025-11-06 17:04:04'),
+(114, 30, 'comprovanteResidencia', '/uploads/documentos/logo_dru-2--1762448644962.png', 'logo_dru (2).png', '2025-11-06 17:04:04'),
+(115, 30, 'documentoAluno', '/uploads/documentos/logo_dru-2--1762448644965.png', 'logo_dru (2).png', '2025-11-06 17:04:04'),
+(116, 30, 'documentoResponsavel', '/uploads/documentos/logo_dru-2--1762448644968.png', 'logo_dru (2).png', '2025-11-06 17:04:04'),
+(117, 30, 'certidaoNascimento', '/uploads/documentos/logo_dru-2--1762448644971.png', 'logo_dru (2).png', '2025-11-06 17:04:04');
 
 -- --------------------------------------------------------
 
@@ -1844,7 +1859,8 @@ INSERT INTO `stats_seguidores` (`user_id`, `qtd_seguidores`, `qtd_seguindo`) VAL
 (26, 0, 0),
 (27, 0, 0),
 (28, 0, 0),
-(29, 0, 0);
+(29, 0, 0),
+(30, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -1937,9 +1953,82 @@ CREATE TABLE `turmas` (
 INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `materias_ids`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
 (3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 2, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkkkkkkkkkkk'),
 (5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '[\"19\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 6, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
 (7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, '[\"27\"]', 17, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk'),
 (8, 'Turma 1', '2025', '2025-11-05 03:29:37', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `turmas_ingresso`
+--
+
+CREATE TABLE `turmas_ingresso` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(255) NOT NULL,
+  `curso_posgraduacao_id` int(11) NOT NULL,
+  `periodo_letivo_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `turmas_ingresso`
+--
+
+INSERT INTO `turmas_ingresso` (`id`, `nome`, `curso_posgraduacao_id`, `periodo_letivo_id`) VALUES
+(1, 'MCC 2025.1', 1, 16),
+(2, 'MCC 2025.2', 1, 17),
+(3, 'MCC 2026.1', 1, 18),
+(4, 'MCC 2026.2', 1, 19),
+(5, 'MCC 2027.1', 1, 20),
+(6, 'MCC 2027.2', 1, 21),
+(7, 'DIAA 2025.1', 4, 16),
+(8, 'DIAA 2025.2', 4, 17),
+(9, 'DIAA 2026.1', 4, 18),
+(10, 'DIAA 2026.2', 4, 19),
+(11, 'DIAA 2027.1', 4, 20),
+(12, 'DIAA 2027.2', 4, 21),
+(13, 'MBA-GPA 2025.1', 5, 16),
+(14, 'MBA-GPA 2025.2', 5, 17),
+(15, 'MBA-GPA 2026.1', 5, 18),
+(16, 'MBA-GPA 2026.2', 5, 19),
+(17, 'MBA-GPA 2027.1', 5, 20),
+(18, 'MBA-GPA 2027.2', 5, 21),
+(19, 'EDDPD 2025.1', 6, 16),
+(20, 'EDDPD 2025.2', 6, 17),
+(21, 'EDDPD 2026.1', 6, 18),
+(22, 'EDDPD 2026.2', 6, 19),
+(23, 'EDDPD 2027.1', 6, 20),
+(24, 'EDDPD 2027.2', 6, 21),
+(25, 'MBA-FIN 2025.1', 9, 16),
+(26, 'MBA-FIN 2025.2', 9, 17),
+(27, 'MBA-FIN 2026.1', 9, 18),
+(28, 'MBA-FIN 2026.2', 9, 19),
+(29, 'MBA-FIN 2027.1', 9, 20),
+(30, 'MBA-FIN 2027.2', 9, 21),
+(31, 'MDIUX 2025.1', 10, 16),
+(32, 'MDIUX 2025.2', 10, 17),
+(33, 'MDIUX 2026.1', 10, 18),
+(34, 'MDIUX 2026.2', 10, 19),
+(35, 'MDIUX 2027.1', 10, 20),
+(36, 'MDIUX 2027.2', 10, 21),
+(37, 'EPCTCC 2025.1', 11, 16),
+(38, 'EPCTCC 2025.2', 11, 17),
+(39, 'EPCTCC 2026.1', 11, 18),
+(40, 'EPCTCC 2026.2', 11, 19),
+(41, 'EPCTCC 2027.1', 11, 20),
+(42, 'EPCTCC 2027.2', 11, 21),
+(43, 'MPSP 2025.1', 12, 16),
+(44, 'MPSP 2025.2', 12, 17),
+(45, 'MPSP 2026.1', 12, 18),
+(46, 'MPSP 2026.2', 12, 19),
+(47, 'MPSP 2027.1', 12, 20),
+(48, 'MPSP 2027.2', 12, 21),
+(49, 'EMDGH 2025.1', 13, 16),
+(50, 'EMDGH 2025.2', 13, 17),
+(51, 'EMDGH 2026.1', 13, 18),
+(52, 'EMDGH 2026.2', 13, 19),
+(53, 'EMDGH 2027.1', 13, 20),
+(54, 'EMDGH 2027.2', 13, 21);
 
 -- --------------------------------------------------------
 
@@ -1979,7 +2068,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-05 19:59:54'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-06 17:31:41'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2005,7 +2094,8 @@ INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, 
 (26, 'arthurlsaraiva@gmail.com', '$2b$10$pU0wPsr3SJYr67FA/WBaH.JNaFKLhx7doucvDIvkZHQlPSmdP.NZ2', 'arthurlsaraiva@gmail.com', 'aluno', 'ativo', 'Arthur Lopes Saraiva', '22222222222', '(31) 98247-1144', '2025-10-28 17:37:05', NULL, NULL),
 (27, 'arthurlsaraiva1@gmail.com', '$2b$10$fZ8q6mMsfMzdanFnAgL06ONstWB1yyPXyp3mNjTkOuBz89yqhnCNm', 'Joaovv@gmail.com', 'aluno', 'ativo', 'Arthur L. Saraiva', '99999999999', '(31) 98247-1144', '2025-10-28 17:59:54', '/uploads/download-1761674394496.jpg', NULL),
 (28, 'arthurlsaraiva1h@gmail.com', '$2b$10$8NuHVqMJfQUwIMx9a1lRI.aRwMHsrUP7FoFxvj8nY2QKzKGxJyAq.', 'arthur11@gmail.com', 'aluno', 'ativo', 'Arthur Teste', '77777777777', '(31) 98247-1144', '2025-10-28 20:31:25', '/uploads/download-1761683485087.jpg', NULL),
-(29, 'arthurlh12@gmail.com', '$2b$10$A2RjjfOocqTDPm9QkhmgP.sdrItNpunTl2WLaNhAn3HwL8WcBwUC6', 'arthur123@gmail.com', 'aluno', 'ativo', 'Arthur Teste 2', '02036224544', '(31) 98247-1144', '2025-10-29 14:02:13', NULL, NULL);
+(29, 'arthurlh12@gmail.com', '$2b$10$A2RjjfOocqTDPm9QkhmgP.sdrItNpunTl2WLaNhAn3HwL8WcBwUC6', 'arthur123@gmail.com', 'aluno', 'ativo', 'Arthur Teste 2', '02036224544', '(31) 98247-1144', '2025-10-29 14:02:13', NULL, NULL),
+(30, 'arthurlsaraiva1@gmail.com', '$2b$10$lGswa9HWpmiZkR7mTrHh7OtIlRC2j2wDftLEz2QB6MklYNUXY6PQW', 'userteste@gmail.com', 'aluno', 'ativo', 'Usuario Teste', '55555555555', '31982471122', '2025-11-06 17:03:00', '/uploads/logo_dru-1--1762448580573.png', NULL);
 
 --
 -- Acionadores `users`
@@ -2031,7 +2121,7 @@ CREATE TABLE `vincular_aluno_curso` (
   `id` int(11) NOT NULL,
   `aluno_id` int(11) NOT NULL,
   `curso_posgraduacao_id` int(11) NOT NULL,
-  `turma_id_mocado` varchar(50) DEFAULT NULL COMMENT 'Armazena o ID mocado da turma selecionada',
+  `turmas_ingresso_id` int(11) DEFAULT NULL COMMENT 'ID da turma de ingresso selecionada',
   `grade_mocada` varchar(50) DEFAULT NULL COMMENT 'Armazena a grade mocada selecionada',
   `data_vinculo` timestamp NOT NULL DEFAULT current_timestamp(),
   `status_matricula` enum('Ativa','Concluída','Cancelada') NOT NULL DEFAULT 'Ativa'
@@ -2041,9 +2131,10 @@ CREATE TABLE `vincular_aluno_curso` (
 -- Despejando dados para a tabela `vincular_aluno_curso`
 --
 
-INSERT INTO `vincular_aluno_curso` (`id`, `aluno_id`, `curso_posgraduacao_id`, `turma_id_mocado`, `grade_mocada`, `data_vinculo`, `status_matricula`) VALUES
-(1, 29, 8, '1', '2025.1', '2025-10-30 14:56:28', 'Ativa'),
-(2, 29, 4, '1', '2025.1', '2025-10-30 15:35:20', 'Ativa');
+INSERT INTO `vincular_aluno_curso` (`id`, `aluno_id`, `curso_posgraduacao_id`, `turmas_ingresso_id`, `grade_mocada`, `data_vinculo`, `status_matricula`) VALUES
+(2, 29, 4, 1, '2025.1', '2025-10-30 15:35:20', 'Ativa'),
+(3, 27, 6, 19, '2025.1', '2025-11-06 16:52:45', 'Ativa'),
+(6, 30, 4, 7, '2025.1', '2025-11-06 17:06:32', 'Ativa');
 
 --
 -- Índices para tabelas despejadas
@@ -2477,6 +2568,14 @@ ALTER TABLE `turmas`
   ADD KEY `fk_turma_semestre_periodo` (`semestre_id`);
 
 --
+-- Índices de tabela `turmas_ingresso`
+--
+ALTER TABLE `turmas_ingresso`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_curso_periodo_unico` (`curso_posgraduacao_id`,`periodo_letivo_id`),
+  ADD KEY `fk_turma_ingresso_periodo` (`periodo_letivo_id`);
+
+--
 -- Índices de tabela `turmas_materias`
 --
 ALTER TABLE `turmas_materias`
@@ -2507,7 +2606,7 @@ ALTER TABLE `vincular_aluno_curso`
 -- AUTO_INCREMENT de tabela `alunos_responsaveis`
 --
 ALTER TABLE `alunos_responsaveis`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT de tabela `alunos_turmas`
@@ -2621,13 +2720,13 @@ ALTER TABLE `cursos_eventos`
 -- AUTO_INCREMENT de tabela `cursos_posgraduacao`
 --
 ALTER TABLE `cursos_posgraduacao`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_ppc`
 --
 ALTER TABLE `cursos_ppc`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de tabela `descontos`
@@ -2651,7 +2750,7 @@ ALTER TABLE `disponibilidade`
 -- AUTO_INCREMENT de tabela `documentos_alunos`
 --
 ALTER TABLE `documentos_alunos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
 
 --
 -- AUTO_INCREMENT de tabela `envios`
@@ -2804,6 +2903,12 @@ ALTER TABLE `turmas`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT de tabela `turmas_ingresso`
+--
+ALTER TABLE `turmas_ingresso`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+
+--
 -- AUTO_INCREMENT de tabela `turmas_materias`
 --
 ALTER TABLE `turmas_materias`
@@ -2813,13 +2918,13 @@ ALTER TABLE `turmas_materias`
 -- AUTO_INCREMENT de tabela `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT de tabela `vincular_aluno_curso`
 --
 ALTER TABLE `vincular_aluno_curso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Restrições para tabelas despejadas
@@ -3099,6 +3204,13 @@ ALTER TABLE `turmas`
   ADD CONSTRAINT `fk_turma_curso_pos` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_turma_semestre` FOREIGN KEY (`semestre_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_turma_semestre_periodo` FOREIGN KEY (`semestre_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE SET NULL;
+
+--
+-- Restrições para tabelas `turmas_ingresso`
+--
+ALTER TABLE `turmas_ingresso`
+  ADD CONSTRAINT `fk_turma_ingresso_curso` FOREIGN KEY (`curso_posgraduacao_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_turma_ingresso_periodo` FOREIGN KEY (`periodo_letivo_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `vincular_aluno_curso`

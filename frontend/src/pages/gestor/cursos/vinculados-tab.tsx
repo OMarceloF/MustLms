@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { GraduationCap, Users, BookOpen, Loader2 } from "lucide-react"
 
-// --- Interfaces para os dados da API ---
+// --- Interfaces ---
 interface Professor {
   id: string;
   nome: string;
@@ -27,73 +27,59 @@ interface Turma {
   disciplina: string;
 }
 
-type VinculoStatus = "ativo" | "inativo" | "trancado";
+type VinculoStatus = "Ativa" | "Concluída" | "Cancelada";
 
-// Interface para os dados dos alunos, agora com vinculoId
-interface Aluno {
+interface AlunoVinculado {
   id: string;
   nome: string;
   matricula: string;
   status: VinculoStatus;
-  vinculoId: number; // ID do registro na tabela alunos_turmas
+  vinculoId: number;
 }
-
-// Objeto para mapear status do DB para texto na UI
-const statusMap: Record<VinculoStatus, string> = {
-  ativo: "Ativo",
-  inativo: "Inativo",
-  trancado: "Trancado",
-};
 
 export function VinculadosTab() {
   const { id: cursoId } = useParams<{ id: string }>();
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [turmas, setTurmas] = useState<Turma[]>([]);
-  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [alunosVinculados, setAlunosVinculados] = useState<AlunoVinculado[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Função para buscar os dados, agora com useCallback para otimização
   const fetchVinculados = useCallback(async () => {
     if (!cursoId) return;
+    setIsLoading(true);
     try {
-      // A flag de loading só é ativada na primeira vez para evitar piscar a tela
-      if (alunos.length === 0) setIsLoading(true);
-      const response = await axios.get(`/api/cursos/${cursoId}/vinculados`);
-      setProfessores(response.data.professores || []);
-      setTurmas(response.data.turmas || []);
-      setAlunos(response.data.alunos || []);
+      const [alunosResponse, outrosResponse] = await Promise.all([
+        axios.get(`/api/cursos/${cursoId}/alunos-vinculados`),
+        axios.get(`/api/cursos/${cursoId}/vinculados`)
+      ]);
+
+      setAlunosVinculados(alunosResponse.data || []);
+      setProfessores(outrosResponse.data.professores || []);
+      setTurmas(outrosResponse.data.turmas || []);
+
     } catch (error) {
       console.error("Erro ao buscar dados de vinculados:", error);
       toast.error("Não foi possível carregar os dados vinculados ao curso.");
     } finally {
       setIsLoading(false);
     }
-  }, [cursoId, alunos.length]);
+  }, [cursoId]);
 
   useEffect(() => {
     fetchVinculados();
   }, [fetchVinculados]);
 
-  /**
-   * Atualiza o status do vínculo de um aluno em uma turma.
-   * @param vinculoId O ID da linha na tabela `alunos_turmas`.
-   * @param newStatus O novo status a ser aplicado.
-   */
   const handleStatusChange = async (vinculoId: number, newStatus: VinculoStatus) => {
-    // Atualização otimista: muda a UI primeiro para uma resposta rápida
-    setAlunos(prevAlunos =>
+    setAlunosVinculados(prevAlunos =>
       prevAlunos.map(aluno =>
         aluno.vinculoId === vinculoId ? { ...aluno, status: newStatus } : aluno
       )
     );
-
     try {
-      // Rota específica para atualizar o status do vínculo
-      await axios.patch(`/api/alunos-turmas/${vinculoId}/status`, { status: newStatus });
+      await axios.patch(`/api/vincular-aluno-curso/${vinculoId}/status`, { status: newStatus });
       toast.success(`Status do aluno atualizado com sucesso!`);
     } catch (error) {
       toast.error("Falha ao atualizar o status do vínculo.");
-      // Em caso de erro, reverte a mudança na UI buscando os dados frescos do servidor
       fetchVinculados();
     }
   };
@@ -128,7 +114,7 @@ export function VinculadosTab() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Aba de Alunos com Status Editável */}
+          {/* Aba de Alunos */}
           <TabsContent value="alunos" className="mt-0">
             <div className="rounded-md border border-border">
               <Table>
@@ -136,14 +122,14 @@ export function VinculadosTab() {
                   <TableRow className="border-border hover:bg-muted/50">
                     <TableHead>Nome</TableHead>
                     <TableHead>Matrícula</TableHead>
-                    <TableHead className="w-[180px]">Status no Vínculo</TableHead>
+                    <TableHead className="w-[180px]">Status da Matrícula</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow><TableCell colSpan={3}>{renderLoading()}</TableCell></TableRow>
-                  ) : alunos.length > 0 ? (
-                    alunos.map((aluno) => (
+                  ) : alunosVinculados.length > 0 ? (
+                    alunosVinculados.map((aluno) => (
                       <TableRow key={aluno.vinculoId} className="border-border hover:bg-muted/50">
                         <TableCell className="font-medium">{aluno.nome}</TableCell>
                         <TableCell>{aluno.matricula}</TableCell>
@@ -156,9 +142,9 @@ export function VinculadosTab() {
                               <SelectValue placeholder="Alterar status..." />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="ativo">Ativo</SelectItem>
-                              <SelectItem value="inativo">Inativo</SelectItem>
-                              <SelectItem value="trancado">Trancado</SelectItem>
+                              <SelectItem value="Ativa">Ativa</SelectItem>
+                              <SelectItem value="Concluída">Concluída</SelectItem>
+                              <SelectItem value="Cancelada">Cancelada</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -172,7 +158,9 @@ export function VinculadosTab() {
             </div>
           </TabsContent>
 
-          {/* Aba de Professores (sem alterações) */}
+          {/* ======================================================================= */}
+          {/* CÓDIGO RESTAURADO PARA A ABA DE PROFESSORES */}
+          {/* ======================================================================= */}
           <TabsContent value="professores" className="mt-0">
             <div className="rounded-md border border-border">
               <Table>
@@ -202,7 +190,9 @@ export function VinculadosTab() {
             </div>
           </TabsContent>
 
-          {/* Aba de Turmas (sem alterações) */}
+          {/* ======================================================================= */}
+          {/* CÓDIGO RESTAURADO PARA A ABA DE TURMAS */}
+          {/* ======================================================================= */}
           <TabsContent value="turmas" className="mt-0">
             <div className="rounded-md border border-border">
               <Table>
