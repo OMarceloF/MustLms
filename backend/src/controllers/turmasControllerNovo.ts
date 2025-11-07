@@ -13,11 +13,13 @@ interface TurmaFromDB extends RowDataPacket {
     materias_ids: string; // JSON string '[1, 2, 3]'
     semestre_id: number;
     semestre_nome: string;
+    semestre_data_inicio: string; // <-- ADICIONADO PARA A LÓGICA DE STATUS
+    semestre_data_fim: string;   // <-- ADICIONADO PARA A LÓGICA DE STATUS
     professor_responsavel: number;
     professor_nome: string;
     modalidade: 'Presencial' | 'Híbrido' | 'EAD';
     quantidade_alunos: number | null;
-    status: 'Ativa' | 'Em Planejamento' | 'Encerrada';
+    // O campo 'status' do banco de dados não é mais usado diretamente na resposta.
     descricao: string | null;
 }
 
@@ -43,16 +45,20 @@ interface TurmaAPI {
 
 /**
  * [GET] /api/turmas-novo - Listar todas as turmas com detalhes.
- * OTIMIZADO: Evita o problema de query N+1, buscando todas as matérias de uma vez.
+ * ATUALIZADO: Define o status dinamicamente com base nas datas do período letivo.
  */
 export const getTurmas = async (req: Request, res: Response) => {
     try {
+        // A query foi modificada para buscar as datas de início e fim do período letivo.
         const [turmasRows] = await pool.query<TurmaFromDB[]>(`
             SELECT 
                 t.id, t.nome_turma, t.ano_letivo, t.curso_id, cp.nome AS curso_nome,
-                t.materias_ids, t.semestre_id, cpl.nome AS semestre_nome,
+                t.materias_ids, t.semestre_id, 
+                cpl.nome AS semestre_nome,
+                cpl.data_inicio AS semestre_data_inicio, -- Data de início do período
+                cpl.data_fim AS semestre_data_fim,       -- Data de fim do período
                 t.professor_responsavel, f.nome AS professor_nome, t.modalidade,
-                t.quantidade_alunos, t.status, t.descricao
+                t.quantidade_alunos, t.descricao
             FROM turmas t
             LEFT JOIN cursos_posgraduacao cp ON t.curso_id = cp.id
             LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
@@ -64,7 +70,6 @@ export const getTurmas = async (req: Request, res: Response) => {
         // Pega todos os IDs de matérias de todas as turmas
         const allMateriaIds = turmasRows.flatMap(turma => {
             try {
-                // Garante que o parse funcione mesmo com string vazia ou inválida
                 const ids = JSON.parse(turma.materias_ids || '[]');
                 return Array.isArray(ids) ? ids : [];
             } catch {
@@ -72,7 +77,7 @@ export const getTurmas = async (req: Request, res: Response) => {
             }
         });
         
-        const uniqueMateriaIds = [...new Set(allMateriaIds)].filter(id => id != null); // Remove nulos/undefined
+        const uniqueMateriaIds = [...new Set(allMateriaIds)].filter(id => id != null);
 
         // Cria um mapa para associar ID da matéria ao seu nome
         const materiasMap = new Map<number, string>();
@@ -86,37 +91,52 @@ export const getTurmas = async (req: Request, res: Response) => {
             disciplinasRows.forEach(d => materiasMap.set(d.id, d.nome));
         }
 
-        // Mapeia os resultados, agora com os nomes das matérias
+        const dataAtual = new Date();
+        dataAtual.setHours(0, 0, 0, 0); // Normaliza para comparar apenas a data
+
+        // Mapeia os resultados, agora com os nomes das matérias e o status dinâmico
         const turmasFormatadas = turmasRows.map(turma => {
             let materiasIds: (string | number)[] = [];
             try {
                 const parsedIds = JSON.parse(turma.materias_ids || '[]');
                 materiasIds = Array.isArray(parsedIds) ? parsedIds : [];
-            } catch {
-                // Deixa o array vazio se o JSON for inválido
-            }
+            } catch {}
             
-            // *** LINHA DA CORREÇÃO PRINCIPAL ***
-            // Converte os IDs para número e busca o nome no mapa
             const materiasNomes = materiasIds
                 .map(id => materiasMap.get(Number(id)))
-                .filter((nome): nome is string => !!nome); // Filtra nomes não encontrados
+                .filter((nome): nome is string => !!nome);
+
+            // ===== LÓGICA DE STATUS DINÂMICO =====
+            let status: 'Ativa' | 'Em Planejamento' | 'Encerrada' = 'Em Planejamento'; // Padrão
+            if (turma.semestre_data_inicio && turma.semestre_data_fim) {
+                const dataInicio = new Date(turma.semestre_data_inicio);
+                const dataFim = new Date(turma.semestre_data_fim);
+
+                if (dataAtual >= dataInicio && dataAtual <= dataFim) {
+                    status = 'Ativa';
+                } else if (dataAtual > dataFim) {
+                    status = 'Encerrada';
+                } else { // dataAtual < dataInicio
+                    status = 'Em Planejamento';
+                }
+            }
+            // =======================================
 
             return {
-                id: turma.id, // Mantém o ID como número para consistência interna
+                id: turma.id,
                 nomeTurma: turma.nome_turma,
                 anoInicio: turma.ano_letivo,
                 cursoId: String(turma.curso_id),
                 cursoNome: turma.curso_nome,
-                materiasIds: materiasIds.map(String), // Converte para string para o frontend
-                materiasNomes: materiasNomes.length > 0 ? materiasNomes : ["Nenhuma matéria vinculada"], // Mensagem padrão se não houver nomes
+                materiasIds: materiasIds.map(String),
+                materiasNomes: materiasNomes.length > 0 ? materiasNomes : ["Nenhuma matéria vinculada"],
                 semestre: String(turma.semestre_id),
                 semestreNome: turma.semestre_nome,
                 responsavelId: String(turma.professor_responsavel),
                 responsavelNome: turma.professor_nome,
                 modalidade: turma.modalidade,
                 quantidadeAlunos: turma.quantidade_alunos ?? undefined,
-                status: turma.status,
+                status: status, // <-- USANDO O STATUS CALCULADO
                 descricao: turma.descricao ?? undefined,
             };
         });
@@ -132,12 +152,14 @@ export const getTurmas = async (req: Request, res: Response) => {
  * [POST] /api/turmas-novo - Criar uma nova turma.
  */
 export const createTurma = async (req: Request, res: Response) => {
-    const { nomeTurma, cursoId, materiasIds, anoInicio, semestre, responsavelId, modalidade, quantidadeAlunos, status, descricao }: TurmaAPI = req.body;
+    // O status enviado pelo frontend será ignorado e salvo como o padrão do DB,
+    // pois a lógica de status é dinâmica no GET.
+    const { nomeTurma, cursoId, materiasIds, anoInicio, semestre, responsavelId, modalidade, quantidadeAlunos, descricao }: TurmaAPI = req.body;
 
     try {
         const [result] = await pool.execute(
-            `INSERT INTO turmas (nome_turma, ano_letivo, curso_id, materias_ids, semestre_id, professor_responsavel, modalidade, quantidade_alunos, status, descricao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [nomeTurma, anoInicio, cursoId, JSON.stringify(materiasIds), semestre, responsavelId, modalidade, quantidadeAlunos ?? null, status, descricao ?? null]
+            `INSERT INTO turmas (nome_turma, ano_letivo, curso_id, materias_ids, semestre_id, professor_responsavel, modalidade, quantidade_alunos, status, descricao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Em Planejamento', ?)`,
+            [nomeTurma, anoInicio, cursoId, JSON.stringify(materiasIds), semestre, responsavelId, modalidade, quantidadeAlunos ?? null, descricao ?? null]
         );
         const insertId = (result as ResultSetHeader).insertId;
         res.status(201).json({ id: String(insertId), ...req.body });
@@ -152,12 +174,13 @@ export const createTurma = async (req: Request, res: Response) => {
  */
 export const updateTurma = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { nomeTurma, cursoId, materiasIds, anoInicio, semestre, responsavelId, modalidade, quantidadeAlunos, status, descricao }: TurmaAPI = req.body;
+    // O status enviado pelo frontend será ignorado na atualização.
+    const { nomeTurma, cursoId, materiasIds, anoInicio, semestre, responsavelId, modalidade, quantidadeAlunos, descricao }: TurmaAPI = req.body;
 
     try {
         await pool.execute(
-            `UPDATE turmas SET nome_turma = ?, ano_letivo = ?, curso_id = ?, materias_ids = ?, semestre_id = ?, professor_responsavel = ?, modalidade = ?, quantidade_alunos = ?, status = ?, descricao = ? WHERE id = ?`,
-            [nomeTurma, anoInicio, cursoId, JSON.stringify(materiasIds), semestre, responsavelId, modalidade, quantidadeAlunos ?? null, status, descricao ?? null, id]
+            `UPDATE turmas SET nome_turma = ?, ano_letivo = ?, curso_id = ?, materias_ids = ?, semestre_id = ?, professor_responsavel = ?, modalidade = ?, quantidade_alunos = ?, descricao = ? WHERE id = ?`,
+            [nomeTurma, anoInicio, cursoId, JSON.stringify(materiasIds), semestre, responsavelId, modalidade, quantidadeAlunos ?? null, descricao ?? null, id]
         );
         res.status(200).json({ id, ...req.body });
     } catch (error) {
@@ -180,7 +203,7 @@ export const deleteTurma = async (req: Request, res: Response) => {
     }
 };
 
-// --- FUNÇÕES PARA DADOS DE FORMULÁRIO ---
+// --- FUNÇÕES PARA DADOS DE FORMULÁRIO (sem alterações) ---
 
 export const getCursosParaForm = async (req: Request, res: Response) => {
     try {
@@ -219,12 +242,8 @@ export const getProfessoresParaForm = async (req: Request, res: Response) => {
     }
 };
 
-// --- FUNÇÕES PARA GERENCIAMENTO DE UMA TURMA ESPECÍFICA ---
+// --- FUNÇÕES PARA GERENCIAMENTO DE UMA TURMA ESPECÍFICA (sem alterações) ---
 
-/**
- * [GET] /api/turmas-novo/:id - Busca uma turma pelo ID com todos os detalhes.
- * VERSÃO CORRIGIDA: Garante que o nome do curso seja sempre incluído.
- */
 export const getTurmaByIdNovo = async (req: Request, res: Response) => {
     const { id } = req.params;
 
@@ -234,7 +253,7 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
                 t.id, t.nome_turma, t.ano_letivo, t.modalidade, t.status, t.descricao,
                 t.materias_ids, t.semestre_id,
                 cp.nome AS curso_nome,
-                cpl.nome AS semestre_nome, -- <-- Este campo é a chave
+                cpl.nome AS semestre_nome,
                 f.nome AS professor_nome
             FROM turmas t
             LEFT JOIN cursos_posgraduacao cp ON t.curso_id = cp.id
@@ -278,7 +297,7 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
             modalidade: turma.modalidade,
             materiaId: materias.length > 0 ? materias[0].materiaId : null,
             semestreId: turma.semestre_id,
-            semestre_nome: turma.semestre_nome, // <-- GARANTINDO QUE O CAMPO SEJA ENVIADO
+            semestre_nome: turma.semestre_nome,
         };
 
         return res.status(200).json(responseData);
@@ -289,10 +308,6 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * @description Lista os alunos disponíveis para serem vinculados a uma turma específica.
- * @route GET /api/turmas-novo/:turmaId/alunos-disponiveis
- */
 export const getAlunosDisponiveisParaTurma = async (req: Request, res: Response) => {
     const { turmaId } = req.params;
     if (!turmaId) return res.status(400).json({ message: 'O ID da turma é obrigatório.' });
@@ -311,10 +326,6 @@ export const getAlunosDisponiveisParaTurma = async (req: Request, res: Response)
     }
 };
 
-/**
- * @description Adiciona uma lista de alunos a uma turma específica.
- * @route POST /api/turmas-novo/:turmaId/adicionar-alunos
- */
 export const adicionarAlunosTurma = async (req: Request, res: Response) => {
     const { turmaId } = req.params;
     const { alunos } = req.body;
@@ -338,10 +349,6 @@ export const adicionarAlunosTurma = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * @description Remove um aluno de uma turma específica.
- * @route DELETE /api/turmas-novo/:turmaId/alunos/:alunoId
- */
 export const removerAlunoDaTurma = async (req: Request, res: Response) => {
     const { turmaId, alunoId } = req.params;
     if (!turmaId || !alunoId) {
@@ -360,12 +367,8 @@ export const removerAlunoDaTurma = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * @description Atualiza o status do VÍNCULO de um aluno com uma turma específica.
- * @route   PATCH /api/turmas-novo/:turmaId/alunos/:alunoId/status
- */
 export const updateAlunoTurmaStatus = async (req: Request, res: Response) => {
-    const { vinculoId } = req.params; // Recebe o ID do vínculo da URL
+    const { vinculoId } = req.params;
     const { status } = req.body;
 
     const allowedStatus = ['ativo', 'inativo', 'trancado'];
@@ -375,7 +378,7 @@ export const updateAlunoTurmaStatus = async (req: Request, res: Response) => {
 
     try {
         const [result] = await pool.query<ResultSetHeader>(
-            "UPDATE alunos_turmas SET status_vinculo = ? WHERE id = ?", // Usa o ID do vínculo (chave primária)
+            "UPDATE alunos_turmas SET status_vinculo = ? WHERE id = ?",
             [status, vinculoId]
         );
 
