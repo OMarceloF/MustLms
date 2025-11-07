@@ -35,7 +35,7 @@ import {
   criarOuAtualizarAluno,
   buscarAlunoPorCPF,
   getDetalhesCompletosAluno,
-  
+  atualizarDocumentoAluno,
 } from '../controllers/alunosControllerNovo';
 // import { criarAluno } from '../controllers/criarAlunoController';
 import { criarResponsavel } from '../controllers/criarResponsavelController';
@@ -997,5 +997,11 @@ router.get('/api/cursos/:cursoId/alunos-vinculados', listarAlunosVinculados);
 
 //Update Vinculo
 router.patch('/api/vincular-aluno-curso/:vinculoId/status', updateStatusVinculo);
+
+router.post(
+  '/api/alunos/:alunoId/documentos/:documentoId/atualizar',
+  uploadSingleDoc('documento'),
+  atualizarDocumentoAluno
+);
 
 export default router;

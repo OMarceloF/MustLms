@@ -4,6 +4,8 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import pool from '../config/db';
 import { RowDataPacket } from 'mysql2';
+import fs from 'fs/promises';
+import path from 'path';
 
 // =======================================================================
 // INTERFACES PARA TIPAGEM
@@ -481,7 +483,7 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
             });
         });
 
-        const [documentos] = await connection.query<RowDataPacket[]>('SELECT tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_alunos WHERE aluno_id = ?;', [alunoId]);
+        const [documentos] = await connection.query<RowDataPacket[]>('SELECT id, tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_alunos WHERE aluno_id = ?;', [alunoId]);
         const [contratos] = await connection.query<RowDataPacket[]>('SELECT cp.id, c.nome as nome_contrato, c.tipo, cp.situacao_contrato, cp.contrato_url, cp.criado_em FROM contratos_preenchidos cp JOIN contratos c ON cp.contrato_id = c.id WHERE cp.aluno_id = ? ORDER BY cp.criado_em DESC;', [alunoId]);
 
         res.status(200).json({
@@ -496,6 +498,111 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
         res.status(500).json({ message: 'Erro interno do servidor.' });
     } finally {
         if (connection) connection.release();
+    }
+};
+
+/**
+ * @route   POST /api/alunos/:alunoId/documentos/:documentoId/atualizar
+ * @desc    Atualiza um documento existente de um aluno.
+ */
+export const atualizarDocumentoAluno = async (req: Request, res: Response) => {
+    const { alunoId, documentoId } = req.params;
+    const file = req.file;
+
+    // --- LOG 1: Verificar Parâmetros e Arquivo ---
+    console.log('--- INICIANDO ATUALIZAÇÃO DE DOCUMENTO ---');
+    console.log(`Recebido alunoId: ${alunoId}, documentoId: ${documentoId}`);
+    if (file) {
+        console.log('Arquivo recebido:', {
+            filename: file.filename,
+            originalname: file.originalname,
+            path: file.path,
+            mimetype: file.mimetype,
+        });
+    } else {
+        console.error('ERRO: Nenhum arquivo foi recebido no req.file.');
+        return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // --- LOG 2: Verificar busca do documento antigo ---
+        console.log('Buscando documento antigo no banco de dados...');
+        const [docRows]: any[] = await connection.execute(
+            'SELECT caminho_arquivo FROM documentos_alunos WHERE id = ? AND aluno_id = ?',
+            [documentoId, alunoId]
+        );
+
+        if (docRows.length === 0) {
+            console.error(`ERRO: Nenhum documento encontrado com id=${documentoId} para o aluno_id=${alunoId}. A atualização não pode continuar.`);
+            await connection.rollback();
+            return res.status(404).json({ message: 'Documento não encontrado para este aluno.' });
+        }
+        
+        console.log('Documento antigo encontrado. Tentando excluir o arquivo físico...');
+        // ... (lógica de exclusão do arquivo antigo)
+
+        // --- LOG 3: Verificar os dados para o UPDATE ---
+        const caminhoAbsolutoNovo = file.path;
+        const novoCaminhoRelativo = path.relative(process.cwd(), caminhoAbsolutoNovo).replace(/\\/g, '/');
+        const urlCaminhoNovo = `/${novoCaminhoRelativo}`;
+        const nomeOriginal = file.originalname;
+
+        console.log('Dados para o UPDATE:', {
+            novoCaminho: urlCaminhoNovo,
+            nomeOriginal: nomeOriginal,
+            documentoId: documentoId,
+            alunoId: alunoId,
+        });
+
+        // --- LOG 4: Executar e verificar o resultado do UPDATE ---
+        console.log('Executando o comando UPDATE no banco de dados...');
+        const [updateResult]: any = await connection.execute(
+            `UPDATE documentos_alunos 
+             SET caminho_arquivo = ?, nome_original = ?, data_upload = NOW() 
+             WHERE id = ? AND aluno_id = ?`,
+            [urlCaminhoNovo, nomeOriginal, documentoId, alunoId]
+        );
+
+        console.log('Resultado do UPDATE:', updateResult);
+        if (updateResult.affectedRows === 0) {
+            console.error('AVISO: O comando UPDATE foi executado, mas nenhuma linha foi afetada. Verifique os IDs.');
+            // Mesmo que nada mude, não vamos tratar como erro fatal, mas é um alerta importante.
+        } else {
+            console.log(`${updateResult.affectedRows} linha(s) atualizada(s) com sucesso.`);
+        }
+
+        await connection.commit();
+        console.log('Transação commitada com sucesso.');
+
+        res.status(200).json({
+            message: 'Documento atualizado com sucesso!',
+            caminho_arquivo: urlCaminhoNovo,
+        });
+
+    } catch (error) {
+        await connection.rollback();
+        // --- LOG 5: Capturar e exibir o erro exato ---
+        console.error('--- ERRO FATAL NA ATUALIZAÇÃO ---');
+        console.error('Erro ao atualizar documento do aluno:', error);
+        
+        if (file) {
+            try {
+                await fs.unlink(file.path);
+                console.log('Arquivo novo foi limpo após o erro.');
+            } catch (cleanupError) {
+                console.error('Erro ao limpar arquivo após falha na transação:', cleanupError);
+            }
+        }
+        res.status(500).json({ message: 'Erro interno ao atualizar o documento.' });
+    } finally {
+        if (connection) {
+            connection.release();
+            console.log('Conexão com o banco liberada.');
+        }
+        console.log('--- FIM DA ATUALIZAÇÃO DE DOCUMENTO ---');
     }
 };
 
