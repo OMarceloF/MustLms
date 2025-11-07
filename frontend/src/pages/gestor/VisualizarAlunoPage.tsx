@@ -8,7 +8,7 @@ import { User, FileText, BookOpen, Briefcase, Download, Loader2 } from 'lucide-r
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import SidebarGestor from "./components/Sidebar";
 
-// --- Interfaces (Atualizadas para corresponder ao backend) ---
+// --- Interfaces ---
 interface AlunoDetalhes {
     id: number;
     nome: string;
@@ -46,7 +46,6 @@ interface DadosAcademicos {
 }
 
 interface Documento {
-    id: number;
     tipo_documento: string;
     caminho_arquivo: string;
     nome_original: string;
@@ -74,7 +73,7 @@ const VisualizarAlunoPage = () => {
     const navigate = useNavigate();
     const [alunoCompleto, setAlunoCompleto] = useState<AlunoCompleto | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'geral' | 'academico' | 'documentos' | 'contratos'>('geral');
+    const [activeTab, setActiveTab] = useState<'geral' | 'academico' | 'documentos' | 'contratos'>('academico');
     const [sidebarAberta, setSidebarAberta] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -96,9 +95,6 @@ const VisualizarAlunoPage = () => {
         fetchAlunoData();
     }, [id, navigate]);
 
-    // =======================================================================
-    // FUNÇÕES DE RENDERIZAÇÃO (Lógica de cálculo foi removida)
-    // =======================================================================
     const renderEndereco = (endereco: AlunoDetalhes['endereco']) => {
         if (!endereco) return "Não informado";
         return `${endereco.logradouro}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade}/${endereco.uf}, CEP: ${endereco.cep}`;
@@ -204,8 +200,7 @@ const VisualizarAlunoPage = () => {
                                                 <div key={semestre} className="mb-8">
                                                     <h3 className="text-xl font-bold text-indigo-700 mb-4">{semestre}</h3>
                                                     <div className="space-y-6">
-                                                        {/* ADICIONADA VERIFICAÇÃO DE SEGURANÇA AQUI */}
-                                                        {disciplinas && disciplinas.map(disciplina => {
+                                                        {disciplinas.map(disciplina => {
                                                             const statusColor = disciplina.status === 'Aprovado' ? 'text-green-600' : disciplina.status === 'Reprovado' ? 'text-red-600' : 'text-gray-500';
                                                             const temRecuperacao = disciplina.nota_recuperacao !== null;
                                                             const temNotasLancadas = disciplina.notas.some(n => n.nota !== null);
@@ -225,6 +220,7 @@ const VisualizarAlunoPage = () => {
                                                                                 {disciplina.notas.map((n, index) => (
                                                                                     <tr key={index} className="border-t">
                                                                                         <td className="py-2">{n.tipo} (Valor: {n.valor})</td>
+                                                                                        {/* CORREÇÃO APLICADA AQUI */}
                                                                                         <td className="py-2 text-right font-medium">
                                                                                             {typeof n.nota === 'number' ? n.nota.toFixed(2) : '—'}
                                                                                         </td>
@@ -234,6 +230,7 @@ const VisualizarAlunoPage = () => {
                                                                                 <tr className={`border-t ${temRecuperacao ? 'bg-yellow-50' : ''}`}>
                                                                                     <td className="py-2 font-semibold">Nota de Recuperação</td>
                                                                                     <td className={`py-2 text-right font-bold ${temRecuperacao ? 'text-yellow-700' : 'text-gray-500'}`}>
+                                                                                        {/* CORREÇÃO APLICADA AQUI */}
                                                                                         {typeof disciplina.nota_recuperacao === 'number' ? disciplina.nota_recuperacao.toFixed(2) : '—'}
                                                                                     </td>
                                                                                 </tr>
@@ -241,6 +238,7 @@ const VisualizarAlunoPage = () => {
                                                                                 <tr className="border-t bg-gray-100">
                                                                                     <td className="py-2 font-semibold">Nota Final</td>
                                                                                     <td className="py-2 text-right font-bold text-gray-800">
+                                                                                        {/* CORREÇÃO APLICADA AQUI */}
                                                                                         {temNotasLancadas ? disciplina.nota_final.toFixed(2) : '—'}
                                                                                     </td>
                                                                                 </tr>
@@ -265,31 +263,15 @@ const VisualizarAlunoPage = () => {
 
                                     {activeTab === 'documentos' && (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {documentos.length > 0 ? documentos.map((doc) => (
-                                                <div key={doc.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
-                                                    <div className="flex-1 min-w-0 mr-4">
+                                            {documentos.length > 0 ? documentos.map((doc, index) => (
+                                                <div key={index} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
+                                                    <div>
                                                         <p className="font-semibold text-gray-700">{doc.tipo_documento.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
                                                         <p className="text-xs text-gray-500 truncate" title={doc.nome_original}>{doc.nome_original}</p>
                                                     </div>
-                                                    {/* Agrupando os botões de ação */}
-                                                    <div className="flex items-center gap-3">
-                                                        <button
-                                                            onClick={() => triggerFileInput(doc.id)}
-                                                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                                                            title="Atualizar Documento"
-                                                        >
-                                                            <RefreshCw size={20} />
-                                                        </button>
-                                                        <a
-                                                            href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                                                            title="Baixar Documento"
-                                                        >
-                                                            <Download size={20} />
-                                                        </a>
-                                                    </div>
+                                                    <a href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800">
+                                                        <Download size={20} />
+                                                    </a>
                                                 </div>
                                             )) : <p>Nenhum documento encontrado.</p>}
                                         </div>
