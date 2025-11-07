@@ -1,7 +1,8 @@
 // backend/src/controllers/vincularAlunoCursoController.ts
 
 import { Request, Response } from 'express';
-import pool from '../config/db'; // Ajuste o caminho se necessário
+import pool from '../config/db';
+import { ResultSetHeader } from 'mysql2';
 
 /**
  * @route   POST /api/matriculas/vincular-aluno-curso
@@ -65,22 +66,30 @@ export const updateStatusVinculo = async (req: Request, res: Response) => {
     const { vinculoId } = req.params;
     const { status } = req.body;
 
-    if (!status) {
-        return res.status(400).json({ message: "O novo status é obrigatório." });
+    const statusPermitidos = ['Ativa', 'Concluída', 'Cancelada', 'Trancada'];
+    if (!status || !statusPermitidos.includes(status)) {
+        return res.status(400).json({ 
+            message: `Status inválido. Os valores permitidos são: ${statusPermitidos.join(', ')}.` 
+        });
+    }
+
+    if (!vinculoId) {
+        return res.status(400).json({ message: "O ID do vínculo é obrigatório." });
     }
 
     try {
         const query = "UPDATE vincular_aluno_curso SET status_matricula = ? WHERE id = ?";
-        const [result]: any = await pool.execute(query, [status, vinculoId]);
+        
+        const [result] = await pool.execute<ResultSetHeader>(query, [status, vinculoId]);
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Vínculo não encontrado." });
+            return res.status(404).json({ message: "Vínculo de matrícula não encontrado." });
         }
 
         res.status(200).json({ message: "Status do vínculo atualizado com sucesso." });
 
     } catch (error: any) {
         console.error("Erro ao atualizar status do vínculo:", error);
-        res.status(500).json({ message: "Erro interno do servidor." });
+        res.status(500).json({ message: "Erro interno do servidor ao atualizar o status." });
     }
 };
