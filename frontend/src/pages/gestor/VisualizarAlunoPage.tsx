@@ -46,6 +46,7 @@ interface DadosAcademicos {
 }
 
 interface Documento {
+    id: number;
     tipo_documento: string;
     caminho_arquivo: string;
     nome_original: string;
@@ -264,15 +265,31 @@ const VisualizarAlunoPage = () => {
 
                                     {activeTab === 'documentos' && (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {documentos.length > 0 ? documentos.map((doc, index) => (
-                                                <div key={index} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
-                                                    <div>
+                                            {documentos.length > 0 ? documentos.map((doc) => (
+                                                <div key={doc.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
+                                                    <div className="flex-1 min-w-0 mr-4">
                                                         <p className="font-semibold text-gray-700">{doc.tipo_documento.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
                                                         <p className="text-xs text-gray-500 truncate" title={doc.nome_original}>{doc.nome_original}</p>
                                                     </div>
-                                                    <a href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800">
-                                                        <Download size={20} />
-                                                    </a>
+                                                    {/* Agrupando os botões de ação */}
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => triggerFileInput(doc.id)}
+                                                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                            title="Atualizar Documento"
+                                                        >
+                                                            <RefreshCw size={20} />
+                                                        </button>
+                                                        <a
+                                                            href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                            title="Baixar Documento"
+                                                        >
+                                                            <Download size={20} />
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             )) : <p>Nenhum documento encontrado.</p>}
                                         </div>
