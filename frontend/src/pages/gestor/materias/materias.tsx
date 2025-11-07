@@ -99,7 +99,7 @@ export default function PainelAcademico() {
                                 </TabsTrigger> */}
                                 <TabsTrigger value="producao" className="flex flex-1 items-center justify-center gap-2 data-[state=active]:bg-background sm:flex-none">
                                     <FileText className="h-4 w-4" />
-                                    <span className="hidden sm:inline">Produção</span>
+                                    <span className="hidden sm:inline">Atividades</span>
                                 </TabsTrigger>
                                 <TabsTrigger value="aulas" className="flex flex-1 items-center justify-center gap-2 data-[state=active]:bg-background sm:flex-none">
                                     <Video className="h-4 w-4" />

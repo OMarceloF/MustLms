@@ -249,9 +249,9 @@ export default function GestorTurma() {
                                     <Button onClick={() => handleOpenModal(null)} disabled={!turma.materiaId || !turma.semestreId}>
                                         <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Avaliação
                                     </Button>
-                                    <Button variant="outline" onClick={() => navigate(`/gestor/turmas/${turmaId}/materias/${turma.materiaId}/diario`)} disabled={!turma.materiaId}>
+                                    {/* <Button variant="outline" onClick={() => navigate(`/gestor/turmas/${turmaId}/materias/${turma.materiaId}/diario`)} disabled={!turma.materiaId}>
                                         <CalendarDays className="mr-2 h-4 w-4" /> Ver Diário
-                                    </Button>
+                                    </Button> */}
                                 </div>
                             </div>
                         </div>
