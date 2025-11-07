@@ -18,12 +18,19 @@ import { ActivityCompletion } from "./form-sections/ActivityCompletion";
 import { RestrictAccess } from "./form-sections/RestrictAccess";
 import { Tags } from "./form-sections/Tags";
 import { FileUpload } from './FileUpload';
+import { RichTextEditor } from './form-sections/RichTextEditor';
+import { QuestionarioForm } from "./forms/QuestionarioForm";
+import { LicaoForm } from './forms/LicaoForm';
+import { PesquisaForm } from './forms/PesquisaForm';
+
 
 interface ActivityFormProps {
   activityType: string;
 }
 
 export function ActivityForm({ activityType }: ActivityFormProps) {
+  console.log('ActivityForm recebeu o tipo de atividade:', `"${activityType}"`);
+
   // Componente para a área de upload de arquivos
   const FileUploadSection = () => (
     <div className="space-y-2">
@@ -41,31 +48,45 @@ export function ActivityForm({ activityType }: ActivityFormProps) {
 
   // Seção "Geral", agora com lógica condicional
   const GeneralSection = () => (
-    <div className="space-y-6"> {/* Aumenta o espaçamento vertical */}
+    <div className="space-y-6">
       <div className="space-y-3">
-        <Label htmlFor="activity-name" className="text-base font-semibold">Nome *</Label>
+        <Label htmlFor="activity-name" className="text-base font-semibold">
+          {/* O label muda para a tarefa */}
+          {activityType === 'task' ? 'Nome da tarefa' : 'Nome'} *
+        </Label>
         <Input id="activity-name" required />
       </div>
+
+      {/* Campo URL Externa (condicional) */}
+      {activityType === 'url' && (
+        <div className="space-y-3">
+          <Label htmlFor="external-url" className="text-base font-semibold">URL externa *</Label>
+          <Input id="external-url" type="url" required />
+        </div>
+      )}
+
       <div className="space-y-3">
         <Label htmlFor="activity-description" className="text-base font-semibold">Descrição</Label>
-        <div className="prose prose-sm max-w-none rounded-md border">
-          {/* Este div simula a aparência de um editor de texto rico. */}
-          <Textarea
-            id="activity-description"
-            placeholder="Forneça instruções ou detalhes..."
-            rows={6}
-            className="border-0 focus-visible:ring-0" // Remove a borda e o foco do textarea para que a borda do div prevaleça
-          />
-        </div>
+        <RichTextEditor id="activity-description" placeholder="..." rows={5} />
       </div>
+      {/* A tarefa tem um segundo editor de texto rico */}
+      {activityType === 'task' && (
+        <div className="space-y-3">
+          <Label htmlFor="activity-instructions" className="text-base font-semibold">Descrição da atividade</Label>
+          <RichTextEditor id="activity-instructions" placeholder="Instruções adicionais para a tarefa..." rows={8} />
+        </div>
+      )}
+
       <div className="flex items-center space-x-3 pt-2">
         <Checkbox id="show-description" />
         <Label htmlFor="show-description" className="font-normal">Exibir descrição na página do curso</Label>
       </div>
 
-      {activityType === 'file' && <FileUpload />}
+      {/* A tarefa também pode ter arquivos adicionais */}
+      {(activityType === 'file' || activityType === 'task') && <FileUpload />}
     </div>
   );
+
 
 
   const renderSpecificSections = () => {
@@ -73,7 +94,11 @@ export function ActivityForm({ activityType }: ActivityFormProps) {
       case 'arquivo': return <ArquivoForm />;
       case 'pagina': return <PaginaForm />;
       case 'url': return <UrlForm />;
-      case 'tarefa': return <TarefaForm />;
+      case 'quiz': return <QuestionarioForm />;
+      case 'task': return <TarefaForm />;
+      case 'lesson': return <LicaoForm />;
+      case 'survey': return <PesquisaForm />;
+
       default: return null;
     }
   };

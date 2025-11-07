@@ -2,22 +2,24 @@
 "use client"
 
 import { Label } from "../../../components/ui/label";
-import { Checkbox } from "../../../components/ui/checkbox";
 import { Input } from "../../../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
+import { Checkbox } from "../../../components/ui/checkbox";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "../../../components/ui/accordion";
-import { UploadCloud } from "lucide-react";
+import { HelpTooltip } from "../form-sections/HelpTooltip";
+import { FileUpload } from "../FileUpload"; // Reutilizaremos o componente de upload
 
-// Componente auxiliar para seletores de data/hora reutilizáveis
+// Componente auxiliar para os seletores de data/hora
 const DateTimeSelector = ({ label, id }: { label: string, id: string }) => (
-  <div className="space-y-2 rounded-md border p-3">
-    <div className="flex items-center space-x-2">
-      <Checkbox id={id}/>
-      <Label htmlFor={id}>{label}</Label>
+  <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
+    <div className="flex items-center gap-2">
+      <Label>{label}</Label>
+      <HelpTooltip text={`Habilite para definir a data de "${label.toLowerCase()}".`} />
     </div>
-    {/* Os campos de data/hora (desabilitados por padrão) ficariam aqui. */}
-    <div className="pl-6 text-xs text-muted-foreground">
-      Habilite para definir a data.
+    <div className="flex items-center gap-2">
+      <Checkbox id={id} />
+      <Label htmlFor={id} className="font-normal">Habilitar</Label>
+      {/* Aqui entrariam os seletores de data/hora, que seriam ativados pelo checkbox */}
     </div>
   </div>
 );
@@ -25,9 +27,10 @@ const DateTimeSelector = ({ label, id }: { label: string, id: string }) => (
 export function TarefaForm() {
   return (
     <>
+      {/* Seção Disponibilidade */}
       <AccordionItem value="disponibilidade">
-        <AccordionTrigger>Disponibilidade</AccordionTrigger>
-        <AccordionContent className="p-1 pt-4 space-y-3">
+        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">Disponibilidade</AccordionTrigger>
+        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-6">
           <DateTimeSelector id="allow-from" label="Permite envios a partir de" />
           <DateTimeSelector id="due-date" label="Data de entrega" />
           <DateTimeSelector id="cutoff-date" label="Data limite" />
@@ -35,41 +38,38 @@ export function TarefaForm() {
         </AccordionContent>
       </AccordionItem>
 
+      {/* Seção Tipos de Envio */}
       <AccordionItem value="tipos-envio">
-        <AccordionTrigger>Tipos de Envio</AccordionTrigger>
-        <AccordionContent className="p-1 pt-4 space-y-4">
-          <div className="space-y-3">
-            <Label>Tipos de envio permitidos</Label>
-            <div className="flex items-center space-x-2"><Checkbox id="tipo-texto-online" /><Label htmlFor="tipo-texto-online">Texto online</Label></div>
-            <div className="flex items-center space-x-2"><Checkbox id="tipo-envio-arquivo" defaultChecked /><Label htmlFor="tipo-envio-arquivo">Envios de arquivo</Label></div>
+        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">Tipos de envio</AccordionTrigger>
+        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-6">
+          <div className="grid grid-cols-1 items-start gap-2 md:grid-cols-[1fr_2fr]">
+            <div className="flex items-center gap-2">
+              <Label>Tipos de envio</Label>
+              <HelpTooltip text="Escolha como os estudantes devem submeter a tarefa." />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3"><Checkbox id="online-text" /><Label htmlFor="online-text" className="font-normal">Texto online</Label></div>
+              <div className="flex items-center gap-3"><Checkbox id="file-submission" defaultChecked /><Label htmlFor="file-submission" className="font-normal">Envios de arquivo</Label></div>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="max-files">Número máximo de arquivos enviados</Label>
-            <Input id="max-files" type="number" defaultValue={20} />
+          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
+            <Label>Número máximo de arquivos</Label>
+            <Input type="number" defaultValue={20} className="max-w-xs" />
           </div>
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="tipos-feedback">
-        <AccordionTrigger>Tipos de Feedback</AccordionTrigger>
-        <AccordionContent className="p-1 pt-4 space-y-3">
-          <div className="flex items-center space-x-2"><Checkbox id="feedback-comments" defaultChecked /><Label htmlFor="feedback-comments">Comentários de feedback</Label></div>
-          <div className="flex items-center space-x-2"><Checkbox id="feedback-files" /><Label htmlFor="feedback-files">Arquivos de feedback</Label></div>
-        </AccordionContent>
-      </AccordionItem>
-
+      {/* Seção Nota */}
       <AccordionItem value="nota">
-        <AccordionTrigger>Nota</AccordionTrigger>
-        <AccordionContent className="p-1 pt-4 space-y-4">
-          <div className="flex items-end gap-4">
-            <div className="space-y-2 flex-1">
-              <Label>Tipo</Label>
-              <Select defaultValue="pontos"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pontos">Pontos</SelectItem><SelectItem value="escala">Escala</SelectItem></SelectContent></Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="max-grade">Nota máxima</Label>
-              <Input id="max-grade" type="number" defaultValue={100} className="w-24" />
-            </div>
+        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">Nota</AccordionTrigger>
+        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-6">
+          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
+            <Label>Nota máxima</Label>
+            <Input type="number" defaultValue={100} className="max-w-xs" />
+          </div>
+          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
+            <Label>Método de avaliação</Label>
+            <Select defaultValue="simple"><SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="simple">Método simples de avaliação</SelectItem><SelectItem value="rubric">Rubrica</SelectItem></SelectContent></Select>
           </div>
         </AccordionContent>
       </AccordionItem>
