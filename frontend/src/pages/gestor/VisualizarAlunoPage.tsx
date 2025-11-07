@@ -8,7 +8,7 @@ import { User, FileText, BookOpen, Briefcase, Download, Loader2 } from 'lucide-r
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import SidebarGestor from "./components/Sidebar";
 
-// --- Interfaces (sem alterações) ---
+// --- Interfaces (Atualizadas para corresponder ao backend) ---
 interface AlunoDetalhes {
     id: number;
     nome: string;
@@ -30,13 +30,15 @@ interface Nota {
     tipo: string;
     valor: number;
     nota: number | null;
-    nota_rec: number | null;
 }
 
 interface Disciplina {
     id: number;
     nome: string;
     notas: Nota[];
+    nota_final: number;
+    nota_recuperacao: number | null;
+    status: 'Aprovado' | 'Reprovado' | 'Em Andamento' | 'Pendente';
 }
 
 interface DadosAcademicos {
@@ -94,37 +96,8 @@ const VisualizarAlunoPage = () => {
     }, [id, navigate]);
 
     // =======================================================================
-    // FUNÇÕES DE CÁLCULO E RENDERIZAÇÃO (NOVAS E ATUALIZADAS)
+    // FUNÇÕES DE RENDERIZAÇÃO (Lógica de cálculo foi removida)
     // =======================================================================
-    const calcularStatusDisciplina = (disciplina: Disciplina) => {
-        const notaTotalRegular = disciplina.notas.reduce((acc, n) => acc + (n.nota || 0), 0);
-        const notaRecuperacao = disciplina.notas.find(n => n.nota_rec !== null)?.nota_rec ?? null;
-        const MEDIA_APROVACAO = 60;
-
-        let notaFinal = notaTotalRegular;
-        let status: 'Aprovado' | 'Reprovado' | 'Em Andamento' = 'Em Andamento';
-        let statusColor = 'text-gray-500';
-
-        // Considera a nota de recuperação se ela for maior que a nota regular
-        if (notaRecuperacao !== null && notaRecuperacao > notaTotalRegular) {
-            notaFinal = notaRecuperacao;
-        }
-
-        // Só define status se houver alguma nota lançada
-        const temNotasLancadas = disciplina.notas.some(n => n.nota !== null);
-        if (temNotasLancadas) {
-            if (notaFinal >= MEDIA_APROVACAO) {
-                status = 'Aprovado';
-                statusColor = 'text-green-600';
-            } else {
-                status = 'Reprovado';
-                statusColor = 'text-red-600';
-            }
-        }
-
-        return { notaFinal, status, statusColor, notaRecuperacao };
-    };
-
     const renderEndereco = (endereco: AlunoDetalhes['endereco']) => {
         if (!endereco) return "Não informado";
         return `${endereco.logradouro}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade}/${endereco.uf}, CEP: ${endereco.cep}`;
@@ -181,7 +154,7 @@ const VisualizarAlunoPage = () => {
                                 {/* --- Cabeçalho do Aluno --- */}
                                 <div className="p-6 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row items-center gap-6">
                                     <img
-                                        src={aluno.foto ? `${import.meta.env.VITE_API_URL}${aluno.foto}` : `https://ui-avatars.com/api/?name=${aluno.nome.replace(' ', '+' )}&background=e0e7ff&color=4f46e5`}
+                                        src={aluno.foto ? `${import.meta.env.VITE_API_URL}${aluno.foto}` : `https://ui-avatars.com/api/?name=${aluno.nome.replace(' ', '+'  )}&background=e0e7ff&color=4f46e5`}
                                         alt={`Foto de ${aluno.nome}`}
                                         className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
                                     />
@@ -230,9 +203,11 @@ const VisualizarAlunoPage = () => {
                                                 <div key={semestre} className="mb-8">
                                                     <h3 className="text-xl font-bold text-indigo-700 mb-4">{semestre}</h3>
                                                     <div className="space-y-6">
-                                                        {disciplinas.map(disciplina => {
-                                                            const { status, statusColor, notaRecuperacao } = calcularStatusDisciplina(disciplina);
-                                                            const temRecuperacao = notaRecuperacao !== null;
+                                                        {/* ADICIONADA VERIFICAÇÃO DE SEGURANÇA AQUI */}
+                                                        {disciplinas && disciplinas.map(disciplina => {
+                                                            const statusColor = disciplina.status === 'Aprovado' ? 'text-green-600' : disciplina.status === 'Reprovado' ? 'text-red-600' : 'text-gray-500';
+                                                            const temRecuperacao = disciplina.nota_recuperacao !== null;
+                                                            const temNotasLancadas = disciplina.notas.some(n => n.nota !== null);
 
                                                             return (
                                                                 <div key={disciplina.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
@@ -249,18 +224,31 @@ const VisualizarAlunoPage = () => {
                                                                                 {disciplina.notas.map((n, index) => (
                                                                                     <tr key={index} className="border-t">
                                                                                         <td className="py-2">{n.tipo} (Valor: {n.valor})</td>
-                                                                                        <td className="py-2 text-right font-medium">{n.nota ?? '—'}</td>
+                                                                                        <td className="py-2 text-right font-medium">
+                                                                                            {typeof n.nota === 'number' ? n.nota.toFixed(2) : '—'}
+                                                                                        </td>
                                                                                     </tr>
                                                                                 ))}
-                                                                                {temRecuperacao && (
-                                                                                    <tr className="border-t bg-yellow-50">
-                                                                                        <td className="py-2 font-semibold">Nota de Recuperação</td>
-                                                                                        <td className="py-2 text-right font-bold text-yellow-700">{notaRecuperacao}</td>
-                                                                                    </tr>
-                                                                                )}
+                                                                                
+                                                                                <tr className={`border-t ${temRecuperacao ? 'bg-yellow-50' : ''}`}>
+                                                                                    <td className="py-2 font-semibold">Nota de Recuperação</td>
+                                                                                    <td className={`py-2 text-right font-bold ${temRecuperacao ? 'text-yellow-700' : 'text-gray-500'}`}>
+                                                                                        {typeof disciplina.nota_recuperacao === 'number' ? disciplina.nota_recuperacao.toFixed(2) : '—'}
+                                                                                    </td>
+                                                                                </tr>
+
+                                                                                <tr className="border-t bg-gray-100">
+                                                                                    <td className="py-2 font-semibold">Nota Final</td>
+                                                                                    <td className="py-2 text-right font-bold text-gray-800">
+                                                                                        {temNotasLancadas ? disciplina.nota_final.toFixed(2) : '—'}
+                                                                                    </td>
+                                                                                </tr>
+
                                                                                 <tr className="border-t bg-gray-100">
                                                                                     <td className="py-2 font-semibold">Status Final</td>
-                                                                                    <td className={`py-2 text-right font-bold ${statusColor}`}>{status}</td>
+                                                                                    <td className={`py-2 text-right font-bold ${statusColor}`}>
+                                                                                        {temNotasLancadas ? disciplina.status : 'Pendente'}
+                                                                                    </td>
                                                                                 </tr>
                                                                             </tbody>
                                                                         </table>

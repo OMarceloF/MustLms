@@ -5,7 +5,7 @@ import pool from '../config/db';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 import { notificarNotaLancada } from './notificacoesEventosController';
 
-// --- Interfaces (sem alterações) ---
+// --- Interfaces ---
 interface Avaliacao extends RowDataPacket {
   id: number;
   descricao: string;
@@ -21,10 +21,10 @@ interface AlunoComNotas {
     matricula?: string;
     status_aluno?: 'ativo' | 'inativo';
     notas: { avaliacao_id: number; nota: number | null }[];
-    media_final: number;
-    status: 'Aprovado' | 'Recuperação' | 'Reprovado' | 'Pendente';
+    media_final: number; // Mantido como a soma das notas regulares para referência
+    status: 'Aprovado' | 'Reprovado' | 'Pendente'; // Simplificado, pois 'Recuperação' é um estado transitório
     nota_recuperacao: number | null;
-    nota_final: number;
+    nota_final: number; // A nota final real após todas as regras
 }
 
 // =======================================================================
@@ -128,7 +128,7 @@ export const deleteAvaliacao = async (req: Request, res: Response) => {
 };
 
 // =======================================================================
-// LÓGICA CENTRAL DE NOTAS E STATUS (COM CORREÇÃO)
+// LÓGICA CENTRAL DE NOTAS E STATUS (COM A NOVA REGRA DE NEGÓCIO)
 // =======================================================================
 export const getDadosAcademicosCompletos = async (req: Request, res: Response) => {
     const { turmaId, materiaId, calendarioId } = req.params;
@@ -168,49 +168,40 @@ export const getDadosAcademicosCompletos = async (req: Request, res: Response) =
         const recMap = new Map<number, number>();
         notas.forEach(n => {
             if (n.nota_rec !== null) {
+                // Armazena a maior nota de recuperação encontrada para o aluno
                 const currentRec = recMap.get(n.aluno_id) || 0;
                 recMap.set(n.aluno_id, Math.max(currentRec, parseFloat(n.nota_rec)));
             }
         });
 
         const resultadoFinal: AlunoComNotas[] = alunos.map(aluno => {
-            let media_final = 0;
-            const notasDoAluno = avaliacoes.map(av => {
-                const nota = notasMap.get(`${aluno.id}-${av.id}`) ?? null;
-                if (nota !== null) media_final += nota;
-                return { avaliacao_id: av.id, nota };
-            });
+            const somaNotasRegulares = avaliacoes.reduce((acc, av) => {
+                const nota = notasMap.get(`${aluno.id}-${av.id}`) ?? 0;
+                return acc + nota;
+            }, 0);
 
-            if (media_final > 100) {
-                media_final = 100;
-            }
+            const notasDoAluno = avaliacoes.map(av => ({
+                avaliacao_id: av.id,
+                nota: notasMap.get(`${aluno.id}-${av.id}`) ?? null
+            }));
 
             const nota_recuperacao = recMap.get(aluno.id) ?? null;
-            let status: AlunoComNotas['status'] = 'Pendente';
-            let nota_final = media_final;
+            let nota_final = somaNotasRegulares;
 
-            const MEDIA_APROVACAO = 60;
-            const MEDIA_RECUPERACAO = 40;
-
-            const temAvaliacoes = avaliacoes.length > 0;
-            const temNotasLancadas = notasDoAluno.some(n => n.nota !== null);
-
-            if (temAvaliacoes && temNotasLancadas) {
-                if (media_final >= MEDIA_APROVACAO) {
-                    status = 'Aprovado';
-                } else if (media_final >= MEDIA_RECUPERACAO) {
-                    status = 'Recuperação';
-                    if (nota_recuperacao !== null) {
-                        if (nota_recuperacao > media_final) {
-                            nota_final = nota_recuperacao;
-                        }
-                        status = nota_final >= MEDIA_APROVACAO ? 'Aprovado' : 'Reprovado';
-                    }
-                } else {
-                    status = 'Reprovado';
-                }
+            // Aplica a regra da recuperação
+            if (nota_recuperacao !== null && nota_recuperacao > somaNotasRegulares) {
+                // Se a nota da recuperação for maior que 60, a nota final é 60.
+                nota_final = Math.min(nota_recuperacao, 60);
             }
 
+            const MEDIA_APROVACAO = 60;
+            const temNotasLancadas = notasDoAluno.some(n => n.nota !== null);
+            let status: AlunoComNotas['status'] = 'Pendente';
+
+            if (avaliacoes.length > 0 && temNotasLancadas) {
+                status = nota_final >= MEDIA_APROVACAO ? 'Aprovado' : 'Reprovado';
+            }
+            
             return {
                 aluno_id: aluno.id, 
                 aluno_nome: aluno.nome, 
@@ -218,7 +209,7 @@ export const getDadosAcademicosCompletos = async (req: Request, res: Response) =
                 matricula: aluno.matricula,
                 status_aluno: aluno.status_aluno,
                 notas: notasDoAluno, 
-                media_final: parseFloat(media_final.toFixed(1)), 
+                media_final: parseFloat(somaNotasRegulares.toFixed(1)), // Renomeado para clareza
                 status, 
                 nota_recuperacao, 
                 nota_final: parseFloat(nota_final.toFixed(1))
@@ -232,6 +223,10 @@ export const getDadosAcademicosCompletos = async (req: Request, res: Response) =
     }
 };
 
+
+// =======================================================================
+// UPSERT DE NOTAS (Sem alterações)
+// =======================================================================
 export const upsertNotas = async (req: Request, res: Response) => {
     const { aluno_id, materia_id, turma_id, avaliacao_id, nota, tipo_nota } = req.body;
 
@@ -274,7 +269,6 @@ export const upsertNotas = async (req: Request, res: Response) => {
 
             if (notaParaSalvar !== null && notaParaSalvar > valorMaximo) {
                 notaFinalParaSalvar = valorMaximo;
-                // A linha do toast foi removida daqui
             }
             
             await connection.query(

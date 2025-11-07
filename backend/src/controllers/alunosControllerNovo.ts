@@ -6,6 +6,24 @@ import pool from '../config/db';
 import { RowDataPacket } from 'mysql2';
 
 // =======================================================================
+// INTERFACES PARA TIPAGEM
+// =======================================================================
+interface NotaDetalhe {
+    tipo: string;
+    valor: number;
+    nota: number | null;
+}
+
+interface DisciplinaAcademica {
+    id: number;
+    nome: string;
+    notas: NotaDetalhe[];
+    nota_final: number;
+    nota_recuperacao: number | null;
+    status: 'Aprovado' | 'Reprovado' | 'Pendente';
+}
+
+// =======================================================================
 // FUNÇÃO AUXILIAR PARA GERAR MATRÍCULA
 // =======================================================================
 async function gerarProximaMatricula(): Promise<string> {
@@ -145,8 +163,6 @@ export const criarOuAtualizarAluno = async (req: Request, res: Response) => {
     }
 };
 
-// ... (O restante do arquivo, como buscarAlunoPorCPF, getAlunoEditData, etc., permanece inalterado) ...
-
 export const buscarAlunoPorCPF = async (req: Request, res: Response) => {
     const { cpf } = req.params;
     const cleanCpf = String(cpf).replace(/\D/g, '');
@@ -285,9 +301,6 @@ export const getAlunoById = async (req: Request, res: Response) => {
 
 export const listarAlunos = async (req: Request, res: Response) => {
     try {
-        // =======================================================================
-        // CONSULTA SQL ATUALIZADA
-        // =======================================================================
         const query = `
             SELECT 
                 u.id, 
@@ -296,20 +309,14 @@ export const listarAlunos = async (req: Request, res: Response) => {
                 u.foto_url as foto,
                 a.matricula, 
                 a.status,
-                -- Busca o nome do curso vinculado na tabela de vínculo
                 cpg.nome AS curso_nome,
-                -- Busca o nome da turma de ingresso vinculada
                 ti.nome AS turma_ingresso_nome
             FROM users u
             JOIN alunos a ON u.id = a.id
-            -- Junta com a tabela de vínculo para encontrar a matrícula mais recente do aluno
             LEFT JOIN vincular_aluno_curso vac ON u.id = vac.aluno_id
-            -- A partir do vínculo, encontra o nome do curso
             LEFT JOIN cursos_posgraduacao cpg ON vac.curso_posgraduacao_id = cpg.id
-            -- A partir do vínculo, encontra o nome da turma de ingresso
             LEFT JOIN turmas_ingresso ti ON vac.turmas_ingresso_id = ti.id
             WHERE u.role = 'aluno' AND u.status = 'ativo'
-            -- Agrupamos por aluno para evitar duplicatas se um aluno tiver múltiplos vínculos (embora a tabela tenha uma restrição)
             GROUP BY u.id
             ORDER BY u.nome ASC;
         `;
@@ -370,26 +377,19 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
 
     const connection = await pool.getConnection();
     try {
-        // =======================================================================
-        // CONSULTA PRINCIPAL ATUALIZADA
-        // =======================================================================
         const [alunoRows] = await connection.query<RowDataPacket[]>(`
             SELECT 
                 a.id, u.nome, a.cpf, a.rg, a.matricula, u.email, u.foto_url as foto, a.biografia,
                 u.telefone, a.endereco, a.data_nascimento, a.genero, a.status,
                 cpg.id as curso_id, 
                 cpg.nome as curso_nome,
-                ti.nome as turma_ingresso_nome  -- <<< NOVA INFORMAÇÃO ADICIONADA
+                ti.nome as turma_ingresso_nome
             FROM alunos a
             JOIN users u ON a.id = u.id
-            -- Junta com a tabela de vínculo para encontrar a matrícula do aluno
             LEFT JOIN vincular_aluno_curso vac ON a.id = vac.aluno_id
-            -- A partir do vínculo, encontra o nome do curso
             LEFT JOIN cursos_posgraduacao cpg ON vac.curso_posgraduacao_id = cpg.id
-            -- A partir do vínculo, encontra o nome da turma de ingresso
             LEFT JOIN turmas_ingresso ti ON vac.turmas_ingresso_id = ti.id
             WHERE a.id = ?
-            -- Ordena para pegar o vínculo mais recente, caso haja mais de um
             ORDER BY vac.data_vinculo DESC
             LIMIT 1;
         `, [alunoId]);
@@ -400,21 +400,21 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
         const aluno = alunoRows[0];
         aluno.endereco = aluno.endereco ? JSON.parse(aluno.endereco) : null;
 
-        // O restante da função para buscar dados acadêmicos, documentos e contratos permanece o mesmo.
-        // ... (código para buscar disciplinas, documentos e contratos) ...
-
-        // Se o aluno não estiver em nenhum curso, retorna os dados básicos.
         if (!aluno.curso_id) {
-            const [documentos] = await connection.query('SELECT * FROM documentos_alunos WHERE aluno_id = ?', [alunoId]);
-            const [contratos] = await connection.query('SELECT * FROM contratos_preenchidos WHERE aluno_id = ?', [alunoId]);
+            const [documentos] = await connection.query<RowDataPacket[]>('SELECT * FROM documentos_alunos WHERE aluno_id = ?', [alunoId]);
+            const [contratos] = await connection.query<RowDataPacket[]>('SELECT * FROM contratos_preenchidos WHERE aluno_id = ?', [alunoId]);
             return res.status(200).json({ aluno, academico: {}, documentos, contratos });
         }
 
         const [disciplinasRows] = await connection.query<RowDataPacket[]>(`
             SELECT 
-                d.id as disciplina_id, d.nome as disciplina_nome, d.semestre,
-                av.descricao as avaliacao_tipo, av.valor as avaliacao_valor,      
-                n.nota, n.nota_rec
+                d.id as disciplina_id, 
+                d.nome as disciplina_nome, 
+                d.semestre,
+                av.descricao as avaliacao_tipo, 
+                av.valor as avaliacao_valor,      
+                n.nota, 
+                n.nota_rec
             FROM cursos_disciplinas d
             LEFT JOIN notas n ON n.aluno_id = ? AND n.materia_id = d.id
             LEFT JOIN avaliacoes av ON n.avaliacao_id = av.id
@@ -425,20 +425,61 @@ export const getDetalhesCompletosAluno = async (req: Request, res: Response) => 
         const academico = disciplinasRows.reduce((acc, row) => {
             const { semestre, disciplina_id, disciplina_nome, avaliacao_tipo, avaliacao_valor, nota, nota_rec } = row;
             const semestreKey = `Semestre ${semestre}`;
-            if (!acc[semestreKey]) acc[semestreKey] = [];
-            let disciplina = acc[semestreKey].find(d => d.id === disciplina_id);
+            
+            if (!acc[semestreKey]) {
+                acc[semestreKey] = [];
+            }
+
+            let disciplina: DisciplinaAcademica | undefined = acc[semestreKey].find(d => d.id === disciplina_id);
             if (!disciplina) {
-                disciplina = { id: disciplina_id, nome: disciplina_nome, notas: [] };
+                disciplina = { 
+                    id: disciplina_id, 
+                    nome: disciplina_nome, 
+                    notas: [],
+                    nota_final: 0,
+                    nota_recuperacao: null,
+                    status: 'Pendente'
+                };
                 acc[semestreKey].push(disciplina);
             }
-            if (avaliacao_tipo) {
+
+            if (avaliacao_tipo && !disciplina.notas.some(n => n.tipo === avaliacao_tipo)) {
                 disciplina.notas.push({
-                    tipo: avaliacao_tipo, valor: avaliacao_valor, nota: nota, nota_rec: nota_rec,
-                    recuperacao: nota_rec !== null ? 'Sim' : 'Não' 
+                    tipo: avaliacao_tipo,
+                    valor: avaliacao_valor,
+                    nota: nota !== null ? parseFloat(nota) : null,
                 });
             }
+            
+            if (nota_rec !== null) {
+                const recAtual = disciplina.nota_recuperacao || 0;
+                disciplina.nota_recuperacao = Math.max(recAtual, parseFloat(nota_rec));
+            }
+
             return acc;
-        }, {} as Record<string, any[]>);
+        }, {} as Record<string, DisciplinaAcademica[]>);
+
+        Object.values(academico).forEach((disciplinas: DisciplinaAcademica[]) => {
+            disciplinas.forEach((disciplina: DisciplinaAcademica) => {
+                const somaNotasRegulares = disciplina.notas.reduce((sum: number, n: NotaDetalhe) => sum + (n.nota || 0), 0);
+                let notaFinal = somaNotasRegulares;
+
+                if (disciplina.nota_recuperacao !== null && disciplina.nota_recuperacao > somaNotasRegulares) {
+                    notaFinal = Math.min(disciplina.nota_recuperacao, 60);
+                }
+
+                disciplina.nota_final = notaFinal;
+
+                const MEDIA_APROVACAO = 60;
+                const temNotasLancadas = disciplina.notas.some((n: NotaDetalhe) => n.nota !== null);
+                
+                if (temNotasLancadas) {
+                    disciplina.status = notaFinal >= MEDIA_APROVACAO ? 'Aprovado' : 'Reprovado';
+                } else {
+                    disciplina.status = 'Pendente';
+                }
+            });
+        });
 
         const [documentos] = await connection.query<RowDataPacket[]>('SELECT tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_alunos WHERE aluno_id = ?;', [alunoId]);
         const [contratos] = await connection.query<RowDataPacket[]>('SELECT cp.id, c.nome as nome_contrato, c.tipo, cp.situacao_contrato, cp.contrato_url, cp.criado_em FROM contratos_preenchidos cp JOIN contratos c ON cp.contrato_id = c.id WHERE cp.aluno_id = ? ORDER BY cp.criado_em DESC;', [alunoId]);
