@@ -62,7 +62,7 @@ export default function AdicionarCursoPage() {
 
     const [isLoading, setIsLoading] = useState(isEditMode);
     const [errors, setErrors] = useState<Partial<Record<keyof CursoFormData, string>>>({});
-    
+
     // Estado inicial do formulário atualizado com 'sigla'
     const [formData, setFormData] = useState<CursoFormData>({
         nome: "",
@@ -210,7 +210,7 @@ export default function AdicionarCursoPage() {
         }
     };
 
-    const handleCancel = () => navigate("/gestaocurso");
+    const handleCancel = () => navigate("/gestor");
 
     if (!user) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
     if (isLoading) {
@@ -240,10 +240,6 @@ export default function AdicionarCursoPage() {
                     <main className={`flex-1 transition-all duration-500 pt-20 ${sidebarAberta ? 'sm:ml-[220px]' : 'sm:ml-[60px]'}`}>
                         <div className="mx-auto max-w-4xl p-8">
                             <div className="mb-8">
-                                <Button variant="ghost" onClick={handleCancel} className="mb-4">
-                                    <ArrowLeft className="mr-2 h-4 w-4" />
-                                    Voltar para Gestão de Cursos
-                                </Button>
                                 <h1 className="text-4xl font-bold tracking-tight text-foreground">
                                     {isEditMode ? "Editar Curso" : "Adicionar Novo Curso"}
                                 </h1>
@@ -438,7 +434,7 @@ export default function AdicionarCursoPage() {
                                         Cancelar
                                     </Button>
                                     <Button type="submit" className="min-w-32 bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoading}>
-                                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEditMode ? "Salvar Alterações" : "Salvar Curso" )}
+                                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (isEditMode ? "Salvar Alterações" : "Salvar Curso")}
                                     </Button>
                                 </div>
                             </form>
