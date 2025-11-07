@@ -308,7 +308,7 @@ import {
 
 import { loginLimiter } from '../middlewares/rateLimiter';
 
-import { getPeriodosLetivos, syncPeriodosLetivos } from '../controllers/periodosLetivosController';
+import { getPeriodosLetivos, syncPeriodosLetivos,getAllPeriodosLetivos } from '../controllers/periodosLetivosController';
 
 import {
   createContrato,
@@ -634,6 +634,7 @@ router.put('/api/configuracoes/calendario', updateCalendarConfig);
 // ROTAS PARA A GESTÃO DE PERÍODOS LETIVOS (TABELA: configuracoes_periodos_letivos)
 router.get('/api/periodos-letivos', getPeriodosLetivos);
 router.post('/api/periodos-letivos', syncPeriodosLetivos);
+router.get('/api/periodos-letivos/todos', getAllPeriodosLetivos);
 
 // // 🔹 Criação de grupo
 // router.post('/api/grupos', criarGrupo);

@@ -13,7 +13,29 @@ interface PeriodoLetivoDB extends RowDataPacket {
 }
 
 /**
+ * @description Obtém TODOS os períodos letivos para popular seletores no frontend.
+ * @route GET /api/periodos-letivos/todos
+ */
+export const getAllPeriodosLetivos = async (req: Request, res: Response) => {
+  console.log(`✅ [GET /api/periodos-letivos/todos] Buscando todos os períodos letivos.`);
+
+  try {
+    const [periodos] = await pool.query<PeriodoLetivoDB[]>(
+      'SELECT id, nome, data_inicio, data_fim FROM configuracoes_periodos_letivos ORDER BY data_inicio DESC'
+    );
+    
+    console.log(`🔍 [GET /api/periodos-letivos/todos] Encontrados ${periodos.length} períodos.`);
+    return res.json(periodos);
+
+  } catch (error) {
+    console.error("🚨 [GET /api/periodos-letivos/todos] Erro ao buscar todos os períodos:", error);
+    res.status(500).json({ error: 'Erro interno ao buscar todos os períodos letivos.' });
+  }
+};
+
+/**
  * @description Obtém os períodos letivos associados à configuração do calendário do ano atual.
+ * @route GET /api/periodos-letivos
  */
 export const getPeriodosLetivos = async (req: Request, res: Response) => {
   const anoLetivo = new Date().getFullYear();
@@ -49,6 +71,7 @@ export const getPeriodosLetivos = async (req: Request, res: Response) => {
 
 /**
  * @description Sincroniza (apaga e recria) os períodos letivos para o ano atual.
+ * @route POST /api/periodos-letivos
  */
 export const syncPeriodosLetivos = async (req: Request, res: Response) => {
   const anoLetivo = new Date().getFullYear();
@@ -78,7 +101,6 @@ export const syncPeriodosLetivos = async (req: Request, res: Response) => {
     const configId = configRows[0].id;
 
     // 2. Apaga TODOS os períodos letivos antigos associados a esta configuração.
-    // Esta é a abordagem mais simples e segura, já que esta tabela não tem dependentes.
     await connection.query('DELETE FROM configuracoes_periodos_letivos WHERE config_calendario_id = ?', [configId]);
     console.log(`🗑️ [POST /api/periodos-letivos] Períodos antigos para config_id=${configId} apagados.`);
 
