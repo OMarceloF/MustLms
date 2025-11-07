@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { User, FileText, BookOpen, Briefcase, Download, Loader2 } from 'lucide-react';
+import { User, FileText, BookOpen, Briefcase, Download, Loader2, RefreshCw } from 'lucide-react';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import SidebarGestor from "./components/Sidebar";
 
@@ -46,6 +46,7 @@ interface DadosAcademicos {
 }
 
 interface Documento {
+    id: number; 
     tipo_documento: string;
     caminho_arquivo: string;
     nome_original: string;
@@ -73,7 +74,7 @@ const VisualizarAlunoPage = () => {
     const navigate = useNavigate();
     const [alunoCompleto, setAlunoCompleto] = useState<AlunoCompleto | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'geral' | 'academico' | 'documentos' | 'contratos'>('academico');
+    const [activeTab, setActiveTab] = useState<'geral' | 'academico' | 'documentos' | 'contratos'>('geral');
     const [sidebarAberta, setSidebarAberta] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -87,7 +88,6 @@ const VisualizarAlunoPage = () => {
             } catch (error) {
                 console.error("Erro ao buscar detalhes do aluno:", error);
                 toast.error("Não foi possível carregar os dados do aluno.");
-                navigate('/gestor/alunos');
             } finally {
                 setIsLoading(false);
             }
@@ -124,7 +124,7 @@ const VisualizarAlunoPage = () => {
     if (!alunoCompleto) {
         return (
             <div className="text-center mt-10 p-4">
-                <p className="text-red-500">Dados do aluno não encontrados.</p>
+                <p className="text-red-500">Dados do aluno não encontrados. Verifique o console para mais detalhes.</p>
             </div>
         );
     }
@@ -151,7 +151,7 @@ const VisualizarAlunoPage = () => {
                                 {/* --- Cabeçalho do Aluno --- */}
                                 <div className="p-6 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row items-center gap-6">
                                     <img
-                                        src={aluno.foto ? `${import.meta.env.VITE_API_URL}${aluno.foto}` : `https://ui-avatars.com/api/?name=${aluno.nome.replace(' ', '+'  )}&background=e0e7ff&color=4f46e5`}
+                                        src={aluno.foto ? `${import.meta.env.VITE_API_URL}${aluno.foto}` : `https://ui-avatars.com/api/?name=${aluno.nome.replace(' ', '+'   )}&background=e0e7ff&color=4f46e5`}
                                         alt={`Foto de ${aluno.nome}`}
                                         className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
                                     />
@@ -200,7 +200,7 @@ const VisualizarAlunoPage = () => {
                                                 <div key={semestre} className="mb-8">
                                                     <h3 className="text-xl font-bold text-indigo-700 mb-4">{semestre}</h3>
                                                     <div className="space-y-6">
-                                                        {disciplinas.map(disciplina => {
+                                                        {disciplinas && disciplinas.map(disciplina => {
                                                             const statusColor = disciplina.status === 'Aprovado' ? 'text-green-600' : disciplina.status === 'Reprovado' ? 'text-red-600' : 'text-gray-500';
                                                             const temRecuperacao = disciplina.nota_recuperacao !== null;
                                                             const temNotasLancadas = disciplina.notas.some(n => n.nota !== null);
@@ -220,7 +220,6 @@ const VisualizarAlunoPage = () => {
                                                                                 {disciplina.notas.map((n, index) => (
                                                                                     <tr key={index} className="border-t">
                                                                                         <td className="py-2">{n.tipo} (Valor: {n.valor})</td>
-                                                                                        {/* CORREÇÃO APLICADA AQUI */}
                                                                                         <td className="py-2 text-right font-medium">
                                                                                             {typeof n.nota === 'number' ? n.nota.toFixed(2) : '—'}
                                                                                         </td>
@@ -230,7 +229,6 @@ const VisualizarAlunoPage = () => {
                                                                                 <tr className={`border-t ${temRecuperacao ? 'bg-yellow-50' : ''}`}>
                                                                                     <td className="py-2 font-semibold">Nota de Recuperação</td>
                                                                                     <td className={`py-2 text-right font-bold ${temRecuperacao ? 'text-yellow-700' : 'text-gray-500'}`}>
-                                                                                        {/* CORREÇÃO APLICADA AQUI */}
                                                                                         {typeof disciplina.nota_recuperacao === 'number' ? disciplina.nota_recuperacao.toFixed(2) : '—'}
                                                                                     </td>
                                                                                 </tr>
@@ -238,7 +236,6 @@ const VisualizarAlunoPage = () => {
                                                                                 <tr className="border-t bg-gray-100">
                                                                                     <td className="py-2 font-semibold">Nota Final</td>
                                                                                     <td className="py-2 text-right font-bold text-gray-800">
-                                                                                        {/* CORREÇÃO APLICADA AQUI */}
                                                                                         {temNotasLancadas ? disciplina.nota_final.toFixed(2) : '—'}
                                                                                     </td>
                                                                                 </tr>
@@ -263,13 +260,19 @@ const VisualizarAlunoPage = () => {
 
                                     {activeTab === 'documentos' && (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {documentos.length > 0 ? documentos.map((doc, index) => (
-                                                <div key={index} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
+                                            {documentos.length > 0 ? documentos.map((doc) => (
+                                                <div key={doc.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
                                                     <div>
                                                         <p className="font-semibold text-gray-700">{doc.tipo_documento.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
                                                         <p className="text-xs text-gray-500 truncate" title={doc.nome_original}>{doc.nome_original}</p>
                                                     </div>
-                                                    <a href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800">
+                                                    <a
+                                                        href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-indigo-600 hover:text-indigo-800"
+                                                        title="Baixar Documento"
+                                                    >
                                                         <Download size={20} />
                                                     </a>
                                                 </div>
