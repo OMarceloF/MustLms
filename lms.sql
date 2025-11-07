@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 06/11/2025 às 19:14
+-- Tempo de geração: 07/11/2025 às 13:58
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -182,7 +182,9 @@ INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VAL
 (32, 27, 8, 'ativo'),
 (34, 26, 8, 'ativo'),
 (35, 29, 8, 'ativo'),
-(36, 2, 8, 'ativo');
+(36, 2, 8, 'ativo'),
+(37, 29, 9, 'ativo'),
+(38, 30, 9, 'ativo');
 
 -- --------------------------------------------------------
 
@@ -255,7 +257,11 @@ CREATE TABLE `avaliacoes` (
 INSERT INTO `avaliacoes` (`id`, `descricao`, `valor`, `calendario_id`, `materia_id`, `turma_id`, `data_inicio`, `data_fim`, `status`) VALUES
 (24, 'Prova 1', 40.00, 17, 17, 8, '2025-11-05', '2025-11-12', 'Pendente'),
 (26, 'Prova 2', 50.00, 17, 17, 8, '2025-11-13', '2025-11-29', 'Pendente'),
-(27, 'Trabalho 1', 10.00, 17, 17, 8, '2025-12-01', '2025-12-18', 'Pendente');
+(27, 'Trabalho 1', 10.00, 17, 17, 8, '2025-12-01', '2025-12-18', 'Pendente'),
+(28, 'Prova 1', 25.00, 17, 36, 9, '2025-11-06', '2025-11-07', 'Pendente'),
+(29, 'Prova 2', 25.00, 17, 36, 9, '2025-11-08', '2025-11-09', 'Pendente'),
+(30, 'Prova 3', 40.00, 17, 36, 9, '2025-11-11', '2025-11-12', 'Pendente'),
+(31, 'Trabalho 1', 10.00, 17, 36, 9, '2025-11-21', '2025-11-22', 'Pendente');
 
 -- --------------------------------------------------------
 
@@ -572,7 +578,8 @@ INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `codigo`, `carga_hor
 (30, 7, 'Funções Executivas e o Desenvolvimento Cognitivo na Escola', 'NED-002', 60, 4, 2, 'Dr. Adele Diamond', 'Análise do papel da atenção, controle inibitório e memória de trabalho no desempenho acadêmico e desenvolvimento de estratégias de ensino.'),
 (31, 8, 'Tecnologias de Energia Solar e Eólica', 'SER-001', 60, 4, 1, 'Prof. Eicke Weber', 'Princípios de funcionamento, dimensionamento e integração de sistemas fotovoltaicos e eólicos na matriz energética.'),
 (32, 8, 'Políticas Públicas para Sustentabilidade e Mudanças Climáticas', 'SER-002', 60, 4, 2, 'Dra. Christiana Figueres', 'Análise de acordos internacionais, legislação ambiental e instrumentos econômicos para a transição para uma economia de baixo carbono.'),
-(35, 4, 'Engenharia Civil', 'CALC-01', 2, 2, 2, NULL, '1');
+(35, 4, 'Engenharia Civil', 'CALC-01', 2, 2, 2, NULL, '1'),
+(36, 4, 'Disciplina Muito Dificil', 'HARD', 16, 2, 1, NULL, 'É realmente muito dificil ');
 
 -- --------------------------------------------------------
 
@@ -1228,7 +1235,15 @@ INSERT INTO `notas` (`id`, `aluno_id`, `avaliacao_id`, `nota`, `materia_id`, `tu
 (24, 27, 27, 10.00, 17, 8, NULL),
 (25, 26, 27, 10.00, 17, 8, NULL),
 (26, 29, 27, 10.00, 17, 8, 50.00),
-(28, 2, 27, 10.00, 17, 8, 60.00);
+(28, 2, 27, 10.00, 17, 8, 60.00),
+(47, 29, 28, 20.00, 36, 9, NULL),
+(49, 29, 29, 17.00, 36, 9, NULL),
+(50, 29, 30, 20.00, 36, 9, NULL),
+(51, 29, 31, 7.00, 36, 9, NULL),
+(52, 30, 28, 10.00, 36, 9, 56.00),
+(53, 30, 29, 10.00, 36, 9, 56.00),
+(54, 30, 30, 20.00, 36, 9, 56.00),
+(55, 30, 31, 7.00, 36, 9, 56.00);
 
 -- --------------------------------------------------------
 
@@ -1642,7 +1657,17 @@ INSERT INTO `notificacoes_eventos` (`id`, `tipo`, `conteudo`, `titulo`, `data`, 
 (338, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:00:25', 2, 0),
 (339, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:01:52', 2, 0),
 (340, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:01:59', 2, 0),
-(341, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:02:02', 2, 0);
+(341, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:02:02', 2, 0),
+(342, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:40', 29, 0),
+(343, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:43', 29, 0),
+(344, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:46', 29, 0),
+(345, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:48', 29, 0),
+(346, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:52', 29, 0),
+(347, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:55', 30, 0),
+(348, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:57', 30, 0),
+(349, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:00', 30, 0),
+(350, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:04', 30, 0),
+(351, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:08', 30, 0);
 
 -- --------------------------------------------------------
 
@@ -1955,7 +1980,8 @@ INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por
 (5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '[\"19\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
 (6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 6, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
 (7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, '[\"27\"]', 17, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk'),
-(8, 'Turma 1', '2025', '2025-11-05 03:29:37', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk');
+(8, 'Turma 1', '2025', '2025-11-05 03:29:37', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(9, 'Turma 1', '2025', '2025-11-06 18:45:05', 5, NULL, NULL, NULL, 0, 22, 4, '[\"36\"]', 17, 'Presencial', 45, 'Ativa', 'Vão ser reprovados');
 
 -- --------------------------------------------------------
 
@@ -2068,7 +2094,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-06 17:31:41'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-07 12:32:55'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2612,7 +2638,7 @@ ALTER TABLE `alunos_responsaveis`
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
@@ -2636,7 +2662,7 @@ ALTER TABLE `aulas`
 -- AUTO_INCREMENT de tabela `avaliacoes`
 --
 ALTER TABLE `avaliacoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT de tabela `calendario_gestor`
@@ -2708,7 +2734,7 @@ ALTER TABLE `conversas`
 -- AUTO_INCREMENT de tabela `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_eventos`
@@ -2840,7 +2866,7 @@ ALTER TABLE `mensalidades`
 -- AUTO_INCREMENT de tabela `notas`
 --
 ALTER TABLE `notas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT de tabela `notificacoes`
@@ -2852,7 +2878,7 @@ ALTER TABLE `notificacoes`
 -- AUTO_INCREMENT de tabela `notificacoes_eventos`
 --
 ALTER TABLE `notificacoes_eventos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=342;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=352;
 
 --
 -- AUTO_INCREMENT de tabela `pagamentos_funcionarios`
@@ -2900,7 +2926,7 @@ ALTER TABLE `transacoes`
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de tabela `turmas_ingresso`
