@@ -369,6 +369,17 @@ import {
   listarTodasDisciplinasPosGraduacao
 } from '../controllers/disciplinasController';
 
+
+
+
+import {
+  listarAulasGravadas,
+  criarAulaGravada,
+  atualizarAulaGravada,
+  excluirAulaGravada
+} from '../controllers/AulasGravadasController';
+
+
 const router = Router();
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1003,5 +1014,12 @@ router.post(
   uploadSingleDoc('documento'),
   atualizarDocumentoAluno
 );
+
+
+// ROTAS DE AULAS GRAVADAS
+router.get('/api/aulas-gravadas', listarAulasGravadas);
+router.post('/api/aulas-gravadas', uploadAny.single('arquivo'), criarAulaGravada);
+router.put('/api/aulas-gravadas/:id', uploadAny.single('arquivo'), atualizarAulaGravada);
+router.delete('/api/aulas-gravadas/:id', excluirAulaGravada);
 
 export default router;
