@@ -297,3 +297,30 @@ export const getDisciplinasByCursoGrouped = async (req: Request, res: Response) 
         res.status(500).json({ message: 'Erro interno ao buscar disciplinas.' });
     }
 };
+
+/**
+ * @description Obtém as grades curriculares de um curso específico.
+ * @route GET /api/grades/por-curso/:cursoId
+ */
+export const getGradesByCurso = async (req: Request, res: Response) => {
+    const { cursoId } = req.params;
+    if (!cursoId) {
+        return res.status(400).json({ message: 'O ID do curso é obrigatório.' });
+    }
+
+    try {
+        const [grades] = await pool.query<RowDataPacket[]>(`
+            SELECT 
+                id, 
+                periodo_academico AS periodoAcademico
+            FROM grades_curriculares
+            WHERE curso_id = ?
+            ORDER BY periodo_academico DESC
+        `, [cursoId]);
+
+        res.status(200).json(grades);
+    } catch (error) {
+        console.error("Erro ao buscar grades por curso:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar as grades.' });
+    }
+};

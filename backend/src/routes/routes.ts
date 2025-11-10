@@ -315,7 +315,8 @@ import {
     deleteGrade,
     getMateriasForGradeForm,
     getPeriodosLetivosForForm,
-    getDisciplinasByCursoGrouped
+    getDisciplinasByCursoGrouped,
+    getGradesByCurso
 } from '../controllers/gradeCurricularController';
 
 import { getPeriodosLetivos, syncPeriodosLetivos,getAllPeriodosLetivos } from '../controllers/periodosLetivosController';
@@ -1025,5 +1026,6 @@ router.delete('/api/grades/:id', deleteGrade);
 router.get('/api/grades/form-data/materias', getMateriasForGradeForm);
 router.get('/api/grades/form-data/periodos-letivos', getPeriodosLetivosForForm);
 router.get('/api/grades/form-data/disciplinas-por-curso/:cursoId', getDisciplinasByCursoGrouped);
+router.get('/api/grades/por-curso/:cursoId', getGradesByCurso);
 
 export default router;
