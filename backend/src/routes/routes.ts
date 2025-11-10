@@ -308,6 +308,16 @@ import {
 
 import { loginLimiter } from '../middlewares/rateLimiter';
 
+import {
+    createGrade,
+    getGrades,
+    updateGrade,
+    deleteGrade,
+    getMateriasForGradeForm,
+    getPeriodosLetivosForForm,
+    getDisciplinasByCursoGrouped
+} from '../controllers/gradeCurricularController';
+
 import { getPeriodosLetivos, syncPeriodosLetivos,getAllPeriodosLetivos } from '../controllers/periodosLetivosController';
 
 import {
@@ -1004,5 +1014,16 @@ router.post(
   uploadSingleDoc('documento'),
   atualizarDocumentoAluno
 );
+
+// ==============================================================================
+// ROTAS PARA GESTÃO DE GRADES CURRICULARES
+// ==============================================================================
+router.post('/api/grades', createGrade);
+router.get('/api/grades', getGrades);
+router.put('/api/grades/:id', updateGrade);
+router.delete('/api/grades/:id', deleteGrade);
+router.get('/api/grades/form-data/materias', getMateriasForGradeForm);
+router.get('/api/grades/form-data/periodos-letivos', getPeriodosLetivosForForm);
+router.get('/api/grades/form-data/disciplinas-por-curso/:cursoId', getDisciplinasByCursoGrouped);
 
 export default router;

@@ -1,19 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react"
 import { Button } from "../components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion"
 import { Checkbox } from "../components/ui/checkbox"
 import { useToast } from "../hooks/use-toast"
-import SidebarGestor from '../../gestor/components/Sidebar';
-import TopbarGestorAuto from '../components/TopbarGestorAuto';
-import { useAuth } from '../../../hooks/useAuth';
 
-// --- TIPAGEM (sem alterações) ---
-type TipoCurso = "Graduação" | "Pós" | "Mestrado" | "Doutorado"
+// --- CONSTANTES E TIPAGEM ---
+const API_BASE_URL = 'http://localhost:3001/api';
+
+type TipoCurso = "Graduação" | "Pós" | "Mestrado" | "Doutorado" | "especializacao";
 
 type Curso = {
     id: number
@@ -34,382 +33,292 @@ type Periodo = {
     materias: Materia[]
 }
 
-type GradeCurricular = {
-    id: number
-    curso: Curso
-    periodoAcademico: string
-    periodos: Periodo[]
+type PeriodoLetivo = {
+    id: number;
+    nome: string;
 }
 
-// --- MOCKS ADICIONADOS AQUI ---
-
-const mockCursos: Curso[] = [
-    { id: 1, nome: "Ciência da Computação", tipo: "Graduação" },
-    { id: 2, nome: "Engenharia de Software", tipo: "Graduação" },
-    { id: 3, nome: "Inteligência Artificial", tipo: "Pós" },
-    { id: 4, nome: "Design Digital", tipo: "Graduação" },
-];
-
-const mockMaterias: Materia[] = [
-    { id: 101, nome: "Cálculo I", codigo: "MAT101", cargaHoraria: 60 },
-    { id: 102, nome: "Algoritmos e Estruturas de Dados I", codigo: "COMP102", cargaHoraria: 80 },
-    { id: 103, nome: "Introdução à Programação", codigo: "COMP101", cargaHoraria: 60 },
-    { id: 201, nome: "Banco de Dados", codigo: "COMP201", cargaHoraria: 60 },
-    { id: 202, nome: "Engenharia de Requisitos", codigo: "ENG202", cargaHoraria: 40 },
-    { id: 203, nome: "Teoria da Computação", codigo: "COMP203", cargaHoraria: 60 },
-    { id: 301, nome: "Redes de Computadores", codigo: "COMP301", cargaHoraria: 60 },
-    { id: 401, nome: "Inteligência Artificial", codigo: "COMP401", cargaHoraria: 80 },
-];
-
-// --- FUNÇÕES DE API SIMULADAS (MOCKADAS) ---
-
-// Simula um atraso da rede
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+// --- FUNÇÕES DE API (sem alterações ) ---
 
 async function getCursos(): Promise<Curso[]> {
-    await delay(300);
-    return mockCursos;
+    const response = await fetch(`${API_BASE_URL}/cursos-posgraduacao`);
+    if (!response.ok) throw new Error("Falha ao buscar cursos");
+    return response.json();
 }
 
-async function getMaterias(): Promise<Materia[]> {
-    await delay(400);
-    return mockMaterias;
+async function getPeriodosLetivos(): Promise<PeriodoLetivo[]> {
+    const response = await fetch(`${API_BASE_URL}/grades/form-data/periodos-letivos`);
+    if (!response.ok) throw new Error("Falha ao buscar períodos letivos");
+    return response.json();
 }
 
-async function createGrade(grade: Omit<GradeCurricular, "id">): Promise<GradeCurricular> {
-    await delay(1000); // Simula o tempo de salvamento
-
-    // Simula a criação de um novo ID pela API
-    const newId = Math.floor(Math.random() * 1000) + 100;
-    const novaGrade = { ...grade, id: newId };
-
-    console.log("--- NOVA GRADE CRIADA (MOCK) ---");
-    console.log(JSON.stringify(novaGrade, null, 2));
-
-    // Normalmente, você adicionaria a `novaGrade` à sua lista de mocks
-    // para que ela apareça na página de listagem, mas isso é opcional.
-
-    return novaGrade;
+async function getDisciplinasAgrupadas(cursoId: string): Promise<Periodo[]> {
+    const response = await fetch(`${API_BASE_URL}/grades/form-data/disciplinas-por-curso/${cursoId}`);
+    if (!response.ok) throw new Error("Falha ao buscar disciplinas do curso");
+    return response.json();
 }
 
-// --- COMPONENTE REACT (sem alterações na lógica principal) ---
+async function createGrade(gradeData: any): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/grades`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(gradeData),
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao criar a grade curricular");
+    }
+    return response.json();
+}
+
+// --- COMPONENTE REACT ---
 
 export default function NovaGradePage() {
-    const { id } = useParams<{ id: string }>();
-    const { user: currentUser } = useAuth();
-
-    // --- ESTADOS ---
-    const [sidebarAberta, setSidebarAberta] = useState(false);
-
-    // --- VARIÁVEIS DE CONTROLE DE UI ---
-    const isGestor = currentUser?.role === 'gestor';
-    const isPerfilPrincipal = String(currentUser?.id) === id;
-    const podeVisualizarInfoPrivada = isPerfilPrincipal || isGestor || currentUser?.role === 'professor';
-    const showSidebar = !['responsavel', 'aluno'].includes(currentUser?.role ?? '');
-    const showSidebarAluno = currentUser?.role === 'aluno';
-
     const navigate = useNavigate();
-    const { toast } = useToast()
+    const { toast } = useToast();
 
-    const [loading, setLoading] = useState(false)
-    const [cursos, setCursos] = useState<Curso[]>([])
-    const [materias, setMaterias] = useState<Materia[]>([])
+    const [loading, setLoading] = useState(true);
+    const [loadingPeriodos, setLoadingPeriodos] = useState(false);
+    const [saving, setSaving] = useState(false);
+    
+    const [cursos, setCursos] = useState<Curso[]>([]);
+    const [periodosLetivos, setPeriodosLetivos] = useState<PeriodoLetivo[]>([]);
 
-    const [cursoId, setCursoId] = useState("")
-    const [periodoAcademico, setPeriodoAcademico] = useState("")
-    const [periodos, setPeriodos] = useState<Periodo[]>([])
-    const [nextPeriodoId, setNextPeriodoId] = useState(1)
+    const [cursoId, setCursoId] = useState("");
+    const [periodoAcademicoId, setPeriodoAcademicoId] = useState("");
+    
+    // Armazena a estrutura completa vinda da API
+    const [estruturaBase, setEstruturaBase] = useState<Periodo[]>([]);
+    // Armazena apenas as matérias selecionadas pelo usuário
+    const [periodosSelecionados, setPeriodosSelecionados] = useState<Periodo[]>([]);
 
     useEffect(() => {
-        loadData()
-    }, [])
-
-    const loadData = async () => {
-        try {
-            // Mostra o loading apenas para o carregamento inicial dos dados
+        const loadInitialData = async () => {
             setLoading(true);
-            const [cursosData, materiasData] = await Promise.all([getCursos(), getMaterias()])
-            setCursos(cursosData)
-            setMaterias(materiasData)
-        } catch (error) {
-            toast({
-                title: "Erro",
-                description: "Erro ao carregar dados",
-                variant: "destructive",
-            })
-        } finally {
-            setLoading(false);
-        }
-    }
+            try {
+                const [cursosData, periodosLetivosData] = await Promise.all([
+                    getCursos(),
+                    getPeriodosLetivos()
+                ]);
+                setCursos(cursosData);
+                setPeriodosLetivos(periodosLetivosData);
+            } catch (error: any) {
+                toast({ title: "Erro ao carregar dados", description: error.message, variant: "destructive" });
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadInitialData();
+    }, [toast]);
 
-    const adicionarPeriodo = () => {
-        const novoPeriodo: Periodo = {
-            id: nextPeriodoId,
-            nome: `${nextPeriodoId}º Período`,
-            materias: [],
-        }
-        setPeriodos((prev) => [...prev, novoPeriodo])
-        setNextPeriodoId((prev) => prev + 1)
-
-        toast({
-            title: "Período adicionado",
-            description: `${novoPeriodo.nome} foi adicionado com sucesso`,
-        })
-    }
-
-    const removerPeriodo = (periodoId: number) => {
-        if (periodos.length === 1 && periodos[0].materias.length === 0) {
-            setPeriodos([]);
-            setNextPeriodoId(1);
+    useEffect(() => {
+        if (!cursoId) {
+            setEstruturaBase([]);
+            setPeriodosSelecionados([]);
             return;
         }
 
-        setPeriodos((prev) => prev.filter((p) => p.id !== periodoId))
+        const fetchDisciplinas = async () => {
+            setLoadingPeriodos(true);
+            try {
+                const data = await getDisciplinasAgrupadas(cursoId);
+                setEstruturaBase(data);
+                // Inicializa os períodos selecionados com a mesma estrutura, mas com matérias vazias
+                setPeriodosSelecionados(data.map(p => ({ ...p, materias: [] })));
+            } catch (error: any) {
+                toast({ title: "Erro", description: error.message, variant: "destructive" });
+                setEstruturaBase([]);
+                setPeriodosSelecionados([]);
+            } finally {
+                setLoadingPeriodos(false);
+            }
+        };
 
-        toast({
-            title: "Período removido",
-            description: "O período foi removido com sucesso",
-        })
-    }
+        fetchDisciplinas();
+    }, [cursoId, toast]);
 
-    const getCargaHorariaPeriodo = (periodo: Periodo) => {
-        return periodo.materias.reduce((sum, materia) => sum + materia.cargaHoraria, 0)
-    }
-
+    // ** FUNÇÃO PARA MARCAR/DESMARCAR MATÉRIAS **
     const toggleMateria = (periodoId: number, materia: Materia) => {
-        setPeriodos((prev) =>
-            prev.map((periodo) => {
-                if (periodo.id !== periodoId) return periodo
-
-                const hasMateria = periodo.materias.some((m) => m.id === materia.id)
-                return {
-                    ...periodo,
-                    materias: hasMateria ? periodo.materias.filter((m) => m.id !== materia.id) : [...periodo.materias, materia],
+        setPeriodosSelecionados(prevPeriodos =>
+            prevPeriodos.map(periodo => {
+                if (periodo.id !== periodoId) {
+                    return periodo;
                 }
-            }),
-        )
-    }
+                const materiaExiste = periodo.materias.some(m => m.id === materia.id);
+                if (materiaExiste) {
+                    // Remove a matéria
+                    return { ...periodo, materias: periodo.materias.filter(m => m.id !== materia.id) };
+                } else {
+                    // Adiciona a matéria
+                    return { ...periodo, materias: [...periodo.materias, materia] };
+                }
+            })
+        );
+    };
 
     const getTotalCargaHoraria = () => {
-        return periodos.reduce((total, periodo) => {
-            return total + periodo.materias.reduce((sum, materia) => sum + materia.cargaHoraria, 0)
-        }, 0)
-    }
+        return periodosSelecionados.reduce((total, periodo) => 
+            total + periodo.materias.reduce((sum, materia) => sum + materia.cargaHoraria, 0), 0);
+    };
 
     const handleSubmit = async () => {
-        if (!cursoId || !periodoAcademico) {
-            toast({
-                title: "Atenção",
-                description: "Preencha todos os campos obrigatórios",
-                variant: "destructive",
-            })
-            return
+        if (!cursoId || !periodoAcademicoId) {
+            toast({ title: "Atenção", description: "Selecione o curso e o período acadêmico.", variant: "destructive" });
+            return;
+        }
+        // Filtra períodos que não têm matérias selecionadas para não enviar dados vazios
+        const periodosParaSalvar = periodosSelecionados.filter(p => p.materias.length > 0);
+
+        if (periodosParaSalvar.length === 0) {
+            toast({ title: "Atenção", description: "Selecione pelo menos uma matéria para salvar a grade.", variant: "destructive" });
+            return;
         }
 
-        if (periodos.length === 0 || periodos.every(p => p.materias.length === 0)) {
-            toast({
-                title: "Atenção",
-                description: "Adicione pelo menos uma matéria a um período",
-                variant: "destructive",
-            })
-            return
-        }
-
-        // Mostra o loading durante o salvamento
-        setLoading(true);
+        setSaving(true);
         try {
-            const cursoSelecionado = cursos.find((c) => c.id.toString() === cursoId)
-            if (!cursoSelecionado) throw new Error("Curso não encontrado")
+            const cursoSelecionado = cursos.find((c) => c.id.toString() === cursoId);
+            const periodoSelecionado = periodosLetivos.find((p) => p.id.toString() === periodoAcademicoId);
 
-            await createGrade({
+            if (!cursoSelecionado || !periodoSelecionado) throw new Error("Curso ou Período Acadêmico inválido.");
+
+            const gradeData = {
                 curso: cursoSelecionado,
-                periodoAcademico,
-                periodos,
-            })
+                periodoAcademico: periodoSelecionado.nome,
+                periodos: periodosParaSalvar,
+            };
 
-            toast({
-                title: "Sucesso",
-                description: "Grade criada com sucesso! (Mock)",
-            })
+            await createGrade(gradeData);
 
-            navigate("/gestor/grade")
-        } catch (error) {
-            toast({
-                title: "Erro",
-                description: "Erro ao criar grade (Mock)",
-                variant: "destructive",
-            })
+            toast({ title: "Sucesso", description: "Grade curricular criada com sucesso!" });
+            navigate("/gestor/grade");
+        } catch (error: any) {
+            toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
         } finally {
-            setLoading(false)
+            setSaving(false);
         }
-    }
+    };
 
     return (
-        <div className={`dashboard-container flex min-h-screen w-full overflow-x-hidden pl-4 ${showSidebar || showSidebarAluno ? 'md:pl-15' : 'md:pl-0'}`}>
-            {/* Agora 'navigate' está definida e pode ser passada como prop */}
-            {showSidebar && (
-                <SidebarGestor
-                    isMenuOpen={sidebarAberta}
-                    setActivePage={(page) => navigate('/gestor', { state: { activePage: page } })}
-                    handleMouseEnter={() => setSidebarAberta(true)}
-                    handleMouseLeave={() => setSidebarAberta(false)}
-                />
-            )}
+        <div className="min-h-screen bg-slate-50">
+            <div className="container mx-auto max-w-4xl p-8">
+                <div className="mb-8">
+                    <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 px-0 hover:bg-transparent">
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Voltar para a listagem
+                    </Button>
+                    <h1 className="text-3xl font-bold tracking-tight">Nova Grade Curricular</h1>
+                    <p className="mt-2 text-muted-foreground">
+                        Defina a estrutura de um curso, organizando as matérias por períodos.
+                    </p>
+                </div>
 
-            <div className="flex-1 px-4 py-6 pt-16 md:pt-20">
-                <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
-                <div className="min-h-screen bg-slate-50">            <div className="container mx-auto max-w-7xl p-8">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Voltar
-                        </Button>
-                        <h1 className="text-3xl font-bold tracking-tight text-balance">Nova Grade Curricular</h1>
-                        <p className="mt-2 text-muted-foreground text-pretty">
-                            Crie uma nova grade curricular selecionando o curso, período e matérias.
+                <div className="bg-white rounded-lg border p-6 space-y-8">
+                    {/* Cabeçalho da Grade */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Curso <span className="text-destructive">*</span></label>
+                            <Select value={cursoId} onValueChange={setCursoId} disabled={loading || saving}>
+                                <SelectTrigger><SelectValue placeholder="Selecione um curso" /></SelectTrigger>
+                                <SelectContent>
+                                    {cursos.map((curso) => (
+                                        <SelectItem key={curso.id} value={curso.id.toString()}>
+                                            {curso.nome}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Período Acadêmico <span className="text-destructive">*</span></label>
+                            <Select value={periodoAcademicoId} onValueChange={setPeriodoAcademicoId} disabled={loading || saving}>
+                                <SelectTrigger><SelectValue placeholder="Selecione o período" /></SelectTrigger>
+                                <SelectContent>
+                                    {periodosLetivos.map((p) => (
+                                        <SelectItem key={p.id} value={p.id.toString()}>
+                                            {p.nome}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    {/* Carga Horária Total */}
+                    <div className="bg-slate-50 rounded-lg p-4 border">
+                        <p className="text-sm font-medium">
+                            Carga Horária Total da Grade: <span className="text-lg font-bold text-primary">{getTotalCargaHoraria()}h</span>
                         </p>
                     </div>
 
-                    <div className="bg-white rounded-lg border p-6 space-y-6">
-                        {/* Basic Info */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">
-                                    Curso <span className="text-destructive">*</span>
-                                </label>
-                                <Select value={cursoId} onValueChange={setCursoId} disabled={loading}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um curso" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {cursos.map((curso) => (
-                                            <SelectItem key={curso.id} value={curso.id.toString()}>
-                                                {curso.nome} ({curso.tipo})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                    {/* Estrutura dos Períodos */}
+                    <div>
+                        <h3 className="font-semibold text-lg mb-4">Estrutura dos Períodos</h3>
+                        {loadingPeriodos ? (
+                            <div className="flex items-center justify-center text-muted-foreground py-12">
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                <span>Carregando disciplinas do curso...</span>
                             </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">
-                                    Período Acadêmico <span className="text-destructive">*</span>
-                                </label>
-                                <Select value={periodoAcademico} onValueChange={setPeriodoAcademico} disabled={loading}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione o período" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="2024.1">2024.1</SelectItem>
-                                        <SelectItem value="2024.2">2024.2</SelectItem>
-                                        <SelectItem value="2025.1">2025.1</SelectItem>
-                                        <SelectItem value="2025.2">2025.2</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                        ) : !cursoId ? (
+                             <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed">
+                                <p className="text-muted-foreground">Selecione um curso para ver a estrutura de períodos e disciplinas.</p>
                             </div>
-                        </div>
-
-                        {/* Total Workload */}
-                        <div className="bg-slate-50 rounded-lg p-4">
-                            <p className="text-sm font-medium">
-                                Carga Horária Total: <span className="text-lg font-bold">{getTotalCargaHoraria()}h</span>
-                            </p>
-                        </div>
-
-                        {/* Periods */}
-                        <div>
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-semibold">Organização das Matérias por Período</h3>
-                                <Button onClick={adicionarPeriodo} size="sm" variant="outline" disabled={loading}>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Adicionar Período
-                                </Button>
+                        ) : estruturaBase.length === 0 ? (
+                            <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed">
+                                <p className="text-muted-foreground">Nenhuma disciplina encontrada para este curso.</p>
                             </div>
-
-                            {periodos.length === 0 ? (
-                                <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed">
-                                    <p className="text-muted-foreground mb-4">Nenhum período adicionado ainda</p>
-                                    <Button onClick={adicionarPeriodo} variant="outline" disabled={loading}>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Adicionar Primeiro Período
-                                    </Button>
-                                </div>
-                            ) : (
-                                <Accordion type="single" collapsible className="w-full" defaultValue="periodo-1">
-                                    {periodos.map((periodo) => (
-                                        <AccordionItem key={periodo.id} value={`periodo-${periodo.id}`}>
-                                            <AccordionTrigger className="hover:no-underline">
-                                                <div className="flex justify-between items-center w-full pr-4">
-                                                    <div className="flex items-center gap-4">
-                                                        <span className="font-medium">{periodo.nome}</span>
-                                                        <span className="text-sm text-muted-foreground">{getCargaHorariaPeriodo(periodo)}h</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-sm text-muted-foreground">{periodo.materias.length} matérias</span>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                removerPeriodo(periodo.id)
-                                                            }}
-                                                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                            disabled={loading}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
+                        ) : (
+                            <Accordion type="multiple" className="w-full space-y-3" defaultValue={estruturaBase.map(p => `periodo-${p.id}`)}>
+                                {estruturaBase.map((periodoBase) => {
+                                    const periodoSelecionado = periodosSelecionados.find(p => p.id === periodoBase.id);
+                                    return (
+                                        <AccordionItem key={periodoBase.id} value={`periodo-${periodoBase.id}`} className="border rounded-lg bg-white">
+                                            <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                                                <div className="flex justify-between items-center w-full">
+                                                    <span className="font-medium text-base">{periodoBase.nome}</span>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {periodoSelecionado?.materias.length || 0} / {periodoBase.materias.length} matérias selecionadas
+                                                    </span>
                                                 </div>
                                             </AccordionTrigger>
-                                            <AccordionContent>
-                                                <div className="space-y-2 pt-2">
-                                                    {materias.length === 0 ? (
-                                                        <p className="text-sm text-muted-foreground text-center py-4">Nenhuma matéria disponível</p>
-                                                    ) : (
-                                                        materias.map((materia) => {
-                                                            const isSelected = periodo.materias.some((m) => m.id === materia.id)
-                                                            return (
-                                                                <div
-                                                                    key={materia.id}
-                                                                    className="flex items-center space-x-3 p-3 bg-slate-50 rounded-md hover:bg-slate-100 transition-colors"
-                                                                >
-                                                                    <Checkbox
-                                                                        checked={isSelected}
-                                                                        onCheckedChange={() => toggleMateria(periodo.id, materia)}
-                                                                        disabled={loading}
-                                                                    />
-                                                                    <div className="flex-1">
-                                                                        <p className="font-medium">{materia.nome}</p>
-                                                                        <p className="text-sm text-muted-foreground">
-                                                                            Código: {materia.codigo} • Carga Horária: {materia.cargaHoraria}h
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        })
-                                                    )}
+                                            <AccordionContent className="px-4 pb-4">
+                                                <div className="space-y-2 pt-2 border-t">
+                                                    {periodoBase.materias.map((materia) => {
+                                                        const isSelected = periodoSelecionado?.materias.some(m => m.id === materia.id) ?? false;
+                                                        return (
+                                                            <div key={materia.id} className="flex items-center space-x-3 p-3 rounded-md hover:bg-slate-50">
+                                                                <Checkbox
+                                                                    id={`chk-${periodoBase.id}-${materia.id}`}
+                                                                    checked={isSelected}
+                                                                    onCheckedChange={() => toggleMateria(periodoBase.id, materia)}
+                                                                    disabled={saving}
+                                                                />
+                                                                <label htmlFor={`chk-${periodoBase.id}-${materia.id}`} className="flex-1 cursor-pointer">
+                                                                    <p className="font-medium">{materia.nome}</p>
+                                                                    <p className="text-sm text-muted-foreground">
+                                                                        {materia.codigo} • {materia.cargaHoraria}h
+                                                                    </p>
+                                                                </label>
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </AccordionContent>
                                         </AccordionItem>
-                                    ))}
-                                </Accordion>
-                            )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex justify-end gap-3 pt-4 border-t">
-                            <Button variant="outline" onClick={() => navigate(-1)} disabled={loading}>
-                                Cancelar
-                            </Button>
-                            <Button onClick={handleSubmit} disabled={loading}>
-                                {loading ? "Salvando..." : "Salvar Grade"}
-                            </Button>
-                        </div>
+                                    );
+                                })}
+                            </Accordion>
+                        )}
                     </div>
-                </div>
+
+                    {/* Ações Finais */}
+                    <div className="flex justify-end gap-3 pt-6 border-t">
+                        <Button variant="outline" onClick={() => navigate(-1)} disabled={saving}>Cancelar</Button>
+                        <Button onClick={handleSubmit} disabled={loading || saving || loadingPeriodos}>
+                            {saving ? "Salvando..." : "Salvar Grade Curricular"}
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
