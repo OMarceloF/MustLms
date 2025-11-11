@@ -4,11 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { User, FileText, BookOpen, Briefcase, Download, RefreshCw } from 'lucide-react';
+import { User, FileText, BookOpen, Briefcase, Download, Loader2, RefreshCw } from 'lucide-react';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import SidebarGestor from "./components/Sidebar";
 
-// --- Interfaces para tipagem dos dados da API ---
+// --- Interfaces ---
 interface AlunoDetalhes {
     id: number;
     nome: string;
@@ -18,32 +18,27 @@ interface AlunoDetalhes {
     foto: string | null;
     biografia: string | null;
     telefone: string | null;
-    endereco: {
-        logradouro: string;
-        numero: string;
-        bairro: string;
-        cidade: string;
-        uf: string;
-        cep: string;
-    } | null;
+    endereco: { logradouro: string; numero: string; bairro: string; cidade: string; uf: string; cep: string; } | null;
     data_nascimento: string;
     genero: string;
     status: string;
     curso_nome: string | null;
+    turma_ingresso_nome: string | null;
 }
 
 interface Nota {
     tipo: string;
     valor: number;
-    nota: number;
-    recuperacao: 'Sim' | 'Não';
-    nota_rec: number;
+    nota: number | null;
 }
 
 interface Disciplina {
     id: number;
     nome: string;
     notas: Nota[];
+    nota_final: number;
+    nota_recuperacao: number | null;
+    status: 'Aprovado' | 'Reprovado' | 'Em Andamento' | 'Pendente';
 }
 
 interface DadosAcademicos {
@@ -51,7 +46,7 @@ interface DadosAcademicos {
 }
 
 interface Documento {
-    id: number;
+    id: number; 
     tipo_documento: string;
     caminho_arquivo: string;
     nome_original: string;
@@ -105,7 +100,7 @@ const VisualizarAlunoPage = () => {
     }, [id, navigate]);
 
 
-    const handleUpdateDocument = async (documentoId: number, file: File) => {
+     const handleUpdateDocument = async (documentoId: number, file: File) => {
         if (!file) {
             toast.info("Nenhum arquivo selecionado.");
             return;
@@ -137,7 +132,7 @@ const VisualizarAlunoPage = () => {
         }
     };
 
-    const triggerFileInput = (documentoId: number) => {
+const triggerFileInput = (documentoId: number) => {
         const input = document.createElement('input');
         input.type = 'file';
         // Opcional: defina os tipos de arquivo aceitos
@@ -151,7 +146,6 @@ const VisualizarAlunoPage = () => {
         input.click();
     };
 
-
     useEffect(() => {
         const fetchAlunoData = async () => {
             if (!id) return;
@@ -162,16 +156,12 @@ const VisualizarAlunoPage = () => {
             } catch (error) {
                 console.error("Erro ao buscar detalhes do aluno:", error);
                 toast.error("Não foi possível carregar os dados do aluno.");
-                navigate('/gestor/alunos'); // Redireciona em caso de erro
             } finally {
                 setIsLoading(false);
             }
         };
-
         fetchAlunoData();
     }, [id, navigate]);
-
-
 
     const renderEndereco = (endereco: AlunoDetalhes['endereco']) => {
         if (!endereco) return "Não informado";
@@ -193,16 +183,16 @@ const VisualizarAlunoPage = () => {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
+            <div className="flex justify-center items-center h-screen bg-gray-100">
+                <Loader2 className="h-12 w-12 animate-spin text-indigo-500" />
             </div>
         );
     }
 
     if (!alunoCompleto) {
         return (
-            <div className="text-center mt-10">
-                <p className="text-red-500">Dados do aluno não encontrados.</p>
+            <div className="text-center mt-10 p-4">
+                <p className="text-red-500">Dados do aluno não encontrados. Verifique o console para mais detalhes.</p>
             </div>
         );
     }
@@ -210,33 +200,26 @@ const VisualizarAlunoPage = () => {
     const { aluno, academico, documentos, contratos } = alunoCompleto;
 
     return (
-
         <div className="min-h-screen bg-gray-100 w-full min-w-0 overflow-x-hidden">
             <div className="flex flex-col md:flex-row w-full min-w-0 md:flex">
-                {/* Sidebar */}
                 <SidebarGestor
                     isMenuOpen={sidebarAberta}
-                    setActivePage={(page: string) =>
-                        navigate('/gestor', { state: { activePage: page } })
-                    }
+                    setActivePage={(page: string) => navigate('/gestor', { state: { activePage: page } })}
                     handleMouseEnter={() => setSidebarAberta(true)}
                     handleMouseLeave={() => setSidebarAberta(false)}
                 />
-
                 <div className="flex-1 min-w-0 flex flex-col">
-                    {/* Topbar */}
                     <TopbarGestorAuto
                         isMenuOpen={sidebarAberta}
                         setIsMenuOpen={setSidebarAberta}
                     />
                     <main className={`flex-1 transition-all duration-500 pt-20 ${isMenuOpen ? 'sm:ml-[220px]' : 'sm:ml-[60px]'}`}>
-
                         <div className="container mx-auto p-4 sm:p-6 lg:p-8">
                             <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
                                 {/* --- Cabeçalho do Aluno --- */}
                                 <div className="p-6 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row items-center gap-6">
                                     <img
-                                        src={aluno.foto ? `${import.meta.env.VITE_API_URL}${aluno.foto}` : `https://ui-avatars.com/api/?name=${aluno.nome.replace(' ', '+')}&background=e0e7ff&color=4f46e5`}
+                                        src={aluno.foto ? `${import.meta.env.VITE_API_URL}${aluno.foto}` : `https://ui-avatars.com/api/?name=${aluno.nome.replace(' ', '+'   )}&background=e0e7ff&color=4f46e5`}
                                         alt={`Foto de ${aluno.nome}`}
                                         className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
                                     />
@@ -262,12 +245,13 @@ const VisualizarAlunoPage = () => {
                                     {activeTab === 'geral' && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div className="space-y-4">
-                                                <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Informações Pessoais</h3>
+                                                <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Informações Pessoais e de Matrícula</h3>
                                                 <p><strong>CPF:</strong> {aluno.cpf}</p>
                                                 <p><strong>Email:</strong> {aluno.email}</p>
                                                 <p><strong>Telefone:</strong> {aluno.telefone || "Não informado"}</p>
                                                 <p><strong>Data de Nascimento:</strong> {new Date(aluno.data_nascimento).toLocaleDateString('pt-BR')}</p>
                                                 <p><strong>Gênero:</strong> {aluno.genero}</p>
+                                                <p><strong>Turma de Ingresso:</strong> {aluno.turma_ingresso_nome || "Não informada"}</p>
                                                 <p><strong>Status:</strong> <span className={`px-2 py-1 text-xs font-semibold rounded-full ${aluno.status === 'regular' || aluno.status === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{aluno.status}</span></p>
                                             </div>
                                             <div className="space-y-4">
@@ -284,31 +268,58 @@ const VisualizarAlunoPage = () => {
                                                 <div key={semestre} className="mb-8">
                                                     <h3 className="text-xl font-bold text-indigo-700 mb-4">{semestre}</h3>
                                                     <div className="space-y-6">
-                                                        {disciplinas.map(disciplina => (
-                                                            <div key={disciplina.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
-                                                                <h4 className="font-semibold text-gray-800">{disciplina.nome}</h4>
-                                                                {disciplina.notas.length > 0 ? (
-                                                                    <table className="mt-2 w-full text-sm">
-                                                                        <thead className="text-left text-gray-500">
-                                                                            <tr>
-                                                                                <th className="py-1">Avaliação</th>
-                                                                                <th className="py-1 text-center">Nota</th>
-                                                                                <th className="py-1 text-center">Recuperação</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            {disciplina.notas.map((n, index) => (
-                                                                                <tr key={index} className="border-t">
-                                                                                    <td className="py-2">{n.tipo} (Valor: {n.valor})</td>
-                                                                                    <td className="py-2 text-center font-medium">{n.nota}</td>
-                                                                                    <td className="py-2 text-center">{n.recuperacao === 'Sim' ? n.nota_rec : '—'}</td>
+                                                        {disciplinas && disciplinas.map(disciplina => {
+                                                            const statusColor = disciplina.status === 'Aprovado' ? 'text-green-600' : disciplina.status === 'Reprovado' ? 'text-red-600' : 'text-gray-500';
+                                                            const temRecuperacao = disciplina.nota_recuperacao !== null;
+                                                            const temNotasLancadas = disciplina.notas.some(n => n.nota !== null);
+
+                                                            return (
+                                                                <div key={disciplina.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                                                                    <h4 className="font-semibold text-gray-800">{disciplina.nome}</h4>
+                                                                    {disciplina.notas.length > 0 ? (
+                                                                        <table className="mt-2 w-full text-sm">
+                                                                            <thead className="text-left text-gray-500">
+                                                                                <tr>
+                                                                                    <th className="py-1 font-medium">Avaliação</th>
+                                                                                    <th className="py-1 font-medium text-right">Nota</th>
                                                                                 </tr>
-                                                                            ))}
-                                                                        </tbody>
-                                                                    </table>
-                                                                ) : <p className="text-sm text-gray-500 mt-2">Nenhuma nota lançada para esta disciplina.</p>}
-                                                            </div>
-                                                        ))}
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {disciplina.notas.map((n, index) => (
+                                                                                    <tr key={index} className="border-t">
+                                                                                        <td className="py-2">{n.tipo} (Valor: {n.valor})</td>
+                                                                                        <td className="py-2 text-right font-medium">
+                                                                                            {typeof n.nota === 'number' ? n.nota.toFixed(2) : '—'}
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                                
+                                                                                <tr className={`border-t ${temRecuperacao ? 'bg-yellow-50' : ''}`}>
+                                                                                    <td className="py-2 font-semibold">Nota de Recuperação</td>
+                                                                                    <td className={`py-2 text-right font-bold ${temRecuperacao ? 'text-yellow-700' : 'text-gray-500'}`}>
+                                                                                        {typeof disciplina.nota_recuperacao === 'number' ? disciplina.nota_recuperacao.toFixed(2) : '—'}
+                                                                                    </td>
+                                                                                </tr>
+
+                                                                                <tr className="border-t bg-gray-100">
+                                                                                    <td className="py-2 font-semibold">Nota Final</td>
+                                                                                    <td className="py-2 text-right font-bold text-gray-800">
+                                                                                        {temNotasLancadas ? disciplina.nota_final.toFixed(2) : '—'}
+                                                                                    </td>
+                                                                                </tr>
+
+                                                                                <tr className="border-t bg-gray-100">
+                                                                                    <td className="py-2 font-semibold">Status Final</td>
+                                                                                    <td className={`py-2 text-right font-bold ${statusColor}`}>
+                                                                                        {temNotasLancadas ? disciplina.status : 'Pendente'}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    ) : <p className="text-sm text-gray-500 mt-2">Nenhuma nota lançada para esta disciplina.</p>}
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
                                             )) : <p>Nenhuma informação acadêmica encontrada.</p>}
@@ -316,31 +327,30 @@ const VisualizarAlunoPage = () => {
                                     )}
 
                                     {activeTab === 'documentos' && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {documentos.length > 0 ? documentos.map((doc) => (
-                                                <div key={doc.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
-                                                    <div className="flex-1 min-w-0 mr-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                {documentos.length > 0 ? documentos.map((doc) => (
+                                                    <div key={doc.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
+                                                    <div>
                                                         <p className="font-semibold text-gray-700">{doc.tipo_documento.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
                                                         <p className="text-xs text-gray-500 truncate" title={doc.nome_original}>{doc.nome_original}</p>
                                                     </div>
-                                                    {/* Agrupando os botões de ação */}
-                                                    <div className="flex items-center gap-3">
-                                                        <button
-                                                            onClick={() => triggerFileInput(doc.id)}
-                                                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                                                            title="Atualizar Documento"
-                                                        >
-                                                            <RefreshCw size={20} />
-                                                        </button>
-                                                        <a
-                                                            href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-indigo-600 hover:text-indigo-800 transition-colors"
-                                                            title="Baixar Documento"
-                                                        >
-                                                            <Download size={20} />
-                                                        </a>
+                                                     <div className="flex items-center gap-3">
+                                                    <button
+                                                        onClick={() => triggerFileInput(doc.id)} // ✅ `doc.id` será um número válido
+                                                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                        title="Atualizar Documento"
+                                                    >
+                                                        <RefreshCw size={20} />
+                                                    </button>
+                                                    <a
+                                                        href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-indigo-600 hover:text-indigo-800"
+                                                        title="Baixar Documento"
+                                                    >
+                                                        <Download size={20} />
+                                                    </a>
                                                     </div>
                                                 </div>
                                             )) : <p>Nenhum documento encontrado.</p>}
@@ -368,7 +378,9 @@ const VisualizarAlunoPage = () => {
                                     )}
                                 </div>
                             </div>
-                        </div></main></div>
+                        </div>
+                    </main>
+                </div>
             </div>
         </div>
     );

@@ -11,7 +11,7 @@ import { Button } from '../components/ui/button';
 import { Loader2, PlusCircle, Trash2, CalendarDays, Pencil } from 'lucide-react';
 import { getSafeImagePath } from './utils';
 
-// --- Interfaces ---
+// --- Interfaces (sem alterações) ---
 interface Turma {
     id: number;
     nome: string;
@@ -42,7 +42,7 @@ interface AlunoComNotas {
     media_final: number;
     status: 'Aprovado' | 'Recuperação' | 'Reprovado' | 'Pendente';
     nota_recuperacao: number | null;
-    nota_final: number;
+    nota_final: number; // Este campo já vem do backend, mas vamos recalcular para exibição
 }
 
 interface DadosCompletosNotas {
@@ -111,7 +111,7 @@ export default function GestorTurma() {
         fetchDadosCompletos();
     }, [fetchDadosCompletos]);
 
-    // --- Handlers ---
+    // --- Handlers (sem alterações) ---
     const handleNotaChange = (alunoId: number, avaliacaoId: number | 'rec', value: string) => {
         setEditableNotas(prev => ({ ...prev, [`${alunoId}-${avaliacaoId}`]: value }));
     };
@@ -217,24 +217,18 @@ export default function GestorTurma() {
     return (
         <div className="min-h-screen bg-gray-100 w-full min-w-0 overflow-x-hidden">
             <div className="flex flex-col md:flex-row w-full min-w-0 md:flex">
-                {/* Sidebar */}
                 <SidebarGestor
                     isMenuOpen={sidebarAberta}
-                    setActivePage={(page: string) =>
-                        navigate('/gestor', { state: { activePage: page } })
-                    }
+                    setActivePage={(page: string) => navigate('/gestor', { state: { activePage: page } })}
                     handleMouseEnter={() => setSidebarAberta(true)}
                     handleMouseLeave={() => setSidebarAberta(false)}
                 />
-
                 <div className="flex-1 min-w-0 flex flex-col">
-                    {/* Topbar */}
                     <TopbarGestorAuto
                         isMenuOpen={sidebarAberta}
                         setIsMenuOpen={setSidebarAberta}
                     />
                     <div className="p-4 sm:p-6 mt-20 max-w-7xl mx-auto w-full space-y-8">
-
                         <div className="bg-card rounded-xl shadow-sm p-6">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                                 <div>
@@ -255,7 +249,6 @@ export default function GestorTurma() {
 
                         <div className="bg-card rounded-xl shadow-sm p-6 space-y-6">
                             <h2 className="text-2xl font-bold text-foreground">Painel de Notas</h2>
-
                             {loadingNotas ? <div className="text-center p-8"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div> : dadosNotas ? (
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full divide-y divide-gray-200">
@@ -295,14 +288,13 @@ export default function GestorTurma() {
                                                         <td className="px-4 py-4 whitespace-nowrap text-sm text-center font-bold">{aluno.media_final.toFixed(1)}</td>
                                                         <td className="px-4 py-4 whitespace-nowrap text-sm text-center"><span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(aluno.status)}`}>{aluno.status}</span></td>
                                                         <td className="px-4 py-4 whitespace-nowrap text-sm text-center">
-                                                            {/* A condição agora verifica se o aluno TEVE DIREITO à recuperação */}
                                                             {teveDireitoRecuperacao ? (
                                                                 <input type="number" value={editableNotas[`${aluno.aluno_id}-rec`] ?? ''} onChange={e => handleNotaChange(aluno.aluno_id, 'rec', e.target.value)} onBlur={() => handleSalvarNota(aluno.aluno_id, 'rec')} className="w-20 text-center border rounded-md shadow-sm bg-yellow-50" max={100} min={0} />
                                                             ) : (
                                                                 '—'
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-blue-600">{aluno.nota_final.toFixed(1)}</td>
+                                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-blue-600">{notaFinalExibida.toFixed(1)}</td>
                                                     </tr>
                                                 );
                                             })}

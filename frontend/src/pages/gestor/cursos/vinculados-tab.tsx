@@ -27,7 +27,7 @@ interface Turma {
   disciplina: string;
 }
 
-type VinculoStatus = "Ativa" | "Concluída" | "Cancelada";
+type VinculoStatus = "Ativa" | "Concluída" | "Cancelada" | "Trancada";
 
 interface AlunoVinculado {
   id: string;
@@ -36,6 +36,7 @@ interface AlunoVinculado {
   status: VinculoStatus;
   vinculoId: number;
 }
+
 
 export function VinculadosTab() {
   const { id: cursoId } = useParams<{ id: string }>();
@@ -145,6 +146,7 @@ export function VinculadosTab() {
                               <SelectItem value="Ativa">Ativa</SelectItem>
                               <SelectItem value="Concluída">Concluída</SelectItem>
                               <SelectItem value="Cancelada">Cancelada</SelectItem>
+                              <SelectItem value="Trancada">Trancada</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>

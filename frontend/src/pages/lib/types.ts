@@ -33,4 +33,6 @@ export interface Turma {
   semestreNome?: string;
   responsavelNome?: string;
   materiasNomes?: string[];
+  disciplinaId: string;
+  disciplinaNome?: string
 }

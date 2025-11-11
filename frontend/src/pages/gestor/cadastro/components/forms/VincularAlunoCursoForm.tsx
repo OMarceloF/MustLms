@@ -25,11 +25,17 @@ interface TurmaIngresso {
     curso_posgraduacao_id: number;
 }
 
+// NOVA TIPAGEM PARA A GRADE
+interface Grade {
+    id: number;
+    periodoAcademico: string;
+}
+
 // --- Schema de Validação ---
 const vincularSchema = z.object({
     cursoId: z.coerce.number({ required_error: "Selecione um curso." }).min(1, "Selecione um curso."),
     turmaId: z.coerce.number({ required_error: "Selecione uma turma." }).min(1, "Selecione uma turma."),
-    grade: z.string({ required_error: "Selecione uma grade." }),
+    gradeId: z.coerce.number({ required_error: "Selecione uma grade." }).min(1, "Selecione uma grade."), // Alterado para gradeId
 });
 
 type VincularFormData = z.infer<typeof vincularSchema>;
@@ -41,7 +47,8 @@ export function VincularAlunoCursoForm() {
     const [cursos, setCursos] = useState<Curso[]>([]);
     const [todasTurmasIngresso, setTodasTurmasIngresso] = useState<TurmaIngresso[]>([]);
     const [turmasFiltradas, setTurmasFiltradas] = useState<TurmaIngresso[]>([]);
-    const [loading, setLoading] = useState({ cursos: true, turmas: true, submit: false });
+    const [grades, setGrades] = useState<Grade[]>([]); // <-- NOVO ESTADO PARA GRADES
+    const [loading, setLoading] = useState({ cursos: true, turmas: true, grades: false, submit: false });
     const [error, setError] = useState<string | null>(null);
 
     const form = useForm<VincularFormData>({
@@ -51,9 +58,10 @@ export function VincularAlunoCursoForm() {
     const { watch, setValue } = form;
     const selectedCursoId = watch('cursoId');
 
+    // Efeito para buscar dados iniciais (cursos e turmas)
     useEffect(() => {
         const fetchData = async () => {
-            setLoading({ cursos: true, turmas: true, submit: false });
+            setLoading(prev => ({ ...prev, cursos: true, turmas: true }));
             setError(null);
             try {
                 const [cursosResponse, turmasResponse] = await Promise.all([
@@ -80,26 +88,40 @@ export function VincularAlunoCursoForm() {
         fetchData();
     }, []);
 
+    // Efeito para filtrar turmas e buscar grades quando o curso muda
     useEffect(() => {
-        // Abre o console do navegador (F12) para ver estas mensagens
-        console.log('ID do curso selecionado:', selectedCursoId, '| Tipo:', typeof selectedCursoId);
-        if (todasTurmasIngresso.length > 0) {
-            console.log('Dados da primeira turma na lista completa:', todasTurmasIngresso[0]);
-            console.log('Tipo do ID do curso na lista de turmas:', typeof todasTurmasIngresso[0].curso_posgraduacao_id);
-        }
-
         if (selectedCursoId) {
-            // GARANTIA DE COMPARAÇÃO CORRETA: Converte ambos os valores para número.
+            // Filtra turmas
             const cursoIdNumerico = Number(selectedCursoId);
             const filtradas = todasTurmasIngresso.filter(
                 (turma) => Number(turma.curso_posgraduacao_id) === cursoIdNumerico
             );
-            console.log('Turmas encontradas para este curso:', filtradas);
             setTurmasFiltradas(filtradas);
+
+            // Busca as grades para o curso selecionado
+            const fetchGrades = async () => {
+                setLoading(prev => ({ ...prev, grades: true }));
+                try {
+                    const response = await fetch(`/api/grades/por-curso/${selectedCursoId}`);
+                    if (!response.ok) throw new Error('Falha ao buscar as grades do curso.');
+                    const gradesData = await response.json();
+                    setGrades(gradesData);
+                } catch (err: any) {
+                    toast.error("Erro ao buscar grades", { description: err.message });
+                    setGrades([]);
+                } finally {
+                    setLoading(prev => ({ ...prev, grades: false }));
+                }
+            };
+            fetchGrades();
+
         } else {
             setTurmasFiltradas([]);
+            setGrades([]); // Limpa as grades se nenhum curso estiver selecionado
         }
+        // Reseta os campos dependentes
         setValue('turmaId', undefined as any);
+        setValue('gradeId', undefined as any);
     }, [selectedCursoId, todasTurmasIngresso, setValue]);
 
     const goBack = () => setCurrentStep('documents');
@@ -118,7 +140,7 @@ export function VincularAlunoCursoForm() {
                     alunoId: student.id,
                     cursoId: data.cursoId,
                     turmaId: data.turmaId,
-                    grade: data.grade,
+                    gradeId: data.gradeId, // Enviando o ID da grade
                 }),
             });
             const result = await response.json();
@@ -153,6 +175,7 @@ export function VincularAlunoCursoForm() {
                         </div>
                     )}
 
+                    {/* Campo de Curso (sem alteração) */}
                     <div>
                         <Label htmlFor="cursoId">Curso *</Label>
                         <Controller
@@ -174,6 +197,7 @@ export function VincularAlunoCursoForm() {
                         {form.formState.errors.cursoId && <p className="text-destructive text-sm mt-1">{form.formState.errors.cursoId.message}</p>}
                     </div>
 
+                    {/* Campo de Turma de Ingresso (sem alteração) */}
                     <div>
                         <Label htmlFor="turmaId">Turma de Ingresso *</Label>
                         <Controller
@@ -197,25 +221,32 @@ export function VincularAlunoCursoForm() {
                         {form.formState.errors.turmaId && <p className="text-destructive text-sm mt-1">{form.formState.errors.turmaId.message}</p>}
                     </div>
 
+                    {/* ===== CAMPO DE GRADE MODIFICADO ===== */}
                     <div>
-                        <Label htmlFor="grade">Grade *</Label>
+                        <Label htmlFor="gradeId">Grade *</Label>
                         <Controller
-                            name="grade"
+                            name="gradeId"
                             control={form.control}
                             render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value || ''}>
-                                    <SelectTrigger id="grade" className="mt-1">
-                                        <SelectValue placeholder="Selecione a grade" />
+                                <Select onValueChange={field.onChange} value={String(field.value || '')} disabled={!selectedCursoId || loading.grades}>
+                                    <SelectTrigger id="gradeId" className="mt-1">
+                                        <SelectValue placeholder={!selectedCursoId ? "Selecione um curso primeiro" : (loading.grades ? "Carregando grades..." : "Selecione a grade")} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="2025.1">2025.1</SelectItem>
-                                        <SelectItem value="2025.2">2025.2</SelectItem>
-                                        <SelectItem value="2026.1">2026.1</SelectItem>
+                                        {grades.length > 0 ? (
+                                            grades.map(grade => (
+                                                <SelectItem key={grade.id} value={String(grade.id)}>
+                                                    Grade de {grade.periodoAcademico}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            !loading.grades && <p className="p-4 text-sm text-muted-foreground">Nenhuma grade encontrada para este curso.</p>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             )}
                         />
-                        {form.formState.errors.grade && <p className="text-destructive text-sm mt-1">{form.formState.errors.grade.message}</p>}
+                        {form.formState.errors.gradeId && <p className="text-destructive text-sm mt-1">{form.formState.errors.gradeId.message}</p>}
                     </div>
                 </CardContent>
             </Card>
@@ -225,7 +256,7 @@ export function VincularAlunoCursoForm() {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Voltar
                 </Button>
-                <Button type="submit" disabled={loading.submit || loading.cursos || loading.turmas}>
+                <Button type="submit" disabled={loading.submit || loading.cursos || loading.turmas || loading.grades}>
                     {loading.submit ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
                     Continuar para o Contrato
                 </Button>
@@ -233,5 +264,3 @@ export function VincularAlunoCursoForm() {
         </form>
     );
 }
-
-
