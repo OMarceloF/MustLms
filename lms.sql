@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 11/11/2025 às 14:51
+-- Tempo de geração: 11/11/2025 às 19:56
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -147,8 +147,7 @@ INSERT INTO `alunos_responsaveis` (`id`, `aluno_id`, `responsavel_id`, `parentes
 (43, 27, 7, 'Próprio Aluno'),
 (44, 27, 7, 'Próprio Aluno'),
 (45, 26, 7, 'Próprio Aluno'),
-(47, 30, 3, 'Mãe'),
-(48, 27, 7, 'Próprio Aluno');
+(47, 30, 3, 'Mãe');
 
 -- --------------------------------------------------------
 
@@ -183,9 +182,7 @@ INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VAL
 (32, 27, 8, 'ativo'),
 (34, 26, 8, 'ativo'),
 (35, 29, 8, 'ativo'),
-(36, 2, 8, 'ativo'),
-(37, 29, 9, 'ativo'),
-(38, 30, 9, 'ativo');
+(36, 2, 8, 'ativo');
 
 -- --------------------------------------------------------
 
@@ -236,6 +233,43 @@ CREATE TABLE `aulas` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `aulas_gravadas`
+--
+
+CREATE TABLE `aulas_gravadas` (
+  `id` int(11) NOT NULL,
+  `titulo` varchar(255) NOT NULL,
+  `descricao` text DEFAULT NULL,
+  `data` date NOT NULL,
+  `link` varchar(255) NOT NULL,
+  `professor_id` int(11) DEFAULT NULL,
+  `turma_id` int(11) DEFAULT NULL,
+  `disciplina_id` int(11) DEFAULT NULL,
+  `arquivo` varchar(255) DEFAULT NULL,
+  `criado_em` datetime DEFAULT current_timestamp(),
+  `atualizado_em` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `aulas_gravadas`
+--
+
+INSERT INTO `aulas_gravadas` (`id`, `titulo`, `descricao`, `data`, `link`, `professor_id`, `turma_id`, `disciplina_id`, `arquivo`, `criado_em`, `atualizado_em`) VALUES
+(3, 'teste', 'teste', '2025-11-07', 'https://www.youtube.com/watch?v=nB-PVq0nzjM&list=PLrVhyUnEQMV9wipApG6PS7sOtUMkw_3vq&index=46', 6, 6, NULL, NULL, '2025-11-07 15:59:54', '2025-11-07 15:59:54'),
+(4, 'testando', 'testando Marcelo', '2025-11-10', 'https://www.youtube.com/shorts/3hdt5YRmAYc', 6, 8, 27, NULL, '2025-11-10 14:58:09', '2025-11-10 15:54:48'),
+(5, 'krysthyan', 'krysthyan', '2025-11-10', 'https://www.youtube.com/watch?v=nB-PVq0nzjM&list=PLrVhyUnEQMV9wipApG6PS7sOtUMkw_3vq&index=46', NULL, 8, 22, NULL, '2025-11-10 14:59:24', '2025-11-10 14:59:24');
+
+--
+-- Acionadores `aulas_gravadas`
+--
+DELIMITER $$
+CREATE TRIGGER `trg_aulas_gravadas_update` BEFORE UPDATE ON `aulas_gravadas` FOR EACH ROW SET NEW.`atualizado_em` = CURRENT_TIMESTAMP
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `avaliacoes`
 --
 
@@ -258,11 +292,7 @@ CREATE TABLE `avaliacoes` (
 INSERT INTO `avaliacoes` (`id`, `descricao`, `valor`, `calendario_id`, `materia_id`, `turma_id`, `data_inicio`, `data_fim`, `status`) VALUES
 (24, 'Prova 1', 40.00, 17, 17, 8, '2025-11-05', '2025-11-12', 'Pendente'),
 (26, 'Prova 2', 50.00, 17, 17, 8, '2025-11-13', '2025-11-29', 'Pendente'),
-(27, 'Trabalho 1', 10.00, 17, 17, 8, '2025-12-01', '2025-12-18', 'Pendente'),
-(28, 'Prova 1', 25.00, 17, 36, 9, '2025-11-06', '2025-11-07', 'Pendente'),
-(29, 'Prova 2', 25.00, 17, 36, 9, '2025-11-08', '2025-11-09', 'Pendente'),
-(30, 'Prova 3', 40.00, 17, 36, 9, '2025-11-11', '2025-11-12', 'Pendente'),
-(31, 'Trabalho 1', 10.00, 17, 36, 9, '2025-11-21', '2025-11-22', 'Pendente');
+(27, 'Trabalho 1', 10.00, 17, 17, 8, '2025-12-01', '2025-12-18', 'Pendente');
 
 -- --------------------------------------------------------
 
@@ -579,9 +609,7 @@ INSERT INTO `cursos_disciplinas` (`id`, `curso_id`, `nome`, `codigo`, `carga_hor
 (30, 7, 'Funções Executivas e o Desenvolvimento Cognitivo na Escola', 'NED-002', 60, 4, 2, 'Dr. Adele Diamond', 'Análise do papel da atenção, controle inibitório e memória de trabalho no desempenho acadêmico e desenvolvimento de estratégias de ensino.'),
 (31, 8, 'Tecnologias de Energia Solar e Eólica', 'SER-001', 60, 4, 1, 'Prof. Eicke Weber', 'Princípios de funcionamento, dimensionamento e integração de sistemas fotovoltaicos e eólicos na matriz energética.'),
 (32, 8, 'Políticas Públicas para Sustentabilidade e Mudanças Climáticas', 'SER-002', 60, 4, 2, 'Dra. Christiana Figueres', 'Análise de acordos internacionais, legislação ambiental e instrumentos econômicos para a transição para uma economia de baixo carbono.'),
-(35, 4, 'Engenharia Civil', 'CALC-01', 2, 2, 2, NULL, '1'),
-(36, 4, 'Disciplina Muito Dificil', 'HARD', 16, 2, 1, NULL, 'É realmente muito dificil '),
-(37, 4, 'TESTE OPTATIVA', 'TEST01', 20, 2, 0, NULL, 'Optativa');
+(35, 4, 'Engenharia Civil', 'CALC-01', 2, 2, 2, NULL, '1');
 
 -- --------------------------------------------------------
 
@@ -640,7 +668,7 @@ CREATE TABLE `cursos_posgraduacao` (
 
 INSERT INTO `cursos_posgraduacao` (`id`, `nome`, `sigla`, `tipo`, `area_conhecimento`, `carga_horaria`, `duracao_semestres`, `modalidade`, `coordenador_id`, `vice_coordenador_id`, `unidade_id`, `objetivos`, `perfil_egresso`, `justificativa`, `ano_inicio`, `status`, `link_divulgacao`, `criado_em`, `atualizado_em`) VALUES
 (1, 'Mestrado em Ciências da Computação', 'MCC', 'mestrado', 'ciencias-exatas', 240, 1, 'presencial', 1, 2, 2, 'oooooooooooooooo', 'ooooopppppppppppppp', 'lllllllllllllllllllllllllllllllllllllll', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 12:42:14', '2025-11-06 12:13:19'),
-(3, 'Engenharia Civil', 'ECIV', 'doutorado', 'engenharias', 4000, 10, 'presencial', 1, 3, 1, 'kkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkk', '2025', 'ativo', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 14:24:08', '2025-11-10 14:27:42'),
+(3, 'Engenharia Civil', 'ECIV', 'doutorado', 'engenharias', 4000, 10, 'presencial', 1, 3, 1, 'kkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkk', 'kkkkkkkkkkkkkkkkkkkkkk', '2025', 'planejamento', 'https://mustedu.com/pt/forma-para-admissao/', '2025-10-23 14:24:08', '2025-11-06 12:13:19'),
 (4, 'Doutorado em Inteligência Artificial Aplicada', 'DIAA', 'doutorado', 'ciencias-exatas', 600, 8, 'hibrido', 1, 3, 1, 'Formar pesquisadores de alto nível capazes de desenvolver soluções inovadoras em IA para problemas complexos da indústria e da sociedade.', 'Pesquisador ou líder técnico em IA, com profundo conhecimento em machine learning, processamento de linguagem natural e visão computacional.', 'A crescente demanda por especialistas em IA justifica um programa de doutorado focado em aplicações práticas e pesquisa de ponta.', '2025', 'ativo', 'https://mustedu.com/pt/ia-aplicada/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
 (5, 'MBA em Gestão de Projetos e Metodologias Ágeis', 'MBA-GPA', 'especializacao', 'ciencias-sociais-aplicadas', 360, 2, 'ead', 1, 6, 2, 'Capacitar profissionais para liderar projetos complexos utilizando frameworks ágeis como Scrum, Kanban e Lean, garantindo entregas de valor.', 'Gerente de projetos, Scrum Master, Product Owner ou Agile Coach, apto a otimizar processos e liderar equipes de alta performance.', 'O mercado de trabalho moderno exige profissionais que dominem tanto a gestão tradicional quanto as abordagens ágeis para se manterem competitivos.', '2025', 'ativo', 'https://mustedu.com/pt/mba-projetos/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
 (6, 'Especialização em Direito Digital e Proteção de Dados', 'EDDPD', 'especializacao', 'ciencias-sociais-aplicadas', 400, 3, 'ead', 1, NULL, 1, 'Aprofundar o conhecimento sobre a legislação de proteção de dados (LGPD/GDPR), crimes cibernéticos e os desafios jurídicos da era digital.', 'Advogado especialista em direito digital, Data Protection Officer (DPO) ou consultor em privacidade e proteção de dados.', 'Com a implementação da LGPD, a necessidade de profissionais especializados em proteção de dados tornou-se crítica para todas as organizações.', '2024', 'ativo', 'https://mustedu.com/pt/direito-digital/', '2025-10-24 12:03:55', '2025-11-06 12:13:19'),
@@ -758,11 +786,11 @@ INSERT INTO `documentos_alunos` (`id`, `aluno_id`, `tipo_documento`, `caminho_ar
 (6, 7, 'historicoEscolar', '/uploads/documentos/download-1761656398205.jpg', 'download.jpg', '2025-10-28 12:59:58'),
 (7, 7, 'laudoMedico', '/uploads/documentos/download-1761656398206.jpg', 'download.jpg', '2025-10-28 12:59:58'),
 (8, 7, 'adicionais', '/uploads/documentos/download-1761656398209.jpg', 'download.jpg', '2025-10-28 12:59:58'),
-(9, 27, 'foto3x4', '/uploads/documentos/logo_dru-2--1762804107921.png', 'logo_dru (2).png', '2025-11-10 19:48:27'),
-(10, 27, 'comprovanteResidencia', '/uploads/documentos/logo_dru-2--1762804107925.png', 'logo_dru (2).png', '2025-11-10 19:48:27'),
-(11, 27, 'documentoAluno', '/uploads/documentos/logo_dru-2--1762804107927.png', 'logo_dru (2).png', '2025-11-10 19:48:27'),
-(12, 27, 'documentoResponsavel', '/uploads/documentos/logo_dru-2--1762804107930.png', 'logo_dru (2).png', '2025-11-10 19:48:27'),
-(13, 27, 'certidaoNascimento', '/uploads/documentos/logo_dru-2--1762804107931.png', 'logo_dru (2).png', '2025-11-10 19:48:27'),
+(9, 27, 'foto3x4', '/uploads/documentos/logo_dru-2--1762447045747.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(10, 27, 'comprovanteResidencia', '/uploads/documentos/logo_dru-2--1762447045750.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(11, 27, 'documentoAluno', '/uploads/documentos/logo_dru-2--1762447045753.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(12, 27, 'documentoResponsavel', '/uploads/documentos/logo_dru-2--1762447045755.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
+(13, 27, 'certidaoNascimento', '/uploads/documentos/logo_dru-2--1762447045758.png', 'logo_dru (2).png', '2025-11-06 16:37:25'),
 (14, 27, 'historicoEscolar', '/uploads/documentos/download-1762430184354.jpg', 'download.jpg', '2025-11-06 11:56:24'),
 (15, 27, 'laudoMedico', '/uploads/documentos/download-1762430184354.jpg', 'download.jpg', '2025-11-06 11:56:24'),
 (16, 27, 'adicionais', '/uploads/documentos/download-1761683311156.jpg', 'download.jpg', '2025-10-28 20:28:31'),
@@ -775,10 +803,10 @@ INSERT INTO `documentos_alunos` (`id`, `aluno_id`, `tipo_documento`, `caminho_ar
 (23, 28, 'laudoMedico', '/uploads/documentos/download-1761832955790.jpg', 'download.jpg', '2025-10-30 14:02:35'),
 (24, 28, 'adicionais', '/uploads/documentos/transacoes-1761683577611.pdf', 'transacoes.pdf', '2025-10-28 20:32:57'),
 (47, 29, 'foto3x4', '/uploads/documentos/download-1761838566327.jpg', 'download.jpg', '2025-10-30 15:36:06'),
-(48, 29, 'comprovanteResidencia', '/uploads/images/logo_dru-1--1762535178069.png', 'logo_dru (1).png', '2025-11-07 17:06:18'),
+(48, 29, 'comprovanteResidencia', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
 (49, 29, 'documentoAluno', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
 (50, 29, 'documentoResponsavel', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
-(51, 29, 'certidaoNascimento', '/uploads/images/logo_dru-1--1762535175084.png', 'logo_dru (1).png', '2025-11-07 17:06:15'),
+(51, 29, 'certidaoNascimento', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
 (52, 29, 'historicoEscolar', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
 (53, 29, 'laudoMedico', '/uploads/documentos/download-1761838566328.jpg', 'download.jpg', '2025-10-30 15:36:06'),
 (113, 30, 'foto3x4', '/uploads/documentos/logo_dru-2--1762448644960.png', 'logo_dru (2).png', '2025-11-06 17:04:04'),
@@ -1049,68 +1077,7 @@ CREATE TABLE `funcionarios` (
 
 INSERT INTO `funcionarios` (`id`, `nome`, `email`, `cpf`, `telefone`, `data_nascimento`, `data_contratacao`, `endereco`, `cargo`, `departamento`, `foto`, `registro`, `biografia`, `formacao_academica`, `especialidades`, `instituicao`, `materias`, `turmas`, `total_alunos`, `taxa_aprovacao`, `status`) VALUES
 (6, 'jose', 'jose@gmail.com', NULL, NULL, NULL, NULL, NULL, 'Professor', 'História', '', 'MAT12345', 'José', NULL, NULL, NULL, NULL, NULL, 0, 0.00, 'ativo'),
-(22, 'Lela', 'lela@gmail.com', '54378793223', '52376832341', '1998-09-03', '2025-09-30', '{\"cep\":\"36576-130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"31\",\"complemento\":\"Apt 202\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', 'Professor', 'Matemática  ', '/uploads/1759235296926-718355380.png', 'MAT12345', 'Oi, sou Lucas, professor de Matemática', 'Matemática', 'Matemática Computacional', NULL, NULL, NULL, 0, 0.00, 'ativo'),
 (23, 'Marcelo Funcionario ', 'marcelofuncionarionovo@gmail.com', '12629680232', '31989371121', '2003-03-07', '2025-09-30', '{\"cep\":\"36576-130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"78\",\"complemento\":\"Apt 202\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', 'Gestor', 'Matemática  ', '/uploads/1759249857291-37726123.jpg', 'DEV1', 'We are the future', 'Ciencia da Computação', NULL, NULL, NULL, NULL, 0, 0.00, 'ativo');
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `grades_curriculares`
---
-
-CREATE TABLE `grades_curriculares` (
-  `id` int(11) NOT NULL,
-  `curso_id` int(11) NOT NULL,
-  `periodo_academico` varchar(20) NOT NULL,
-  `criado_em` timestamp NOT NULL DEFAULT current_timestamp(),
-  `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `grades_curriculares`
---
-
-INSERT INTO `grades_curriculares` (`id`, `curso_id`, `periodo_academico`, `criado_em`, `atualizado_em`) VALUES
-(4, 4, '2025.2', '2025-11-10 19:34:32', '2025-11-10 19:34:32'),
-(6, 3, '2025.2', '2025-11-10 19:41:09', '2025-11-10 19:41:09'),
-(7, 6, '2025.2', '2025-11-10 19:41:21', '2025-11-10 19:41:21'),
-(8, 5, '2025.2', '2025-11-10 19:41:35', '2025-11-10 19:41:35');
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `grade_periodo_disciplinas`
---
-
-CREATE TABLE `grade_periodo_disciplinas` (
-  `id` int(11) NOT NULL,
-  `grade_id` int(11) NOT NULL,
-  `periodo_numero` int(11) NOT NULL COMMENT 'Ex: 1 para 1º Período, 2 para 2º Período',
-  `disciplina_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `grade_periodo_disciplinas`
---
-
-INSERT INTO `grade_periodo_disciplinas` (`id`, `grade_id`, `periodo_numero`, `disciplina_id`) VALUES
-(13, 4, 0, 37),
-(15, 4, 1, 17),
-(14, 4, 1, 36),
-(16, 4, 2, 35),
-(17, 4, 3, 19),
-(18, 4, 4, 20),
-(25, 6, 1, 13),
-(24, 6, 1, 16),
-(26, 6, 2, 14),
-(27, 7, 1, 25),
-(28, 7, 1, 26),
-(29, 7, 2, 27),
-(30, 7, 2, 28),
-(32, 8, 1, 21),
-(31, 8, 1, 22),
-(34, 8, 2, 23),
-(33, 8, 2, 24);
 
 -- --------------------------------------------------------
 
@@ -1132,6 +1099,34 @@ CREATE TABLE `materiais` (
 
 INSERT INTO `materiais` (`id`, `nome`, `autor`, `capa_url`, `conteudo_url`) VALUES
 (1, 'Livro', 'Autor', '/uploads/material/1753360900782-836016659.png', '/uploads/material/1753360900793-26293232.pdf');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `materiais_novo`
+--
+
+CREATE TABLE `materiais_novo` (
+  `id` int(11) NOT NULL,
+  `titulo` varchar(255) NOT NULL,
+  `descricao` text DEFAULT NULL,
+  `data` date DEFAULT NULL,
+  `link` varchar(255) DEFAULT NULL,
+  `professor_id` int(11) DEFAULT NULL,
+  `turma_id` int(11) DEFAULT NULL,
+  `disciplina_id` int(11) DEFAULT NULL,
+  `arquivo` varchar(255) DEFAULT NULL,
+  `criado_em` datetime DEFAULT current_timestamp(),
+  `atualizado_em` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `materiais_novo`
+--
+
+INSERT INTO `materiais_novo` (`id`, `titulo`, `descricao`, `data`, `link`, `professor_id`, `turma_id`, `disciplina_id`, `arquivo`, `criado_em`, `atualizado_em`) VALUES
+(11, 'ewfewg', 'gweewge', '2025-11-11', 'https://docs.google.com/spreadsheets/d/1eypFYLW0wsLMiiST3cVXTWcb_xi5XICrMUOYwQPW5aE/edit?gid=1386834576#gid=1386834576', 6, 7, 27, '/materiais_novos/6d68460ec6a66292b68102b11e88fa07', '2025-11-11 15:40:38', '2025-11-11 15:40:38'),
+(12, 'shthsjtjtsj', 'wetwerds', '2025-11-12', 'https://docs.google.com/spreadsheets/d/1eypFYLW0wsLMiiST3cVXTWcb_xi5XICrMUOYwQPW5aE/edit?gid=1386834576#gid=1386834576', 6, 6, 29, '/materiais_novos/d346877f072e2d37b5b08c820b0b8765', '2025-11-11 15:42:37', '2025-11-11 15:42:37');
 
 -- --------------------------------------------------------
 
@@ -1290,22 +1285,14 @@ INSERT INTO `notas` (`id`, `aluno_id`, `avaliacao_id`, `nota`, `materia_id`, `tu
 (2, 27, 26, 40.00, 17, 8, NULL),
 (7, 26, 24, 40.00, 17, 8, NULL),
 (9, 26, 26, 50.00, 17, 8, NULL),
-(13, 29, 24, 30.00, 17, 8, 52.00),
-(14, 29, 26, 10.00, 17, 8, 52.00),
+(13, 29, 24, 30.00, 17, 8, 50.00),
+(14, 29, 26, 10.00, 17, 8, 50.00),
 (15, 2, 24, 25.00, 17, 8, 60.00),
 (16, 2, 26, 20.00, 17, 8, 60.00),
 (24, 27, 27, 10.00, 17, 8, NULL),
 (25, 26, 27, 10.00, 17, 8, NULL),
-(26, 29, 27, 10.00, 17, 8, 52.00),
-(28, 2, 27, 10.00, 17, 8, 60.00),
-(47, 29, 28, 20.00, 36, 9, NULL),
-(49, 29, 29, 17.00, 36, 9, NULL),
-(50, 29, 30, 20.00, 36, 9, NULL),
-(51, 29, 31, 7.00, 36, 9, NULL),
-(52, 30, 28, 10.00, 36, 9, 56.00),
-(53, 30, 29, 10.00, 36, 9, 56.00),
-(54, 30, 30, 20.00, 36, 9, 56.00),
-(55, 30, 31, 7.00, 36, 9, 56.00);
+(26, 29, 27, 10.00, 17, 8, 50.00),
+(28, 2, 27, 10.00, 17, 8, 60.00);
 
 -- --------------------------------------------------------
 
@@ -1719,18 +1706,7 @@ INSERT INTO `notificacoes_eventos` (`id`, `tipo`, `conteudo`, `titulo`, `data`, 
 (338, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:00:25', 2, 0),
 (339, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:01:52', 2, 0),
 (340, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:01:59', 2, 0),
-(341, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:02:02', 2, 0),
-(342, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:40', 29, 0),
-(343, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:43', 29, 0),
-(344, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:46', 29, 0),
-(345, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:48', 29, 0),
-(346, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:52', 29, 0),
-(347, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:55', 30, 0),
-(348, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:46:57', 30, 0),
-(349, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:00', 30, 0),
-(350, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:04', 30, 0),
-(351, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:08', 30, 0),
-(352, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-07 11:07:25', 29, 0);
+(341, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-05 15:02:02', 2, 0);
 
 -- --------------------------------------------------------
 
@@ -2026,7 +2002,7 @@ CREATE TABLE `turmas` (
   `qtd_alunos` int(11) NOT NULL DEFAULT 0,
   `professor_responsavel` int(11) DEFAULT NULL,
   `curso_id` int(11) DEFAULT NULL COMMENT 'ID do curso de pós-graduação vinculado',
-  `disciplina_id` int(11) DEFAULT NULL,
+  `materias_ids` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Array de IDs das matérias vinculadas' CHECK (json_valid(`materias_ids`)),
   `semestre_id` int(11) DEFAULT NULL COMMENT 'ID do período letivo (semestre) vinculado',
   `modalidade` enum('Presencial','Híbrido','EAD') DEFAULT NULL,
   `quantidade_alunos` int(11) DEFAULT NULL COMMENT 'Quantidade estimada de alunos',
@@ -2038,13 +2014,12 @@ CREATE TABLE `turmas` (
 -- Despejando dados para a tabela `turmas`
 --
 
-INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `disciplina_id`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
-(3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 2, 22, 4, 17, 16, 'Presencial', 30, 'Encerrada', 'kkkkkkkkkkkkkkkkkkk'),
-(5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, 19, 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 6, 4, 17, 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, 27, 18, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk'),
-(8, 'Turma 1', '2025', '2025-11-05 03:29:37', 5, NULL, NULL, NULL, 0, 22, 4, 17, 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(9, 'Turma 1', '2025', '2025-11-06 18:45:05', 5, NULL, NULL, NULL, 0, 22, 4, 36, 17, 'Presencial', 45, 'Ativa', 'Vão ser reprovados');
+INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `materias_ids`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
+(3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 2, 22, 4, '[\"17\"]', 16, 'Presencial', 30, 'Ativa', 'kkkkkkkkkkkkkkkkkkk'),
+(5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '[\"19\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 6, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, '[\"27\"]', 17, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk'),
+(8, 'Turma 1', '2025', '2025-11-05 03:29:37', 5, NULL, NULL, NULL, 0, 22, 4, '[\"17\"]', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk');
 
 -- --------------------------------------------------------
 
@@ -2157,7 +2132,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-10 20:33:06'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-11 18:46:09'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2178,7 +2153,6 @@ INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, 
 (19, 'paidolucas@gmail.com', '$2b$10$0fJ2McVtKuCT/RlTo729WeYsw9q5c9Zzf3wt8JyqN5XHUT/Gu3vZC', 'paidolucas@gmail.com', 'responsavel', 'ativo', 'Pai do Lucas', '12431243243', '(12) 35462-1412', '2025-09-26 18:27:41', NULL, NULL),
 (20, 'lucasum', '$2b$10$rK2y/upUxF2BIFHXDNCZHeOQeDagythRuWfZ9eOVW7ZrgjYG5Rlz.', 'lucasferreira@gmail.com', 'aluno', 'ativo', 'Lucas Ferreira', NULL, NULL, '2025-09-26 18:27:41', '/uploads/1758911261009-736922933.png', NULL),
 (21, 'lucas@gmail.com', '$2b$10$dsRwmxL8H9lb5k7Y/JaqWOTpqsT0wBlJADyhA8ERvOcrUwQIaZqru', 'lucas@gmail.com', 'responsavel', 'ativo', 'Lucas Fonseca', '52351241243', '54634632754', '2025-09-29 16:13:13', NULL, NULL),
-(22, 'lela', '$2b$10$6oTF70xLe.OeASx74luWxu9JjE/4ARBDHME6Ubt2bYbcaUtFOPAy2', 'lela@gmail.com', 'professor', 'ativo', 'Lela', '54378793223', '52376832341', '2025-09-30 12:28:16', '/uploads/1759235296926-718355380.png', NULL),
 (23, 'OMarceloFuncionario', '$2b$10$qQol/APCBRHsj8B7KaVv8.LJtkD2YO/y2XqZ3lsWkSzc9jo6q65b6', 'marcelofuncionarionovo@gmail.com', 'gestor', 'ativo', 'Marcelo Funcionario ', '12629680232', '31989371121', '2025-09-30 16:21:53', '/uploads/1759249857291-37726123.jpg', NULL),
 (26, 'arthurlsaraiva@gmail.com', '$2b$10$pU0wPsr3SJYr67FA/WBaH.JNaFKLhx7doucvDIvkZHQlPSmdP.NZ2', 'arthurlsaraiva@gmail.com', 'aluno', 'ativo', 'Arthur Lopes Saraiva', '22222222222', '(31) 98247-1144', '2025-10-28 17:37:05', NULL, NULL),
 (27, 'arthurlsaraiva1@gmail.com', '$2b$10$fZ8q6mMsfMzdanFnAgL06ONstWB1yyPXyp3mNjTkOuBz89yqhnCNm', 'Joaovv@gmail.com', 'aluno', 'ativo', 'Arthur L. Saraiva', '99999999999', '(31) 98247-1144', '2025-10-28 17:59:54', '/uploads/download-1761674394496.jpg', NULL),
@@ -2211,21 +2185,19 @@ CREATE TABLE `vincular_aluno_curso` (
   `aluno_id` int(11) NOT NULL,
   `curso_posgraduacao_id` int(11) NOT NULL,
   `turmas_ingresso_id` int(11) DEFAULT NULL COMMENT 'ID da turma de ingresso selecionada',
-  `grade_curricular_id` int(11) DEFAULT NULL,
   `grade_mocada` varchar(50) DEFAULT NULL COMMENT 'Armazena a grade mocada selecionada',
   `data_vinculo` timestamp NOT NULL DEFAULT current_timestamp(),
-  `status_matricula` enum('Ativa','Concluída','Cancelada','Trancada') NOT NULL DEFAULT 'Ativa'
+  `status_matricula` enum('Ativa','Concluída','Cancelada') NOT NULL DEFAULT 'Ativa'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Despejando dados para a tabela `vincular_aluno_curso`
 --
 
-INSERT INTO `vincular_aluno_curso` (`id`, `aluno_id`, `curso_posgraduacao_id`, `turmas_ingresso_id`, `grade_curricular_id`, `grade_mocada`, `data_vinculo`, `status_matricula`) VALUES
-(2, 29, 4, 1, NULL, '2025.1', '2025-10-30 15:35:20', 'Ativa'),
-(3, 27, 6, 19, NULL, '2025.1', '2025-11-06 16:52:45', 'Ativa'),
-(6, 30, 4, 7, NULL, '2025.1', '2025-11-06 17:06:32', 'Ativa'),
-(7, 27, 4, 7, 4, NULL, '2025-11-10 20:02:16', 'Ativa');
+INSERT INTO `vincular_aluno_curso` (`id`, `aluno_id`, `curso_posgraduacao_id`, `turmas_ingresso_id`, `grade_mocada`, `data_vinculo`, `status_matricula`) VALUES
+(2, 29, 4, 1, '2025.1', '2025-10-30 15:35:20', 'Ativa'),
+(3, 27, 6, 19, '2025.1', '2025-11-06 16:52:45', 'Ativa'),
+(6, 30, 4, 7, '2025.1', '2025-11-06 17:06:32', 'Ativa');
 
 --
 -- Índices para tabelas despejadas
@@ -2277,6 +2249,16 @@ ALTER TABLE `aulas`
   ADD KEY `fk_aulas_materia` (`materia_id`),
   ADD KEY `fk_aulas_turma` (`turma_id`),
   ADD KEY `fk_aulas_calendario_gestor` (`calendario_id`);
+
+--
+-- Índices de tabela `aulas_gravadas`
+--
+ALTER TABLE `aulas_gravadas`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_professor_id` (`professor_id`),
+  ADD KEY `idx_turma_id` (`turma_id`),
+  ADD KEY `idx_professor_turma` (`professor_id`,`turma_id`),
+  ADD KEY `idx_disciplina_id` (`disciplina_id`);
 
 --
 -- Índices de tabela `avaliacoes`
@@ -2513,25 +2495,19 @@ ALTER TABLE `funcionarios`
   ADD PRIMARY KEY (`id`);
 
 --
--- Índices de tabela `grades_curriculares`
---
-ALTER TABLE `grades_curriculares`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_grade_curso` (`curso_id`);
-
---
--- Índices de tabela `grade_periodo_disciplinas`
---
-ALTER TABLE `grade_periodo_disciplinas`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `idx_grade_periodo_disciplina` (`grade_id`,`periodo_numero`,`disciplina_id`),
-  ADD KEY `fk_gpd_disciplina` (`disciplina_id`);
-
---
 -- Índices de tabela `materiais`
 --
 ALTER TABLE `materiais`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `materiais_novo`
+--
+ALTER TABLE `materiais_novo`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_professor_id` (`professor_id`),
+  ADD KEY `idx_turma_id` (`turma_id`),
+  ADD KEY `idx_disciplina_id` (`disciplina_id`);
 
 --
 -- Índices de tabela `materias`
@@ -2702,8 +2678,7 @@ ALTER TABLE `users`
 ALTER TABLE `vincular_aluno_curso`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `idx_aluno_curso` (`aluno_id`,`curso_posgraduacao_id`),
-  ADD KEY `curso_posgraduacao_id` (`curso_posgraduacao_id`),
-  ADD KEY `fk_vinculo_grade` (`grade_curricular_id`);
+  ADD KEY `curso_posgraduacao_id` (`curso_posgraduacao_id`);
 
 --
 -- AUTO_INCREMENT para tabelas despejadas
@@ -2713,13 +2688,13 @@ ALTER TABLE `vincular_aluno_curso`
 -- AUTO_INCREMENT de tabela `alunos_responsaveis`
 --
 ALTER TABLE `alunos_responsaveis`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
@@ -2740,10 +2715,16 @@ ALTER TABLE `aulas`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
+-- AUTO_INCREMENT de tabela `aulas_gravadas`
+--
+ALTER TABLE `aulas_gravadas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
 -- AUTO_INCREMENT de tabela `avaliacoes`
 --
 ALTER TABLE `avaliacoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT de tabela `calendario_gestor`
@@ -2815,7 +2796,7 @@ ALTER TABLE `conversas`
 -- AUTO_INCREMENT de tabela `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_eventos`
@@ -2857,7 +2838,7 @@ ALTER TABLE `disponibilidade`
 -- AUTO_INCREMENT de tabela `documentos_alunos`
 --
 ALTER TABLE `documentos_alunos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=118;
 
 --
 -- AUTO_INCREMENT de tabela `envios`
@@ -2914,22 +2895,16 @@ ALTER TABLE `favoritos`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=259;
 
 --
--- AUTO_INCREMENT de tabela `grades_curriculares`
---
-ALTER TABLE `grades_curriculares`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- AUTO_INCREMENT de tabela `grade_periodo_disciplinas`
---
-ALTER TABLE `grade_periodo_disciplinas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
-
---
 -- AUTO_INCREMENT de tabela `materiais`
 --
 ALTER TABLE `materiais`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `materiais_novo`
+--
+ALTER TABLE `materiais_novo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de tabela `materias`
@@ -2959,7 +2934,7 @@ ALTER TABLE `mensalidades`
 -- AUTO_INCREMENT de tabela `notas`
 --
 ALTER TABLE `notas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT de tabela `notificacoes`
@@ -2971,7 +2946,7 @@ ALTER TABLE `notificacoes`
 -- AUTO_INCREMENT de tabela `notificacoes_eventos`
 --
 ALTER TABLE `notificacoes_eventos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=353;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=342;
 
 --
 -- AUTO_INCREMENT de tabela `pagamentos_funcionarios`
@@ -3019,7 +2994,7 @@ ALTER TABLE `transacoes`
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de tabela `turmas_ingresso`
@@ -3043,7 +3018,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de tabela `vincular_aluno_curso`
 --
 ALTER TABLE `vincular_aluno_curso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Restrições para tabelas despejadas
@@ -3082,6 +3057,14 @@ ALTER TABLE `aulas`
   ADD CONSTRAINT `fk_aulas_calendario_gestor` FOREIGN KEY (`calendario_id`) REFERENCES `calendario_gestor` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_aulas_materia` FOREIGN KEY (`materia_id`) REFERENCES `materias` (`id`),
   ADD CONSTRAINT `fk_aulas_turma` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`);
+
+--
+-- Restrições para tabelas `aulas_gravadas`
+--
+ALTER TABLE `aulas_gravadas`
+  ADD CONSTRAINT `fk_aulas_gravadas_disciplina` FOREIGN KEY (`disciplina_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_aulas_gravadas_professor` FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_aulas_gravadas_turma` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `avaliacoes`
@@ -3123,234 +3106,21 @@ ALTER TABLE `conversas`
   ADD CONSTRAINT `conversas_ibfk_2` FOREIGN KEY (`usuario2_id`) REFERENCES `users` (`id`);
 
 --
--- Restrições para tabelas `cursos_alunos`
---
-ALTER TABLE `cursos_alunos`
-  ADD CONSTRAINT `cursos_alunos_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `cursos_alunos_ibfk_2` FOREIGN KEY (`aluno_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
 -- Restrições para tabelas `cursos_disciplinas`
 --
 ALTER TABLE `cursos_disciplinas`
   ADD CONSTRAINT `fk_disciplina_para_posgraduacao` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
 
 --
--- Restrições para tabelas `cursos_eventos`
+-- Restrições para tabelas `materiais_novo`
 --
-ALTER TABLE `cursos_eventos`
-  ADD CONSTRAINT `cursos_eventos_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `cursos_posgraduacao`
---
-ALTER TABLE `cursos_posgraduacao`
-  ADD CONSTRAINT `fk_curso_coordenador` FOREIGN KEY (`coordenador_id`) REFERENCES `users` (`id`) ON DELETE NO ACTION ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_curso_vice_coordenador` FOREIGN KEY (`vice_coordenador_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
---
--- Restrições para tabelas `cursos_ppc`
---
-ALTER TABLE `cursos_ppc`
-  ADD CONSTRAINT `fk_ppc_curso_posgraduacao` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `cursos_professores`
---
-ALTER TABLE `cursos_professores`
-  ADD CONSTRAINT `cursos_professores_ibfk_1` FOREIGN KEY (`curso_id`) REFERENCES `cursos` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `cursos_professores_ibfk_2` FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `descontos`
---
-ALTER TABLE `descontos`
-  ADD CONSTRAINT `descontos_ibfk_1` FOREIGN KEY (`aluno_id`) REFERENCES `alunos` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `disciplinas_turmas`
---
-ALTER TABLE `disciplinas_turmas`
-  ADD CONSTRAINT `fk_disciplina_id` FOREIGN KEY (`disciplina_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_turma_id` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Restrições para tabelas `disponibilidade`
---
-ALTER TABLE `disponibilidade`
-  ADD CONSTRAINT `disponibilidade_ibfk_1` FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`);
-
---
--- Restrições para tabelas `envios`
---
-ALTER TABLE `envios`
-  ADD CONSTRAINT `envios_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `eventos_calendario`
---
-ALTER TABLE `eventos_calendario`
-  ADD CONSTRAINT `eventos_calendario_ibfk_1` FOREIGN KEY (`calendario_id`) REFERENCES `calendario_letivo` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `eventos_roles`
---
-ALTER TABLE `eventos_roles`
-  ADD CONSTRAINT `fk_eventos_roles_ibfk_1` FOREIGN KEY (`evento_id`) REFERENCES `eventos_calendario` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `eventos_usuarios`
---
-ALTER TABLE `eventos_usuarios`
-  ADD CONSTRAINT `fk_eventos_usuarios_ibfk_1` FOREIGN KEY (`evento_id`) REFERENCES `eventos_calendario` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_eventos_usuarios_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `exercicios`
---
-ALTER TABLE `exercicios`
-  ADD CONSTRAINT `fk_exercicio_envio` FOREIGN KEY (`envios_id`) REFERENCES `envios` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `exercicios_alunos`
---
-ALTER TABLE `exercicios_alunos`
-  ADD CONSTRAINT `exercicios_alunos_ibfk_1` FOREIGN KEY (`aluno_id`) REFERENCES `alunos` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `exercicios_alunos_ibfk_2` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `exercicios_alunos_ibfk_3` FOREIGN KEY (`exercicio_id`) REFERENCES `exercicios` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `exercicios_alunos_ibfk_4` FOREIGN KEY (`questao_id`) REFERENCES `exercicios_questoes` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_exercicio_alunos_envio` FOREIGN KEY (`envios_id`) REFERENCES `envios` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_exercicio_questões_alunos_envio` FOREIGN KEY (`exercicios_questoes_id`) REFERENCES `exercicios_questoes` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `exercicios_questoes`
---
-ALTER TABLE `exercicios_questoes`
-  ADD CONSTRAINT `exercicios_questoes_ibfk_1` FOREIGN KEY (`exercicio_id`) REFERENCES `exercicios` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_exercicio_questoes_envio` FOREIGN KEY (`envios_id`) REFERENCES `envios` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `funcionarios`
---
-ALTER TABLE `funcionarios`
-  ADD CONSTRAINT `fk_funcionario_user` FOREIGN KEY (`id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Restrições para tabelas `grades_curriculares`
---
-ALTER TABLE `grades_curriculares`
-  ADD CONSTRAINT `fk_grade_curso` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `grade_periodo_disciplinas`
---
-ALTER TABLE `grade_periodo_disciplinas`
-  ADD CONSTRAINT `fk_gpd_disciplina` FOREIGN KEY (`disciplina_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_gpd_grade` FOREIGN KEY (`grade_id`) REFERENCES `grades_curriculares` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `materias_materiais`
---
-ALTER TABLE `materias_materiais`
-  ADD CONSTRAINT `materias_materiais_ibfk_1` FOREIGN KEY (`materia_id`) REFERENCES `materias` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `materias_materiais_ibfk_2` FOREIGN KEY (`material_id`) REFERENCES `materiais` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `mensalidades`
---
-ALTER TABLE `mensalidades`
-  ADD CONSTRAINT `mensalidades_ibfk_1` FOREIGN KEY (`aluno_id`) REFERENCES `alunos` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `notas`
---
-ALTER TABLE `notas`
-  ADD CONSTRAINT `fk_notas_aluno` FOREIGN KEY (`aluno_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_notas_avaliacao` FOREIGN KEY (`avaliacao_id`) REFERENCES `avaliacoes` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_notas_materia` FOREIGN KEY (`materia_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_notas_turma` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `notificacoes`
---
-ALTER TABLE `notificacoes`
-  ADD CONSTRAINT `fk_notificacoes_conversa` FOREIGN KEY (`conversa_id`) REFERENCES `conversas` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_notificacoes_destinatario` FOREIGN KEY (`destinatario_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_notificacoes_remetente` FOREIGN KEY (`remetente_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `notificacoes_eventos`
---
-ALTER TABLE `notificacoes_eventos`
-  ADD CONSTRAINT `notificacoes_eventos_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `posts`
---
-ALTER TABLE `posts`
-  ADD CONSTRAINT `fk_posts_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `presencas`
---
-ALTER TABLE `presencas`
-  ADD CONSTRAINT `fk_presenca_aluno` FOREIGN KEY (`aluno_id`) REFERENCES `alunos` (`id`),
-  ADD CONSTRAINT `fk_presenca_materia` FOREIGN KEY (`materia_id`) REFERENCES `materias` (`id`),
-  ADD CONSTRAINT `fk_presenca_turma` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`),
-  ADD CONSTRAINT `fk_presencas_aula` FOREIGN KEY (`aula_id`) REFERENCES `aulas` (`id`);
-
---
--- Restrições para tabelas `professores_materias`
---
-ALTER TABLE `professores_materias`
-  ADD CONSTRAINT `professores_materias_ibfk_1` FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `professores_materias_ibfk_2` FOREIGN KEY (`materia_id`) REFERENCES `materias` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `seguidores`
---
-ALTER TABLE `seguidores`
-  ADD CONSTRAINT `fk_seguidores_seguido` FOREIGN KEY (`seguido_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_seguidores_seguidor` FOREIGN KEY (`seguidor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Restrições para tabelas `stats_seguidores`
---
-ALTER TABLE `stats_seguidores`
-  ADD CONSTRAINT `fk_stats_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_stats_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Restrições para tabelas `status_digitando`
---
-ALTER TABLE `status_digitando`
-  ADD CONSTRAINT `status_digitando_ibfk_1` FOREIGN KEY (`conversa_id`) REFERENCES `conversas` (`id`),
-  ADD CONSTRAINT `status_digitando_ibfk_2` FOREIGN KEY (`usuario_id`) REFERENCES `users` (`id`),
-  ADD CONSTRAINT `status_digitando_ibfk_3` FOREIGN KEY (`destinatario_id`) REFERENCES `users` (`id`);
-
---
--- Restrições para tabelas `turmas`
---
-ALTER TABLE `turmas`
-  ADD CONSTRAINT `fk_turma_curso` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_turma_curso_pos` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_turma_semestre` FOREIGN KEY (`semestre_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_turma_semestre_periodo` FOREIGN KEY (`semestre_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE SET NULL;
-
---
--- Restrições para tabelas `turmas_ingresso`
---
-ALTER TABLE `turmas_ingresso`
-  ADD CONSTRAINT `fk_turma_ingresso_curso` FOREIGN KEY (`curso_posgraduacao_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_turma_ingresso_periodo` FOREIGN KEY (`periodo_letivo_id`) REFERENCES `configuracoes_periodos_letivos` (`id`) ON DELETE CASCADE;
-
---
--- Restrições para tabelas `vincular_aluno_curso`
---
-ALTER TABLE `vincular_aluno_curso`
-  ADD CONSTRAINT `fk_vinculo_grade` FOREIGN KEY (`grade_curricular_id`) REFERENCES `grades_curriculares` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `vincular_aluno_curso_ibfk_1` FOREIGN KEY (`aluno_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `vincular_aluno_curso_ibfk_2` FOREIGN KEY (`curso_posgraduacao_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
+ALTER TABLE `materiais_novo`
+  ADD CONSTRAINT `fk_materiais_disciplina` FOREIGN KEY (`disciplina_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_materiais_disciplina_rel` FOREIGN KEY (`disciplina_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_materiais_professor` FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_materiais_professor_rel` FOREIGN KEY (`professor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_materiais_turma` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_materiais_turma_rel` FOREIGN KEY (`turma_id`) REFERENCES `turmas` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
