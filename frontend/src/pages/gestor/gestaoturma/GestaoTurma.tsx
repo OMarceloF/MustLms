@@ -249,9 +249,6 @@ export default function GestorTurma() {
                                     <Button onClick={() => handleOpenModal(null)} disabled={!turma.materiaId || !turma.semestreId}>
                                         <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Avaliação
                                     </Button>
-                                    {/* <Button variant="outline" onClick={() => navigate(`/gestor/turmas/${turmaId}/materias/${turma.materiaId}/diario`)} disabled={!turma.materiaId}>
-                                        <CalendarDays className="mr-2 h-4 w-4" /> Ver Diário
-                                    </Button> */}
                                 </div>
                             </div>
                         </div>
@@ -284,7 +281,6 @@ export default function GestorTurma() {
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {alunosDaTurma.map(aluno => {
-                                                // ***** LÓGICA CORRIGIDA AQUI *****
                                                 // O aluno tem direito à recuperação se a média final (sem recuperação) o colocou nessa faixa.
                                                 const teveDireitoRecuperacao = aluno.media_final >= 40 && aluno.media_final < 60;
 
@@ -360,9 +356,6 @@ export default function GestorTurma() {
 
                         <FormVincularAluno turmaId={turmaId!} onAlunosVinculados={fetchDadosCompletos} />
 
-                        <div className="flex justify-end mt-10">
-                            <Button variant="outline" onClick={() => navigate('/gestor', { state: { activePage: 'turmas' } })}>Voltar</Button>
-                        </div>
                     </div>
                 </div>
 
@@ -398,6 +391,6 @@ export default function GestorTurma() {
                     </div>
                 )}
             </div>
-            </div>
-            );
+        </div>
+    );
 }

@@ -161,10 +161,10 @@ const App: React.FC = () => {
               <Route path="/gestor/grade/nova" element={<CriarGrade />} />
               <Route path="/gestor/gestao-turma/:id" element={<GestaoTurma />} />
               <Route path="/gestor/trancamento" element={<Trancamento />} />
-              
+
               {/* === ESTA É A LINHA ESSENCIAL PARA A FUNCIONALIDADE === */}
               <Route path="/gestor/materiasgestor/:id" element={<MateriasGestor />} />
-              
+
               <Route path="/adicionar-curso/:id?" element={<AdicionarCursoPage />} />
 
             </Route>
@@ -199,6 +199,7 @@ const App: React.FC = () => {
               <Route path="/aluno/curso" element={<GraduateCoursePage />} />
               <Route path="/aluno/materias/:id" element={<MateriaVisualizacaoPage />} />
             </Route>
+
 
             {/* Rotas do Financeiro (Gestor e Financeiro) */}
             <Route element={<ProtectedRoute allowedRoles={['gestor', 'financeiro']} />}>

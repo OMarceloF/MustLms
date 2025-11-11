@@ -33,13 +33,13 @@ export const ACTIVITY_TYPES: ActivityType[] = [
     category: "content",
     icon: FileText,
   },
-  {
-    id: "page",
-    name: "Página",
-    description: "Crie páginas de conteúdo com texto e mídia",
-    category: "content",
-    icon: BookOpen,
-  },
+  // {
+  //   id: "page",
+  //   name: "Página",
+  //   description: "Crie páginas de conteúdo com texto e mídia",
+  //   category: "content",
+  //   icon: BookOpen,
+  // },
   {
     id: "url",
     name: "URL",
@@ -98,8 +98,8 @@ export const ACTIVITY_TYPES: ActivityType[] = [
   //   category: "content",
   //   icon: Database,
   // },
- 
-  
+
+
   // {
   //   id: "workshop",
   //   name: "Workshop",
