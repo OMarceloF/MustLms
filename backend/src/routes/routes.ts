@@ -144,10 +144,11 @@ import {
 // } from '../controllers/chatController';
 // import { listarTodosUsuarios } from '../controllers/chatController';
 import {
-  listarMateriais,
-  criarMaterial,
-  excluirMaterial,
-  editarMaterial,
+   listarMateriaisNovo,
+  criarMaterialNovo,
+  editarMaterialNovo,
+  excluirMaterialNovo,
+  buscarMaterialPorId,
 } from '../controllers/materiaisController';
 
 // import { listarConversasRecentes } from '../controllers/chatController';
@@ -380,6 +381,26 @@ import {
 } from '../controllers/AulasGravadasController';
 
 
+// Diretório base
+const uploadDir = path.join(__dirname, "../../materiais_novos");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configuração do multer
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadDir),
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now();
+    const ext = path.extname(file.originalname);
+    const base = path.basename(file.originalname, ext);
+    cb(null, `${base}-${uniqueSuffix}${ext}`);
+  },
+});
+
+
+const upload = multer({ dest: "public/materiais_novos/" });
+
 const router = Router();
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -566,24 +587,19 @@ router.patch('/api/users/:id/biography', updateUserBiography);
 // router.get('/api/usuarios/:usuarioId', listarTodosUsuarios);
 router.get('/api/financeiro/exportar/excel', exportarExcel);
 router.get('/api/financeiro/exportar/pdf', exportarPDF);
-router.get('/api/materiais', listarMateriais);
-router.post(
-  '/api/materiais',
-  uploadFields([
-    { name: 'capa', maxCount: 1 },
-    { name: 'conteudo', maxCount: 1 },
-  ]),
-  criarMaterial
-);
-router.delete('/api/materiais/:id', excluirMaterial);
+// ROTAS DE MATERIAIS DIDÁTICOS (ajustadas)
+router.get('/api/materiais', listarMateriaisNovo);
+
+router.post("/api/materiais", upload.single("arquivo"), criarMaterialNovo);
+
 router.put(
   '/api/materiais/:id',
-  uploadFields([
-    { name: 'capa', maxCount: 1 },
-    { name: 'conteudo', maxCount: 1 },
-  ]),
-  editarMaterial
+  uploadAny.single('arquivo'),
+  editarMaterialNovo
 );
+
+router.delete('/api/materiais/:id', excluirMaterialNovo);
+router.get('/api/materiais/:id', buscarMaterialPorId);
 // router.get('/api/recentes/:usuarioId', listarConversasRecentes);
 // router.post('/api/favoritos/toggle', toggleFavorito);
 // router.get('/api/favoritos/:usuarioId', listarFavoritos);
