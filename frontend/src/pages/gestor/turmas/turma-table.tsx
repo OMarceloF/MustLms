@@ -10,13 +10,11 @@ import type { Turma } from "../../lib/types"
 import { DeleteDialog } from "./delete-dialog"
 import { useAuth } from '../../../hooks/useAuth';
 
-
 interface TurmaTableProps {
   turmas: Turma[]
   onEdit: (turma: Turma) => void
   onDelete: (id: number) => void
 }
-
 
 export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -42,7 +40,6 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
     setTurmaToDelete(id)
     setDeleteDialogOpen(true)
   }
-
 
   const handleConfirmDelete = () => {
     if (turmaToDelete !== null) {
@@ -78,8 +75,8 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
             <TableRow>
               <TableHead>Nome da Turma</TableHead>
               <TableHead>Curso Vinculado</TableHead>
-              <TableHead>Matéria</TableHead>
-              <TableHead>Ano/Semestre</TableHead>
+              <TableHead>Disciplina</TableHead> {/* <-- Título da coluna atualizado */}
+              <TableHead>Semestre</TableHead>
               <TableHead>Professor</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -90,22 +87,14 @@ export function TurmaTable({ turmas, onEdit, onDelete }: TurmaTableProps) {
               <TableRow key={turma.id}>
                 <TableCell className="font-medium">{turma.nomeTurma}</TableCell>
                 <TableCell>{turma.cursoNome || "N/A"}</TableCell>
+                
+                {/* ===== CORREÇÃO PRINCIPAL APLICADA AQUI ===== */}
                 <TableCell>
-                  {/* *** ALTERAÇÃO AQUI *** */}
-                  {/* Lógica aprimorada para exibir o nome da matéria ou um fallback */}
-                  {turma.materiasNomes && turma.materiasNomes.length > 0
-                    ? turma.materiasNomes[0]
-                    : "Nenhuma matéria vinculada"
-                  }
-                  {turma.materiasNomes && turma.materiasNomes.length > 1 && (
-                    <span className="ml-2 text-muted-foreground text-xs font-medium">
-                      (+{turma.materiasNomes.length - 1})
-                    </span>
-                  )}
+                  {turma.disciplinaNome || "Nenhuma disciplina vinculada"}
                 </TableCell>
-                <TableCell>
-                  {turma.anoInicio}/{turma.semestreNome || turma.semestre}
-                </TableCell>
+                {/* =============================================== */}
+
+                <TableCell>{turma.semestreNome || turma.semestre}</TableCell>
                 <TableCell>{turma.responsavelNome || "N/A"}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusVariant(turma.status)}>{turma.status}</Badge>
