@@ -446,3 +446,4 @@ export const desativarFuncionario = async (req: Request, res: Response) => {
     connection.release();
   }
 };
+

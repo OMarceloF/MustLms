@@ -380,6 +380,17 @@ import {
   listarTodasDisciplinasPosGraduacao
 } from '../controllers/disciplinasController';
 
+
+
+
+import {
+  listarAulasGravadas,
+  criarAulaGravada,
+  atualizarAulaGravada,
+  excluirAulaGravada
+} from '../controllers/AulasGravadasController';
+
+
 const router = Router();
 
 // ──────────────────────────────────────────────────────────────────────────────

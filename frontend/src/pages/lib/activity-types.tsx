@@ -54,13 +54,13 @@ export const ACTIVITY_TYPES: ActivityType[] = [
   //   category: "content",
   //   icon: Bookmark,
   // },
-  {
-    id: "glossary",
-    name: "Glossário",
-    description: "Crie um dicionário de termos relacionados ao curso",
-    category: "content",
-    icon: AlignLeft,
-  },
+  // {
+  //   id: "glossary",
+  //   name: "Glossário",
+  //   description: "Crie um dicionário de termos relacionados ao curso",
+  //   category: "content",
+  //   icon: AlignLeft,
+  // },
   // {
   //   id: "forum",
   //   name: "Fórum",

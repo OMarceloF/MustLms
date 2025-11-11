@@ -16,6 +16,7 @@ import {
 } from './controllers/financeiroController';
 import { atualizarStatusAtrasados } from './models/financeiro';
 import fetch from 'node-fetch';
+import fs from 'fs';
 
 // =============================
 // App / Server Express
@@ -56,6 +57,22 @@ const BODY_LIMIT = `${process.env.BODY_MAX_MB || 50}mb`;
 app.use(express.json({ limit: BODY_LIMIT }));
 app.use(express.urlencoded({ limit: BODY_LIMIT, extended: true }));
 app.use(cookieParser());
+
+
+// Pasta base de uploads
+const uploadsBaseDir = path.resolve(__dirname, '..', '..', 'uploads');
+
+// Subpastas específicas
+const subPastas = ['contratos', 'comprovantes', 'aulas'];
+
+for (const sub of subPastas) {
+  const fullPath = path.join(uploadsBaseDir, sub);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+    console.log(`📂 Pasta criada: ${fullPath}`);
+  }
+}
+
 
 app.use(
   '/uploads',
