@@ -1,172 +1,234 @@
-import type { Request, Response } from 'express';
-import pool from '../config/db';
-import { RowDataPacket } from 'mysql2';
-import path from 'node:path';
-import fs from 'node:fs/promises';
+import type { Request, Response } from "express";
+import pool from "../config/db";
+import path from "node:path";
+import fs from "node:fs/promises";
 
-const UPLOADS_DIR   = '/home/ubuntu/app/couto/backend/uploads';
-const MATERIAIS_DIR = '/home/ubuntu/app/couto/backend/materiais';
+// Diretório base de armazenamento dos materiais
+const MATERIAIS_DIR = "/home/ubuntu/app/couto/backend/materiais_novos";
 
-// Listar todos os materiais
-export const listarMateriais = async (req: Request, res: Response) => {
-  try {
-    const [rows] = await pool.query<RowDataPacket[]>(`
-      SELECT id, nome, autor, capa_url, conteudo_url FROM materiais
-    `);
-    res.json(rows);
-  } catch (error) {
-    console.error('Erro ao listar materiais:', error);
-    res.status(500).json({ error: 'Erro interno ao listar materiais' });
-  }
-};
-
-// Upload de novo material
-// Upload de novo material
-export const criarMaterial = async (req: Request, res: Response) => {
-  try {
-    const { nome, autor } = req.body;
-
-    const files = (req.files as any) || {};
-    const capaFile = files.capa?.[0] || null;
-    const conteudoFile = files.conteudo?.[0] || null;
-
-    if (!nome || !autor || !capaFile || !conteudoFile) {
-      return res.status(400).json({ error: 'Dados incompletos para criar material' });
-    }
-
-    // URL públicas coerentes com Nginx:
-    // - capa (imagem): /uploads/images/...
-    // - conteúdo (PDF): /materiais/...
-    const capa_url = `/uploads/images/${capaFile.filename}`;
-    const conteudo_url = `/materiais/${conteudoFile.filename}`;
-
-    await pool.query(
-      `INSERT INTO materiais (nome, autor, capa_url, conteudo_url)
-       VALUES (?, ?, ?, ?)`,
-      [nome, autor, capa_url, conteudo_url]
-    );
-
-    return res.status(201).json({ message: 'Material criado com sucesso' });
-  } catch (error) {
-    console.error('Erro ao criar material:', error);
-    return res.status(500).json({ error: 'Erro interno ao criar material' });
-  }
-};
-
-// Converte URL pública em caminho absoluto no disco, com segurança.
+/**
+ * Converte uma URL pública em um caminho físico absoluto
+ * (usado para apagar arquivos do disco de forma segura)
+ */
 function publicUrlToAbs(p: string): string | null {
-  if (!p || typeof p !== 'string') return null;
-
-  // Normaliza
-  const clean = p.replace(/\.\./g, '').trim();
-
-  if (clean.startsWith('/uploads/images/')) {
-    const rel = clean.replace(/^\/uploads\/images\//, '');
-    return path.join(UPLOADS_DIR, 'images', rel);
-  }
-  if (clean.startsWith('/materiais/')) {
-    const rel = clean.replace(/^\/materiais\//, '');
+  if (!p || typeof p !== "string") return null;
+  const clean = p.replace(/\.\./g, "").trim();
+  if (clean.startsWith("/materiais_novos/")) {
+    const rel = clean.replace(/^\/materiais_novos\//, "");
     return path.join(MATERIAIS_DIR, rel);
   }
-  return null; // não apagamos nada que não seja dessas duas pastas
+  return null;
 }
 
-// Remove arquivo do disco, ignorando erros (ex.: já não existe)
+/** Remove arquivo físico, ignorando erros (ex.: não existe mais) */
 async function safeUnlink(absPath: string | null) {
   if (!absPath) return;
   try {
     await fs.unlink(absPath);
   } catch {
-    /* ignore */
+    /* ignora */
   }
 }
 
-/** DELETE /api/materiais/:id  */
-export const excluirMaterial = async (req: Request, res: Response) => {
-  const { id } = req.params;
-
+// ============================================================================
+// 📚 LISTAR MATERIAIS
+// ============================================================================
+export const listarMateriaisNovo = async (req: Request, res: Response) => {
   try {
-    // 1) Descobre URLs atuais para apagar do disco
-    const [rows] = await pool.query<RowDataPacket[]>(
-      'SELECT capa_url, conteudo_url FROM materiais WHERE id = ?',
-      [id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Material não encontrado' });
-    }
-
-    const { capa_url, conteudo_url } = rows[0];
-
-    // 2) Deleta do banco
-    await pool.query('DELETE FROM materiais WHERE id = ?', [id]);
-
-    // 3) Tenta remover arquivos físicos
-    await Promise.all([
-      safeUnlink(publicUrlToAbs(capa_url)),
-      safeUnlink(publicUrlToAbs(conteudo_url)),
-    ]);
-
-    return res.json({ message: 'Material excluído com sucesso' });
+    const [rows] = await pool.query(`
+      SELECT 
+        m.id,
+        m.titulo,
+        m.descricao,
+        m.data,
+        m.link,
+        m.professor_id,
+        m.turma_id,
+        m.disciplina_id,
+        m.arquivo,
+        m.criado_em,
+        m.atualizado_em,
+        u.nome AS professor_nome,
+        t.nome_turma AS turma_nome,
+        d.nome AS disciplina_nome
+      FROM materiais_novo m
+      LEFT JOIN users u ON m.professor_id = u.id
+      LEFT JOIN turmas t ON m.turma_id = t.id
+      LEFT JOIN cursos_disciplinas d ON m.disciplina_id = d.id
+      ORDER BY m.criado_em DESC
+    `);
+    return res.json(rows);
   } catch (error) {
-    console.error('Erro ao excluir material:', error);
-    return res.status(500).json({ error: 'Erro ao excluir material' });
+    console.error("Erro ao listar materiais:", error);
+    return res.status(500).json({ error: "Erro ao listar materiais." });
   }
 };
 
-/** PUT /api/materiais/:id  (multipart) */
-export const editarMaterial = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const nome  = (req.body?.nome  ?? '').toString().trim();
-  const autor = (req.body?.autor ?? '').toString().trim();
-
+// ============================================================================
+// 🆕 CRIAR MATERIAL NOVO (corrigido com cursos_disciplinas)
+// ============================================================================
+export const criarMaterialNovo = async (req: Request, res: Response) => {
   try {
-    // 1) Material atual
-    const [rows] = await pool.query<RowDataPacket[]>(
-      'SELECT capa_url, conteudo_url FROM materiais WHERE id = ?',
-      [id]
-    );
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'Material não encontrado' });
+    console.log("📩 req.body recebido:", req.body);
+    console.log("📎 req.file recebido:", req.file);
+
+    const {
+      titulo,
+      descricao,
+      data,
+      link,
+      professor_id,
+      turma_id,
+      disciplina_id: disciplinaRaw,
+    } = req.body;
+
+    const arquivoFile = (req.file as Express.Multer.File) || null;
+    const arquivoPath = arquivoFile ? `/materiais_novos/${arquivoFile.filename}` : null;
+
+    if (!titulo) {
+      return res.status(400).json({ error: "Campo 'título' é obrigatório." });
     }
-    const atual = rows[0] as { capa_url: string; conteudo_url: string };
 
-    // 2) Arquivos enviados (opcionais)
-    const files: any = req.files || {};
-    const capaFile     = files.capa?.[0]     || null;
-    const conteudoFile = files.conteudo?.[0] || null;
+    // 🔹 Corrige e valida disciplina_id
+    let disciplina_id: number | null = null;
+    if (disciplinaRaw && disciplinaRaw !== "undefined" && disciplinaRaw !== "null" && disciplinaRaw !== "") {
+      disciplina_id = Number(disciplinaRaw);
+      if (isNaN(disciplina_id)) disciplina_id = null;
+    }
 
-    // 3) Monta novas URLs públicas (se enviou arquivo novo)
-    const novaCapaUrl     = capaFile     ? `/uploads/images/${capaFile.filename}`  : atual.capa_url;
-    const novoConteudoUrl = conteudoFile ? `/materiais/${conteudoFile.filename}`   : atual.conteudo_url;
+    // 🔹 Verifica se disciplina existe na tabela correta
+    if (disciplina_id) {
+      const [discRows]: any = await pool.query("SELECT id FROM cursos_disciplinas WHERE id = ?", [disciplina_id]);
+      if (discRows.length === 0) {
+        return res.status(400).json({ error: `Disciplina ID ${disciplina_id} não existe em cursos_disciplinas.` });
+      }
+    }
 
-    // 4) Atualiza campos “nome/autor” apenas se vieram preenchidos
-    const novoNome  = nome  || (await (async () => {
-      const [r2] = await pool.query<RowDataPacket[]>('SELECT nome FROM materiais WHERE id = ?', [id]);
-      return r2[0]?.nome ?? '';
-    })());
-    const novoAutor = autor || (await (async () => {
-      const [r3] = await pool.query<RowDataPacket[]>('SELECT autor FROM materiais WHERE id = ?', [id]);
-      return r3[0]?.autor ?? '';
-    })());
-
-    // 5) Persiste
+    // 🔹 Cria o registro
     await pool.query(
-      'UPDATE materiais SET nome = ?, autor = ?, capa_url = ?, conteudo_url = ? WHERE id = ?',
-      [novoNome, novoAutor, novaCapaUrl, novoConteudoUrl, id]
+      `INSERT INTO materiais_novo 
+        (titulo, descricao, data, link, professor_id, turma_id, disciplina_id, arquivo, criado_em, atualizado_em)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      [
+        titulo,
+        descricao || null,
+        data || null,
+        link || null,
+        professor_id ? Number(professor_id) : null,
+        turma_id ? Number(turma_id) : null,
+        disciplina_id,
+        arquivoPath || null,
+      ]
     );
 
-    // 6) Se trocou arquivo, remove o antigo do disco
-    await Promise.all([
-      capaFile     ? safeUnlink(publicUrlToAbs(atual.capa_url))     : Promise.resolve(),
-      conteudoFile ? safeUnlink(publicUrlToAbs(atual.conteudo_url)) : Promise.resolve(),
-    ]);
-
-    return res.json({ message: 'Material atualizado com sucesso' });
-  } catch (error) {
-    console.error('Erro ao editar material:', error);
-    return res.status(500).json({ error: 'Erro ao editar material' });
+    return res.status(201).json({ message: "Material criado com sucesso!" });
+  } catch (error: any) {
+    console.error("❌ Erro ao criar material:", error);
+    return res.status(500).json({
+      error: error.sqlMessage || "Erro interno ao criar material.",
+    });
   }
 };
 
+// ============================================================================
+// ✏️ EDITAR MATERIAL
+// ============================================================================
+export const editarMaterialNovo = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { titulo, descricao, data, link, professor_id, turma_id, disciplina_id } = req.body;
+  const arquivoFile = (req.file as Express.Multer.File) || null;
 
+  try {
+    const [rows]: any = await pool.query("SELECT arquivo FROM materiais_novo WHERE id = ?", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Material não encontrado." });
+    }
+
+    const atual = rows[0];
+    const novoArquivo = arquivoFile ? `/materiais_novos/${arquivoFile.filename}` : atual.arquivo;
+
+    await pool.query(
+      `UPDATE materiais_novo
+       SET titulo = ?, descricao = ?, data = ?, link = ?, 
+           professor_id = ?, turma_id = ?, disciplina_id = ?, 
+           arquivo = ?, atualizado_em = NOW()
+       WHERE id = ?`,
+      [
+        titulo,
+        descricao || null,
+        data || null,
+        link || null,
+        professor_id ? Number(professor_id) : null,
+        turma_id ? Number(turma_id) : null,
+        disciplina_id ? Number(disciplina_id) : null,
+        novoArquivo,
+        id,
+      ]
+    );
+
+    // Remove arquivo antigo se houve upload novo
+    if (arquivoFile) {
+      await safeUnlink(publicUrlToAbs(atual.arquivo));
+    }
+
+    return res.json({ message: "Material atualizado com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao editar material:", error);
+    return res.status(500).json({ error: "Erro interno ao editar material." });
+  }
+};
+
+// ============================================================================
+// 🗑️ EXCLUIR MATERIAL
+// ============================================================================
+export const excluirMaterialNovo = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const [rows]: any = await pool.query("SELECT arquivo FROM materiais_novo WHERE id = ?", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Material não encontrado." });
+    }
+
+    const { arquivo } = rows[0];
+
+    await pool.query("DELETE FROM materiais_novo WHERE id = ?", [id]);
+    await safeUnlink(publicUrlToAbs(arquivo));
+
+    return res.json({ message: "Material excluído com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao excluir material:", error);
+    return res.status(500).json({ error: "Erro interno ao excluir material." });
+  }
+};
+
+// ============================================================================
+// 🔍 BUSCAR MATERIAL POR ID
+// ============================================================================
+export const buscarMaterialPorId = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const [rows]: any = await pool.query(
+      `SELECT 
+        m.*, 
+        u.nome AS professor_nome,
+        t.nome_turma AS turma_nome,
+        d.nome AS disciplina_nome
+       FROM materiais_novo m
+       LEFT JOIN users u ON m.professor_id = u.id
+       LEFT JOIN turmas t ON m.turma_id = t.id
+       LEFT JOIN cursos_disciplinas d ON m.disciplina_id = d.id
+       WHERE m.id = ?`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Material não encontrado." });
+    }
+
+    return res.json(rows[0]);
+  } catch (error) {
+    console.error("Erro ao buscar material:", error);
+    return res.status(500).json({ error: "Erro ao buscar material." });
+  }
+};
