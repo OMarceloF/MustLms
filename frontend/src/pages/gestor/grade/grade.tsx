@@ -14,16 +14,14 @@ import {
     DialogTitle,
 } from "../components/ui/dialog"
 import { useToast } from "../hooks/use-toast"
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ViewGradeModal } from "./visualizar-grade"
 import { EditGradeModal } from "./edit-grade"
-// import SidebarGestor from '../../gestor/components/Sidebar';
-import TopbarGestorAuto from '../components/TopbarGestorAuto';
-import { useAuth } from '../../../hooks/useAuth';
 
+// --- CONSTANTES E TIPAGEM ---
+const API_BASE_URL = 'http://localhost:3001/api';
 
-// --- TIPAGEM (sem alterações) ---
-type TipoCurso = "Graduação" | "Pós" | "Mestrado" | "Doutorado"
+type TipoCurso = "Graduação" | "Pós" | "Mestrado" | "Doutorado" | "especializacao";
 
 type Curso = {
     id: number
@@ -51,110 +49,57 @@ export type GradeCurricular = {
     periodos: Periodo[]
 }
 
+// NOVO TIPO
+type PeriodoLetivo = {
+    id: number;
+    nome: string;
+}
 
+// --- FUNÇÕES DE API ---
 
-
-// --- MOCKS ADICIONADOS AQUI ---
-
-const mockCursos: Curso[] = [
-    { id: 1, nome: "Ciência da Computação", tipo: "Graduação" },
-    { id: 2, nome: "Engenharia de Software", tipo: "Graduação" },
-    { id: 3, nome: "Inteligência Artificial", tipo: "Pós" },
-];
-
-const mockMaterias: Materia[] = [
-    { id: 101, nome: "Cálculo I", codigo: "MAT101", cargaHoraria: 60 },
-    { id: 102, nome: "Algoritmos e Estruturas de Dados", codigo: "COMP102", cargaHoraria: 80 },
-    { id: 103, nome: "Arquitetura de Computadores", codigo: "COMP103", cargaHoraria: 60 },
-    { id: 201, nome: "Banco de Dados", codigo: "COMP201", cargaHoraria: 60 },
-    { id: 202, nome: "Engenharia de Requisitos", codigo: "ENG202", cargaHoraria: 40 },
-];
-
-let mockGrades: GradeCurricular[] = [
-    {
-        id: 1,
-        curso: mockCursos[0], // Ciência da Computação
-        periodoAcademico: "2024.1",
-        periodos: [
-            { id: 1, nome: "1º Período", materias: [mockMaterias[0], mockMaterias[1]] },
-            { id: 2, nome: "2º Período", materias: [mockMaterias[2]] },
-        ],
-    },
-    {
-        id: 2,
-        curso: mockCursos[1], // Engenharia de Software
-        periodoAcademico: "2024.1",
-        periodos: [
-            { id: 1, nome: "1º Período", materias: [mockMaterias[0], mockMaterias[4]] },
-        ],
-    },
-    {
-        id: 3,
-        curso: mockCursos[0], // Ciência da Computação
-        periodoAcademico: "2024.2",
-        periodos: [
-            { id: 3, nome: "3º Período", materias: [mockMaterias[3]] },
-        ],
-    },
-];
-
-// --- FUNÇÕES DE API SIMULADAS (MOCKADAS) ---
-
-// Simula um atraso da rede
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
-async function getGrades(params?: { curso?: string; periodo?: string }): Promise<GradeCurricular[]> {
-    await delay(500); // Simula o tempo de carregamento da rede
-    console.log("Buscando grades com filtros:", params);
-
-    let gradesFiltradas = [...mockGrades];
-
-    if (params?.curso && params.curso !== "all") {
-        gradesFiltradas = gradesFiltradas.filter(g => g.curso.id.toString() === params.curso);
-    }
-    if (params?.periodo && params.periodo !== "all") {
-        gradesFiltradas = gradesFiltradas.filter(g => g.periodoAcademico === params.periodo);
-    }
-
-    return gradesFiltradas;
+async function getGrades(params?: { curso?: string; periodo?: string } ): Promise<GradeCurricular[]> {
+    const url = new URL(`${API_BASE_URL}/grades`);
+    if (params?.curso && params.curso !== "all") url.searchParams.append('curso', params.curso);
+    if (params?.periodo && params.periodo !== "all") url.searchParams.append('periodo', params.periodo);
+    
+    const response = await fetch(url.toString());
+    if (!response.ok) throw new Error("Falha ao buscar grades curriculares");
+    return response.json();
 }
 
 async function getCursos(): Promise<Curso[]> {
-    await delay(300);
-    return [...mockCursos];
+    const response = await fetch(`${API_BASE_URL}/cursos-posgraduacao`);
+    if (!response.ok) throw new Error("Falha ao buscar cursos");
+    return response.json();
 }
+
+// NOVA FUNÇÃO DE API
+async function getPeriodosLetivos(): Promise<PeriodoLetivo[]> {
+    const response = await fetch(`${API_BASE_URL}/grades/form-data/periodos-letivos`);
+    if (!response.ok) throw new Error("Falha ao buscar períodos letivos");
+    return response.json();
+}
+
 
 async function deleteGrade(id: number): Promise<void> {
-    await delay(500);
-    const index = mockGrades.findIndex(g => g.id === id);
-    if (index === -1) {
-        throw new Error("Grade não encontrada para deletar");
+    const response = await fetch(`${API_BASE_URL}/grades/${id}`, {
+        method: 'DELETE',
+    });
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao excluir grade");
     }
-    mockGrades = mockGrades.filter(g => g.id !== id);
-    console.log("Grades restantes após deleção:", mockGrades);
 }
 
-// --- COMPONENTE REACT (sem alterações na lógica principal) ---
+// --- COMPONENTE REACT ---
 
 export default function GradeCurricularPage() {
-    const { id } = useParams<{ id: string }>();
-    const { user: currentUser } = useAuth();
-
-    // --- ESTADOS ---
-    const [sidebarAberta, setSidebarAberta] = useState(false);
-
-    // --- VARIÁVEIS DE CONTROLE DE UI ---
-    const isGestor = currentUser?.role === 'gestor';
-    const isPerfilPrincipal = String(currentUser?.id) === id;
-    const podeVisualizarInfoPrivada = isPerfilPrincipal || isGestor || currentUser?.role === 'professor';
-    const showSidebar = !['responsavel', 'aluno'].includes(currentUser?.role ?? '');
-    const showSidebarAluno = currentUser?.role === 'aluno';
-
     const navigate = useNavigate();
     const { toast } = useToast()
 
     const [grades, setGrades] = useState<GradeCurricular[]>([])
     const [cursos, setCursos] = useState<Curso[]>([])
+    const [periodosLetivos, setPeriodosLetivos] = useState<PeriodoLetivo[]>([]) // <-- NOVO ESTADO
     const [loading, setLoading] = useState(true)
 
     // Filters
@@ -167,86 +112,89 @@ export default function GradeCurricularPage() {
     const [deleteConfirm, setDeleteConfirm] = useState<GradeCurricular | null>(null)
 
     useEffect(() => {
-        loadData()
-    }, [])
+        loadInitialData();
+    }, []);
 
-    const loadData = async () => {
+    const loadInitialData = async () => {
         try {
-            setLoading(true)
-            // As chamadas continuam iguais, mas agora usam as funções mockadas
-            const [gradesData, cursosData] = await Promise.all([getGrades(), getCursos()])
-            setGrades(gradesData)
-            setCursos(cursosData)
-        } catch (error) {
+            setLoading(true);
+            // Busca grades, cursos e períodos letivos em paralelo
+            const [gradesData, cursosData, periodosData] = await Promise.all([
+                getGrades(), 
+                getCursos(),
+                getPeriodosLetivos() // <-- BUSCA OS PERÍODOS
+            ]);
+            setGrades(gradesData);
+            setCursos(cursosData);
+            setPeriodosLetivos(periodosData); // <-- ATUALIZA O ESTADO
+        } catch (error: any) {
             toast({
-                title: "Erro",
-                description: "Não foi possível carregar os dados",
+                title: "Erro ao carregar dados",
+                description: error.message || "Não foi possível carregar os dados iniciais.",
                 variant: "destructive",
-            })
+            });
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     const handleSearch = async () => {
         try {
-            setLoading(true)
-            const params: { curso?: string; periodo?: string } = {}
-            if (cursoFilter) params.curso = cursoFilter
-            if (periodoFilter) params.periodo = periodoFilter
-
-            const data = await getGrades(params)
-            setGrades(data)
-        } catch (error) {
+            setLoading(true);
+            const params = { curso: cursoFilter, periodo: periodoFilter };
+            const data = await getGrades(params);
+            setGrades(data);
+        } catch (error: any) {
             toast({
-                title: "Erro",
-                description: "Erro ao pesquisar grades",
+                title: "Erro na busca",
+                description: error.message || "Não foi possível filtrar as grades.",
                 variant: "destructive",
-            })
+            });
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }
+    };
 
     const handleClearFilters = () => {
-        setCursoFilter("")
-        setPeriodoFilter("")
-        loadData()
-    }
+        setCursoFilter("");
+        setPeriodoFilter("");
+        loadInitialData();
+    };
 
     const handleDelete = async () => {
-        if (!deleteConfirm) return
+        if (!deleteConfirm) return;
 
         try {
-            await deleteGrade(deleteConfirm.id)
+            await deleteGrade(deleteConfirm.id);
             toast({
                 title: "Sucesso",
-                description: "Grade excluída com sucesso",
-            })
-            setDeleteConfirm(null)
-            loadData() // Recarrega os dados (da lista de mocks)
-        } catch (error) {
+                description: "Grade curricular excluída com sucesso.",
+            });
+            setDeleteConfirm(null);
+            const updatedGrades = await getGrades({ curso: cursoFilter, periodo: periodoFilter });
+            setGrades(updatedGrades);
+        } catch (error: any) {
             toast({
-                title: "Erro",
-                description: "Erro ao excluir grade",
+                title: "Erro ao excluir",
+                description: error.message || "Não foi possível remover a grade.",
                 variant: "destructive",
-            })
+            });
         }
-    }
+    };
 
     const getTotalMaterias = (grade: GradeCurricular) => {
-        return grade.periodos.reduce((total, periodo) => total + periodo.materias.length, 0)
-    }
+        return grade.periodos.reduce((total, periodo) => total + periodo.materias.length, 0);
+    };
 
     const getTotalCargaHoraria = (grade: GradeCurricular) => {
         return grade.periodos.reduce((total, periodo) => {
-            return total + periodo.materias.reduce((sum, materia) => sum + materia.cargaHoraria, 0)
-        }, 0)
-    }
+            return total + periodo.materias.reduce((sum, materia) => sum + materia.cargaHoraria, 0);
+        }, 0);
+    };
 
     return (
         <div className="min-h-screen bg-slate-50">
-            <div className="container mx-auto max-w-7xl">
+            <div className="container mx-auto p-8 max-w-7xl">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold tracking-tight text-balance">Gestão de Grades Curriculares</h1>
                     <p className="mt-2 text-muted-foreground text-pretty">
@@ -256,50 +204,51 @@ export default function GradeCurricularPage() {
 
                 {/* Search and Filters */}
                 <div className="bg-white rounded-lg border p-6 mb-6">
-                    <div className="flex flex-col gap-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Curso</label>
-                                <Select value={cursoFilter} onValueChange={setCursoFilter}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um curso" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos os cursos</SelectItem>
-                                        {cursos.map((curso) => (
-                                            <SelectItem key={curso.id} value={curso.id.toString()}>
-                                                {curso.nome}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Curso</label>
+                            <Select value={cursoFilter} onValueChange={setCursoFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um curso" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos os cursos</SelectItem>
+                                    {cursos.map((curso) => (
+                                        <SelectItem key={curso.id} value={curso.id.toString()}>
+                                            {curso.nome}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Período</label>
-                                <Select value={periodoFilter} onValueChange={setPeriodoFilter}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um período" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos os períodos</SelectItem>
-                                        <SelectItem value="2024.1">2024.1</SelectItem>
-                                        <SelectItem value="2024.2">2024.2</SelectItem>
-                                        <SelectItem value="2025.1">2025.1</SelectItem>
-                                        <SelectItem value="2025.2">2025.2</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        {/* ===== ÁREA MODIFICADA ===== */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Período Acadêmico</label>
+                            <Select value={periodoFilter} onValueChange={setPeriodoFilter}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione um período" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">Todos os períodos</SelectItem>
+                                    {periodosLetivos.map((periodo) => (
+                                        <SelectItem key={periodo.id} value={periodo.nome}>
+                                            {periodo.nome}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {/* ========================== */}
 
-                            <div className="flex items-end gap-2">
-                                <Button onClick={handleSearch} className="flex-1">
-                                    <Search className="mr-2 h-4 w-4" />
-                                    Pesquisar
-                                </Button>
-                                <Button onClick={handleClearFilters} variant="outline">
-                                    Limpar
-                                </Button>
-                            </div>
+                        <div className="flex items-end gap-2">
+                            <Button onClick={handleSearch} className="flex-1">
+                                <Search className="mr-2 h-4 w-4" />
+                                Pesquisar
+                            </Button>
+                            <Button onClick={handleClearFilters} variant="outline">
+                                Limpar
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -319,7 +268,7 @@ export default function GradeCurricularPage() {
                             <TableRow>
                                 <TableHead>Curso</TableHead>
                                 <TableHead>Período</TableHead>
-                                <TableHead>Quantidade de Matérias</TableHead>
+                                <TableHead>Qtd. Matérias</TableHead>
                                 <TableHead>Carga Horária Total</TableHead>
                                 <TableHead className="text-right">Ações</TableHead>
                             </TableRow>
@@ -334,7 +283,7 @@ export default function GradeCurricularPage() {
                             ) : grades.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                        Nenhuma grade encontrada
+                                        Nenhuma grade encontrada.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -364,39 +313,30 @@ export default function GradeCurricularPage() {
                     </Table>
                 </div>
 
-                {/* View Modal */}
+                {/* Modals */}
                 {viewGrade && <ViewGradeModal grade={viewGrade} open={!!viewGrade} onClose={() => setViewGrade(null)} />}
-
-                {/* Edit Modal */}
                 {editGrade && (
                     <EditGradeModal
                         grade={editGrade}
                         open={!!editGrade}
                         onClose={() => setEditGrade(null)}
                         onSuccess={() => {
-                            setEditGrade(null)
-                            loadData()
+                            setEditGrade(null);
+                            handleSearch();
                         }}
                     />
                 )}
-
-                {/* Delete Confirmation */}
                 <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Confirmar Exclusão</DialogTitle>
                             <DialogDescription>
-                                Tem certeza que deseja excluir a grade curricular de <strong>{deleteConfirm?.curso.nome}</strong> (
-                                {deleteConfirm?.periodoAcademico})? Esta ação não pode ser desfeita.
+                                Tem certeza que deseja excluir a grade curricular de <strong>{deleteConfirm?.curso.nome}</strong> ({deleteConfirm?.periodoAcademico})? Esta ação não pode ser desfeita.
                             </DialogDescription>
                         </DialogHeader>
                         <DialogFooter>
-                            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
-                                Cancelar
-                            </Button>
-                            <Button variant="destructive" onClick={handleDelete}>
-                                Excluir
-                            </Button>
+                            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
+                            <Button variant="destructive" onClick={handleDelete}>Excluir</Button>
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>

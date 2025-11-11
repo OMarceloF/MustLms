@@ -42,7 +42,6 @@ export const adicionarCurso = async (req: Request, res: Response) => {
  */
 export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
     try {
-        // ATUALIZAÇÃO: Adicionado o campo 'duracao_semestres' à consulta SQL.
         const query = `
             SELECT 
                 c.id, 
@@ -64,7 +63,6 @@ export const listarCursosPosGraduacao = async (req: Request, res: Response) => {
 /**
  * @description Lista as turmas de ingresso, opcionalmente filtrando por curso.
  * @route GET /api/turmas-ingresso
- * @route GET /api/turmas-ingresso/:cursoId
  */
 export const listarTurmasDeIngresso = async (req: Request, res: Response) => {
     try {
@@ -74,19 +72,6 @@ export const listarTurmasDeIngresso = async (req: Request, res: Response) => {
             ORDER BY nome ASC;
         `;
         const [rows] = await pool.query<RowDataPacket[]>(query);
-        
-        // =======================================================================
-        // LOG DE DEPURAÇÃO (MUITO IMPORTANTE)
-        // =======================================================================
-        if (rows.length > 0) {
-            console.log('Backend: Retornando turmas de ingresso. Exemplo da primeira linha:', rows[0]);
-            console.log('Tipo do ID da turma:', typeof rows[0].id);
-            console.log('Tipo do ID do curso:', typeof rows[0].curso_posgraduacao_id);
-        } else {
-            console.log('Backend: Nenhuma turma de ingresso encontrada no banco de dados.');
-        }
-        // =======================================================================
-
         res.status(200).json(rows);
     } catch (error: any) {
         console.error("Erro ao listar turmas de ingresso:", error);
@@ -121,9 +106,7 @@ export const listarAlunosVinculados = async (req: Request, res: Response) => {
         `;
 
         const [alunos] = await pool.query<RowDataPacket[]>(query, [cursoId]);
-
         res.status(200).json(alunos);
-
     } catch (error: any) {
         console.error("Erro ao buscar alunos vinculados:", error);
         res.status(500).json({ message: "Erro interno ao buscar os alunos vinculados: " + error.message });
@@ -131,15 +114,14 @@ export const listarAlunosVinculados = async (req: Request, res: Response) => {
 };
 
 /**
- * @description Lista todos os períodos letivos ativos.
- * @route GET /api/configuracoes/periodos-letivos
+ * @description Lista todos os períodos letivos.
+ * @route GET /api/periodos-letivos/todos (Exemplo, a rota real pode variar)
  */
 export const listarPeriodosLetivos = async (req: Request, res: Response) => {
     try {
         const query = `
             SELECT id, nome 
             FROM configuracoes_periodos_letivos 
-            WHERE status = 'Ativo' 
             ORDER BY data_inicio DESC;
         `;
         const [rows] = await pool.query(query);
@@ -230,7 +212,6 @@ export const obterDetalhesCurso = async (req: Request, res: Response) => {
  * @route GET /api/cursos/:cursoId/calendario
  */
 export const listarEventosCalendario = async (req: Request, res: Response) => {
-    // Implementação futura
     res.status(200).json([]);
 };
 
@@ -239,7 +220,6 @@ export const listarEventosCalendario = async (req: Request, res: Response) => {
  * @route POST /api/cursos/:cursoId/calendario
  */
 export const adicionarEventoCalendario = async (req: Request, res: Response) => {
-    // Implementação futura
     res.status(201).json({ message: 'Evento adicionado (simulado).' });
 };
 
@@ -269,31 +249,19 @@ export const salvarPPC = async (req: Request, res: Response) => {
     const { cursoId } = req.params;
     const { conteudo } = req.body;
 
-    // Validação de entrada
-    if (!cursoId) {
-        return res.status(400).json({ message: 'O ID do curso é obrigatório.' });
-    }
-    if (conteudo === undefined || conteudo === null) {
-        return res.status(400).json({ message: 'O conteúdo do PPC é obrigatório.' });
-    }
+    if (!cursoId) return res.status(400).json({ message: 'O ID do curso é obrigatório.' });
+    if (conteudo === undefined) return res.status(400).json({ message: 'O conteúdo do PPC é obrigatório.' });
 
     try {
-        // A query ON DUPLICATE KEY UPDATE é perfeita para "criar ou atualizar"
         const query = 'INSERT INTO cursos_ppc (curso_id, conteudo) VALUES (?, ?) ON DUPLICATE KEY UPDATE conteudo = ?';
-        
         await pool.query(query, [cursoId, conteudo, conteudo]);
-        
         res.status(200).json({ message: 'PPC salvo com sucesso.' });
     } catch (error) {
-        // Log detalhado do erro no servidor para depuração
         console.error(`[ERRO AO SALVAR PPC] Curso ID: ${cursoId}`, error);
         res.status(500).json({ message: 'Erro interno no servidor ao salvar o PPC.' });
     }
 };
 
-// =======================================================================
-// NOVA FUNÇÃO PARA LISTAR TURMAS POR DISCIPLINA
-// =======================================================================
 /**
  * @description Lista todas as turmas vinculadas a uma disciplina específica.
  * @route GET /api/disciplinas/:disciplinaId/turmas
@@ -306,7 +274,7 @@ export const listarTurmasPorDisciplina = async (req: Request, res: Response) => 
     }
 
     try {
-        // CORREÇÃO: Adicionamos um LEFT JOIN para buscar o nome do semestre
+        // ===== QUERY CORRIGIDA =====
         const query = `
             SELECT 
                 t.id, 
@@ -314,18 +282,16 @@ export const listarTurmasPorDisciplina = async (req: Request, res: Response) => 
                 cpl.nome AS semestre_nome 
             FROM turmas t
             LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
-            WHERE JSON_CONTAINS(t.materias_ids, ?, '$');
+            WHERE t.disciplina_id = ?;
         `;
+        // ===========================
 
-        const valorParaBusca = `"${disciplinaId}"`;
+        const [turmas] = await pool.query<RowDataPacket[]>(query, [disciplinaId]);
 
-        const [turmas] = await pool.query<RowDataPacket[]>(query, [valorParaBusca]);
-
-        // Renomeia as colunas para corresponder à interface 'Turma' do frontend
         const turmasFormatadas = turmas.map(turma => ({
             id: turma.id,
             nome: turma.nome_turma,
-            semestre_nome: turma.semestre_nome || 'N/A' // Retorna o nome do semestre ou 'N/A'
+            semestre_nome: turma.semestre_nome || 'N/A'
         }));
 
         res.status(200).json(turmasFormatadas);
@@ -349,7 +315,7 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
     }
 
     try {
-        // Query para buscar professores
+        // Query para buscar professores (sem alteração)
         const [professores] = await pool.query<RowDataPacket[]>(`
             SELECT DISTINCT
                 f.id, f.nome, f.departamento,
@@ -360,44 +326,32 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
             ORDER BY f.nome;
         `, [cursoId]);
 
-        // Query para buscar turmas
+        // ===== QUERY DAS TURMAS CORRIGIDA =====
         const [turmasBase] = await pool.query<RowDataPacket[]>(`
             SELECT 
-                t.id, t.nome_turma AS codigo, cpl.nome AS periodo,
-                t.quantidade_alunos AS alunos, t.materias_ids
+                t.id, 
+                t.nome_turma AS codigo, 
+                cpl.nome AS periodo,
+                t.quantidade_alunos AS alunos,
+                d.nome AS disciplina_nome
             FROM turmas t
             LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
+            LEFT JOIN cursos_disciplinas d ON t.disciplina_id = d.id
             WHERE t.curso_id = ?
             ORDER BY cpl.data_inicio DESC, t.nome_turma;
         `, [cursoId]);
+        // ======================================
 
-        // Processamento para buscar nomes das disciplinas das turmas
-        const turmas = await Promise.all(turmasBase.map(async (turma) => {
-            let disciplinaNomes = 'N/A';
-            if (turma.materias_ids && turma.materias_ids.length > 2) {
-                try {
-                    const ids = JSON.parse(turma.materias_ids);
-                    if (ids.length > 0) {
-                        const placeholders = ids.map(() => '?').join(',');
-                        const [disciplinas] = await pool.query<RowDataPacket[]>(
-                            `SELECT nome FROM cursos_disciplinas WHERE id IN (${placeholders})`,
-                            ids
-                        );
-                        disciplinaNomes = disciplinas.map(d => d.nome).join(', ');
-                    }
-                } catch (e) {
-                    console.error("Erro ao fazer parse dos IDs de matérias:", e);
-                }
-            }
-            return {
-                id: turma.id,
-                codigo: turma.codigo,
-                periodo: turma.periodo,
-                alunos: turma.alunos || 0,
-                disciplina: disciplinaNomes
-            };
+        // Mapeamento simplificado dos resultados
+        const turmas = turmasBase.map(turma => ({
+            id: turma.id,
+            codigo: turma.codigo,
+            periodo: turma.periodo,
+            alunos: turma.alunos || 0,
+            disciplina: turma.disciplina_nome || 'N/A'
         }));
 
+        // Query para buscar alunos (sem alteração)
         const [alunos] = await pool.query<RowDataPacket[]>(`
             SELECT DISTINCT
                 u.id,
@@ -412,7 +366,6 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
             WHERE t.curso_id = ? AND u.role = 'aluno'
             ORDER BY u.nome ASC;
         `, [cursoId]);
-        // ===============================================================
 
         res.status(200).json({ professores, turmas, alunos });
 

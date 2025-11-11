@@ -6,13 +6,15 @@ import { ResultSetHeader } from 'mysql2';
 
 /**
  * @route   POST /api/matriculas/vincular-aluno-curso
- * @desc    Vincula um aluno a um curso de pós-graduação.
+ * @desc    Vincula um aluno a um curso de pós-graduação, incluindo a grade curricular.
  */
 export const vincularAlunoCursoPosGraduacao = async (req: Request, res: Response) => {
-    const { alunoId, cursoId, turmaId, grade } = req.body;
+    // MODIFICAÇÃO: Trocado 'grade' por 'gradeId' para refletir o que o frontend envia.
+    const { alunoId, cursoId, turmaId, gradeId } = req.body;
 
-    if (!alunoId || !cursoId || !turmaId || !grade) {
-        return res.status(400).json({ message: 'Dados insuficientes para realizar o vínculo.' });
+    // MODIFICAÇÃO: Adicionada validação para o novo campo 'gradeId'.
+    if (!alunoId || !cursoId || !turmaId || !gradeId) {
+        return res.status(400).json({ message: 'Dados insuficientes para realizar o vínculo. Todos os campos (aluno, curso, turma e grade) são obrigatórios.' });
     }
 
     const connection = await pool.getConnection();
@@ -20,7 +22,7 @@ export const vincularAlunoCursoPosGraduacao = async (req: Request, res: Response
     try {
         await connection.beginTransaction();
 
-        // Validações (sem alteração)
+        // Validações (sem alteração, mas mantidas por segurança)
         const [alunoRows]: any[] = await connection.execute('SELECT id FROM users WHERE id = ?', [alunoId]);
         if (alunoRows.length === 0) throw new Error('Aluno não encontrado no sistema.');
 
@@ -28,25 +30,32 @@ export const vincularAlunoCursoPosGraduacao = async (req: Request, res: Response
         if (cursoRows.length === 0) throw new Error('Curso de pós-graduação não encontrado.');
 
         const [turmaIngressoRows]: any[] = await connection.execute('SELECT id FROM turmas_ingresso WHERE id = ?', [turmaId]);
-        if (turmaIngressoRows.length === 0) {
-            throw new Error('A turma de ingresso selecionada não foi encontrada no sistema.');
-        }
+        if (turmaIngressoRows.length === 0) throw new Error('A turma de ingresso selecionada não foi encontrada.');
+        
+        const [gradeRows]: any[] = await connection.execute('SELECT id FROM grades_curriculares WHERE id = ?', [gradeId]);
+        if (gradeRows.length === 0) throw new Error('A grade curricular selecionada não foi encontrada.');
+
+        // MODIFICAÇÃO: A query SQL foi atualizada para usar a nova coluna 'grade_curricular_id'.
         const sql = `
             INSERT INTO vincular_aluno_curso 
-            (aluno_id, curso_posgraduacao_id, turmas_ingresso_id, grade_mocada, status_matricula) 
+            (aluno_id, curso_posgraduacao_id, turmas_ingresso_id, grade_curricular_id, status_matricula) 
             VALUES (?, ?, ?, ?, 'Ativa')
             ON DUPLICATE KEY UPDATE
                 turmas_ingresso_id = VALUES(turmas_ingresso_id),
-                grade_mocada = VALUES(grade_mocada),
+                grade_curricular_id = VALUES(grade_curricular_id),
                 status_matricula = 'Ativa'
         `;
         
-        const params = [alunoId, cursoId, turmaId, grade];
-        await connection.execute(sql, params);
+        // MODIFICAÇÃO: O parâmetro 'grade' foi substituído por 'gradeId'.
+        const params = [alunoId, cursoId, turmaId, gradeId];
+        const [result] = await connection.execute<ResultSetHeader>(sql, params);
 
         await connection.commit();
 
-        res.status(201).json({ message: 'Aluno vinculado ao curso com sucesso!' });
+        res.status(201).json({ 
+            message: 'Aluno vinculado ao curso com sucesso!',
+            vinculoId: result.insertId 
+        });
 
     } catch (error: any) {
         await connection.rollback();

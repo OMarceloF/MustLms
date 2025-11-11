@@ -308,6 +308,17 @@ import {
 
 import { loginLimiter } from '../middlewares/rateLimiter';
 
+import {
+    createGrade,
+    getGrades,
+    updateGrade,
+    deleteGrade,
+    getMateriasForGradeForm,
+    getPeriodosLetivosForForm,
+    getDisciplinasByCursoGrouped,
+    getGradesByCurso
+} from '../controllers/gradeCurricularController';
+
 import { getPeriodosLetivos, syncPeriodosLetivos,getAllPeriodosLetivos } from '../controllers/periodosLetivosController';
 
 import {
@@ -1016,11 +1027,16 @@ router.post(
   atualizarDocumentoAluno
 );
 
-
-// ROTAS DE AULAS GRAVADAS
-router.get('/api/aulas-gravadas', listarAulasGravadas);
-router.post('/api/aulas-gravadas', uploadAny.single('arquivo'), criarAulaGravada);
-router.put('/api/aulas-gravadas/:id', uploadAny.single('arquivo'), atualizarAulaGravada);
-router.delete('/api/aulas-gravadas/:id', excluirAulaGravada);
+// ==============================================================================
+// ROTAS PARA GESTÃO DE GRADES CURRICULARES
+// ==============================================================================
+router.post('/api/grades', createGrade);
+router.get('/api/grades', getGrades);
+router.put('/api/grades/:id', updateGrade);
+router.delete('/api/grades/:id', deleteGrade);
+router.get('/api/grades/form-data/materias', getMateriasForGradeForm);
+router.get('/api/grades/form-data/periodos-letivos', getPeriodosLetivosForForm);
+router.get('/api/grades/form-data/disciplinas-por-curso/:cursoId', getDisciplinasByCursoGrouped);
+router.get('/api/grades/por-curso/:cursoId', getGradesByCurso);
 
 export default router;
