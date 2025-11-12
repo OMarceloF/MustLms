@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 11/11/2025 às 19:56
+-- Tempo de geração: 12/11/2025 às 13:50
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -1078,6 +1078,64 @@ CREATE TABLE `funcionarios` (
 INSERT INTO `funcionarios` (`id`, `nome`, `email`, `cpf`, `telefone`, `data_nascimento`, `data_contratacao`, `endereco`, `cargo`, `departamento`, `foto`, `registro`, `biografia`, `formacao_academica`, `especialidades`, `instituicao`, `materias`, `turmas`, `total_alunos`, `taxa_aprovacao`, `status`) VALUES
 (6, 'jose', 'jose@gmail.com', NULL, NULL, NULL, NULL, NULL, 'Professor', 'História', '', 'MAT12345', 'José', NULL, NULL, NULL, NULL, NULL, 0, 0.00, 'ativo'),
 (23, 'Marcelo Funcionario ', 'marcelofuncionarionovo@gmail.com', '12629680232', '31989371121', '2003-03-07', '2025-09-30', '{\"cep\":\"36576-130\",\"logradouro\":\"Rua Doutor José Felismino de Oliveira\",\"numero\":\"78\",\"complemento\":\"Apt 202\",\"bairro\":\"Júlia Mollá\",\"cidade\":\"Viçosa\",\"uf\":\"MG\"}', 'Gestor', 'Matemática  ', '/uploads/1759249857291-37726123.jpg', 'DEV1', 'We are the future', 'Ciencia da Computação', NULL, NULL, NULL, NULL, 0, 0.00, 'ativo');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `grades_curriculares`
+--
+
+CREATE TABLE `grades_curriculares` (
+  `id` int(11) NOT NULL,
+  `curso_id` int(11) NOT NULL,
+  `periodo_academico` varchar(20) NOT NULL,
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp(),
+  `atualizado_em` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `grades_curriculares`
+--
+
+INSERT INTO `grades_curriculares` (`id`, `curso_id`, `periodo_academico`, `criado_em`, `atualizado_em`) VALUES
+(4, 4, '2025.2', '2025-11-10 22:34:32', '2025-11-10 22:34:32'),
+(6, 3, '2025.2', '2025-11-10 22:41:09', '2025-11-10 22:41:09'),
+(7, 6, '2025.2', '2025-11-10 22:41:21', '2025-11-10 22:41:21'),
+(8, 5, '2025.2', '2025-11-10 22:41:35', '2025-11-10 22:41:35');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `grade_periodo_disciplinas`
+--
+
+CREATE TABLE `grade_periodo_disciplinas` (
+  `id` int(11) NOT NULL,
+  `grade_id` int(11) NOT NULL,
+  `periodo_numero` int(11) NOT NULL COMMENT 'Ex: 1 para 1º Período, 2 para 2º Período',
+  `disciplina_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Despejando dados para a tabela `grade_periodo_disciplinas`
+--
+
+INSERT INTO `grade_periodo_disciplinas` (`id`, `grade_id`, `periodo_numero`, `disciplina_id`) VALUES
+(15, 4, 1, 17),
+(16, 4, 2, 35),
+(17, 4, 3, 19),
+(18, 4, 4, 20),
+(25, 6, 1, 13),
+(24, 6, 1, 16),
+(26, 6, 2, 14),
+(27, 7, 1, 25),
+(28, 7, 1, 26),
+(29, 7, 2, 27),
+(30, 7, 2, 28),
+(32, 8, 1, 21),
+(31, 8, 1, 22),
+(34, 8, 2, 23),
+(33, 8, 2, 24);
 
 -- --------------------------------------------------------
 
@@ -2495,6 +2553,21 @@ ALTER TABLE `funcionarios`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `grades_curriculares`
+--
+ALTER TABLE `grades_curriculares`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_grade_curso` (`curso_id`);
+
+--
+-- Índices de tabela `grade_periodo_disciplinas`
+--
+ALTER TABLE `grade_periodo_disciplinas`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `idx_grade_periodo_disciplina` (`grade_id`,`periodo_numero`,`disciplina_id`),
+  ADD KEY `fk_gpd_disciplina` (`disciplina_id`);
+
+--
 -- Índices de tabela `materiais`
 --
 ALTER TABLE `materiais`
@@ -2895,6 +2968,18 @@ ALTER TABLE `favoritos`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=259;
 
 --
+-- AUTO_INCREMENT de tabela `grades_curriculares`
+--
+ALTER TABLE `grades_curriculares`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT de tabela `grade_periodo_disciplinas`
+--
+ALTER TABLE `grade_periodo_disciplinas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+
+--
 -- AUTO_INCREMENT de tabela `materiais`
 --
 ALTER TABLE `materiais`
@@ -3110,6 +3195,19 @@ ALTER TABLE `conversas`
 --
 ALTER TABLE `cursos_disciplinas`
   ADD CONSTRAINT `fk_disciplina_para_posgraduacao` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `grades_curriculares`
+--
+ALTER TABLE `grades_curriculares`
+  ADD CONSTRAINT `fk_grade_curso` FOREIGN KEY (`curso_id`) REFERENCES `cursos_posgraduacao` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `grade_periodo_disciplinas`
+--
+ALTER TABLE `grade_periodo_disciplinas`
+  ADD CONSTRAINT `fk_gpd_disciplina` FOREIGN KEY (`disciplina_id`) REFERENCES `cursos_disciplinas` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_gpd_grade` FOREIGN KEY (`grade_id`) REFERENCES `grades_curriculares` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `materiais_novo`
