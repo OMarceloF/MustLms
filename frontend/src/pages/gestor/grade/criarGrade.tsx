@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion"
 import { Checkbox } from "../components/ui/checkbox"
 import { useToast } from "../hooks/use-toast"
+import SidebarGestor from "../components/Sidebar";
+import TopbarGestorAuto from "../components/TopbarGestorAuto";
 
 // --- CONSTANTES E TIPAGEM ---
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -80,17 +82,20 @@ export default function NovaGradePage() {
     const [loading, setLoading] = useState(true);
     const [loadingPeriodos, setLoadingPeriodos] = useState(false);
     const [saving, setSaving] = useState(false);
-    
+
     const [cursos, setCursos] = useState<Curso[]>([]);
     const [periodosLetivos, setPeriodosLetivos] = useState<PeriodoLetivo[]>([]);
 
     const [cursoId, setCursoId] = useState("");
     const [periodoAcademicoId, setPeriodoAcademicoId] = useState("");
-    
+
+
     // Armazena a estrutura completa vinda da API
     const [estruturaBase, setEstruturaBase] = useState<Periodo[]>([]);
     // Armazena apenas as matérias selecionadas pelo usuário
     const [periodosSelecionados, setPeriodosSelecionados] = useState<Periodo[]>([]);
+    const [sidebarAberta, setSidebarAberta] = useState(false);
+
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -157,7 +162,7 @@ export default function NovaGradePage() {
     };
 
     const getTotalCargaHoraria = () => {
-        return periodosSelecionados.reduce((total, periodo) => 
+        return periodosSelecionados.reduce((total, periodo) =>
             total + periodo.materias.reduce((sum, materia) => sum + materia.cargaHoraria, 0), 0);
     };
 
@@ -199,126 +204,144 @@ export default function NovaGradePage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            <div className="container mx-auto max-w-4xl p-8">
-                <div className="mb-8">
-                    <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 px-0 hover:bg-transparent">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Voltar para a listagem
-                    </Button>
-                    <h1 className="text-3xl font-bold tracking-tight">Nova Grade Curricular</h1>
-                    <p className="mt-2 text-muted-foreground">
-                        Defina a estrutura de um curso, organizando as matérias por períodos.
-                    </p>
-                </div>
+        <div className="min-h-screen bg-gray-100 w-full min-w-0 overflow-x-hidden">
+            <div className="flex flex-col md:flex-row w-full min-w-0 md:flex">
+                <SidebarGestor
+                    isMenuOpen={sidebarAberta}
+                    setActivePage={(page: string) => navigate('/gestor', { state: { activePage: page } })}
+                    handleMouseEnter={() => setSidebarAberta(true)}
+                    handleMouseLeave={() => setSidebarAberta(false)}
+                />
 
-                <div className="bg-white rounded-lg border p-6 space-y-8">
-                    {/* Cabeçalho da Grade */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Curso <span className="text-destructive">*</span></label>
-                            <Select value={cursoId} onValueChange={setCursoId} disabled={loading || saving}>
-                                <SelectTrigger><SelectValue placeholder="Selecione um curso" /></SelectTrigger>
-                                <SelectContent>
-                                    {cursos.map((curso) => (
-                                        <SelectItem key={curso.id} value={curso.id.toString()}>
-                                            {curso.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Período Acadêmico <span className="text-destructive">*</span></label>
-                            <Select value={periodoAcademicoId} onValueChange={setPeriodoAcademicoId} disabled={loading || saving}>
-                                <SelectTrigger><SelectValue placeholder="Selecione o período" /></SelectTrigger>
-                                <SelectContent>
-                                    {periodosLetivos.map((p) => (
-                                        <SelectItem key={p.id} value={p.id.toString()}>
-                                            {p.nome}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
+                <div className="flex-1 min-w-0 flex flex-col">
+                    <TopbarGestorAuto
+                        isMenuOpen={sidebarAberta}
+                        setIsMenuOpen={setSidebarAberta}
+                    />
 
-                    {/* Carga Horária Total */}
-                    <div className="bg-slate-50 rounded-lg p-4 border">
-                        <p className="text-sm font-medium">
-                            Carga Horária Total da Grade: <span className="text-lg font-bold text-primary">{getTotalCargaHoraria()}h</span>
-                        </p>
-                    </div>
+                    <main className={`flex-1 transition-all duration-500 pt-20 ${sidebarAberta ? 'sm:ml-[220px]' : 'sm:ml-[60px]'}`}></main>
+                    <div className="min-h-screen bg-slate-50">
+                        <div className="container mx-auto max-w-4xl p-8">
+                            <div className="mb-8">
+                                <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4 px-0 hover:bg-transparent">
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Voltar para a listagem
+                                </Button>
+                                <h1 className="text-3xl font-bold tracking-tight">Nova Grade Curricular</h1>
+                                <p className="mt-2 text-muted-foreground">
+                                    Defina a estrutura de um curso, organizando as matérias por períodos.
+                                </p>
+                            </div>
 
-                    {/* Estrutura dos Períodos */}
-                    <div>
-                        <h3 className="font-semibold text-lg mb-4">Estrutura dos Períodos</h3>
-                        {loadingPeriodos ? (
-                            <div className="flex items-center justify-center text-muted-foreground py-12">
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                <span>Carregando disciplinas do curso...</span>
-                            </div>
-                        ) : !cursoId ? (
-                             <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed">
-                                <p className="text-muted-foreground">Selecione um curso para ver a estrutura de períodos e disciplinas.</p>
-                            </div>
-                        ) : estruturaBase.length === 0 ? (
-                            <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed">
-                                <p className="text-muted-foreground">Nenhuma disciplina encontrada para este curso.</p>
-                            </div>
-                        ) : (
-                            <Accordion type="multiple" className="w-full space-y-3" defaultValue={estruturaBase.map(p => `periodo-${p.id}`)}>
-                                {estruturaBase.map((periodoBase) => {
-                                    const periodoSelecionado = periodosSelecionados.find(p => p.id === periodoBase.id);
-                                    return (
-                                        <AccordionItem key={periodoBase.id} value={`periodo-${periodoBase.id}`} className="border rounded-lg bg-white">
-                                            <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                                                <div className="flex justify-between items-center w-full">
-                                                    <span className="font-medium text-base">{periodoBase.nome}</span>
-                                                    <span className="text-sm text-muted-foreground">
-                                                        {periodoSelecionado?.materias.length || 0} / {periodoBase.materias.length} matérias selecionadas
-                                                    </span>
-                                                </div>
-                                            </AccordionTrigger>
-                                            <AccordionContent className="px-4 pb-4">
-                                                <div className="space-y-2 pt-2 border-t">
-                                                    {periodoBase.materias.map((materia) => {
-                                                        const isSelected = periodoSelecionado?.materias.some(m => m.id === materia.id) ?? false;
-                                                        return (
-                                                            <div key={materia.id} className="flex items-center space-x-3 p-3 rounded-md hover:bg-slate-50">
-                                                                <Checkbox
-                                                                    id={`chk-${periodoBase.id}-${materia.id}`}
-                                                                    checked={isSelected}
-                                                                    onCheckedChange={() => toggleMateria(periodoBase.id, materia)}
-                                                                    disabled={saving}
-                                                                />
-                                                                <label htmlFor={`chk-${periodoBase.id}-${materia.id}`} className="flex-1 cursor-pointer">
-                                                                    <p className="font-medium">{materia.nome}</p>
-                                                                    <p className="text-sm text-muted-foreground">
-                                                                        {materia.codigo} • {materia.cargaHoraria}h
-                                                                    </p>
-                                                                </label>
+                            <div className="bg-white rounded-lg border p-6 space-y-8">
+                                {/* Cabeçalho da Grade */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Curso <span className="text-destructive">*</span></label>
+                                        <Select value={cursoId} onValueChange={setCursoId} disabled={loading || saving}>
+                                            <SelectTrigger><SelectValue placeholder="Selecione um curso" /></SelectTrigger>
+                                            <SelectContent>
+                                                {cursos.map((curso) => (
+                                                    <SelectItem key={curso.id} value={curso.id.toString()}>
+                                                        {curso.nome}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Período Acadêmico <span className="text-destructive">*</span></label>
+                                        <Select value={periodoAcademicoId} onValueChange={setPeriodoAcademicoId} disabled={loading || saving}>
+                                            <SelectTrigger><SelectValue placeholder="Selecione o período" /></SelectTrigger>
+                                            <SelectContent>
+                                                {periodosLetivos.map((p) => (
+                                                    <SelectItem key={p.id} value={p.id.toString()}>
+                                                        {p.nome}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {/* Carga Horária Total */}
+                                <div className="bg-slate-50 rounded-lg p-4 border">
+                                    <p className="text-sm font-medium">
+                                        Carga Horária Total da Grade: <span className="text-lg font-bold text-primary">{getTotalCargaHoraria()}h</span>
+                                    </p>
+                                </div>
+
+                                {/* Estrutura dos Períodos */}
+                                <div>
+                                    <h3 className="font-semibold text-lg mb-4">Estrutura dos Períodos</h3>
+                                    {loadingPeriodos ? (
+                                        <div className="flex items-center justify-center text-muted-foreground py-12">
+                                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                            <span>Carregando disciplinas do curso...</span>
+                                        </div>
+                                    ) : !cursoId ? (
+                                        <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed">
+                                            <p className="text-muted-foreground">Selecione um curso para ver a estrutura de períodos e disciplinas.</p>
+                                        </div>
+                                    ) : estruturaBase.length === 0 ? (
+                                        <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed">
+                                            <p className="text-muted-foreground">Nenhuma disciplina encontrada para este curso.</p>
+                                        </div>
+                                    ) : (
+                                        <Accordion type="multiple" className="w-full space-y-3" defaultValue={estruturaBase.map(p => `periodo-${p.id}`)}>
+                                            {estruturaBase.map((periodoBase) => {
+                                                const periodoSelecionado = periodosSelecionados.find(p => p.id === periodoBase.id);
+                                                return (
+                                                    <AccordionItem key={periodoBase.id} value={`periodo-${periodoBase.id}`} className="border rounded-lg bg-white">
+                                                        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                                                            <div className="flex justify-between items-center w-full">
+                                                                <span className="font-medium text-base">{periodoBase.nome}</span>
+                                                                <span className="text-sm text-muted-foreground">
+                                                                    {periodoSelecionado?.materias.length || 0} / {periodoBase.materias.length} matérias selecionadas
+                                                                </span>
                                                             </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </AccordionContent>
-                                        </AccordionItem>
-                                    );
-                                })}
-                            </Accordion>
-                        )}
-                    </div>
+                                                        </AccordionTrigger>
+                                                        <AccordionContent className="px-4 pb-4">
+                                                            <div className="space-y-2 pt-2 border-t">
+                                                                {periodoBase.materias.map((materia) => {
+                                                                    const isSelected = periodoSelecionado?.materias.some(m => m.id === materia.id) ?? false;
+                                                                    return (
+                                                                        <div key={materia.id} className="flex items-center space-x-3 p-3 rounded-md hover:bg-slate-50">
+                                                                            <Checkbox
+                                                                                id={`chk-${periodoBase.id}-${materia.id}`}
+                                                                                checked={isSelected}
+                                                                                onCheckedChange={() => toggleMateria(periodoBase.id, materia)}
+                                                                                disabled={saving}
+                                                                            />
+                                                                            <label htmlFor={`chk-${periodoBase.id}-${materia.id}`} className="flex-1 cursor-pointer">
+                                                                                <p className="font-medium">{materia.nome}</p>
+                                                                                <p className="text-sm text-muted-foreground">
+                                                                                    {materia.codigo} • {materia.cargaHoraria}h
+                                                                                </p>
+                                                                            </label>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </AccordionContent>
+                                                    </AccordionItem>
+                                                );
+                                            })}
+                                        </Accordion>
+                                    )}
+                                </div>
 
-                    {/* Ações Finais */}
-                    <div className="flex justify-end gap-3 pt-6 border-t">
-                        <Button variant="outline" onClick={() => navigate(-1)} disabled={saving}>Cancelar</Button>
-                        <Button onClick={handleSubmit} disabled={loading || saving || loadingPeriodos}>
-                            {saving ? "Salvando..." : "Salvar Grade Curricular"}
-                        </Button>
+                                {/* Ações Finais */}
+                                <div className="flex justify-end gap-3 pt-6 border-t">
+                                    <Button variant="outline" onClick={() => navigate(-1)} disabled={saving}>Cancelar</Button>
+                                    <Button onClick={handleSubmit} disabled={loading || saving || loadingPeriodos}>
+                                        {saving ? "Salvando..." : "Salvar Grade Curricular"}
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div></div>
     );
 }
