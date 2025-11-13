@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 13/11/2025 às 14:37
+-- Tempo de geração: 13/11/2025 às 17:54
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -168,11 +168,8 @@ CREATE TABLE `alunos_turmas` (
 --
 
 INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VALUES
-(10, 29, 3, 'ativo'),
-(11, 28, 3, 'ativo'),
-(12, 26, 3, 'ativo'),
-(13, 27, 3, 'ativo'),
-(16, 18, 3, 'ativo'),
+(10, 29, 3, 'trancado'),
+(11, 28, 3, 'trancado'),
 (17, 18, 7, 'ativo'),
 (18, 27, 7, 'ativo'),
 (19, 26, 7, 'ativo'),
@@ -183,10 +180,14 @@ INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VAL
 (32, 27, 8, 'ativo'),
 (34, 26, 8, 'ativo'),
 (35, 29, 8, 'ativo'),
-(36, 2, 8, 'ativo'),
+(36, 2, 8, 'trancado'),
 (37, 29, 9, 'ativo'),
 (38, 30, 9, 'ativo'),
-(39, 18, 9, 'ativo');
+(40, 27, 9, 'trancado'),
+(41, 26, 6, 'ativo'),
+(42, 28, 6, 'ativo'),
+(43, 30, 6, 'ativo'),
+(44, 2, 6, 'trancado');
 
 -- --------------------------------------------------------
 
@@ -283,7 +284,10 @@ INSERT INTO `avaliacoes` (`id`, `descricao`, `valor`, `calendario_id`, `materia_
 (28, 'Prova 1', 25.00, 17, 36, 9, '2025-11-06', '2025-11-07', 'Pendente'),
 (29, 'Prova 2', 25.00, 17, 36, 9, '2025-11-08', '2025-11-09', 'Pendente'),
 (30, 'Prova 3', 40.00, 17, 36, 9, '2025-11-11', '2025-11-12', 'Pendente'),
-(31, 'Trabalho 1', 10.00, 17, 36, 9, '2025-11-21', '2025-11-22', 'Pendente');
+(31, 'Trabalho 1', 10.00, 17, 36, 9, '2025-11-21', '2025-11-22', 'Pendente'),
+(32, 'Prova 1', 50.00, 17, 17, 6, '2025-11-13', '2025-11-13', 'Pendente'),
+(33, 'Prova 2', 50.00, 17, 17, 6, '2025-11-14', '2025-11-17', 'Pendente'),
+(43, 'Prova', 100.00, 17, 19, 5, '2025-11-14', '2025-11-15', 'Pendente');
 
 -- --------------------------------------------------------
 
@@ -1370,7 +1374,14 @@ INSERT INTO `notas` (`id`, `aluno_id`, `avaliacao_id`, `nota`, `materia_id`, `tu
 (53, 30, 29, 10.00, 36, 9, 56.00),
 (54, 30, 30, 20.00, 36, 9, 56.00),
 (55, 30, 31, 7.00, 36, 9, 56.00),
-(56, 18, 28, 2.00, 36, 9, NULL);
+(56, 18, 28, 2.00, 36, 9, NULL),
+(58, 27, 28, 0.00, 36, 9, NULL),
+(64, 26, 32, 50.00, 17, 6, NULL),
+(65, 26, 33, 20.00, 17, 6, NULL),
+(66, 28, 32, 30.00, 17, 6, 40.00),
+(67, 28, 33, 25.00, 17, 6, 40.00),
+(68, 30, 32, 30.00, 17, 6, NULL),
+(69, 30, 33, 40.00, 17, 6, NULL);
 
 -- --------------------------------------------------------
 
@@ -1797,7 +1808,20 @@ INSERT INTO `notificacoes_eventos` (`id`, `tipo`, `conteudo`, `titulo`, `data`, 
 (351, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:08', 30, 0),
 (352, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-07 11:07:25', 29, 0),
 (353, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 10:35:46', 18, 0),
-(354, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 10:36:07', 18, 0);
+(354, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 10:36:07', 18, 0),
+(355, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 11:28:57', 27, 0),
+(356, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 11:51:37', 27, 0),
+(357, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 11:56:23', 27, 0),
+(358, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 11:56:39', 27, 0),
+(359, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 11:56:43', 27, 0),
+(360, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 11:56:45', 27, 0),
+(361, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:07', 26, 0),
+(362, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:10', 26, 0),
+(363, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:13', 28, 0),
+(364, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:15', 28, 0),
+(365, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:19', 30, 0),
+(366, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:22', 30, 0),
+(367, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:27', 28, 0);
 
 -- --------------------------------------------------------
 
@@ -2224,7 +2248,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-10 20:33:06'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-13 15:03:18'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2804,7 +2828,7 @@ ALTER TABLE `alunos_responsaveis`
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
@@ -2834,7 +2858,7 @@ ALTER TABLE `aulas_gravadas`
 -- AUTO_INCREMENT de tabela `avaliacoes`
 --
 ALTER TABLE `avaliacoes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT de tabela `calendario_gestor`
@@ -3056,7 +3080,7 @@ ALTER TABLE `mensalidades`
 -- AUTO_INCREMENT de tabela `notas`
 --
 ALTER TABLE `notas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
 
 --
 -- AUTO_INCREMENT de tabela `notificacoes`
@@ -3068,7 +3092,7 @@ ALTER TABLE `notificacoes`
 -- AUTO_INCREMENT de tabela `notificacoes_eventos`
 --
 ALTER TABLE `notificacoes_eventos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=355;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=368;
 
 --
 -- AUTO_INCREMENT de tabela `pagamentos_funcionarios`

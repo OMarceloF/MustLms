@@ -14,18 +14,26 @@ interface Avaliacao extends RowDataPacket {
   data_fim: string | null;
 }
 
+// Interface atualizada para suportar o novo status
 interface AlunoComNotas {
     aluno_id: number;
     aluno_nome: string;
     aluno_foto: string | null;
     matricula?: string;
-    status_aluno?: 'ativo' | 'inativo';
+    vinculoId: number;
+    status_vinculo: 'Ativo' | 'Inativo' | 'Trancado' | 'Concluído';
     notas: { avaliacao_id: number; nota: number | null }[];
-    media_final: number; // Mantido como a soma das notas regulares para referência
-    status: 'Aprovado' | 'Reprovado' | 'Pendente'; // Simplificado, pois 'Recuperação' é um estado transitório
+    media_final: number;
+    status: 'Aprovado' | 'Recuperação' | 'Reprovado' | 'Pendente' | 'Trancado' | 'Inativo' | 'Concluído'; // Adicionado novos status
     nota_recuperacao: number | null;
-    nota_final: number; // A nota final real após todas as regras
+    nota_final: number;
 }
+
+// Função auxiliar para capitalizar a primeira letra
+const capitalize = (s: string) => {
+  if (typeof s !== 'string' || !s) return '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
 // =======================================================================
 // CRUD DE AVALIAÇÕES (Sem alterações)
@@ -128,101 +136,124 @@ export const deleteAvaliacao = async (req: Request, res: Response) => {
 };
 
 // =======================================================================
-// LÓGICA CENTRAL DE NOTAS E STATUS (COM A NOVA REGRA DE NEGÓCIO)
+// LÓGICA CENTRAL DE NOTAS E STATUS (COM A NOVA REGRA DE PRIORIDADE)
 // =======================================================================
 export const getDadosAcademicosCompletos = async (req: Request, res: Response) => {
     const { turmaId, materiaId, calendarioId } = req.params;
+
+    if (!turmaId || !materiaId || !calendarioId) {
+        return res.status(400).json({ message: 'IDs da turma, matéria e calendário são obrigatórios.' });
+    }
+
+    const connection = await pool.getConnection();
+
     try {
-        const [alunos] = await pool.query<RowDataPacket[]>(
-            `SELECT u.id, u.nome, u.foto_url, a.matricula, u.status as status_aluno
-             FROM users u 
-             JOIN alunos_turmas at ON u.id = at.aluno_id 
-             JOIN alunos a ON u.id = a.id
-             WHERE at.turma_id = ? AND at.status_vinculo = 'ativo'
-             ORDER BY u.nome`,
-            [turmaId]
-        );
-
-        if (alunos.length === 0) {
-            return res.status(200).json({ avaliacoes: [], alunosComNotas: [] });
-        }
-
-        const [avaliacoes] = await pool.query<Avaliacao[]>(
-            'SELECT id, descricao, valor, DATE_FORMAT(data_inicio, "%Y-%m-%d") as data_inicio, DATE_FORMAT(data_fim, "%Y-%m-%d") as data_fim FROM avaliacoes WHERE turma_id = ? AND materia_id = ? AND calendario_id = ? ORDER BY data_inicio',
+        const [avaliacoes] = await connection.query<RowDataPacket[]>(
+            'SELECT id, descricao, valor, data_inicio, data_fim FROM avaliacoes WHERE turma_id = ? AND materia_id = ? AND calendario_id = ? ORDER BY data_inicio, id',
             [turmaId, materiaId, calendarioId]
         );
 
-        const alunoIds = alunos.map(a => a.id);
-        if (alunoIds.length === 0) {
-             return res.status(200).json({ avaliacoes, alunosComNotas: [] });
+        const [alunosBase] = await connection.query<RowDataPacket[]>(`
+            SELECT 
+                u.id AS aluno_id,
+                u.nome AS aluno_nome,
+                u.foto_url AS aluno_foto,
+                a.matricula,
+                at.id AS vinculoId,
+                at.status_vinculo
+            FROM alunos_turmas at
+            JOIN users u ON at.aluno_id = u.id
+            JOIN alunos a ON u.id = a.id
+            WHERE at.turma_id = ?
+            ORDER BY u.nome;
+        `, [turmaId]);
+
+        if (alunosBase.length === 0) {
+            return res.json({ avaliacoes, alunosComNotas: [] });
         }
-        
-        const [notas] = await pool.query<RowDataPacket[]>(
-            `SELECT aluno_id, avaliacao_id, nota, nota_rec 
-             FROM notas
-             WHERE aluno_id IN (?) AND materia_id = ? AND turma_id = ?`,
-            [alunoIds, materiaId, turmaId]
-        );
-        
-        const notasMap = new Map(notas.map(n => [`${n.aluno_id}-${n.avaliacao_id}`, parseFloat(n.nota)]));
-        const recMap = new Map<number, number>();
-        notas.forEach(n => {
-            if (n.nota_rec !== null) {
-                // Armazena a maior nota de recuperação encontrada para o aluno
-                const currentRec = recMap.get(n.aluno_id) || 0;
-                recMap.set(n.aluno_id, Math.max(currentRec, parseFloat(n.nota_rec)));
-            }
-        });
 
-        const resultadoFinal: AlunoComNotas[] = alunos.map(aluno => {
-            const somaNotasRegulares = avaliacoes.reduce((acc, av) => {
-                const nota = notasMap.get(`${aluno.id}-${av.id}`) ?? 0;
-                return acc + nota;
-            }, 0);
+        const alunoIds = alunosBase.map(a => a.aluno_id);
 
-            const notasDoAluno = avaliacoes.map(av => ({
-                avaliacao_id: av.id,
-                nota: notasMap.get(`${aluno.id}-${av.id}`) ?? null
-            }));
+        const [notas] = await connection.query<RowDataPacket[]>(`
+            SELECT aluno_id, avaliacao_id, nota, nota_rec FROM notas 
+            WHERE turma_id = ? AND materia_id = ? AND aluno_id IN (?)
+        `, [turmaId, materiaId, alunoIds]);
 
-            const nota_recuperacao = recMap.get(aluno.id) ?? null;
-            let nota_final = somaNotasRegulares;
+        const alunosComNotas: AlunoComNotas[] = alunosBase.map(alunoInfo => {
+            const notasDoAluno = notas.filter(n => n.aluno_id === alunoInfo.aluno_id);
 
-            // Aplica a regra da recuperação
-            if (nota_recuperacao !== null && nota_recuperacao > somaNotasRegulares) {
-                // Se a nota da recuperação for maior que 60, a nota final é 60.
-                nota_final = Math.min(nota_recuperacao, 60);
-            }
+            const notasFormatadas = avaliacoes.map(av => {
+                const notaEncontrada = notasDoAluno.find(n => n.avaliacao_id === av.id);
+                return {
+                    avaliacao_id: av.id,
+                    nota: notaEncontrada && notaEncontrada.nota !== null ? parseFloat(notaEncontrada.nota) : null
+                };
+            });
+
+            const somaNotasRegulares = notasFormatadas.reduce((acc, n) => acc + (n.nota || 0), 0);
+            
+            const nota_recuperacao = notasDoAluno
+                .filter(n => n.nota_rec !== null)
+                .reduce((max, n) => Math.max(max, parseFloat(n.nota_rec)), 0) || null;
 
             const MEDIA_APROVACAO = 60;
-            const temNotasLancadas = notasDoAluno.some(n => n.nota !== null);
-            let status: AlunoComNotas['status'] = 'Pendente';
+            const MEDIA_RECUPERACAO = 40;
+            let nota_final = somaNotasRegulares;
+            let status_academico: 'Aprovado' | 'Recuperação' | 'Reprovado' | 'Pendente' = 'Pendente';
 
-            if (avaliacoes.length > 0 && temNotasLancadas) {
-                status = nota_final >= MEDIA_APROVACAO ? 'Aprovado' : 'Reprovado';
+            const temNotasLancadas = notasFormatadas.some(n => n.nota !== null);
+
+            if (temNotasLancadas) {
+                if (somaNotasRegulares >= MEDIA_APROVACAO) {
+                    status_academico = 'Aprovado';
+                } else if (somaNotasRegulares >= MEDIA_RECUPERACAO) {
+                    status_academico = 'Recuperação';
+                    if (nota_recuperacao !== null) {
+                        nota_final = Math.max(somaNotasRegulares, nota_recuperacao);
+                        status_academico = nota_final >= MEDIA_APROVACAO ? 'Aprovado' : 'Reprovado';
+                    }
+                } else {
+                    status_academico = 'Reprovado';
+                }
             }
             
+            if (status_academico === 'Aprovado' && somaNotasRegulares < MEDIA_APROVACAO && nota_recuperacao !== null) {
+                nota_final = Math.min(nota_final, MEDIA_APROVACAO);
+            }
+
+            // *** NOVA LÓGICA DE PRIORIDADE DE STATUS ***
+            const statusVinculoCapitalized = capitalize(alunoInfo.status_vinculo || 'ativo') as AlunoComNotas['status_vinculo'];
+            let statusFinal: AlunoComNotas['status'] = status_academico;
+
+            if (statusVinculoCapitalized === 'Trancado' || statusVinculoCapitalized === 'Inativo' || statusVinculoCapitalized === 'Concluído') {
+                statusFinal = statusVinculoCapitalized;
+            }
+            // *******************************************
+
             return {
-                aluno_id: aluno.id, 
-                aluno_nome: aluno.nome, 
-                aluno_foto: aluno.foto_url,
-                matricula: aluno.matricula,
-                status_aluno: aluno.status_aluno,
-                notas: notasDoAluno, 
-                media_final: parseFloat(somaNotasRegulares.toFixed(1)), // Renomeado para clareza
-                status, 
-                nota_recuperacao, 
+                aluno_id: alunoInfo.aluno_id,
+                aluno_nome: alunoInfo.aluno_nome,
+                aluno_foto: alunoInfo.aluno_foto,
+                matricula: alunoInfo.matricula,
+                vinculoId: alunoInfo.vinculoId,
+                status_vinculo: statusVinculoCapitalized,
+                notas: notasFormatadas,
+                media_final: parseFloat(somaNotasRegulares.toFixed(1)),
+                nota_recuperacao: nota_recuperacao,
+                status: statusFinal, // Usa o status final com a regra de prioridade
                 nota_final: parseFloat(nota_final.toFixed(1))
             };
         });
 
-        res.status(200).json({ avaliacoes, alunosComNotas: resultadoFinal });
+        res.json({ avaliacoes, alunosComNotas });
+
     } catch (error) {
-        console.error("Erro ao buscar dados acadêmicos completos:", error);
-        res.status(500).json({ message: 'Erro interno ao processar os dados acadêmicos.' });
+        console.error('Erro ao buscar dados acadêmicos completos:', error);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    } finally {
+        connection.release();
     }
 };
-
 
 // =======================================================================
 // UPSERT DE NOTAS (Sem alterações)

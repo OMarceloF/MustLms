@@ -1,5 +1,3 @@
-// src/pages/GestaoTurma.tsx
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SidebarGestor from '../components/Sidebar';
@@ -10,6 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
 import { Loader2, PlusCircle, Trash2, Pencil } from 'lucide-react';
 import { getSafeImagePath } from './utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 
 // --- Interfaces ---
 interface Turma {
@@ -17,9 +16,8 @@ interface Turma {
     nome: string;
     ano_letivo: string;
     professor_responsavel?: string;
-    // A propriedade 'materias' agora é opcional e pode não existir
     materias?: { materiaId: number; nome: string }[];
-    disciplinaNome?: string; // <-- Nova propriedade para o nome da disciplina
+    disciplinaNome?: string;
     curso_nome: string;
     materiaId: number | null;
     semestreId: number | null;
@@ -39,7 +37,8 @@ interface AlunoComNotas {
     aluno_nome: string;
     aluno_foto: string | null;
     matricula?: string;
-    status_aluno?: 'ativo' | 'inativo';
+    vinculoId: number;
+    status_vinculo: 'Ativo' | 'Inativo' | 'Trancado' | 'Concluído';
     notas: { avaliacao_id: number; nota: number | null }[];
     media_final: number;
     status: 'Aprovado' | 'Recuperação' | 'Reprovado' | 'Pendente';
@@ -67,6 +66,8 @@ export default function GestorTurma() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAvaliacao, setEditingAvaliacao] = useState<Avaliacao | null>(null);
     const [editableNotas, setEditableNotas] = useState<Record<string, string>>({});
+    
+    // O estado 'alunos' foi removido, usaremos 'dadosNotas.alunosComNotas' diretamente.
 
     const fetchDadosCompletos = useCallback(async () => {
         if (!turmaId) return;
@@ -181,6 +182,32 @@ export default function GestorTurma() {
         } catch (err) { toast.error('Erro ao remover aluno da turma.'); }
     };
 
+    const handleStatusChange = async (vinculoId: number, novoStatus: AlunoComNotas['status_vinculo']) => {
+        if (!dadosNotas) return;
+
+        const alunoIndex = dadosNotas.alunosComNotas.findIndex(a => a.vinculoId === vinculoId);
+        if (alunoIndex === -1) return;
+
+        const alunoOriginal = dadosNotas.alunosComNotas[alunoIndex];
+        const statusOriginal = alunoOriginal.status_vinculo;
+
+        // Atualização otimista da UI
+        const novosAlunosComNotas = [...dadosNotas.alunosComNotas];
+        novosAlunosComNotas[alunoIndex] = { ...alunoOriginal, status_vinculo: novoStatus };
+        setDadosNotas({ ...dadosNotas, alunosComNotas: novosAlunosComNotas });
+
+        try {
+            await axios.patch(`/api/alunos-turmas/${vinculoId}/status`, { status: novoStatus });
+            toast.success(`Status do aluno ${alunoOriginal.aluno_nome} atualizado para ${novoStatus}.`);
+        } catch (error) {
+            toast.error(`Falha ao atualizar o status do aluno.`);
+            // Reverte a UI em caso de erro
+            const revertedAlunos = [...dadosNotas.alunosComNotas];
+            revertedAlunos[alunoIndex] = { ...alunoOriginal, status_vinculo: statusOriginal };
+            setDadosNotas({ ...dadosNotas, alunosComNotas: revertedAlunos });
+        }
+    };
+
     const getStatusClass = (status: AlunoComNotas['status']) => {
         switch (status) {
             case 'Aprovado': return 'bg-green-100 text-green-800';
@@ -194,7 +221,6 @@ export default function GestorTurma() {
     if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-10 w-10 animate-spin" /></div>;
     if (erro || !turma) return <div className="flex items-center justify-center min-h-screen"><p className="text-destructive">{erro || 'Turma não encontrada.'}</p></div>;
 
-    // Use a nova propriedade 'disciplinaNome' se existir, senão use a antiga 'materias'
     const nomeDisciplinaPrincipal = turma.disciplinaNome || turma.materias?.[0]?.nome || 'Disciplina não definida';
     const alunosDaTurma = dadosNotas?.alunosComNotas || [];
 
@@ -248,13 +274,11 @@ export default function GestorTurma() {
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {alunosDaTurma.map(aluno => {
-                                                // ===== LÓGICA DA NOTA FINAL MOVIDA PARA CÁ =====
                                                 const teveDireitoRecuperacao = aluno.media_final >= 40 && aluno.media_final < 60;
                                                 let notaFinalExibida = aluno.media_final;
                                                 if (teveDireitoRecuperacao && aluno.nota_recuperacao !== null && aluno.nota_recuperacao > aluno.media_final) {
                                                     notaFinalExibida = Math.min(aluno.nota_recuperacao, 60);
                                                 }
-                                                // ===============================================
 
                                                 return (
                                                     <tr key={aluno.aluno_id}>
@@ -292,13 +316,13 @@ export default function GestorTurma() {
                                             <th className="border border-border p-3 text-left font-semibold text-foreground w-16">Foto</th>
                                             <th className="border border-border p-3 text-left font-semibold text-foreground">Nome</th>
                                             <th className="border border-border p-3 text-left font-semibold text-foreground">Matrícula</th>
-                                            <th className="border border-border p-3 text-left font-semibold text-foreground">Status</th>
+                                            <th className="border border-border p-3 text-left font-semibold text-foreground w-48">Status</th>
                                             <th className="border border-border p-3 text-center font-semibold text-foreground w-20">Remover</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {alunosDaTurma.map((aluno) => (
-                                            <tr key={aluno.aluno_id} className="hover:bg-muted/50 transition-colors">
+                                            <tr key={aluno.vinculoId} className="hover:bg-muted/50 transition-colors">
                                                 <td className="border border-border p-2 align-middle">
                                                     {getSafeImagePath(aluno.aluno_foto ?? undefined) ? (
                                                         <img src={`${import.meta.env.VITE_API_URL}${aluno.aluno_foto}`} alt={aluno.aluno_nome} className="w-10 h-10 rounded-full object-cover" />
@@ -308,10 +332,21 @@ export default function GestorTurma() {
                                                 </td>
                                                 <td className="border border-border p-3 align-middle font-medium text-foreground">{aluno.aluno_nome}</td>
                                                 <td className="border border-border p-3 align-middle text-foreground/80">{aluno.matricula || 'N/A'}</td>
-                                                <td className="border border-border p-3 align-middle">
-                                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${aluno.status_aluno === 'ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                        {aluno.status_aluno || 'ativo'}
-                                                    </span>
+                                                <td className="border border-border p-2 align-middle">
+                                                    <Select
+                                                        value={aluno.status_vinculo}
+                                                        onValueChange={(value: AlunoComNotas['status_vinculo']) => handleStatusChange(aluno.vinculoId, value)}
+                                                    >
+                                                        <SelectTrigger className="h-9">
+                                                            <SelectValue placeholder="Alterar status..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="Ativo">Ativo</SelectItem>
+                                                            <SelectItem value="Trancado">Trancado</SelectItem>
+                                                            <SelectItem value="Inativo">Inativo</SelectItem>
+                                                            <SelectItem value="Concluído">Concluído</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
                                                 </td>
                                                 <td className="border border-border p-2 text-center align-middle">
                                                     <Button variant="ghost" size="icon" onClick={() => handleRemoverAluno(aluno.aluno_id)} className="text-destructive hover:text-destructive" title="Remover aluno"><Trash2 size={16} /></Button>

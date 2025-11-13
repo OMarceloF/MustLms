@@ -3,15 +3,16 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
+import { getDadosAcademicosCompletos } from './avaliacoesNotasController'; // Importando a função correta
 
-// --- INTERFACES ATUALIZADAS ---
+// --- INTERFACES ---
 interface TurmaFromDB extends RowDataPacket {
     id: number;
     nome_turma: string;
     curso_id: number;
     curso_nome: string;
-    disciplina_id: number; // <-- Campo agora é um único ID
-    disciplina_nome: string; // <-- Buscaremos o nome da disciplina diretamente
+    disciplina_id: number;
+    disciplina_nome: string;
     semestre_id: number;
     semestre_nome: string;
     semestre_data_inicio: string;
@@ -28,8 +29,8 @@ interface TurmaAPI {
     nomeTurma: string;
     cursoId: string;
     cursoNome?: string;
-    disciplinaId: string; // <-- Alterado de materiasIds para disciplinaId
-    disciplinaNome?: string; // <-- Novo campo para o nome
+    disciplinaId: string;
+    disciplinaNome?: string;
     semestre: string;
     semestreNome?: string;
     responsavelId: string;
@@ -40,11 +41,10 @@ interface TurmaAPI {
     descricao?: string;
 }
 
-// --- FUNÇÕES DO CONTROLLER ATUALIZADAS ---
+// --- FUNÇÕES DO CONTROLLER ---
 
 export const getTurmas = async (req: Request, res: Response) => {
     try {
-        // A query está correta e não precisa de alterações.
         const [turmasRows] = await pool.query<TurmaFromDB[]>(`
             SELECT 
                 t.id, t.nome_turma, t.curso_id,
@@ -83,10 +83,8 @@ export const getTurmas = async (req: Request, res: Response) => {
                 nomeTurma: turma.nome_turma,
                 cursoId: String(turma.curso_id),
                 cursoNome: turma.curso_nome,
-                // ===== MELHORIA APLICADA AQUI =====
-                disciplinaId: String(turma.disciplina_id || ''), // Converte null para string vazia
-                disciplinaNome: turma.disciplina_nome || "Nenhuma disciplina vinculada", // Fallback mais descritivo
-                // ====================================
+                disciplinaId: String(turma.disciplina_id || ''),
+                disciplinaNome: turma.disciplina_nome || "Nenhuma disciplina vinculada",
                 semestre: String(turma.semestre_id),
                 semestreNome: turma.semestre_nome,
                 responsavelId: String(turma.professor_responsavel),
@@ -109,7 +107,6 @@ export const createTurma = async (req: Request, res: Response) => {
     const { nomeTurma, cursoId, disciplinaId, semestre, responsavelId, modalidade, quantidadeAlunos, descricao }: TurmaAPI = req.body;
 
     try {
-        // Query atualizada para salvar 'disciplina_id'
         const [result] = await pool.execute(
             `INSERT INTO turmas (nome_turma, curso_id, disciplina_id, semestre_id, professor_responsavel, modalidade, quantidade_alunos, descricao, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Em Planejamento')`,
             [nomeTurma, cursoId, disciplinaId, semestre, responsavelId, modalidade, quantidadeAlunos ?? null, descricao ?? null]
@@ -127,7 +124,6 @@ export const updateTurma = async (req: Request, res: Response) => {
     const { nomeTurma, cursoId, disciplinaId, semestre, responsavelId, modalidade, quantidadeAlunos, descricao }: TurmaAPI = req.body;
 
     try {
-        // Query atualizada para atualizar 'disciplina_id'
         await pool.execute(
             `UPDATE turmas SET nome_turma = ?, curso_id = ?, disciplina_id = ?, semestre_id = ?, professor_responsavel = ?, modalidade = ?, quantidade_alunos = ?, descricao = ? WHERE id = ?`,
             [nomeTurma, cursoId, disciplinaId, semestre, responsavelId, modalidade, quantidadeAlunos ?? null, descricao ?? null, id]
@@ -139,10 +135,6 @@ export const updateTurma = async (req: Request, res: Response) => {
     }
 };
 
-
-/**
- * [DELETE] /api/turmas-novo/:id - Excluir uma turma.
- */
 export const deleteTurma = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
@@ -154,7 +146,7 @@ export const deleteTurma = async (req: Request, res: Response) => {
     }
 };
 
-// --- FUNÇÕES PARA DADOS DE FORMULÁRIO (sem alterações) ---
+// --- FUNÇÕES PARA DADOS DE FORMULÁRIO ---
 
 export const getCursosParaForm = async (req: Request, res: Response) => {
     try {
@@ -193,38 +185,34 @@ export const getProfessoresParaForm = async (req: Request, res: Response) => {
     }
 };
 
-// --- FUNÇÕES PARA GERENCIAMENTO DE UMA TURMA ESPECÍFICA (sem alterações) ---
+// --- FUNÇÕES PARA GERENCIAMENTO DE UMA TURMA ESPECÍFICA ---
 
 export const getTurmaByIdNovo = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        // ===== QUERY CORRIGIDA =====
         const [turmaRows] = await pool.query<RowDataPacket[]>(`
             SELECT 
                 t.id, t.nome_turma, t.ano_letivo, t.modalidade, t.status, t.descricao,
-                t.disciplina_id, -- <-- Alterado de materias_ids para disciplina_id
+                t.disciplina_id,
                 t.semestre_id,
                 cp.nome AS curso_nome,
                 cpl.nome AS semestre_nome,
                 f.nome AS professor_nome,
-                d.nome AS disciplina_nome -- <-- Adicionado para buscar o nome da disciplina
+                d.nome AS disciplina_nome
             FROM turmas t
             LEFT JOIN cursos_posgraduacao cp ON t.curso_id = cp.id
-            LEFT JOIN cursos_disciplinas d ON t.disciplina_id = d.id -- <-- Adicionado JOIN com disciplinas
+            LEFT JOIN cursos_disciplinas d ON t.disciplina_id = d.id
             LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
             LEFT JOIN funcionarios f ON t.professor_responsavel = f.id
             WHERE t.id = ?
         `, [id]);
-        // ===========================
 
         if (turmaRows.length === 0) {
             return res.status(404).json({ message: 'Turma não encontrada' });
         }
         const turma = turmaRows[0];
 
-        // A lógica para buscar múltiplas matérias não é mais necessária.
-        // A disciplina já vem da query principal.
         const disciplina = turma.disciplina_id 
             ? [{ materiaId: turma.disciplina_id, nome: turma.disciplina_nome }] 
             : [];
@@ -237,21 +225,19 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
             WHERE at.turma_id = ? ORDER BY u.nome ASC
         `, [id]);
         
-        // ===== RESPOSTA ATUALIZADA =====
         const responseData = {
             id: turma.id,
             nome: turma.nome_turma,
             ano_letivo: turma.ano_letivo,
             professor_responsavel: turma.professor_nome,
             alunos: alunosRows,
-            materias: disciplina, // Mantém o nome 'materias' para compatibilidade com o frontend, se necessário
+            materias: disciplina,
             curso_nome: turma.curso_nome,
             modalidade: turma.modalidade,
-            materiaId: turma.disciplina_id, // Enviando o ID da disciplina
+            materiaId: turma.disciplina_id,
             semestreId: turma.semestre_id,
             semestre_nome: turma.semestre_nome,
         };
-        // ===============================
 
         return res.status(200).json(responseData);
 
@@ -260,7 +246,6 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Erro interno do servidor' });
     }
 };
-
 
 export const getAlunosDisponiveisParaTurma = async (req: Request, res: Response) => {
     const { turmaId } = req.params;
@@ -321,11 +306,16 @@ export const removerAlunoDaTurma = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * @description Atualiza o status de um aluno em uma turma específica.
+ * @route PATCH /api/alunos-turmas/:vinculoId/status
+ */
 export const updateAlunoTurmaStatus = async (req: Request, res: Response) => {
     const { vinculoId } = req.params;
     const { status } = req.body;
 
-    const allowedStatus = ['ativo', 'inativo', 'trancado'];
+    // Validação para garantir que o status enviado é um dos permitidos
+    const allowedStatus = ['Ativo', 'Inativo', 'Trancado', 'Concluído'];
     if (!status || !allowedStatus.includes(status)) {
         return res.status(400).json({ message: 'Status inválido ou não fornecido.' });
     }
@@ -337,13 +327,13 @@ export const updateAlunoTurmaStatus = async (req: Request, res: Response) => {
         );
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Vínculo não encontrado.' });
+            return res.status(404).json({ message: 'Vínculo do aluno na turma não encontrado.' });
         }
 
-        res.status(200).json({ message: 'Status do vínculo do aluno atualizado com sucesso.' });
+        res.status(200).json({ message: 'Status do aluno atualizado com sucesso.' });
 
     } catch (error) {
         console.error('Erro ao atualizar status do vínculo do aluno:', error);
-        res.status(500).json({ message: 'Erro interno ao atualizar o status do vínculo.' });
+        res.status(500).json({ message: 'Erro interno ao atualizar o status.' });
     }
 };

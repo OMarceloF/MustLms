@@ -202,6 +202,8 @@ import {
     updateAlunoTurmaStatus,
 } from '../controllers/turmasControllerNovo';
 
+import { getRelatoriosDisciplina } from '../controllers/relatoriosDisciplinasController';
+
 import {
   getAvaliacoesByTurmaMateria,
   createAvaliacao,
@@ -1056,5 +1058,8 @@ router.get('/api/grades/form-data/periodos-letivos', getPeriodosLetivosForForm);
 router.get('/api/grades/form-data/disciplinas-por-curso/:cursoId', getDisciplinasByCursoGrouped);
 router.get('/api/grades/por-curso/:cursoId', getGradesByCurso);
 router.get('/api/cursos/:cursoId/disciplinas-agrupadas', listarDisciplinasAgrupadasPorSemestre);
+
+// --- ROTA PARA A NOVA ABA DE RELATÓRIOS DA DISCIPLINA ---
+router.get('/api/disciplinas/:disciplinaId/relatorios', getRelatoriosDisciplina);
 
 export default router;
