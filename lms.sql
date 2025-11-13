@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 12/11/2025 às 18:35
+-- Tempo de geração: 13/11/2025 às 14:37
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -185,7 +185,8 @@ INSERT INTO `alunos_turmas` (`id`, `aluno_id`, `turma_id`, `status_vinculo`) VAL
 (35, 29, 8, 'ativo'),
 (36, 2, 8, 'ativo'),
 (37, 29, 9, 'ativo'),
-(38, 30, 9, 'ativo');
+(38, 30, 9, 'ativo'),
+(39, 18, 9, 'ativo');
 
 -- --------------------------------------------------------
 
@@ -1091,10 +1092,10 @@ CREATE TABLE `grades_curriculares` (
 --
 
 INSERT INTO `grades_curriculares` (`id`, `curso_id`, `periodo_academico`, `criado_em`, `atualizado_em`) VALUES
-(4, 4, '2025.2', '2025-11-10 19:34:32', '2025-11-10 19:34:32'),
-(6, 3, '2025.2', '2025-11-10 19:41:09', '2025-11-10 19:41:09'),
-(7, 6, '2025.2', '2025-11-10 19:41:21', '2025-11-10 19:41:21'),
-(8, 5, '2025.2', '2025-11-10 19:41:35', '2025-11-10 19:41:35');
+(9, 4, '2025.2', '2025-11-13 12:37:13', '2025-11-13 12:37:13'),
+(11, 3, '2025.2', '2025-11-13 13:07:22', '2025-11-13 13:07:22'),
+(12, 6, '2025.2', '2025-11-13 13:07:32', '2025-11-13 13:07:32'),
+(13, 5, '2025.2', '2025-11-13 13:07:49', '2025-11-13 13:07:49');
 
 -- --------------------------------------------------------
 
@@ -1130,7 +1131,30 @@ INSERT INTO `grade_periodo_disciplinas` (`id`, `grade_id`, `periodo_numero`, `di
 (32, 8, 1, 21),
 (31, 8, 1, 22),
 (34, 8, 2, 23),
-(33, 8, 2, 24);
+(33, 8, 2, 24),
+(82, 9, 0, 37),
+(83, 9, 1, 17),
+(84, 9, 1, 36),
+(85, 9, 2, 35),
+(86, 9, 3, 19),
+(87, 9, 4, 20),
+(41, 10, 0, 37),
+(43, 10, 1, 17),
+(42, 10, 1, 36),
+(44, 10, 2, 35),
+(45, 10, 3, 19),
+(46, 10, 4, 20),
+(89, 11, 1, 13),
+(88, 11, 1, 16),
+(90, 11, 2, 14),
+(91, 12, 1, 25),
+(92, 12, 1, 26),
+(93, 12, 2, 27),
+(94, 12, 2, 28),
+(96, 13, 1, 21),
+(95, 13, 1, 22),
+(98, 13, 2, 23),
+(97, 13, 2, 24);
 
 -- --------------------------------------------------------
 
@@ -1345,7 +1369,8 @@ INSERT INTO `notas` (`id`, `aluno_id`, `avaliacao_id`, `nota`, `materia_id`, `tu
 (52, 30, 28, 10.00, 36, 9, 56.00),
 (53, 30, 29, 10.00, 36, 9, 56.00),
 (54, 30, 30, 20.00, 36, 9, 56.00),
-(55, 30, 31, 7.00, 36, 9, 56.00);
+(55, 30, 31, 7.00, 36, 9, 56.00),
+(56, 18, 28, 2.00, 36, 9, NULL);
 
 -- --------------------------------------------------------
 
@@ -1770,7 +1795,9 @@ INSERT INTO `notificacoes_eventos` (`id`, `tipo`, `conteudo`, `titulo`, `data`, 
 (349, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:00', 30, 0),
 (350, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:04', 30, 0),
 (351, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-06 15:47:08', 30, 0),
-(352, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-07 11:07:25', 29, 0);
+(352, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-07 11:07:25', 29, 0),
+(353, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 10:35:46', 18, 0),
+(354, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 10:36:07', 18, 0);
 
 -- --------------------------------------------------------
 
@@ -2042,11 +2069,11 @@ INSERT INTO `transacoes` (`id`, `descricao`, `id_pessoa`, `valor`, `desconto_per
 (19, 'Mensalidade - 232eqweewasdas', 12, 1232.00, 0.00, 1232.00, 'receita', 'mensalidades', '2025-10-01', NULL, '2025-10-11', NULL, NULL, 'sistema', 'atrasado', NULL),
 (20, 'Mensalidade - usuarioteste', 16, 1111.00, 0.00, 1111.00, 'receita', 'mensalidades', '2025-10-01', NULL, '2025-10-11', NULL, NULL, 'sistema', 'atrasado', NULL),
 (21, 'Pagamento de Salário - jose', 6, 3500.00, 0.00, 3500.00, 'despesa', 'salarios dos funcionarios', '2025-10-01', NULL, '2025-10-11', NULL, NULL, 'sistema', 'atrasado', NULL),
-(22, 'Mensalidade - Marcelo Ferreira', 8, 1200.00, 5.00, 1140.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL),
-(23, 'Mensalidade - Marcelo Ferreira', 10, 1200.00, 0.00, 1200.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL),
-(24, 'Mensalidade - 232eqweewasdas', 12, 1232.00, 0.00, 1232.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL),
-(25, 'Mensalidade - usuarioteste', 16, 1111.00, 0.00, 1111.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL),
-(26, 'Pagamento de Salário - jose', 6, 3500.00, 0.00, 3500.00, 'despesa', 'salarios dos funcionarios', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'aguardando', NULL);
+(22, 'Mensalidade - Marcelo Ferreira', 8, 1200.00, 5.00, 1140.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'atrasado', NULL),
+(23, 'Mensalidade - Marcelo Ferreira', 10, 1200.00, 0.00, 1200.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'atrasado', NULL),
+(24, 'Mensalidade - 232eqweewasdas', 12, 1232.00, 0.00, 1232.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'atrasado', NULL),
+(25, 'Mensalidade - usuarioteste', 16, 1111.00, 0.00, 1111.00, 'receita', 'mensalidades', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'atrasado', NULL),
+(26, 'Pagamento de Salário - jose', 6, 3500.00, 0.00, 3500.00, 'despesa', 'salarios dos funcionarios', '2025-11-01', NULL, '2025-11-11', NULL, NULL, 'sistema', 'atrasado', NULL);
 
 -- --------------------------------------------------------
 
@@ -2079,12 +2106,12 @@ CREATE TABLE `turmas` (
 --
 
 INSERT INTO `turmas` (`id`, `nome_turma`, `ano_letivo`, `created_at`, `aulas_por_dia`, `serie`, `turno`, `etapa_ensino`, `qtd_alunos`, `professor_responsavel`, `curso_id`, `disciplina_id`, `semestre_id`, `modalidade`, `quantidade_alunos`, `status`, `descricao`) VALUES
-(3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 2, 22, 4, '0', 16, 'Presencial', 30, 'Encerrada', 'kkkkkkkkkkkkkkkkkkk'),
-(5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '0', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 6, 4, '0', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, '0', 18, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk'),
-(8, 'Turma 1', '2025', '2025-11-05 03:29:37', 5, NULL, NULL, NULL, 0, 22, 4, '0', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
-(9, 'Turma 1', '2025', '2025-11-06 18:45:05', 5, NULL, NULL, NULL, 0, 22, 4, '0', 17, 'Presencial', 45, 'Ativa', 'Vão ser reprovados');
+(3, 'Turma 1', '2025', '2025-10-30 17:18:28', 5, NULL, NULL, NULL, 2, 22, 4, '17', 16, 'Presencial', 30, 'Encerrada', 'kkkkkkkkkkkkkkkkkkk'),
+(5, 'Turma 1', '2025', '2025-10-31 14:51:39', 5, NULL, NULL, NULL, 0, 22, 4, '19', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(6, 'Turma 2', '2025', '2025-10-31 14:53:27', 5, NULL, NULL, NULL, 0, 6, 4, '17', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(7, 'Turma 1', '2025', '2025-10-31 18:15:25', 5, NULL, NULL, NULL, 0, 6, 6, '27', 18, 'Presencial', 45, 'Ativa', 'kkkkkkkkkkk'),
+(8, 'Turma 1', '2025', '2025-11-05 03:29:37', 5, NULL, NULL, NULL, 0, 22, 4, '17', 17, 'Presencial', 30, 'Ativa', 'kkkkkkkkkk'),
+(9, 'Turma 1', '2025', '2025-11-06 18:45:05', 5, NULL, NULL, NULL, 0, 22, 4, '36', 17, 'Presencial', 45, 'Ativa', 'Vão ser reprovados');
 
 -- --------------------------------------------------------
 
@@ -2777,7 +2804,7 @@ ALTER TABLE `alunos_responsaveis`
 -- AUTO_INCREMENT de tabela `alunos_turmas`
 --
 ALTER TABLE `alunos_turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT de tabela `anuncios`
@@ -2981,13 +3008,13 @@ ALTER TABLE `favoritos`
 -- AUTO_INCREMENT de tabela `grades_curriculares`
 --
 ALTER TABLE `grades_curriculares`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT de tabela `grade_periodo_disciplinas`
 --
 ALTER TABLE `grade_periodo_disciplinas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
 
 --
 -- AUTO_INCREMENT de tabela `materiais`
@@ -3029,7 +3056,7 @@ ALTER TABLE `mensalidades`
 -- AUTO_INCREMENT de tabela `notas`
 --
 ALTER TABLE `notas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
 
 --
 -- AUTO_INCREMENT de tabela `notificacoes`
@@ -3041,7 +3068,7 @@ ALTER TABLE `notificacoes`
 -- AUTO_INCREMENT de tabela `notificacoes_eventos`
 --
 ALTER TABLE `notificacoes_eventos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=353;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=355;
 
 --
 -- AUTO_INCREMENT de tabela `pagamentos_funcionarios`
@@ -3089,7 +3116,7 @@ ALTER TABLE `transacoes`
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de tabela `turmas_ingresso`
