@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 import { Checkbox } from "../components/ui/checkbox"
 import { useToast } from "../hooks/use-toast"
 import type { GradeCurricular } from "./grade" // Importando o tipo do componente principal
+import { Loader2 } from "lucide-react"
 
 // --- CONSTANTES E TIPAGEM ---
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -33,7 +34,7 @@ type Periodo = {
   materias: Materia[]
 }
 
-// --- FUNÇÕES DE API REAIS ---
+// --- FUNÇÕES DE API ---
 
 async function getCursos( ): Promise<Curso[]> {
     const response = await fetch(`${API_BASE_URL}/cursos-posgraduacao`);
@@ -41,9 +42,10 @@ async function getCursos( ): Promise<Curso[]> {
     return response.json();
 }
 
-async function getMaterias(): Promise<Materia[]> {
-    const response = await fetch(`${API_BASE_URL}/grades/form-data/materias`);
-    if (!response.ok) throw new Error("Falha ao buscar matérias");
+// NOVA FUNÇÃO: Busca disciplinas da matriz curricular de um curso específico
+async function getDisciplinasDoCurso(cursoId: string): Promise<Periodo[]> {
+    const response = await fetch(`${API_BASE_URL}/grades/form-data/disciplinas-por-curso/${cursoId}`);
+    if (!response.ok) throw new Error("Falha ao buscar disciplinas do curso");
     return response.json();
 }
 
@@ -73,32 +75,43 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [cursos, setCursos] = useState<Curso[]>([])
-  const [materias, setMaterias] = useState<Materia[]>([])
+  
+  // ESTADO MODIFICADO: Armazena a estrutura da matriz curricular do curso
+  const [estruturaBase, setEstruturaBase] = useState<Periodo[]>([])
 
   // Estados locais para edição
   const [cursoId, setCursoId] = useState(grade.curso.id.toString())
   const [periodoAcademico, setPeriodoAcademico] = useState(grade.periodoAcademico)
-  const [periodos, setPeriodos] = useState<Periodo[]>(JSON.parse(JSON.stringify(grade.periodos))) // Deep copy
+  // ESTADO MODIFICADO: Renomeado para clareza, armazena as seleções do usuário
+  const [periodosSelecionados, setPeriodosSelecionados] = useState<Periodo[]>(JSON.parse(JSON.stringify(grade.periodos))) // Deep copy
 
+  // Efeito para carregar dados iniciais (cursos) e as disciplinas do curso da grade
   useEffect(() => {
-    loadFormData();
-  }, []);
+    const loadInitialData = async () => {
+      setLoading(true);
+      try {
+        // Busca os cursos e as disciplinas do curso da grade em paralelo
+        const [cursosData, disciplinasData] = await Promise.all([
+          getCursos(),
+          getDisciplinasDoCurso(grade.curso.id.toString())
+        ]);
+        setCursos(cursosData);
+        setEstruturaBase(disciplinasData);
+      } catch (error: any) {
+        toast({ title: "Erro", description: `Erro ao carregar dados: ${error.message}`, variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const loadFormData = async () => {
-    setLoading(true);
-    try {
-      const [cursosData, materiasData] = await Promise.all([getCursos(), getMaterias()]);
-      setCursos(cursosData);
-      setMaterias(materiasData);
-    } catch (error: any) {
-      toast({ title: "Erro", description: `Erro ao carregar dados do formulário: ${error.message}`, variant: "destructive" });
-    } finally {
-      setLoading(false);
+    if (open) {
+        loadInitialData();
     }
-  };
+  }, [open, grade.curso.id, toast]);
+
 
   const toggleMateria = (periodoId: number, materia: Materia) => {
-    setPeriodos((prev) =>
+    setPeriodosSelecionados((prev) =>
       prev.map((periodo) => {
         if (periodo.id !== periodoId) return periodo;
         const hasMateria = periodo.materias.some((m) => m.id === materia.id);
@@ -119,7 +132,7 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
       const gradeData = {
         curso: cursoSelecionado,
         periodoAcademico,
-        periodos,
+        periodos: periodosSelecionados.filter(p => p.materias.length > 0), // Envia apenas períodos com matérias
       };
 
       await updateGrade(grade.id, gradeData);
@@ -134,7 +147,7 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
   };
 
   const getTotalCargaHoraria = () => {
-    return periodos.reduce((total, periodo) => 
+    return periodosSelecionados.reduce((total, periodo) => 
         total + periodo.materias.reduce((sum, materia) => sum + materia.cargaHoraria, 0), 0);
   };
 
@@ -153,7 +166,7 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Curso</label>
-              <Select value={cursoId} onValueChange={setCursoId} disabled={loading || saving}>
+              <Select value={cursoId} onValueChange={setCursoId} disabled={true}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {cursos.map((curso) => (
@@ -187,42 +200,50 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
           <div>
             <h4 className="font-semibold mb-3 text-lg">Matérias por Período</h4>
             {loading ? (
-                <p className="text-muted-foreground text-center py-4">Carregando matérias...</p>
+                <div className="flex items-center justify-center text-muted-foreground py-12">
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <span>Carregando disciplinas do curso...</span>
+                </div>
             ) : (
-                <Accordion type="multiple" className="w-full space-y-3">
-                {periodos.map((periodo) => (
-                    <AccordionItem key={periodo.id} value={`periodo-${periodo.id}`} className="border rounded-lg bg-white">
-                    <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                        <div className="flex justify-between items-center w-full">
-                        <span className="font-medium text-base">{periodo.nome}</span>
-                        <span className="text-sm text-muted-foreground">{periodo.materias.length} matérias selecionadas</span>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-4 pb-4">
-                        <div className="space-y-2 pt-2 border-t">
-                        {materias.map((materia) => {
-                            const isSelected = periodo.materias.some((m) => m.id === materia.id);
-                            return (
-                            <div key={materia.id} className="flex items-center space-x-3 p-3 rounded-md hover:bg-slate-50">
-                                <Checkbox
-                                id={`edit-chk-${periodo.id}-${materia.id}`}
-                                checked={isSelected}
-                                onCheckedChange={() => toggleMateria(periodo.id, materia)}
-                                disabled={saving}
-                                />
-                                <label htmlFor={`edit-chk-${periodo.id}-${materia.id}`} className="flex-1 cursor-pointer">
-                                <p className="font-medium">{materia.nome}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {materia.codigo} • {materia.cargaHoraria}h
-                                </p>
-                                </label>
+                <Accordion type="multiple" className="w-full space-y-3" defaultValue={estruturaBase.map(p => `periodo-${p.id}`)}>
+                {estruturaBase.map((periodoBase) => {
+                    const periodoSelecionado = periodosSelecionados.find(p => p.id === periodoBase.id);
+                    return (
+                        <AccordionItem key={periodoBase.id} value={`periodo-${periodoBase.id}`} className="border rounded-lg bg-white">
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                            <div className="flex justify-between items-center w-full">
+                            <span className="font-medium text-base">{periodoBase.nome}</span>
+                            <span className="text-sm text-muted-foreground">
+                                {periodoSelecionado?.materias.length || 0} / {periodoBase.materias.length} matérias selecionadas
+                            </span>
                             </div>
-                            );
-                        })}
-                        </div>
-                    </AccordionContent>
-                    </AccordionItem>
-                ))}
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                            <div className="space-y-2 pt-2 border-t">
+                            {periodoBase.materias.map((materia) => {
+                                const isSelected = periodoSelecionado?.materias.some((m) => m.id === materia.id) ?? false;
+                                return (
+                                <div key={materia.id} className="flex items-center space-x-3 p-3 rounded-md hover:bg-slate-50">
+                                    <Checkbox
+                                    id={`edit-chk-${periodoBase.id}-${materia.id}`}
+                                    checked={isSelected}
+                                    onCheckedChange={() => toggleMateria(periodoBase.id, materia)}
+                                    disabled={saving}
+                                    />
+                                    <label htmlFor={`edit-chk-${periodoBase.id}-${materia.id}`} className="flex-1 cursor-pointer">
+                                    <p className="font-medium">{materia.nome}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {materia.codigo} • {materia.cargaHoraria}h
+                                    </p>
+                                    </label>
+                                </div>
+                                );
+                            })}
+                            </div>
+                        </AccordionContent>
+                        </AccordionItem>
+                    );
+                })}
                 </Accordion>
             )}
           </div>

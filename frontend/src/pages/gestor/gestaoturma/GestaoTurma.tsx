@@ -8,16 +8,18 @@ import { FormVincularAluno } from './FormVincularAluno';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/button';
-import { Loader2, PlusCircle, Trash2, CalendarDays, Pencil } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Pencil } from 'lucide-react';
 import { getSafeImagePath } from './utils';
 
-// --- Interfaces (sem alterações) ---
+// --- Interfaces ---
 interface Turma {
     id: number;
     nome: string;
     ano_letivo: string;
     professor_responsavel?: string;
-    materias: { materiaId: number; nome: string }[];
+    // A propriedade 'materias' agora é opcional e pode não existir
+    materias?: { materiaId: number; nome: string }[];
+    disciplinaNome?: string; // <-- Nova propriedade para o nome da disciplina
     curso_nome: string;
     materiaId: number | null;
     semestreId: number | null;
@@ -42,7 +44,7 @@ interface AlunoComNotas {
     media_final: number;
     status: 'Aprovado' | 'Recuperação' | 'Reprovado' | 'Pendente';
     nota_recuperacao: number | null;
-    nota_final: number; // Este campo já vem do backend, mas vamos recalcular para exibição
+    nota_final: number;
 }
 
 interface DadosCompletosNotas {
@@ -55,24 +57,22 @@ export default function GestorTurma() {
     const { id: turmaId } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    // Estados Gerais
+    // Estados
     const [turma, setTurma] = useState<Turma | null>(null);
     const [loading, setLoading] = useState(true);
     const [erro, setErro] = useState<string | null>(null);
     const [sidebarAberta, setSidebarAberta] = useState(false);
-
-    // Estados para o Módulo de Notas
     const [dadosNotas, setDadosNotas] = useState<DadosCompletosNotas | null>(null);
     const [loadingNotas, setLoadingNotas] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAvaliacao, setEditingAvaliacao] = useState<Avaliacao | null>(null);
     const [editableNotas, setEditableNotas] = useState<Record<string, string>>({});
 
-    // --- Função Central de Carregamento de Dados ---
     const fetchDadosCompletos = useCallback(async () => {
         if (!turmaId) return;
         setLoading(true);
         setLoadingNotas(true);
+        setErro(null);
 
         try {
             const cacheBuster = `?_=${new Date().getTime()}`;
@@ -86,14 +86,16 @@ export default function GestorTurma() {
                 setDadosNotas(notasResponse.data);
 
                 const initialEditableNotas: Record<string, string> = {};
-                notasResponse.data.alunosComNotas.forEach(aluno => {
-                    aluno.notas.forEach(nota => {
-                        initialEditableNotas[`${aluno.aluno_id}-${nota.avaliacao_id}`] = nota.nota?.toString() ?? '';
+                if (notasResponse.data && notasResponse.data.alunosComNotas) {
+                    notasResponse.data.alunosComNotas.forEach(aluno => {
+                        aluno.notas.forEach(nota => {
+                            initialEditableNotas[`${aluno.aluno_id}-${nota.avaliacao_id}`] = nota.nota?.toString() ?? '';
+                        });
+                        if (aluno.nota_recuperacao !== null) {
+                            initialEditableNotas[`${aluno.aluno_id}-rec`] = aluno.nota_recuperacao.toString();
+                        }
                     });
-                    if (aluno.nota_recuperacao !== null) {
-                        initialEditableNotas[`${aluno.aluno_id}-rec`] = aluno.nota_recuperacao.toString();
-                    }
-                });
+                }
                 setEditableNotas(initialEditableNotas);
             } else {
                 setDadosNotas(null);
@@ -111,7 +113,7 @@ export default function GestorTurma() {
         fetchDadosCompletos();
     }, [fetchDadosCompletos]);
 
-    // --- Handlers (sem alterações) ---
+    // --- Handlers ---
     const handleNotaChange = (alunoId: number, avaliacaoId: number | 'rec', value: string) => {
         setEditableNotas(prev => ({ ...prev, [`${alunoId}-${avaliacaoId}`]: value }));
     };
@@ -143,35 +145,20 @@ export default function GestorTurma() {
     const handleSaveAvaliacao = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingAvaliacao || !turma) return;
-
         const { id, descricao, valor, data_inicio, data_fim } = editingAvaliacao;
-
         if (!descricao || !valor || !data_inicio) {
             toast.error("Nome, valor e data de início são obrigatórios.");
             return;
         }
-
         try {
-            const payload = {
-                descricao,
-                valor: parseFloat(String(valor)),
-                data_inicio,
-                data_fim: data_fim || null,
-            };
-
+            const payload = { descricao, valor: parseFloat(String(valor)), data_inicio, data_fim: data_fim || null };
             if (id === 0) {
-                await axios.post('/api/avaliacoes', {
-                    ...payload,
-                    calendario_id: turma.semestreId,
-                    materia_id: turma.materiaId,
-                    turma_id: turmaId,
-                });
+                await axios.post('/api/avaliacoes', { ...payload, calendario_id: turma.semestreId, materia_id: turma.materiaId, turma_id: turmaId });
                 toast.success("Avaliação adicionada!");
             } else {
                 await axios.put(`/api/avaliacoes/${id}`, payload);
                 toast.success("Avaliação atualizada!");
             }
-
             setIsModalOpen(false);
             setEditingAvaliacao(null);
             fetchDadosCompletos();
@@ -181,11 +168,7 @@ export default function GestorTurma() {
     };
 
     const handleOpenModal = (avaliacao: Avaliacao | null) => {
-        if (avaliacao) {
-            setEditingAvaliacao(avaliacao);
-        } else {
-            setEditingAvaliacao({ id: 0, descricao: '', valor: 0, data_inicio: '', data_fim: null });
-        }
+        setEditingAvaliacao(avaliacao ? avaliacao : { id: 0, descricao: '', valor: 0, data_inicio: '', data_fim: null });
         setIsModalOpen(true);
     };
 
@@ -211,23 +194,16 @@ export default function GestorTurma() {
     if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-10 w-10 animate-spin" /></div>;
     if (erro || !turma) return <div className="flex items-center justify-center min-h-screen"><p className="text-destructive">{erro || 'Turma não encontrada.'}</p></div>;
 
-    const nomeDisciplinaPrincipal = turma.materias?.[0]?.nome || 'Disciplina não definida';
+    // Use a nova propriedade 'disciplinaNome' se existir, senão use a antiga 'materias'
+    const nomeDisciplinaPrincipal = turma.disciplinaNome || turma.materias?.[0]?.nome || 'Disciplina não definida';
     const alunosDaTurma = dadosNotas?.alunosComNotas || [];
 
     return (
         <div className="min-h-screen bg-gray-100 w-full min-w-0 overflow-x-hidden">
             <div className="flex flex-col md:flex-row w-full min-w-0 md:flex">
-                <SidebarGestor
-                    isMenuOpen={sidebarAberta}
-                    setActivePage={(page: string) => navigate('/gestor', { state: { activePage: page } })}
-                    handleMouseEnter={() => setSidebarAberta(true)}
-                    handleMouseLeave={() => setSidebarAberta(false)}
-                />
+                <SidebarGestor isMenuOpen={sidebarAberta} setActivePage={(page: string) => navigate('/gestor', { state: { activePage: page } })} handleMouseEnter={() => setSidebarAberta(true)} handleMouseLeave={() => setSidebarAberta(false)} />
                 <div className="flex-1 min-w-0 flex flex-col">
-                    <TopbarGestorAuto
-                        isMenuOpen={sidebarAberta}
-                        setIsMenuOpen={setSidebarAberta}
-                    />
+                    <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
                     <div className="p-4 sm:p-6 mt-20 max-w-7xl mx-auto w-full space-y-8">
                         <div className="bg-card rounded-xl shadow-sm p-6">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
@@ -259,9 +235,7 @@ export default function GestorTurma() {
                                                     <th key={av.id} className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                         <div className="flex items-center justify-center gap-2">
                                                             <span>{av.descricao} ({av.valor} pts)</span>
-                                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenModal(av)}>
-                                                                <Pencil className="h-3 w-3" />
-                                                            </Button>
+                                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleOpenModal(av)}><Pencil className="h-3 w-3" /></Button>
                                                         </div>
                                                         <div className="font-normal normal-case text-gray-400">{new Date(av.data_inicio).toLocaleDateString('pt-BR')}</div>
                                                     </th>
@@ -274,8 +248,13 @@ export default function GestorTurma() {
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
                                             {alunosDaTurma.map(aluno => {
-                                                // O aluno tem direito à recuperação se a média final (sem recuperação) o colocou nessa faixa.
+                                                // ===== LÓGICA DA NOTA FINAL MOVIDA PARA CÁ =====
                                                 const teveDireitoRecuperacao = aluno.media_final >= 40 && aluno.media_final < 60;
+                                                let notaFinalExibida = aluno.media_final;
+                                                if (teveDireitoRecuperacao && aluno.nota_recuperacao !== null && aluno.nota_recuperacao > aluno.media_final) {
+                                                    notaFinalExibida = Math.min(aluno.nota_recuperacao, 60);
+                                                }
+                                                // ===============================================
 
                                                 return (
                                                     <tr key={aluno.aluno_id}>
@@ -290,9 +269,7 @@ export default function GestorTurma() {
                                                         <td className="px-4 py-4 whitespace-nowrap text-sm text-center">
                                                             {teveDireitoRecuperacao ? (
                                                                 <input type="number" value={editableNotas[`${aluno.aluno_id}-rec`] ?? ''} onChange={e => handleNotaChange(aluno.aluno_id, 'rec', e.target.value)} onBlur={() => handleSalvarNota(aluno.aluno_id, 'rec')} className="w-20 text-center border rounded-md shadow-sm bg-yellow-50" max={100} min={0} />
-                                                            ) : (
-                                                                '—'
-                                                            )}
+                                                            ) : ( '—' )}
                                                         </td>
                                                         <td className="px-4 py-4 whitespace-nowrap text-sm text-center font-bold text-blue-600">{notaFinalExibida.toFixed(1)}</td>
                                                     </tr>
@@ -347,7 +324,6 @@ export default function GestorTurma() {
                         </div>
 
                         <FormVincularAluno turmaId={turmaId!} onAlunosVinculados={fetchDadosCompletos} />
-
                     </div>
                 </div>
 
