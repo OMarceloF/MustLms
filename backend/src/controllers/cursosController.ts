@@ -263,38 +263,42 @@ export const salvarPPC = async (req: Request, res: Response) => {
 };
 
 /**
- * @description Lista todas as turmas vinculadas a uma disciplina específica.
+ * @description Lista todas as turmas vinculadas a uma disciplina específica,
+ *              opcionalmente filtrando por período letivo.
  * @route GET /api/disciplinas/:disciplinaId/turmas
  */
 export const listarTurmasPorDisciplina = async (req: Request, res: Response) => {
     const { disciplinaId } = req.params;
+    const { periodoId } = req.query;
 
     if (!disciplinaId) {
         return res.status(400).json({ message: "O ID da disciplina é obrigatório." });
     }
 
     try {
-        // ===== QUERY CORRIGIDA =====
-        const query = `
+        // *** CORREÇÃO: Adicionado t.semestre_id ao SELECT ***
+        let query = `
             SELECT 
                 t.id, 
-                t.nome_turma, 
+                t.nome_turma AS nome, 
+                t.semestre_id, 
                 cpl.nome AS semestre_nome 
             FROM turmas t
             LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
-            WHERE t.disciplina_id = ?;
+            WHERE t.disciplina_id = ?
         `;
-        // ===========================
+        const params: (string | number)[] = [disciplinaId];
 
-        const [turmas] = await pool.query<RowDataPacket[]>(query, [disciplinaId]);
+        if (periodoId && periodoId !== 'all') {
+            query += ' AND t.semestre_id = ?';
+            params.push(periodoId as string);
+        }
 
-        const turmasFormatadas = turmas.map(turma => ({
-            id: turma.id,
-            nome: turma.nome_turma,
-            semestre_nome: turma.semestre_nome || 'N/A'
-        }));
+        query += ' ORDER BY t.nome_turma ASC;';
 
-        res.status(200).json(turmasFormatadas);
+        const [turmas] = await pool.query<RowDataPacket[]>(query, params);
+
+        res.status(200).json(turmas);
 
     } catch (error) {
         console.error("Erro ao buscar turmas por disciplina:", error);
