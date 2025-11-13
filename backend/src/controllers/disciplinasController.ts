@@ -187,3 +187,41 @@ export const listarTodasDisciplinasPosGraduacao = async (req: Request, res: Resp
     res.status(500).json({ message: "Erro interno ao buscar as disciplinas." });
   }
 };
+
+/**
+ * @description Lista todas as disciplinas de um curso, agrupadas por semestre.
+ * @route GET /api/cursos/:cursoId/disciplinas-agrupadas
+ */
+export const listarDisciplinasAgrupadasPorSemestre = async (req: Request, res: Response) => {
+    const { cursoId } = req.params;
+    if (!cursoId) {
+        return res.status(400).json({ message: 'O ID do curso é obrigatório.' });
+    }
+
+    try {
+        const query = `
+            SELECT id, nome, codigo, carga_horaria, semestre 
+            FROM cursos_disciplinas 
+            WHERE curso_id = ? 
+            ORDER BY semestre, nome;
+        `;
+        const [disciplinas] = await pool.query<RowDataPacket[]>(query, [cursoId]);
+
+        // Agrupa as disciplinas por semestre em um objeto
+        const agrupado = disciplinas.reduce((acc, disciplina) => {
+            // Disciplinas com semestre 0 ou null são agrupadas como 'Optativas'
+            const semestreKey = disciplina.semestre || 0; 
+            if (!acc[semestreKey]) {
+                acc[semestreKey] = [];
+            }
+            acc[semestreKey].push(disciplina);
+            return acc;
+        }, {} as Record<number, any[]>);
+
+        res.status(200).json(agrupado);
+
+    } catch (error) {
+        console.error("Erro ao buscar disciplinas agrupadas:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar as disciplinas.' });
+    }
+};

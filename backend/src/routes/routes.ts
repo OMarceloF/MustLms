@@ -378,7 +378,8 @@ import {
   adicionarDisciplinaCurso,
   atualizarDisciplinaCurso,
   deletarDisciplinaCurso,
-  listarTodasDisciplinasPosGraduacao
+  listarTodasDisciplinasPosGraduacao,
+  listarDisciplinasAgrupadasPorSemestre
 } from '../controllers/disciplinasController';
 
 
@@ -1054,5 +1055,6 @@ router.get('/api/grades/form-data/materias', getMateriasForGradeForm);
 router.get('/api/grades/form-data/periodos-letivos', getPeriodosLetivosForForm);
 router.get('/api/grades/form-data/disciplinas-por-curso/:cursoId', getDisciplinasByCursoGrouped);
 router.get('/api/grades/por-curso/:cursoId', getGradesByCurso);
+router.get('/api/cursos/:cursoId/disciplinas-agrupadas', listarDisciplinasAgrupadasPorSemestre);
 
 export default router;
