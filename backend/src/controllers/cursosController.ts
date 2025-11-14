@@ -2,6 +2,17 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 
+// Interface para tipar o resultado do banco
+interface ICursoEvento extends RowDataPacket {
+  id: number;
+  curso_id: number;
+  titulo: string;
+  descricao: string;
+  data_inicio: string;
+  data_fim: string;
+  tipo: 'prazo' | 'evento' | 'defesa';
+}
+
 /**
  * @description Adiciona um novo curso de pós-graduação.
  * @route POST /api/cursos/adicionar
@@ -208,19 +219,22 @@ export const obterDetalhesCurso = async (req: Request, res: Response) => {
 };
 
 /**
- * @description Lista os eventos do calendário de um curso.
+ * @description Lista os eventos do calendário acadêmico de um curso específico.
  * @route GET /api/cursos/:cursoId/calendario
  */
 export const listarEventosCalendario = async (req: Request, res: Response) => {
-    res.status(200).json([]);
-};
+  const { cursoId } = req.params;
 
-/**
- * @description Adiciona um evento ao calendário de um curso.
- * @route POST /api/cursos/:cursoId/calendario
- */
-export const adicionarEventoCalendario = async (req: Request, res: Response) => {
-    res.status(201).json({ message: 'Evento adicionado (simulado).' });
+  try {
+    const [eventos] = await pool.query<ICursoEvento[]>(
+      'SELECT id, titulo, data_inicio AS dataInicio, data_fim AS dataFim, descricao, tipo FROM cursos_eventos WHERE curso_id = ? ORDER BY data_inicio ASC',
+      [cursoId]
+    );
+    res.status(200).json(eventos);
+  } catch (error) {
+    console.error('Erro ao listar eventos do calendário do curso:', error);
+    res.status(500).json({ error: 'Erro interno ao buscar eventos.' });
+  }
 };
 
 /**
@@ -238,6 +252,68 @@ export const obterPPC = async (req: Request, res: Response) => {
         }
     } catch (error) {
         res.status(500).json({ message: 'Erro ao buscar PPC.' });
+    }
+};
+
+/**
+ * @description Adiciona um novo evento ao calendário acadêmico de um curso.
+ * @route POST /api/cursos/:cursoId/calendario
+ */
+export const adicionarEventoCalendario = async (req: Request, res: Response) => {
+  const { cursoId } = req.params;
+  const { titulo, descricao, dataInicio, dataFim, tipo } = req.body;
+
+  if (!titulo || !dataInicio || !dataFim || !tipo) {
+    return res.status(400).json({ error: 'Todos os campos são obrigatórios: título, data de início, data de fim e tipo.' });
+  }
+
+  try {
+    const query = 'INSERT INTO cursos_eventos (curso_id, titulo, descricao, data_inicio, data_fim, tipo) VALUES (?, ?, ?, ?, ?, ?)';
+    const [result] = await pool.query(query, [cursoId, titulo, descricao, dataInicio, dataFim, tipo]);
+    
+    // Para obter o ID do evento recém-criado
+    const insertId = (result as any).insertId;
+
+    res.status(201).json({ message: 'Evento adicionado com sucesso!', id: insertId });
+  } catch (error) {
+    console.error('Erro ao adicionar evento ao calendário do curso:', error);
+    res.status(500).json({ error: 'Erro interno ao salvar o evento.' });
+  }
+};
+
+/**
+ * @description Consolida e retorna todos os eventos de todos os cursos para o calendário do gestor.
+ * @route GET /api/calendario/gestor/eventos-cursos
+ */
+export const getEventosDeCursosParaGestor = async (req: Request, res: Response) => {
+    try {
+        const [rows] = await pool.query<ICursoEvento[]>(`
+            SELECT 
+                ce.id,
+                ce.titulo AS nome,
+                ce.data_inicio AS data,
+                ce.tipo,
+                ce.descricao,
+                cp.sigla AS curso_sigla
+            FROM cursos_eventos ce
+            JOIN cursos_posgraduacao cp ON ce.curso_id = cp.id
+            ORDER BY ce.data_inicio ASC
+        `);
+
+        // Formata os eventos para serem compatíveis com o FullCalendar do gestor
+        const eventosFormatados = rows.map(evento => ({
+            id: `curso-evento-${evento.id}`,
+            nome: `[${evento.curso_sigla}] ${evento.nome}`, // Adiciona a sigla do curso ao título
+            data: evento.data,
+            tipo: 'evento_especial', // Mapeia para um tipo visualmente reconhecível no calendário do gestor
+            importancia: 'media', // Define uma importância padrão
+            descricao: evento.descricao,
+        }));
+
+        res.status(200).json(eventosFormatados);
+    } catch (error) {
+        console.error('Erro ao buscar eventos de cursos para o gestor:', error);
+        res.status(500).json({ error: 'Erro interno ao consolidar eventos de cursos.' });
     }
 };
 
