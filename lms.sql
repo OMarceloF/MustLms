@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 13/11/2025 às 17:54
+-- Tempo de geração: 14/11/2025 às 14:20
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -629,7 +629,11 @@ CREATE TABLE `cursos_eventos` (
 --
 
 INSERT INTO `cursos_eventos` (`id`, `curso_id`, `titulo`, `descricao`, `data_inicio`, `data_fim`, `tipo`) VALUES
-(1, 1, 'Início do Semestre 2024.1', 'Início das aulas do primeiro semestre de 2024', '2024-03-01', '2024-03-01', 'evento');
+(2, 4, 'Prazo para Qualificação de Doutorado', 'Data limite para os doutorandos realizarem o exame de qualificação.', '2025-11-20', '2025-11-30', 'prazo'),
+(3, 4, 'Saúde & Bem-Estar', 'ddddddddd', '2025-11-14', '2025-11-15', 'evento'),
+(4, 4, 'Treino & Bem-Estar', 'kkkkkkkkkkkkk', '2025-11-21', '2025-11-22', 'prazo'),
+(5, 4, 'Novo curso', 'wwwwwwwwwwwwww', '2025-11-21', '2025-11-22', 'defesa'),
+(6, 3, 'Teste Calendario Civil', '', '2025-11-15', '2025-11-16', 'evento');
 
 -- --------------------------------------------------------
 
@@ -883,7 +887,7 @@ CREATE TABLE `eventos_calendario` (
 --
 
 INSERT INTO `eventos_calendario` (`id`, `calendario_id`, `data`, `tipo`, `descricao`, `recorrente`, `cor`, `nome`, `importancia`) VALUES
-(3, 4, '2025-09-09', 'feriado', 'Teste', 0, '#2dd4bf', 'Teste', 'alta');
+(5, 4, '2025-11-03', 'evento_especial', 'Prova', 0, '#ef4444', 'Prova', 'alta');
 
 -- --------------------------------------------------------
 
@@ -902,7 +906,14 @@ CREATE TABLE `eventos_roles` (
 --
 
 INSERT INTO `eventos_roles` (`id`, `evento_id`, `role`) VALUES
-(24, 3, 'aluno');
+(24, 3, 'aluno'),
+(25, 5, 'aluno'),
+(26, 5, 'gestor'),
+(27, 6, 'gestor'),
+(28, 7, 'aluno'),
+(29, 7, 'responsavel'),
+(30, 7, 'professor'),
+(31, 7, 'gestor');
 
 -- --------------------------------------------------------
 
@@ -1381,7 +1392,10 @@ INSERT INTO `notas` (`id`, `aluno_id`, `avaliacao_id`, `nota`, `materia_id`, `tu
 (66, 28, 32, 30.00, 17, 6, 40.00),
 (67, 28, 33, 25.00, 17, 6, 40.00),
 (68, 30, 32, 30.00, 17, 6, NULL),
-(69, 30, 33, 40.00, 17, 6, NULL);
+(69, 30, 33, 40.00, 17, 6, NULL),
+(70, 27, 30, 0.00, 36, 9, NULL),
+(71, 27, 31, 0.00, 36, 9, NULL),
+(72, 27, 29, 0.00, 36, 9, NULL);
 
 -- --------------------------------------------------------
 
@@ -1821,7 +1835,12 @@ INSERT INTO `notificacoes_eventos` (`id`, `tipo`, `conteudo`, `titulo`, `data`, 
 (364, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:15', 28, 0),
 (365, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:19', 30, 0),
 (366, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:22', 30, 0),
-(367, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:27', 28, 0);
+(367, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 12:21:27', 28, 0),
+(368, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 13:55:41', 27, 0),
+(369, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 13:55:47', 27, 0),
+(370, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 13:55:49', 27, 0),
+(371, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 13:56:07', 27, 0),
+(372, 'nota_lancada', 'Uma nova nota foi lançada para você.', 'Nota registrada', '2025-11-13 13:56:10', 27, 0);
 
 -- --------------------------------------------------------
 
@@ -2248,7 +2267,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `login`, `senha`, `email`, `role`, `status`, `nome`, `cpf`, `telefone`, `created_at`, `foto_url`, `last_seen`) VALUES
-(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-13 15:03:18'),
+(1, 'admin', '$2a$10$277ebYX8de9naMMcHyLiseq46sehpWUe.cCX7g09aDYFDc9rE65by', 'admin@gmail.com', 'gestor', 'ativo', 'admin', NULL, NULL, '2025-07-08 18:13:54', NULL, '2025-11-14 13:05:13'),
 (2, 'krysthyan', '$2b$10$KMJrFAJmdYHujl20TRrJYu5tr8DtEbnSSbaoKyOp5ChMkm/DRV9Ei', 'krysthyan@gmail.com', 'aluno', 'ativo', 'Krysthyan', NULL, NULL, '2025-07-17 13:59:58', '/uploads/73613a84a8060384359358d40ff0fe19', '2025-10-23 12:57:26'),
 (3, 'marcelo', '$2b$10$0GUe.kHSKZSHT3xd0phzSOGG5LQPhYUEc44ssaOac3oDz/t.P3VCK', 'marcelo@gmail.com', 'aluno', 'ativo', 'Marcelo', NULL, NULL, '2025-07-17 14:01:45', '', NULL),
 (4, 'rinaldo', '$2b$10$8gNSZSqJYdoXGzInfmGdwehqQcMNnFnMWkEBOemf6pbqERHSbU7JG', 'junio@gmail.com', 'aluno', 'ativo', 'Rinaldo', NULL, NULL, '2025-07-17 14:02:30', '', NULL),
@@ -2936,7 +2955,7 @@ ALTER TABLE `cursos_disciplinas`
 -- AUTO_INCREMENT de tabela `cursos_eventos`
 --
 ALTER TABLE `cursos_eventos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_posgraduacao`
@@ -2990,13 +3009,13 @@ ALTER TABLE `escolas`
 -- AUTO_INCREMENT de tabela `eventos_calendario`
 --
 ALTER TABLE `eventos_calendario`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `eventos_roles`
 --
 ALTER TABLE `eventos_roles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT de tabela `eventos_usuarios`
@@ -3080,7 +3099,7 @@ ALTER TABLE `mensalidades`
 -- AUTO_INCREMENT de tabela `notas`
 --
 ALTER TABLE `notas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=70;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT de tabela `notificacoes`
@@ -3092,7 +3111,7 @@ ALTER TABLE `notificacoes`
 -- AUTO_INCREMENT de tabela `notificacoes_eventos`
 --
 ALTER TABLE `notificacoes_eventos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=368;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=373;
 
 --
 -- AUTO_INCREMENT de tabela `pagamentos_funcionarios`
