@@ -175,6 +175,7 @@ export const listarTodasDisciplinasPosGraduacao = async (req: Request, res: Resp
       SELECT 
         d.id, 
         d.nome, 
+        d.codigo,
         c.nome AS breve_descricao 
       FROM cursos_disciplinas AS d
       JOIN cursos_posgraduacao AS c ON d.curso_id = c.id
