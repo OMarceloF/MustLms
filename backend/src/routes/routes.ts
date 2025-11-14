@@ -373,6 +373,7 @@ import {
   listarTurmasPorDisciplina,
   listarTurmasDeIngresso,
   listarAlunosVinculados,
+  getEventosDeCursosParaGestor,
 } from '../controllers/cursosController';
 
 import {
@@ -1061,5 +1062,8 @@ router.get('/api/cursos/:cursoId/disciplinas-agrupadas', listarDisciplinasAgrupa
 
 // --- ROTA PARA A NOVA ABA DE RELATÓRIOS DA DISCIPLINA ---
 router.get('/api/disciplinas/:disciplinaId/relatorios', getRelatoriosDisciplina);
+
+// --- ROTA PARA O CALENDÁRIO DO GESTOR ---
+router.get('/api/calendario/gestor/eventos-cursos', getEventosDeCursosParaGestor);
 
 export default router;

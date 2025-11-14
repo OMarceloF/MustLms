@@ -2,20 +2,20 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// <<--- PASSO 1: Importar o ícone de busca --->>
 import { Book, MoreVertical, Loader2, AlertTriangle, PlusCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import axios, { isAxiosError } from 'axios';
 
-// Interface para definir a estrutura dos dados do curso
+// 1. ATUALIZAR A INTERFACE PARA INCLUIR A SIGLA
 interface Curso {
   id: number;
   nome: string;
-  objetivos: string;
+  sigla: string; // <-- CAMPO ADICIONADO
+  objetivos: string; // Mantido para o line-clamp, mesmo que não esteja no print
   duracao_semestres: number;
 }
 
-// Componente de Layout simples para envolver a página
+// Componente de Layout (sem alterações)
 const Layout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-gray-50 flex flex-col">
     <main className="flex-1 container mx-auto py-6 px-4">
@@ -31,15 +31,14 @@ const CursosPage: React.FC = () => {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // <<--- PASSO 2: Adicionar estado para o termo de busca --->>
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Efeito para buscar os cursos da API quando o componente é montado
+  // Efeito para buscar os cursos da API (sem alterações na lógica)
   useEffect(() => {
     const fetchCursos = async () => {
       setIsLoading(true);
       try {
+        // A rota /api/cursos-posgraduacao já retorna a sigla, então não precisa mudar a chamada
         const response = await axios.get<Curso[]>('/api/cursos-posgraduacao');
         setCursos(response.data);
       } catch (err) {
@@ -52,7 +51,7 @@ const CursosPage: React.FC = () => {
     fetchCursos();
   }, []);
 
-  // Efeito para fechar o menu de opções ao clicar fora dele
+  // Efeito para fechar o menu (sem alterações)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -63,7 +62,7 @@ const CursosPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Função para lidar com a exclusão de um curso
+  // Funções de manipulação (handleExcluirCurso, handleEditarCurso) (sem alterações)
   const handleExcluirCurso = async (cursoId: number) => {
     const cursoParaExcluir = cursos.find(c => c.id === cursoId);
     const nomeCurso = cursoParaExcluir ? cursoParaExcluir.nome : 'O curso';
@@ -88,7 +87,7 @@ const CursosPage: React.FC = () => {
     setOpenMenuId(null);
   };
 
-  // <<--- PASSO 3: Criar a lista de cursos filtrados --->>
+  // Filtragem de cursos (sem alterações)
   const filteredCursos = cursos.filter(curso =>
     curso.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -107,7 +106,6 @@ const CursosPage: React.FC = () => {
         </div>
       );
     }
-    // <<--- PASSO 5: Verificar se a lista FILTRADA está vazia --->>
     if (filteredCursos.length === 0) {
       return (
         <div className="text-center py-20 bg-white p-6 rounded-lg shadow-sm">
@@ -120,7 +118,6 @@ const CursosPage: React.FC = () => {
     }
 
     return (
-      // <<--- PASSO 6: Mapear a lista FILTRADA --->>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredCursos.map((curso) => (
           <div key={curso.id} className="relative group">
@@ -128,11 +125,17 @@ const CursosPage: React.FC = () => {
               onClick={() => navigate(`/gestaocurso/${curso.id}/matriz-curricular`)}
               className="cursor-pointer transform transition-transform group-hover:scale-105 border-2 border-transparent group-hover:border-blue-600 rounded-lg shadow-sm bg-white flex flex-col h-full"
             >
-              <div className="bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white flex justify-center items-center rounded-t-lg h-32">
-                <Book className="w-12 h-12" />
+              {/* 2. RENDERIZAR A SIGLA NO CABEÇALHO DO CARD */}
+              <div className="bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white flex flex-col justify-center items-center rounded-t-lg h-32">
+                <Book className="w-10 h-10 mb-2" />
+                {/* Exibe a sigla se ela existir, com estilo destacado */}
+                {curso.sigla && (
+                  <span className="font-bold text-lg tracking-wider">{curso.sigla}</span>
+                )}
               </div>
               <div className="p-4 flex-grow flex flex-col">
                 <h3 className="font-bold text-lg mb-2 truncate" title={curso.nome}>{curso.nome}</h3>
+                {/* A descrição continua sendo usada para preencher espaço, mesmo que não visível no print */}
                 <p className="text-gray-600 text-sm line-clamp-3 flex-grow">{curso.objetivos}</p>
                 <p className="text-gray-800 text-sm mt-4 font-semibold">Duração: {curso.duracao_semestres} semestres</p>
               </div>
@@ -183,10 +186,8 @@ const CursosPage: React.FC = () => {
             <span>Adicionar Curso</span>
           </button>
         </div>
-
       </div>
 
-      {/* <<--- PASSO 4: Adicionar o campo de busca --->> */}
       <div className="mb-6 relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
         <input
