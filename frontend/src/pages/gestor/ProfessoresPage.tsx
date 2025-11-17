@@ -243,7 +243,7 @@ const ProfessoresPage = () => {
                               </>
                             ) : (
                               <>
-                                <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/visualizarprofessor`, { state: { funcionario: f, todos: funcionarios } })}><Eye className="size-4" /></Button>
+                                <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/visualizarprofessor`, { state: { funcionario: f, todos: filteredFuncionarios } })}><Eye className="size-4" /></Button>
                                 <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/editar`)}><Settings className="size-4" /></Button>
                                 <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(f.id)} className="text-destructive hover:bg-destructive/10 hover:text-destructive"><Trash className="size-4" /></Button>
                               </>
@@ -282,7 +282,7 @@ const ProfessoresPage = () => {
                           </>
                         ) : (
                           <>
-                            <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/visualizarprofessor`, { state: { funcionario: f } })}><Eye className="size-4" /></Button>
+                            <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/visualizarprofessor`, { state: { funcionario: f, todos: filteredFuncionarios } })}><Eye className="size-4" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => navigate(`/gestor/professores/${f.id}/editar`)}><Settings className="size-4" /></Button>
                             <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(f.id)} className="text-destructive hover:bg-destructive/10 hover:text-destructive"><Trash className="size-4" /></Button>
                           </>
