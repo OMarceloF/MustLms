@@ -320,7 +320,7 @@ const TurmaHorarios = () => {
                     <strong>Carga Horária:</strong> 25 horas/semana
                   </p>
                   <p>
-                    <strong>Disciplinas:</strong> 13 matérias
+                    <strong>Disciplinas:</strong> 13 discplinas
                   </p>
                   <p>
                     <strong>Intervalo:</strong> 08:40 às 09:00 (20 min)

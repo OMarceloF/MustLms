@@ -239,7 +239,7 @@ const GestaoEscolarPage: React.FC = () => {
               <div
                 className="relative transform transition-transform hover:scale-105 border rounded-lg shadow-sm bg-white h-full flex flex-col"
               >
-                <div className="bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white flex justify-center items-center rounded-t-lg">
+                <div className="bg-gradient-to-r from-[#363776] to-[#1e1f45] p-6 text-white flex justify-center items-center rounded-t-lg">
                   <Book className="w-12 h-12" />
                 </div>
                 <div className="p-4 flex-grow">

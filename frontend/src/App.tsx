@@ -19,7 +19,7 @@ import Responsavel from './pages/Responsavel';
 import Financeiro from './pages/Financeiro';
 
 // Páginas do Gestor
-import HomeGestor from './pages/gestor/HomeGestor';
+import HomeGestorNovo from './pages/gestor/homepage/homepage';
 import CriarProfessor from './pages/gestor/CriarProfessorPage';
 import CriarAluno from './pages/gestor/CriarAlunoPage';
 import CriarResponsavel from './pages/gestor/CriarResponsavelPage';
@@ -30,7 +30,7 @@ import MateriaisDisponiveis from './pages/gestor/MateriaisDisponiveisPage';
 import VisualizarProfessorPage from './pages/gestor/VisualizarProfessorPage';
 import EditarProfessorPage from './pages/gestor/EditarProfessorPage';
 import EditarTurmaPage from './pages/gestor/EditarTurmaPage';
-import GestaoEscolarPage from './pages/gestor/GestaoEscolarPage';
+import GestaoEscolarPage from './pages/gestor/DisciplinasPage';
 import CalendarioPage from './pages/gestor/CalendarioPage';
 import CalendarioDetalhePage from './pages/gestor/CalendarioDetalhePage';
 import EditarMateriaPage from './pages/gestor/EditarMateriaPage';
@@ -121,7 +121,7 @@ const App: React.FC = () => {
             {/* Rotas Exclusivas do Gestor */}
             <Route element={<ProtectedRoute allowedRoles={['gestor']} />}>
               <Route path="/gestor" element={<Gestor />} />
-              <Route path="/gestor/home" element={<HomeGestor />} />
+              <Route path="/gestor/home" element={<HomeGestorNovo />} />
               <Route path="/gestor/criarProfessor" element={<CriarProfessor />} />
               <Route path="/gestor/criarAluno" element={<CriarAluno />} />
               <Route path="/gestor/criarResponsavel" element={<CriarResponsavel />} />

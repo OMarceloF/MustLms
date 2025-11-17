@@ -4,7 +4,7 @@ import LargeChart from '../gestor/components/LargeChart';
 import BottomChart from '../gestor/components/BottomChart';
 import MiniCalendar from '../../components/MiniCalendar';
 import Anuncios from '../gestor/components/Anuncios';
-// import '../../styles/HomeGestor.css'
+
 
 const HomePage = () => {
   return (

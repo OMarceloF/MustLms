@@ -693,7 +693,7 @@ const VisualizarTurmaPage = () => {
                       }
                       className="border border-indigo-500 rounded-md p-1 focus:outline-none focus:ring-2 focus:ring-indigo-700"
                     >
-                      <option value="">Todas as Matérias</option>
+                      <option value="">Todas as Disciplinas</option>
                       {listaMaterias.map((mat) => (
                         <option key={mat.id} value={mat.id}>
                           {mat.nome}
