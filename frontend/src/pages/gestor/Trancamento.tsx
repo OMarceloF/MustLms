@@ -1,3 +1,5 @@
+// frontend/src/pages/gestor/Trancamento.tsx
+
 import { useState } from "react";
 import { Search, Filter, Eye, Lock, Unlock, AlertCircle, CheckCircle, Loader2, X } from "lucide-react";
 import { Button } from "./components/ui/button";
@@ -5,6 +7,8 @@ import { toast } from "./hooks/use-toast";
 import SidebarGestor from './components/Sidebar';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+
 
 
 type StatusMatricula = "Ativa" | "Trancada";
@@ -18,6 +22,8 @@ interface Aluno {
     turma: string;
     status: StatusMatricula;
     foto?: string;
+    curso_nome?: string;
+    turma_ingresso_nome?: string; // MODIFICADO: de 'turma_nome' para 'turma_ingresso_nome'
 }
 
 // Mock de dados para demonstração
@@ -72,6 +78,10 @@ const TrancamentoDeMatriculaPage = () => {
     const [modalType, setModalType] = useState<"trancar" | "reativar" | null>(null);
     const [motivo, setMotivo] = useState("");
     const [sidebarAberta, setSidebarAberta] = useState(false);
+    const { user, loading: authLoading } = useAuth();
+
+    const isProfessor = user.role === 'professor';
+
 
 
     // Filtrar alunos
@@ -284,9 +294,7 @@ const TrancamentoDeMatriculaPage = () => {
                                                     </td>
                                                     <td className="p-4">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <Button variant="ghost" size="sm">
-                                                                <Eye className="size-4" />
-                                                            </Button>
+                                                            <Button variant="ghost" size="icon" onClick={() => navigate(isProfessor ? `/professor/alunos/${aluno.id}/visualizaraluno` : `/gestor/alunos/${aluno.id}/visualizaraluno`, { state: { aluno, todosAlunos: alunos } })}><Eye className="size-4" /></Button>
                                                             {aluno.status === "Ativa" ? (
                                                                 <Button
                                                                     variant="ghost"
