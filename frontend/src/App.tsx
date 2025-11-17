@@ -143,7 +143,7 @@ const App: React.FC = () => {
               <Route path="/gestor/turmas/:turmaId/adicionar-alunos" element={<TurmasPage />} />
               <Route path="/gestor/turmas/:id/editar" element={<EditarTurmaPage />} />
               <Route path="/gestor/materias" element={<GestaoEscolarPage />} />
-              <Route path="/gestor/professores/:id/visualizar" element={<VisualizarProfessorPage />} />
+              <Route path="/gestor/professores/:id/visualizarprofessor" element={<VisualizarProfessorPage />} />
               <Route path="/gestor/:id/visualizar" element={<VisualizarTurmaPage />} />
               <Route path="/gestor/eventos" element={<EventosPageMenu />} />
               <Route path="/gestor/feeds" element={<FeedsPageMenu />} />
