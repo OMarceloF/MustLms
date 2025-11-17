@@ -303,6 +303,9 @@ export const getAlunoById = async (req: Request, res: Response) => {
 
 export const listarAlunos = async (req: Request, res: Response) => {
     try {
+        // 🔥 CORREÇÃO APLICADA AQUI 🔥
+        // Adicionamos a função de agregação MAX() para as colunas que não estão no GROUP BY.
+        // E adicionamos todas as colunas não agregadas do SELECT na cláusula GROUP BY.
         const query = `
             SELECT 
                 u.id, 
@@ -311,15 +314,15 @@ export const listarAlunos = async (req: Request, res: Response) => {
                 u.foto_url as foto,
                 a.matricula, 
                 a.status,
-                cpg.nome AS curso_nome,
-                ti.nome AS turma_ingresso_nome
+                MAX(cpg.nome) AS curso_nome,
+                MAX(ti.nome) AS turma_ingresso_nome
             FROM users u
             JOIN alunos a ON u.id = a.id
             LEFT JOIN vincular_aluno_curso vac ON u.id = vac.aluno_id
             LEFT JOIN cursos_posgraduacao cpg ON vac.curso_posgraduacao_id = cpg.id
             LEFT JOIN turmas_ingresso ti ON vac.turmas_ingresso_id = ti.id
             WHERE u.role = 'aluno' AND u.status = 'ativo'
-            GROUP BY u.id
+            GROUP BY u.id, u.nome, u.email, u.foto_url, a.matricula, a.status
             ORDER BY u.nome ASC;
         `;
 
