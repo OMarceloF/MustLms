@@ -244,6 +244,7 @@ const GestaoEscolarPage: React.FC = () => {
                 </div>
                 <div className="p-4 flex-grow">
                   <h3 className="font-bold text-lg mb-1 truncate" title={d.nome}>{d.nome}</h3>
+                  <p className="text-sm text-gray-500 mb-2">Código: {d.codigo}</p>
                   <p className="text-gray-600 text-sm">Curso: {d.breve_descricao}</p>
                 </div>
 
@@ -270,7 +271,7 @@ const GestaoEscolarPage: React.FC = () => {
                       className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-md"
                       onClick={(e) => {
                         e.preventDefault();
-                        alert('Para editar, acesse a página do curso e a aba "Matriz Curricular".');
+                        handleOpenDialog(d);
                       }}
                     >
                       Editar
@@ -316,15 +317,15 @@ const GestaoEscolarPage: React.FC = () => {
               <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="cargaHoraria">Carga Horária (h)</Label>
-                  <Input id="cargaHoraria" type="number" value={editingDisciplina.cargaHoraria} onChange={(e) => handleFormChange('cargaHoraria', Number(e.target.value))} className="bg-background" />
+                  <Input id="cargaHoraria" type="number" value={editingDisciplina.cargaHoraria?.toString() ?? ''} onChange={(e) => handleFormChange('cargaHoraria', Number(e.target.value))} className="bg-background" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="creditos">Créditos</Label>
-                  <Input id="creditos" type="number" value={editingDisciplina.creditos} onChange={(e) => handleFormChange('creditos', Number(e.target.value))} className="bg-background" />
+                  <Input id="creditos" type="number" value={editingDisciplina.creditos?.toString() ?? ''} onChange={(e) => handleFormChange('creditos', Number(e.target.value))} className="bg-background" />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="semestre">Semestre</Label>
-                  <Input id="semestre" type="number" value={editingDisciplina.semestre} onChange={(e) => handleFormChange('semestre', Number(e.target.value))} className="bg-background" />
+                  <Input id="semestre" type="number" value={editingDisciplina.semestre?.toString() ?? ''} onChange={(e) => handleFormChange('semestre', Number(e.target.value))} className="bg-background" />
                 </div>
               </div>
               <div className="grid gap-2">
