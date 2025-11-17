@@ -50,6 +50,8 @@ import {
   obterCalendario,
   unificarCalendariosLetivos,
   obterCalendarioPorId,
+  getEventosAvaliacoesFormatados,
+  getEventosCursos
 } from '../controllers/calendarioController';
 import {
   criarNovoEvento,
@@ -540,6 +542,8 @@ router.post('/api/calendario', criarNovoCalendario);
 router.get('/api/calendario/:ano_letivo', obterCalendario);
 router.post('/api/calendario/unificar', unificarCalendariosLetivos);
 router.get('/api/calendarioById/:id', obterCalendarioPorId);
+router.get('/api/calendario/gestor/avaliacoes-formatadas', getEventosAvaliacoesFormatados);
+router.get('/api/calendario/gestor/eventos-cursos', getEventosCursos);
 router.get('/api/anuncios', listarAnuncios);
 router.post('/api/anuncios', criarAnuncio);
 router.get('/api/anuncios/:id', buscarAnuncioPorId);

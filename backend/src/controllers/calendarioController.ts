@@ -1,5 +1,9 @@
+// src/controllers/calendarioController.ts
+
 import { Request, Response } from 'express';
 import pool from '../config/db';
+// CORREÇÃO: Importar RowDataPacket de mysql2
+import { RowDataPacket } from 'mysql2'; 
 import {
   criarCalendario,
   listarCalendarios,
@@ -143,4 +147,68 @@ export const getTipoAvaliacao = async (req: Request, res: Response) => {
       .status(500)
       .json({ error: 'Erro interno ao buscar tipo de avaliação.' });
   }
+};
+
+/**
+ * @description Busca todas as avaliações e formata o nome do evento para o calendário do gestor.
+ * @route GET /api/calendario/gestor/avaliacoes-formatadas
+ */
+export const getEventosAvaliacoesFormatados = async (req: Request, res: Response) => {
+  try {
+    const query = `
+      SELECT 
+        av.id,
+        av.data_inicio AS data,
+        av.descricao AS nome_avaliacao,
+        cd.codigo AS codigo_disciplina,
+        t.nome_turma
+      FROM avaliacoes AS av
+      JOIN cursos_disciplinas AS cd ON av.materia_id = cd.id
+      JOIN turmas AS t ON av.turma_id = t.id
+    `;
+    const [rows] = await pool.query<RowDataPacket[]>(query);
+
+    const eventosFormatados = rows.map(row => ({
+      id: `avaliacao-${row.id}`,
+      // Formata o título como: "[CODIGO - TURMA] NOME_AVALIACAO"
+      nome: `[${row.codigo_disciplina} - ${row.nome_turma}] ${row.nome_avaliacao}`,
+      data: row.data,
+      tipo: 'prova', // Define o tipo como 'prova' para estilização
+      importancia: 'media' // Define uma importância padrão
+    }));
+
+    res.status(200).json(eventosFormatados);
+  } catch (error) {
+    console.error("Erro ao buscar avaliações formatadas para o calendário:", error);
+    res.status(500).json({ message: "Erro interno ao buscar os eventos de avaliação." });
+  }
+};
+
+// Adicione esta função para buscar eventos de cursos
+export const getEventosCursos = async (req: Request, res: Response) => {
+    try {
+        const query = `
+            SELECT 
+                ce.id,
+                ce.titulo AS nome,
+                ce.data_inicio AS data,
+                cp.sigla
+            FROM cursos_eventos AS ce
+            JOIN cursos_posgraduacao AS cp ON ce.curso_id = cp.id
+        `;
+        const [rows] = await pool.query<RowDataPacket[]>(query);
+
+        const eventosFormatados = rows.map(row => ({
+            id: `curso-evento-${row.id}`,
+            nome: `[${row.sigla}] ${row.nome}`,
+            data: row.data,
+            tipo: 'evento_curso',
+            importancia: 'media'
+        }));
+
+        res.status(200).json(eventosFormatados);
+    } catch (error) {
+        console.error("Erro ao buscar eventos de cursos:", error);
+        res.status(500).json({ message: "Erro interno ao buscar eventos de cursos." });
+    }
 };

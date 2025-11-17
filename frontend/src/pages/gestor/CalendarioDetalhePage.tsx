@@ -1,3 +1,5 @@
+// src/pages/CalendarioDetalhePage.tsx
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -7,7 +9,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, Award, BookOpen, Mic, PartyPopper, Pencil, Plane, Star, Sunset, Loader2, Briefcase // 1. Ícone adicionado
+  AlertTriangle, Award, BookOpen, Mic, PartyPopper, Pencil, Plane, Star, Sunset, Loader2, Briefcase
 } from 'lucide-react';
 
 import SidebarGestor from './components/Sidebar';
@@ -23,7 +25,6 @@ function getUserAvatar(foto: string | null | undefined, nome: string): string {
 
 const API_URL = `/api`;
 
-// 2. Novo tipo de evento para representar os eventos de curso
 const tiposDeEvento = [
   { tipo: 'feriado', label: 'Feriado', cor: '#10b981', Icon: Plane },
   { tipo: 'evento_especial', label: 'Evento Especial', cor: '#ef4444', Icon: PartyPopper },
@@ -33,7 +34,7 @@ const tiposDeEvento = [
   { tipo: 'planejamento', label: 'Planejamento', cor: '#8b5cf6', Icon: Mic },
   { tipo: 'periodo_inicio', label: 'Início de Período', cor: '#0ea5e9', Icon: Star },
   { tipo: 'periodo_fim', label: 'Fim de Período', cor: '#0369a1', Icon: Award },
-  { tipo: 'evento_curso', label: 'Evento de Curso', cor: '#a855f7', Icon: Briefcase }, // <-- NOVO
+  { tipo: 'evento_curso', label: 'Evento de Curso', cor: '#a855f7', Icon: Briefcase },
 ];
 
 const rolesDisponiveis = [
@@ -51,7 +52,7 @@ const tiposDeImportancia = [
 
 type ImportanciaKey = 'alta' | 'media' | 'baixa';
 
-const CalendarioDetalhePage: React.FC = ( ) => {
+const CalendarioDetalhePage: React.FC = (  ) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [calendario, setCalendario] = useState<any>(null);
@@ -69,7 +70,8 @@ const CalendarioDetalhePage: React.FC = ( ) => {
   const [buscaUsuario, setBuscaUsuario] = useState<string>('');
   const [periodosLetivos, setPeriodosLetivos] = useState<any[]>([]);
   const [primeiroDiaSemana, setPrimeiroDiaSemana] = useState<number>(0);
-  const [eventosDeCursos, setEventosDeCursos] = useState<any[]>([]); // 3. Novo estado
+  const [eventosDeCursos, setEventosDeCursos] = useState<any[]>([]);
+  const [eventosDeAvaliacoes, setEventosDeAvaliacoes] = useState<any[]>([]); // NOVO ESTADO
 
   useEffect(() => {
     axios.get(`${API_URL}/calendarioById/${id}`)
@@ -89,14 +91,23 @@ const CalendarioDetalhePage: React.FC = ( ) => {
     const fetchAllData = async () => {
       setLoadingConfig(true);
       try {
-        // 4. Adicionada a busca pelos eventos dos cursos
-        const [eventosCalendarioRes, usuarioRes, feriadosNacRes, configRes, periodosRes, eventosCursosRes] = await Promise.all([
+        // Adicionada a busca pelos eventos de avaliação formatados
+        const [
+          eventosCalendarioRes, 
+          usuarioRes, 
+          feriadosNacRes, 
+          configRes, 
+          periodosRes, 
+          eventosCursosRes,
+          eventosAvaliacoesRes // NOVA BUSCA
+        ] = await Promise.all([
           axios.get(`${API_URL}/evento/${id}`),
           axios.get(`/api/check-auth`),
           axios.get(`/api/ext/feriados`),
           axios.get(`/api/configuracoes/calendario`),
           axios.get(`/api/periodos-letivos`),
-          axios.get(`/api/calendario/gestor/eventos-cursos`), // <-- NOVO
+          axios.get(`/api/calendario/gestor/eventos-cursos`),
+          axios.get(`/api/calendario/gestor/avaliacoes-formatadas`), // NOVA ROTA
         ]);
 
         const eventosCalendario = eventosCalendarioRes.data || [];
@@ -113,12 +124,15 @@ const CalendarioDetalhePage: React.FC = ( ) => {
         }, {} as Record<string, any>));
         setEventos(eventosUnicos);
 
-        // 5. Processa e armazena os eventos dos cursos
+        // Processa e armazena os eventos dos cursos
         const eventosCursosData = (eventosCursosRes.data || []).map((evento: any) => ({
             ...evento,
             tipo: 'evento_curso', // Atribui um tipo para estilização
         }));
         setEventosDeCursos(eventosCursosData);
+
+        // Processa e armazena os eventos de avaliações
+        setEventosDeAvaliacoes(eventosAvaliacoesRes.data || []);
 
         const feriadosNac = feriadosNacRes.data || [];
         const feriadosPersStr = configRes.data?.feriados_personalizados || "";
@@ -180,13 +194,19 @@ const CalendarioDetalhePage: React.FC = ( ) => {
   const handleEventClick = async (clickInfo: any) => {
     const eventId = String(clickInfo.event.id);
 
-    // 6. Impede a edição de eventos de curso e informa o usuário
+    // Impede a edição de eventos de avaliação e informa o usuário
+    if (eventId.startsWith('avaliacao-')) {
+        toast.info("Este é um evento de avaliação. Para editá-lo, acesse a página da disciplina e turma correspondente.");
+        return;
+    }
+
+    // Impede a edição de eventos de curso e informa o usuário
     if (eventId.startsWith('curso-evento-')) {
         toast.info("Este é um evento de um calendário de curso. Para editá-lo, acesse a página do curso correspondente.");
         return;
     }
 
-    const allCalendarEvents = [...eventos, ...feriados, ...periodosLetivos, ...eventosDeCursos];
+    const allCalendarEvents = [...eventos, ...feriados, ...periodosLetivos, ...eventosDeCursos, ...eventosDeAvaliacoes];
     const eventoClicado = allCalendarEvents.find(e => String(e.id) === eventId);
 
     if (!eventoClicado) return;
@@ -324,8 +344,14 @@ const CalendarioDetalhePage: React.FC = ( ) => {
                   firstDay={primeiroDiaSemana}
                   plugins={[dayGridPlugin, interactionPlugin]}
                   initialView="dayGridMonth"
-                  // 7. Junta todos os eventos (gerais, feriados, períodos e de cursos) para exibição
-                  events={[...eventos, ...feriados, ...periodosLetivos, ...eventosDeCursos].map(
+                  // Junta todos os eventos (gerais, feriados, períodos, de cursos e avaliações) para exibição
+                  events={[
+                    ...eventos, 
+                    ...feriados, 
+                    ...periodosLetivos, 
+                    ...eventosDeCursos,
+                    ...eventosDeAvaliacoes
+                  ].map(
                     (evt) => ({
                       id: String(evt.id), title: evt.nome || '', start: evt.data.slice(0, 10) || '',
                       extendedProps: { tipo: evt.tipo || '', descricao: evt.descricao || '', importancia: evt.importancia || '' },
