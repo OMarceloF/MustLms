@@ -157,7 +157,7 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
         <DialogHeader>
           <DialogTitle className="text-2xl">Editar Grade Curricular</DialogTitle>
           <DialogDescription>
-            Modifique o curso, período acadêmico e as matérias de cada período da grade.
+            Modifique o curso, período acadêmico e as disciplinas de cada período da grade.
           </DialogDescription>
         </DialogHeader>
 
@@ -198,7 +198,7 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
 
           {/* Períodos e Matérias */}
           <div>
-            <h4 className="font-semibold mb-3 text-lg">Matérias por Período</h4>
+            <h4 className="font-semibold mb-3 text-lg">Disciplinas por Período</h4>
             {loading ? (
                 <div className="flex items-center justify-center text-muted-foreground py-12">
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -214,7 +214,7 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
                             <div className="flex justify-between items-center w-full">
                             <span className="font-medium text-base">{periodoBase.nome}</span>
                             <span className="text-sm text-muted-foreground">
-                                {periodoSelecionado?.materias.length || 0} / {periodoBase.materias.length} matérias selecionadas
+                                {periodoSelecionado?.materias.length || 0} / {periodoBase.materias.length} discplinas selecionadas
                             </span>
                             </div>
                         </AccordionTrigger>

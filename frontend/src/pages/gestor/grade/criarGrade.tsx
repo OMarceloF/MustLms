@@ -229,7 +229,7 @@ export default function NovaGradePage() {
                                 </Button>
                                 <h1 className="text-3xl font-bold tracking-tight">Nova Grade Curricular</h1>
                                 <p className="mt-2 text-muted-foreground">
-                                    Defina a estrutura de um curso, organizando as matérias por períodos.
+                                    Defina a estrutura de um curso, organizando as disciplinas por períodos.
                                 </p>
                             </div>
 
@@ -297,7 +297,7 @@ export default function NovaGradePage() {
                                                             <div className="flex justify-between items-center w-full">
                                                                 <span className="font-medium text-base">{periodoBase.nome}</span>
                                                                 <span className="text-sm text-muted-foreground">
-                                                                    {periodoSelecionado?.materias.length || 0} / {periodoBase.materias.length} matérias selecionadas
+                                                                    {periodoSelecionado?.materias.length || 0} / {periodoBase.materias.length} disciplinas selecionadas
                                                                 </span>
                                                             </div>
                                                         </AccordionTrigger>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import HomeGestor from './gestor/HomeGestor';
+import HomeGestorNovo from './gestor/homepage/homepage';
 import ProfessoresPage from './gestor/ProfessoresPage';
 import AlunosPage from './gestor/AlunosPage';
 import RelatoriosPage from './gestor/RelatoriosPage';
@@ -13,7 +13,7 @@ import FinanceiroPage from './gestor/FinanceiroPage';
 import HelpModal from '../components/AjudaModal';
 import TurmasPage from './gestor/TurmasPage';
 import HorariosPage from './gestor/HorariosPage';
-import GestaoEscolarPage from './gestor/GestaoEscolarPage';
+import GestaoEscolarPage from './gestor/DisciplinasPage';
 import SidebarGestor from './gestor/components/Sidebar';
 import TopbarGestorAuto from './gestor/components/TopbarGestorAuto';
 import SocialMediaPage from './gestor/SocialMediaPage';
@@ -122,7 +122,7 @@ export default function GestorDashboard() {
 
         {/* Dynamic Content Area */}
         <main className="p-5 bg-gray-100 flex-1 mt-[80px]">
-          {activePage === 'home' && <HomeGestor />}
+          {activePage === 'home' && <HomeGestorNovo />}
           {activePage === 'ia' && <IaPage />}
           {activePage === 'gestao' && <GestaoEscolarPage />}
           {activePage === 'turmas' && <TurmasPage />}

@@ -178,7 +178,7 @@ export default function TurmasPage( ) {
                     <div className="mb-8">
                         <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground">Gestão de Turmas</h1>
                         <p className="mt-2 text-pretty text-muted-foreground">
-                            Visualize e cadastre turmas vinculadas aos cursos e matérias.
+                            Visualize e cadastre turmas vinculadas aos cursos e disciplinas.
                         </p>
                     </div>
 
