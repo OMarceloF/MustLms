@@ -33,7 +33,7 @@ function IaPage() {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
     setAutoScrollAtivo(true); // reativa o scroll automático
-  };  
+  };
 
   const hoje = new Date().toLocaleDateString('pt-BR', {
     day: 'numeric',
@@ -178,8 +178,8 @@ function IaPage() {
             <div
               key={index}
               className={`px-4 py-3 rounded-xl max-w-[75%] break-words text-sm shadow ${msg.role === 'user'
-                  ? 'self-end bg-indigo-500 text-white'
-                  : 'self-start bg-gray-200 text-gray-900'
+                ? 'self-end bg-indigo-500 text-white'
+                : 'self-start bg-gray-200 text-gray-900'
                 }`}
             >
               {msg.role === 'assistant' ? (
@@ -212,8 +212,8 @@ function IaPage() {
           <div className="relative flex-1">
             <textarea
               className={`w-full resize-none p-2 pr-12 rounded-md text-sm border min-h-[50px] ${inputVazio
-                  ? 'border-indigo-500 bg-yellow-100'
-                  : 'border-gray-300'
+                ? 'border-indigo-500 bg-yellow-100'
+                : 'border-gray-300'
                 } focus:outline-none focus:ring-2 focus:ring-indigo-400 transition`}
               value={pergunta}
               onChange={(e) => setPergunta(e.target.value)}
@@ -230,12 +230,26 @@ function IaPage() {
           </div>
 
           <button
-            className="px-6 py-3 bg-indigo-500 text-white font-semibold rounded-md hover:bg-indigo-400 transition shadow-md text-sm"
+            className="
+    px-6
+    py-3
+    bg-gradient-to-r
+    from-[#363776]
+    to-[#1e1f45]
+    text-white
+    font-semibold
+    rounded-md
+    hover:opacity-90
+    transition
+    shadow-md
+    text-sm
+  "
             onClick={enviarPergunta}
             disabled={carregando}
           >
             Enviar
           </button>
+
         </div>
 
         {/* Mensagem de erro */}

@@ -75,7 +75,7 @@ export function ViewGradeModal({ grade, open, onClose }: ViewGradeModalProps) {
 
           {/* Periods Accordion */}
           <div>
-            <h4 className="font-semibold mb-3">Matérias por Período</h4>
+            <h4 className="font-semibold mb-3">Disciplinas por Período</h4>
             <Accordion type="single" collapsible className="w-full">
               {grade.periodos.map((periodo) => (
                 <AccordionItem key={periodo.id} value={`periodo-${periodo.id}`}>
@@ -83,7 +83,7 @@ export function ViewGradeModal({ grade, open, onClose }: ViewGradeModalProps) {
                     <div className="flex justify-between w-full pr-4">
                       <span className="font-medium">{periodo.nome}</span>
                       <span className="text-sm text-muted-foreground">
-                        {periodo.materias.length} matérias • {getPeriodoCargaHoraria(periodo.id)}h
+                        {periodo.materias.length} disciplinas • {getPeriodoCargaHoraria(periodo.id)}h
                       </span>
                     </div>
                   </AccordionTrigger>

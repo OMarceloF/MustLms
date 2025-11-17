@@ -268,7 +268,7 @@ export default function GradeCurricularPage() {
                             <TableRow>
                                 <TableHead>Curso</TableHead>
                                 <TableHead>Período</TableHead>
-                                <TableHead>Qtd. Matérias</TableHead>
+                                <TableHead>Qtd. Disciplinas</TableHead>
                                 <TableHead>Carga Horária Total</TableHead>
                                 <TableHead className="text-right">Ações</TableHead>
                             </TableRow>

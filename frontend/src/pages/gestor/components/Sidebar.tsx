@@ -69,7 +69,7 @@ export default function SidebarGestor({
 
         <NavItem
           icon={<MdComputer size={28} />}
-          text="Matérias"
+          text="Disciplinas"
           isExpanded={isMenuOpen}
           onClick={() => setActivePage('gestao')}
         />

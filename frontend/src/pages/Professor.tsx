@@ -5,7 +5,7 @@ import HomeProfessor from './professor/HomeProfessor';
 import AlunosPage from './gestor/AlunosPage';
 import HelpModal from '../components/AjudaModal';
 import TurmasPage from './gestor/TurmasPage';
-import GestaoEscolarPage from './gestor/GestaoEscolarPage';
+import GestaoEscolarPage from './gestor/DisciplinasPage';
 import SidebarProfessor from './professor/SidebarProfessor';
 import TopbarGestorAuto from './gestor/components/TopbarGestorAuto';
 import { VscRobot } from 'react-icons/vsc';

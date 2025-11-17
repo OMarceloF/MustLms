@@ -69,7 +69,7 @@ export default function SidebarGestor({
 
                 <NavItem
                     icon={<BookMarked size={28} />}
-                    text="Matérias"
+                    text="Disciplinas"
                     isExpanded={isMenuOpen}
                     // Exemplo de navegação para a primeira matéria (id=1)
                     onClick={() => navigate('/aluno/materias/1')}

@@ -126,7 +126,7 @@ const CursosPage: React.FC = () => {
               className="cursor-pointer transform transition-transform group-hover:scale-105 border-2 border-transparent group-hover:border-blue-600 rounded-lg shadow-sm bg-white flex flex-col h-full"
             >
               {/* 2. RENDERIZAR A SIGLA NO CABEÇALHO DO CARD */}
-              <div className="bg-gradient-to-r from-indigo-900 to-indigo-400 p-6 text-white flex flex-col justify-center items-center rounded-t-lg h-32">
+              <div className="bg-gradient-to-r from-[#363776] to-[#1e1f45] p-6 text-white flex flex-col justify-center items-center rounded-t-lg h-32">
                 <Book className="w-10 h-10 mb-2" />
                 {/* Exibe a sigla se ela existir, com estilo destacado */}
                 {curso.sigla && (
