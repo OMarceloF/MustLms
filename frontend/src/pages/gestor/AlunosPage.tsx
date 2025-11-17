@@ -1,4 +1,4 @@
-// src/pages/AlunosPage.tsx (VERSÃO ATUALIZADA)
+// frontend/src/pages/gestor/AlunosPage.tsx
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
