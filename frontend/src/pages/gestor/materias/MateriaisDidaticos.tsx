@@ -25,6 +25,7 @@ import { useParams } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+// --- Interfaces ---
 interface Material {
   id: number;
   titulo: string;
@@ -48,7 +49,7 @@ interface Professor {
 interface Turma {
   id: number;
   nome_turma: string;
-  disciplina_id?: number;
+  professor_id: number; 
 }
 
 interface Disciplina {
@@ -56,24 +57,24 @@ interface Disciplina {
   nome: string;
 }
 
-export default function MateriaisDidaticos() {
+export default function MateriaisDidaticos( ) {
+  const { id: materiaId } = useParams<{ id: string }>();
+
   const [materiais, setMateriais] = useState<Material[]>([]);
   const [filteredMateriais, setFilteredMateriais] = useState<Material[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTurma, setSelectedTurma] = useState("todas");
-  const { id: materiaId } = useParams<{ id: string }>();
 
-  // Modal / form
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingRefs, setLoadingRefs] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Referenciais
+  // Referenciais para os formulários
   const [professores, setProfessores] = useState<Professor[]>([]);
   const [turmas, setTurmas] = useState<Turma[]>([]);
-  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
+  const [disciplinaAtual, setDisciplinaAtual] = useState<Disciplina | null>(null);
 
   const [formData, setFormData] = useState({
     titulo: "",
@@ -82,38 +83,22 @@ export default function MateriaisDidaticos() {
     link: "",
     professor_id: "",
     turma_id: "",
-    disciplina_id: "",
+    disciplina_id: materiaId || "",
     arquivo: null as File | null,
   });
 
-  // 🔹 Força disciplina pela rota (como AulasGravadas)
-  useEffect(() => {
-    if (materiaId) {
-      setFormData((prev) => ({ ...prev, disciplina_id: materiaId }));
-    }
-  }, [materiaId]);
+  // --- Funções de Busca de Dados ---
 
-  // ───────────────────────────────────────────────
-  // 🔹 Fetch principal
-  // ───────────────────────────────────────────────
   const fetchMateriais = async () => {
+    if (!materiaId) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      setErrorMsg(null);
-
       const res = await fetch(`${API_URL}/api/materiais`);
       if (!res.ok) throw new Error(`Falha ao buscar materiais (${res.status})`);
-      const data = await res.json();
-      const all = Array.isArray(data) ? data : [];
-
-      const filtered = materiaId
-        ? all.filter((m) => String(m.disciplina_id) === String(materiaId))
-        : all;
-
+      const data: Material[] = await res.json();
+      const filtered = data.filter((m) => String(m.disciplina_id) === String(materiaId));
       setMateriais(filtered);
-      setFilteredMateriais(filtered);
     } catch (error: any) {
-      console.error("Erro ao buscar materiais:", error);
       setErrorMsg(error?.message || "Erro ao buscar materiais.");
     } finally {
       setLoading(false);
@@ -121,49 +106,31 @@ export default function MateriaisDidaticos() {
   };
 
   const fetchRefs = async () => {
+    if (!materiaId) return;
+    setLoadingRefs(true);
     try {
-      setLoadingRefs(true);
-      const [resProf, resTurmas, resDisc] = await Promise.all([
+      const [profRes, turmasRes, discRes] = await Promise.all([
         fetch(`${API_URL}/api/professores`),
-        fetch(`${API_URL}/api/turmas-novo`),
-        fetch(`${API_URL}/api/disciplinas-posgraduacao`),
+        fetch(`${API_URL}/api/disciplinas/${materiaId}/turmas-ativas-para-aulas`),
+        fetch(`${API_URL}/api/disciplinas/${materiaId}`),
       ]);
 
-      if (!resProf.ok || !resTurmas.ok || !resDisc.ok)
-        throw new Error("Falha ao carregar listas de referência.");
+      if (!profRes.ok || !turmasRes.ok || !discRes.ok) {
+        throw new Error("Falha ao carregar dados de referência para o formulário.");
+      }
 
       const [profData, turmasData, discData] = await Promise.all([
-        resProf.json(),
-        resTurmas.json(),
-        resDisc.json(),
+        profRes.json(),
+        turmasRes.json(),
+        discRes.json(),
       ]);
 
-      setProfessores(
-        Array.isArray(profData)
-          ? profData.map((p) => ({ id: p.id, nome: p.nome || p.name }))
-          : []
-      );
+      setProfessores(Array.isArray(profData) ? profData : []);
+      setTurmas(Array.isArray(turmasData) ? turmasData : []);
+      setDisciplinaAtual(discData);
 
-      setTurmas(
-        Array.isArray(turmasData)
-          ? turmasData.map((t) => ({
-              id: t.id,
-              nome_turma: t.nomeTurma || t.nome_turma || t.nome,
-              disciplina_id: t.disciplina_id,
-            }))
-          : []
-      );
-
-      setDisciplinas(
-        Array.isArray(discData)
-          ? discData.map((d) => ({
-              id: d.id,
-              nome: d.nome || d.titulo,
-            }))
-          : []
-      );
-    } catch (error) {
-      console.error("Erro ao carregar referências:", error);
+    } catch (error: any) {
+      setErrorMsg(error.message || "Erro ao carregar dados do formulário.");
     } finally {
       setLoadingRefs(false);
     }
@@ -172,11 +139,9 @@ export default function MateriaisDidaticos() {
   useEffect(() => {
     fetchMateriais();
     fetchRefs();
-  }, []);
+  }, [materiaId]);
 
-  // ───────────────────────────────────────────────
-  // 🔹 Filtros
-  // ───────────────────────────────────────────────
+  // --- Lógica de Filtros da Tabela ---
   useEffect(() => {
     let filtered = materiais;
     if (searchTerm) {
@@ -194,20 +159,18 @@ export default function MateriaisDidaticos() {
   }, [searchTerm, selectedTurma, materiais]);
 
   const turmasOptions = useMemo(
-    () =>
-      [...new Set(materiais.map((m) => m.turma_nome).filter(Boolean as any))] as string[],
+    () => [...new Set(materiais.map((m) => m.turma_nome).filter(Boolean as any))] as string[],
     [materiais]
   );
 
-  // ───────────────────────────────────────────────
-  // 🔹 Criar / Editar Material
-  // ───────────────────────────────────────────────
+  // --- Funções de CRUD ---
+
   const handleSave = async () => {
     if (!formData.titulo || (!formData.link && !formData.arquivo)) {
       alert("Preencha o título e um link ou arquivo.");
       return;
     }
-
+    setLoading(true);
     const form = new FormData();
     form.append("titulo", formData.titulo);
     form.append("descricao", formData.descricao);
@@ -215,64 +178,53 @@ export default function MateriaisDidaticos() {
     form.append("link", formData.link || "");
     form.append("professor_id", formData.professor_id || "");
     form.append("turma_id", formData.turma_id || "");
-    form.append(
-      "disciplina_id",
-      materiaId || formData.disciplina_id || ""
-    );
+    form.append("disciplina_id", materiaId || "");
     if (formData.arquivo) form.append("arquivo", formData.arquivo);
 
     try {
-      setLoading(true);
       const method = editingMaterial ? "PUT" : "POST";
       const url = editingMaterial
         ? `${API_URL}/api/materiais/${editingMaterial.id}`
         : `${API_URL}/api/materiais`;
 
       const res = await fetch(url, { method, body: form });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Erro ao salvar material (${res.status}): ${text}`);
-      }
+      if (!res.ok) throw new Error(`Erro ao salvar material (${res.status})`);
+      
       await fetchMateriais();
       resetForm();
     } catch (error: any) {
-      console.error("Erro ao salvar material:", error);
       setErrorMsg(error?.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ───────────────────────────────────────────────
-  // 🔹 Excluir Material
-  // ───────────────────────────────────────────────
   const handleDelete = async (id: number) => {
     if (!confirm("Deseja realmente excluir este material?")) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await fetch(`${API_URL}/api/materiais/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_URL}/api/materiais/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Erro ao excluir material.");
       await fetchMateriais();
     } catch (error: any) {
-      console.error("Erro ao excluir material:", error);
       setErrorMsg(error?.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const openEditDialog = (m: Material) => {
-    setEditingMaterial(m);
+  // --- Funções do Modal ---
+
+  const openDialog = (material: Material | null) => {
+    setEditingMaterial(material);
     setFormData({
-      titulo: m.titulo,
-      descricao: m.descricao || "",
-      data: m.data?.split("T")[0] || "",
-      link: m.link || "",
-      professor_id: m.professor_id?.toString() || "",
-      turma_id: m.turma_id?.toString() || "",
-      disciplina_id: m.disciplina_id?.toString() || "",
+      titulo: material?.titulo || "",
+      descricao: material?.descricao || "",
+      data: material?.data?.split("T")[0] || "",
+      link: material?.link || "",
+      professor_id: material?.professor_id?.toString() || "",
+      turma_id: material?.turma_id?.toString() || "",
+      disciplina_id: materiaId || "",
       arquivo: null,
     });
     setIsDialogOpen(true);
@@ -293,12 +245,19 @@ export default function MateriaisDidaticos() {
     setIsDialogOpen(false);
   };
 
-  // ───────────────────────────────────────────────
-  // 🔹 Render
-  // ───────────────────────────────────────────────
+  const handleTurmaChange = (turmaId: string) => {
+    const turmaSelecionada = turmas.find(t => t.id.toString() === turmaId);
+    const professorId = turmaSelecionada?.professor_id?.toString() || "";
+    setFormData(prev => ({
+      ...prev,
+      turma_id: turmaId,
+      professor_id: professorId,
+    }));
+  };
+
+  // --- Renderização ---
   return (
     <div className="space-y-6">
-      {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Materiais Didáticos</h2>
@@ -309,87 +268,54 @@ export default function MateriaisDidaticos() {
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingMaterial(null)} className="gap-2">
+            <Button onClick={() => openDialog(null)} className="gap-2">
               <Plus className="h-4 w-4" /> Novo Material
             </Button>
           </DialogTrigger>
 
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>
-                {editingMaterial ? "Editar Material" : "Novo Material"}
-              </DialogTitle>
+              <DialogTitle>{editingMaterial ? "Editar Material" : "Novo Material"}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-              <div>
-                <Label>Título</Label>
-                <Input
-                  value={formData.titulo}
-                  onChange={(e) =>
-                    setFormData({ ...formData, titulo: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label>Descrição</Label>
-                <Textarea
-                  value={formData.descricao}
-                  onChange={(e) =>
-                    setFormData({ ...formData, descricao: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label>Data</Label>
-                <Input
-                  type="date"
-                  value={formData.data}
-                  onChange={(e) =>
-                    setFormData({ ...formData, data: e.target.value })
-                  }
-                />
-              </div>
+              <Input placeholder="Título do material" value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} />
+              <Textarea placeholder="Descrição (opcional)" value={formData.descricao} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} />
+              <Input type="date" value={formData.data} onChange={(e) => setFormData({ ...formData, data: e.target.value })} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Turma</Label>
-                  <Select
-                    value={formData.turma_id}
-                    onValueChange={(v) => setFormData({ ...formData, turma_id: v })}
-                    disabled={loadingRefs}
-                  >
+                  <Select value={formData.turma_id} onValueChange={handleTurmaChange} disabled={loadingRefs}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a turma" />
+                      <SelectValue placeholder={loadingRefs ? "Carregando..." : "Selecione a turma"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {turmas.map((t) => (
-                        <SelectItem key={t.id} value={t.id.toString()}>
-                          {t.nome_turma}
-                        </SelectItem>
-                      ))}
+                      {turmas.length > 0 ? (
+                        turmas.map((t) => (
+                          <SelectItem key={t.id} value={t.id.toString()}>
+                            {t.nome_turma}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem disabled value="none">Nenhuma turma ativa para esta disciplina</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div>
                   <Label>Professor</Label>
                   <Select
                     value={formData.professor_id}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, professor_id: v })
-                    }
-                    disabled={loadingRefs}
+                    onValueChange={(v) => setFormData({ ...formData, professor_id: v })}
+                    disabled={loadingRefs || !!formData.turma_id}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o professor" />
+                    <SelectTrigger className={!!formData.turma_id ? "bg-gray-100 cursor-not-allowed" : ""}>
+                      <SelectValue placeholder={!formData.turma_id ? "Selecione uma turma primeiro" : "Professor"} />
                     </SelectTrigger>
                     <SelectContent>
                       {professores.map((p) => (
-                        <SelectItem key={p.id} value={p.id.toString()}>
-                          {p.nome}
-                        </SelectItem>
+                        <SelectItem key={p.id} value={p.id.toString()}>{p.nome}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -398,69 +324,31 @@ export default function MateriaisDidaticos() {
 
               <div>
                 <Label>Disciplina</Label>
-                <Select
-                  value={formData.disciplina_id}
-                  onValueChange={(v) =>
-                    setFormData({ ...formData, disciplina_id: v })
-                  }
-                  disabled={!!materiaId || loadingRefs}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a disciplina" />
+                <Select value={formData.disciplina_id} disabled>
+                  <SelectTrigger className="bg-gray-100 cursor-not-allowed">
+                    <SelectValue placeholder="Disciplina" />
                   </SelectTrigger>
                   <SelectContent>
-                    {disciplinas.map((d) => (
-                      <SelectItem key={d.id} value={d.id.toString()}>
-                        {d.nome}
+                    {disciplinaAtual && (
+                      <SelectItem value={disciplinaAtual.id.toString()}>
+                        {disciplinaAtual.nome}
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
-                {materiaId && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Disciplina fixada pela rota (ID: {materiaId})
-                  </p>
-                )}
               </div>
 
+              <Input placeholder="Link (opcional)" value={formData.link} onChange={(e) => setFormData({ ...formData, link: e.target.value })} />
               <div>
-                <Label>Link (Drive ou site)</Label>
-                <Input
-                  value={formData.link}
-                  onChange={(e) =>
-                    setFormData({ ...formData, link: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-              <div>
-                <Label>Arquivo PDF/DOC</Label>
-                <Input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      arquivo: e.target.files?.[0] || null,
-                    })
-                  }
-                />
+                <Label>Arquivo (opcional)</Label>
+                <Input type="file" onChange={(e) => setFormData({ ...formData, arquivo: e.target.files?.[0] || null })} />
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={resetForm} disabled={loading}>
-                  Cancelar
-                </Button>
+                <Button variant="outline" onClick={resetForm} disabled={loading}>Cancelar</Button>
                 <Button onClick={handleSave} disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Salvando...
-                    </>
-                  ) : editingMaterial ? (
-                    "Salvar"
-                  ) : (
-                    "Criar"
-                  )}
+                  {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                  {editingMaterial ? "Salvar" : "Criar"}
                 </Button>
               </div>
             </div>
@@ -468,126 +356,54 @@ export default function MateriaisDidaticos() {
         </Dialog>
       </div>
 
-      {/* Filtros */}
       <Card className="shadow-md rounded-2xl">
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar materiais..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+              <Input placeholder="Buscar materiais..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
-
             <Select value={selectedTurma} onValueChange={setSelectedTurma}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filtrar por turma" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Filtrar por turma" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas as Turmas</SelectItem>
-                {turmasOptions.map((t, i) => (
-                  <SelectItem key={i} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
+                {turmasOptions.map((t, i) => <SelectItem key={i} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Lista */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredMateriais.map((m) => (
-            <Card
-              key={m.id}
-              className="shadow-md rounded-2xl hover:shadow-lg transition-shadow"
-            >
-              <CardHeader>
-                <CardTitle className="text-lg">{m.titulo}</CardTitle>
-              </CardHeader>
+            <Card key={m.id} className="shadow-md rounded-2xl hover:shadow-lg transition-shadow">
+              <CardHeader><CardTitle className="text-lg">{m.titulo}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {m.descricao}
-                </p>
+                <p className="text-sm text-muted-foreground line-clamp-2">{m.descricao}</p>
                 <div className="space-y-2 text-sm">
-                  <p>
-                    <span className="font-semibold">Professor:</span>{" "}
-                    {m.professor_nome || "—"}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Turma:</span>{" "}
-                    {m.turma_nome || "—"}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Disciplina:</span>{" "}
-                    {m.disciplina_nome || "—"}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Data:</span>{" "}
-                    {m.data
-                      ? new Date(m.data).toLocaleDateString("pt-BR")
-                      : "—"}
-                  </p>
+                  <p><span className="font-semibold">Professor:</span> {m.professor_nome || "—"}</p>
+                  <p><span className="font-semibold">Turma:</span> {m.turma_nome || "—"}</p>
+                  <p><span className="font-semibold">Disciplina:</span> {m.disciplina_nome || "—"}</p>
+                  <p><span className="font-semibold">Data:</span> {m.data ? new Date(m.data).toLocaleDateString("pt-BR") : "—"}</p>
                 </div>
                 <div className="flex gap-2">
-                  {m.link && (
-                    <Button
-                      className="flex-1 gap-2"
-                      onClick={() => window.open(m.link, "_blank")}
-                    >
-                      <Download className="h-4 w-4" /> Acessar
-                    </Button>
-                  )}
-                  {m.arquivo && (
-                    <Button
-                      variant="outline"
-                      className="flex-1 gap-2"
-                      onClick={() =>
-                        window.open(`${API_URL}${m.arquivo}`, "_blank")
-                      }
-                    >
-                      <Download className="h-4 w-4" /> Baixar
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => openEditDialog(m)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleDelete(m.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  {m.link && <Button className="flex-1 gap-2" onClick={() => window.open(m.link, "_blank")}><Download className="h-4 w-4" /> Acessar</Button>}
+                  {m.arquivo && <Button variant="outline" className="flex-1 gap-2" onClick={() => window.open(`${API_URL}${m.arquivo}`, "_blank")}><Download className="h-4 w-4" /> Baixar</Button>}
+                  <Button variant="outline" size="icon" onClick={() => openDialog(m)}><Edit className="h-4 w-4" /></Button>
+                  <Button variant="outline" size="icon" onClick={() => handleDelete(m.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               </CardContent>
             </Card>
           ))}
-
           {filteredMateriais.length === 0 && !loading && (
-            <div className="col-span-full text-center text-muted-foreground py-8">
-              Nenhum material encontrado.
-            </div>
+            <div className="col-span-full text-center text-muted-foreground py-8">Nenhum material encontrado.</div>
           )}
         </div>
       )}
-
-      {errorMsg && !isDialogOpen && (
-        <p className="text-sm text-red-600">{errorMsg}</p>
-      )}
+      {errorMsg && !isDialogOpen && <p className="text-sm text-red-600">{errorMsg}</p>}
     </div>
   );
 }
