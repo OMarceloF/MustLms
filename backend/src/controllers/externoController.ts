@@ -1,39 +1,40 @@
-// backend/src/controllers/externoController.ts
 import type { Request, Response } from 'express';
+import axios from 'axios'; // 👈 Importe o axios
 
-// Node 18+ já tem fetch global. Sem dependência extra.
 export async function getFeriados(req: Request, res: Response) {
-  // ano opcional; se não vier, usa o ano atual
   const param = (req.params.ano || '').trim();
   const agora = new Date();
   const ano = param ? Number(param) : agora.getFullYear();
 
   if (!Number.isFinite(ano) || ano < 1900 || ano > 2100) {
-    return res.status(400).json({ message: 'Ano inválido' });
+    return res.status(200).json([]);
   }
 
   const url = `https://brasilapi.com.br/api/feriados/v1/${ano}`;
 
-  // timeout decente, porque a internet adora te deixar esperando
-  const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), 8000);
-
   try {
-    const upstream = await fetch(url, { signal: ac.signal });
-    const body = await upstream.text();
+    // 👇 Substituindo fetch por axios
+    const response = await axios.get(url, {
+      timeout: 5000, // Timeout de 5 segundos
+    } );
 
-    // propaga status e content-type; adiciona cache público (12h)
+    // O axios já lança um erro para status não-2xx, então a verificação de 'upstream.ok' não é necessária.
+    // Se chegarmos aqui, a resposta foi bem-sucedida.
+
     res
-      .status(upstream.status)
-      .set('Content-Type', upstream.headers.get('content-type') || 'application/json')
-      .set('Cache-Control', 'public, max-age=43200')
-      .send(body);
-  } catch (e: any) {
-    const aborted = e?.name === 'AbortError';
-    res
-      .status(aborted ? 504 : 502)
-      .json({ message: 'Falha ao consultar BrasilAPI', detail: String(e?.message || e) });
-  } finally {
-    clearTimeout(timer);
+      .status(200)
+      .set('Cache-Control', 'public, max-age=43200') // Cache de 12 horas
+      .json(response.data); // Usa response.data para obter o corpo da resposta
+
+  } catch (error: any) {
+    // O axios fornece mais detalhes no erro
+    if (axios.isAxiosError(error)) {
+      console.error(`Falha ao consultar BrasilAPI para o ano ${ano}:`, error.message);
+    } else {
+      console.error(`Erro inesperado ao buscar feriados para o ano ${ano}:`, error.message);
+    }
+    
+    // Mantém a lógica de retornar um array vazio para não quebrar o frontend
+    res.status(200).json([]);
   }
 }

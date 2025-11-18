@@ -86,30 +86,39 @@ const CalendarioDetalhePage: React.FC = (  ) => {
   }, [id, navigate]);
 
   useEffect(() => {
-    if (!calendario?.ano_letivo) return;
-
     const fetchAllData = async () => {
+      if (!id) return;
+
       setLoadingConfig(true);
       try {
-        // Adicionada a busca pelos eventos de avaliação formatados
+        // ... (toda a lógica do try permanece a mesma)
+        const calRes = await axios.get(`${API_URL}/calendarioById/${id}`);
+        if (!calRes.data || !calRes.data.ano_letivo) {
+          throw new Error('Dados do calendário ou ano letivo não encontrados');
+        }
+        const calendarioData = calRes.data;
+        setCalendario(calendarioData);
+        const anoLetivo = calendarioData.ano_letivo;
+
         const [
-          eventosCalendarioRes, 
-          usuarioRes, 
-          feriadosNacRes, 
-          configRes, 
-          periodosRes, 
+          eventosCalendarioRes,
+          usuarioRes,
+          feriadosNacRes,
+          configRes,
+          periodosRes,
           eventosCursosRes,
-          eventosAvaliacoesRes // NOVA BUSCA
+          eventosAvaliacoesRes
         ] = await Promise.all([
           axios.get(`${API_URL}/evento/${id}`),
           axios.get(`/api/check-auth`),
-          axios.get(`/api/ext/feriados`),
+          axios.get(`/api/ext/feriados/${anoLetivo}`),
           axios.get(`/api/configuracoes/calendario`),
           axios.get(`/api/periodos-letivos`),
           axios.get(`/api/calendario/gestor/eventos-cursos`),
-          axios.get(`/api/calendario/gestor/avaliacoes-formatadas`), // NOVA ROTA
+          axios.get(`/api/calendario/gestor/avaliacoes-formatadas`),
         ]);
 
+        // ... (todo o processamento de dados permanece o mesmo)
         const eventosCalendario = eventosCalendarioRes.data || [];
         const usuario = usuarioRes.data || {};
         let eventosUsuario: any[] = [];
@@ -124,20 +133,18 @@ const CalendarioDetalhePage: React.FC = (  ) => {
         }, {} as Record<string, any>));
         setEventos(eventosUnicos);
 
-        // Processa e armazena os eventos dos cursos
         const eventosCursosData = (eventosCursosRes.data || []).map((evento: any) => ({
             ...evento,
-            tipo: 'evento_curso', // Atribui um tipo para estilização
+            tipo: 'evento_curso',
         }));
         setEventosDeCursos(eventosCursosData);
 
-        // Processa e armazena os eventos de avaliações
         setEventosDeAvaliacoes(eventosAvaliacoesRes.data || []);
 
         const feriadosNac = feriadosNacRes.data || [];
         const feriadosPersStr = configRes.data?.feriados_personalizados || "";
         const feriadosNacionaisFormatados = feriadosNac.map((f: any) => ({ id: `feriado-nac-${f.date}`, nome: f.name, data: f.date, tipo: 'feriado' }));
-        const feriadosPersonalizadosFormatados = feriadosPersStr.split(',').filter((d: string) => d.trim()).map((d: string) => ({ id: `feriado-pers-${d.trim()}`, nome: 'Feriado Personalizado', data: d.trim(), tipo: 'feriado' }));
+        const feriadosPersonalizadosFormatados = feriadosPersStr.split(',').filter((d: string) => d.trim()).map((d: string) => ({ id: `feriado-pers-${d.trim()}`, nome: 'Feriado', data: d.trim(), tipo: 'feriado' }));
         setFeriados([...feriadosNacionaisFormatados, ...feriadosPersonalizadosFormatados]);
 
         const periodos = periodosRes.data || [];
@@ -150,16 +157,24 @@ const CalendarioDetalhePage: React.FC = (  ) => {
         const primeiroDiaConfig = configRes.data?.primeiro_dia_semana || 'domingo';
         setPrimeiroDiaSemana(primeiroDiaConfig === 'segunda' ? 1 : 0);
 
-      } catch (err) {
+      } catch (err) { // O erro 'err' é do tipo 'unknown'
         console.error('Erro ao buscar todos os dados do calendário:', err);
         toast.error("Falha ao carregar dados do calendário.");
+        
+        // 👇 --- CORREÇÃO APLICADA AQUI --- 👇
+        // Verificamos se 'err' é uma instância de Error antes de acessar 'message'
+        if (err instanceof Error) {
+          if (err.message.includes('Dados do calendário')) {
+              navigate('/gestor');
+          }
+        }
       } finally {
         setLoadingConfig(false);
       }
     };
 
     fetchAllData();
-  }, [id, calendario?.ano_letivo, modalAberto]);
+  }, [id, navigate, modalAberto]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

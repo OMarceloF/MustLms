@@ -454,3 +454,38 @@ export const obterVinculadosCurso = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Erro interno ao buscar professores, turmas e alunos." });
     }
 };
+
+/**
+ * @description Lista apenas as turmas ATIVAS de uma disciplina para o formulário de Aulas Gravadas.
+ * @route GET /api/disciplinas/:disciplinaId/turmas-ativas-para-aulas
+ */
+export const listarTurmasAtivasParaAulas = async (req: Request, res: Response) => {
+    const { disciplinaId } = req.params;
+
+    if (!disciplinaId) {
+        return res.status(400).json({ message: "O ID da disciplina é obrigatório." });
+    }
+
+    try {
+        // Query específica que busca turmas ativas e retorna o professor responsável
+        const query = `
+            SELECT 
+                t.id, 
+                t.nome_turma, 
+                t.professor_responsavel AS professor_id
+            FROM turmas t
+            WHERE 
+                t.disciplina_id = ? 
+                AND t.status = 'Ativa'
+            ORDER BY t.nome_turma ASC;
+        `;
+        
+        const [turmas] = await pool.query<RowDataPacket[]>(query, [disciplinaId]);
+
+        res.status(200).json(turmas);
+
+    } catch (error) {
+        console.error("Erro ao buscar turmas ativas para aulas:", error);
+        res.status(500).json({ message: "Erro interno ao buscar as turmas." });
+    }
+};
