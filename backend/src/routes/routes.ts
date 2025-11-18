@@ -373,6 +373,7 @@ import {
   salvarPPC,
   obterVinculadosCurso,
   listarTurmasPorDisciplina,
+  listarTurmasAtivasParaAulas,
   listarTurmasDeIngresso,
   listarAlunosVinculados,
   getEventosDeCursosParaGestor,
@@ -384,11 +385,9 @@ import {
   atualizarDisciplinaCurso,
   deletarDisciplinaCurso,
   listarTodasDisciplinasPosGraduacao,
-  listarDisciplinasAgrupadasPorSemestre
+  listarDisciplinasAgrupadasPorSemestre,
+  obterDisciplinaPorId
 } from '../controllers/disciplinasController';
-
-
-
 
 import {
   listarAulasGravadas,
@@ -397,6 +396,23 @@ import {
   excluirAulaGravada
 } from '../controllers/AulasGravadasController';
 
+const aulasUploadDir = path.resolve(__dirname, '..', '..', 'uploads', 'aulas');
+if (!fs.existsSync(aulasUploadDir)) {
+  fs.mkdirSync(aulasUploadDir, { recursive: true });
+}
+
+const aulasStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, aulasUploadDir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    const extension = path.extname(file.originalname);
+    cb(null, `${file.fieldname}-${uniqueSuffix}${extension}`);
+  },
+});
+
+const uploadAulas = multer({ storage: aulasStorage });
 
 // Diretório base
 const uploadDir = path.join(__dirname, "../../materiais_novos");
@@ -883,7 +899,6 @@ router.put(
   updateFuncionario
 );
 router.delete('/api/funcionarios/:id', desativarFuncionario);
-router.get('/api/ext/feriados', getFeriados);
 router.get('/api/ext/feriados/:ano', getFeriados);
 // Rotas de configuração de cores
 router.get('/api/colors', getColorsController);
@@ -916,6 +931,7 @@ router.get('/api/cursos/:cursoId/disciplinas', listarDisciplinasCurso);
 router.post('/api/cursos/:cursoId/disciplinas', adicionarDisciplinaCurso);
 router.put('/api/cursos/disciplinas/:disciplinaId', atualizarDisciplinaCurso);
 router.delete('/api/cursos/disciplinas/:disciplinaId', deletarDisciplinaCurso);
+router.get('/api/disciplinas/:id', obterDisciplinaPorId);
 
 // --- Aba "Calendário Acadêmico" ---
 router.get('/api/cursos/:cursoId/calendario', listarEventosCalendario);
@@ -1015,6 +1031,7 @@ router.get('/api/form-data/professores', getProfessoresParaForm);
 
 // ROTA PARA BUSCAR TURMAS VINCULADAS A UMA DISCIPLINA
 router.get('/api/disciplinas/:disciplinaId/turmas', listarTurmasPorDisciplina);
+router.get('/api/disciplinas/:disciplinaId/turmas-ativas-para-aulas', listarTurmasAtivasParaAulas);
 
 //PÁGINA DE VISUALIZAÇÃO COMPLETA
 router.get('/api/alunos/:id/detalhes-completos', getDetalhesCompletosAluno);
@@ -1069,5 +1086,13 @@ router.get('/api/disciplinas/:disciplinaId/relatorios', getRelatoriosDisciplina)
 
 // --- ROTA PARA O CALENDÁRIO DO GESTOR ---
 router.get('/api/calendario/gestor/eventos-cursos', getEventosDeCursosParaGestor);
+
+// ==============================================================================
+// ROTAS PARA AULAS GRAVADAS (CRUD)
+// ==============================================================================
+router.get('/api/aulas-gravadas', listarAulasGravadas);
+router.post('/api/aulas-gravadas', uploadAulas.single('arquivo'), criarAulaGravada);
+router.put('/api/aulas-gravadas/:id', uploadAulas.single('arquivo'), atualizarAulaGravada);
+router.delete('/api/aulas-gravadas/:id', excluirAulaGravada);
 
 export default router;

@@ -226,3 +226,31 @@ export const listarDisciplinasAgrupadasPorSemestre = async (req: Request, res: R
         res.status(500).json({ message: 'Erro interno ao buscar as disciplinas.' });
     }
 };
+
+/**
+ * @description Obtém os detalhes de uma disciplina específica pelo seu ID.
+ * @route GET /api/disciplinas/:id
+ */
+export const obterDisciplinaPorId = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ message: "O ID da disciplina é obrigatório." });
+    }
+
+    try {
+        const [rows] = await pool.query<RowDataPacket[]>(
+            'SELECT id, nome FROM cursos_disciplinas WHERE id = ?',
+            [id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Disciplina não encontrada.' });
+        }
+
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        console.error("Erro ao obter detalhes da disciplina:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar a disciplina.' });
+    }
+};
