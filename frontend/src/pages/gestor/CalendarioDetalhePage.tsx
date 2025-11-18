@@ -342,9 +342,9 @@ const CalendarioDetalhePage: React.FC = (  ) => {
 
         <main className="flex-1 px-0 sm:px-4 py-8 max-w-7xl mx-auto w-full">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 mt-8 gap-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center sm:text-left">
-              Calendário {calendario?.tipo} de {calendario?.ano_letivo}
-            </h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center sm:text-left">
+            Calendário Anual {calendario?.ano_letivo}
+          </h2>
           </div>
           <div className="mb-8">
             {loadingConfig ? (
