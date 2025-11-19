@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog"
 
 // Ícones
-import { Plus, Edit, Trash2, Calendar, User, Loader2, Frown } from "lucide-react"
+import { Plus, Edit, Trash2, Calendar, User, Loader2, Frown, Users } from "lucide-react"
 
 // --- INTERFACES ---
 interface Aviso {
@@ -24,10 +24,16 @@ interface Aviso {
   descricao: string
   data: string
   autor: string
+  turma_id: number | null;
 }
 
 interface AvisosProps {
   disciplinaId: string | number;
+}
+
+interface Turma {
+    id: number;
+    nome: string;
 }
 
 export default function Avisos({ disciplinaId }: AvisosProps) {
@@ -36,10 +42,11 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
 
   // --- ESTADOS DO COMPONENTE ---
   const [avisos, setAvisos] = useState<Aviso[]>([])
+  const [turmas, setTurmas] = useState<Turma[]>([]);
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [selectedAno, setSelectedAno] = useState("todos")
-  const [selectedAutor, setSelectedAutor] = useState("todos")
+  const [selectedTurma, setSelectedTurma] = useState("todos"); // NOVO ESTADO PARA FILTRO DE TURMA
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingAviso, setEditingAviso] = useState<Aviso | null>(null)
   const [formData, setFormData] = useState({
@@ -47,53 +54,69 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
     descricao: "",
     data: new Date().toISOString().split('T')[0],
     autor: user?.nome || "",
+    turma_id: "" as string | number,
   })
 
-  // --- FUNÇÃO DE BUSCA DE DADOS (API) ---
+  // --- FUNÇÕES DE BUSCA DE DADOS (API) ---
   const fetchAvisos = async () => {
     if (!disciplinaId) return;
-    setIsLoading(true);
     try {
       const response = await axios.get(`/api/disciplinas/${disciplinaId}/avisos`);
       setAvisos(response.data);
     } catch (error) {
       console.error("Erro ao buscar avisos:", error);
       toast.error("Falha ao carregar os avisos.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Efeito para carregar os dados iniciais
+  const fetchTurmas = async () => {
+    if (!disciplinaId) return;
+    try {
+        const response = await axios.get(`/api/disciplinas/${disciplinaId}/turmas-para-avisos`);
+        setTurmas(response.data);
+    } catch (error) {
+        console.error("Erro ao buscar turmas:", error);
+        toast.error("Não foi possível carregar as turmas da disciplina.");
+    }
+  };
+
   useEffect(() => {
-    fetchAvisos();
+    setIsLoading(true);
+    Promise.all([fetchAvisos(), fetchTurmas()]).finally(() => {
+        setIsLoading(false);
+    });
   }, [disciplinaId]);
 
-  // --- LÓGICA DE FILTRAGEM DINÂMICA ---
-
-  // Gera a lista de anos dinamicamente a partir dos avisos existentes
+  // --- LÓGICA DE FILTRAGEM ---
   const anosUnicos = useMemo(() => {
     const years = new Set(avisos.map(aviso => new Date(aviso.data).getFullYear()));
-    return Array.from(years).sort((a, b) => b - a); // Ordena do mais novo para o mais antigo
+    return Array.from(years).sort((a, b) => b - a);
   }, [avisos]);
-
-  const autoresUnicos = useMemo(() => [...new Set(avisos.map(a => a.autor))], [avisos]);
   
   const filteredAvisos = useMemo(() => {
     return avisos.filter(aviso => {
       const avisoAno = new Date(aviso.data).getFullYear().toString();
       const filtroAno = selectedAno === "todos" || avisoAno === selectedAno;
-      const filtroAutor = selectedAutor === "todos" || aviso.autor === selectedAutor;
-      return filtroAno && filtroAutor;
+      
+      // LÓGICA DE FILTRO DE TURMA ATUALIZADA
+      const filtroTurma = selectedTurma === "todos" || 
+                          (selectedTurma === "geral" && aviso.turma_id === null) ||
+                          String(aviso.turma_id) === selectedTurma;
+
+      return filtroAno && filtroTurma;
     });
-  }, [selectedAno, selectedAutor, avisos]);
+  }, [selectedAno, selectedTurma, avisos]);
 
   // --- FUNÇÕES CRUD (API) ---
   const handleSave = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const payload = { ...formData, autor_id: user?.id };
+    const payload = {
+        ...formData,
+        autor_id: user?.id,
+        turma_id: formData.turma_id === "todas" || !formData.turma_id ? null : Number(formData.turma_id),
+    };
 
     try {
       if (editingAviso) {
@@ -103,7 +126,7 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
         await axios.post(`/api/disciplinas/${disciplinaId}/avisos`, payload);
         toast.success("Aviso criado com sucesso!");
       }
-      fetchAvisos(); // Essencial para atualizar a lista de avisos e, consequentemente, a lista de anos
+      fetchAvisos();
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Erro ao salvar aviso:", error);
@@ -118,7 +141,7 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
     try {
       await axios.delete(`/api/avisos/${id}`);
       toast.success("Aviso excluído com sucesso!");
-      fetchAvisos(); // Atualiza a lista de avisos e a lista de anos
+      fetchAvisos();
     } catch (error) {
       console.error("Erro ao excluir aviso:", error);
       toast.error("Falha ao excluir o aviso.");
@@ -133,6 +156,7 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
       descricao: aviso.descricao,
       data: aviso.data,
       autor: aviso.autor,
+      turma_id: aviso.turma_id || "todas",
     });
     setIsDialogOpen(true);
   };
@@ -144,6 +168,7 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
         descricao: "",
         data: new Date().toISOString().split('T')[0],
         autor: user?.nome || "Usuário do Sistema",
+        turma_id: "todas",
     });
     setIsDialogOpen(true);
   };
@@ -172,6 +197,22 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
               <div>
                 <Label htmlFor="titulo">Título</Label>
                 <Input id="titulo" value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} placeholder="Ex: Início do Período Letivo" />
+              </div>
+              <div>
+                <Label htmlFor="turma">Turma</Label>
+                <Select value={formData.turma_id.toString()} onValueChange={(value) => setFormData({ ...formData, turma_id: value })}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecione a turma de destino" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="todas">Todas as Turmas</SelectItem>
+                        {turmas.map(turma => (
+                            <SelectItem key={turma.id} value={turma.id.toString()}>
+                                {turma.nome}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="descricao">Descrição</Label>
@@ -205,27 +246,26 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label className="mb-2 block">Ano</Label>
-              {/* Select agora usa a lista de anos dinâmica */}
               <Select value={selectedAno} onValueChange={setSelectedAno}>
                 <SelectTrigger><SelectValue placeholder="Filtrar por ano" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todos">Todos os Anos</SelectItem>
                   {anosUnicos.map(year => (
-                    <SelectItem key={year} value={year.toString()}>
-                        {year}
-                    </SelectItem>
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            {/* FILTRO DE AUTOR REMOVIDO E SUBSTITUÍDO PELO FILTRO DE TURMA */}
             <div>
-              <Label className="mb-2 block">Autor</Label>
-              <Select value={selectedAutor} onValueChange={setSelectedAutor}>
-                <SelectTrigger><SelectValue placeholder="Filtrar por autor" /></SelectTrigger>
+              <Label className="mb-2 block">Turma</Label>
+              <Select value={selectedTurma} onValueChange={setSelectedTurma}>
+                <SelectTrigger><SelectValue placeholder="Filtrar por turma" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos">Todos os Autores</SelectItem>
-                  {autoresUnicos.map(autor => (
-                    <SelectItem key={autor} value={autor}>{autor}</SelectItem>
+                  <SelectItem value="todos">Todas as Turmas</SelectItem>
+                  <SelectItem value="geral">Avisos Gerais (sem turma)</SelectItem>
+                  {turmas.map(turma => (
+                    <SelectItem key={turma.id} value={turma.id.toString()}>{turma.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -249,9 +289,15 @@ export default function Avisos({ disciplinaId }: AvisosProps) {
             <Card key={aviso.id} className="shadow-md rounded-2xl hover:shadow-lg transition-shadow flex flex-col">
               <CardHeader>
                 <CardTitle className="text-lg">{aviso.titulo}</CardTitle>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-2">
                   <div className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(aviso.data).toLocaleDateString("pt-BR", { timeZone: 'UTC' })}</div>
                   <div className="flex items-center gap-1"><User className="h-4 w-4" />{aviso.autor}</div>
+                  {aviso.turma_id && turmas.find(t => t.id === aviso.turma_id) && (
+                    <div className="flex items-center gap-1 text-primary font-medium">
+                        <Users className="h-4 w-4" />
+                        {turmas.find(t => t.id === aviso.turma_id)?.nome}
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow flex flex-col">

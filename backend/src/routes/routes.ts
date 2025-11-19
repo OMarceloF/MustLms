@@ -236,7 +236,8 @@ import {
   listarAvisos,
   criarAviso,
   atualizarAviso,
-  excluirAviso
+  excluirAviso,
+  getTurmasParaAvisos
 } from '../controllers/avisosController';
 
 import {
@@ -1137,5 +1138,6 @@ router.get('/api/disciplinas/:disciplinaId/avisos', listarAvisos);
 router.post('/api/disciplinas/:disciplinaId/avisos', criarAviso);
 router.put('/api/avisos/:avisoId', atualizarAviso);
 router.delete('/api/avisos/:avisoId', excluirAviso);
+router.get('/api/disciplinas/:disciplinaId/turmas-para-avisos', getTurmasParaAvisos);
 
 export default router;
