@@ -1,14 +1,17 @@
+"use client"
 
-// src/pages/VisualizarProfessorPage.tsx
-
+import { Button } from '../aluno/components/ui/button';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios'; // Importe o axios
 import { toast } from 'sonner';
+
+// Componentes e Ícones
 import { User, FileText, Briefcase, Download, Loader2, RefreshCw, Mail, Phone, MapPin, Calendar, Lock, UserCheck } from 'lucide-react';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import SidebarGestor from "./components/Sidebar";
 
-// --- Interfaces Adaptadas para Funcionário ---
+// --- Interfaces (Mantidas como estavam) ---
 interface FuncionarioDetalhes {
   id: number;
   nome: string;
@@ -51,96 +54,59 @@ interface FuncionarioCompleto {
   contratos: Contrato[];
 }
 
-// --- DADOS MOCKADOS ---
-const mockFuncionarioCompleto: FuncionarioCompleto = {
-  funcionario: {
-    id: 6,
-    nome: "Dr. Carlos Andrade",
-    cpf: "123.456.789-00",
-    login: "carlos.andrade",
-    email: "carlos.andrade@faculdade.edu.br",
-    foto: null, // ou um link para uma imagem de placeholder
-    biografia: "Doutor em Ciência da Computação pela Universidade de São Paulo (USP), com mais de 15 anos de experiência em ensino e pesquisa. Especialista em Inteligência Artificial e Desenvolvimento de Software.",
-    telefone: "(11) 98765-4321",
-    endereco: {
-      logradouro: "Avenida Paulista",
-      numero: "1500",
-      bairro: "Bela Vista",
-      cidade: "São Paulo",
-      uf: "SP",
-      cep: "01310-200",
-    },
-    data_nascimento: "1980-05-20T00:00:00.000Z",
-    genero: "Masculino",
-    status: "Ativo",
-    cargo: "Professor Titular",
-    departamento: "Ciência da Computação",
-    role: "Professor",
-    data_admissao: "2010-02-15T00:00:00.000Z",
-  },
-  documentos: [
-    {
-      id: 1,
-      tipo_documento: "Diploma de Doutorado",
-      caminho_arquivo: "#",
-      nome_original: "diploma_doutorado_carlos.pdf",
-      data_upload: "2010-02-10T00:00:00.000Z",
-    },
-    {
-      id: 2,
-      tipo_documento: "Documento de Identidade (RG)",
-      caminho_arquivo: "#",
-      nome_original: "rg_carlos_andrade.pdf",
-      data_upload: "2010-02-10T00:00:00.000Z",
-    },
-  ],
-  contratos: [
-    {
-      id: 1,
-      nome_contrato: "Contrato de Trabalho - CLT",
-      tipo: "Tempo Integral",
-      situacao_contrato: "Ativo",
-      contrato_url: "#",
-      criado_em: "2010-02-15T00:00:00.000Z",
-    },
-  ],
-};
+// --- REMOVEMOS OS DADOS MOCKADOS ---
 
 const VisualizarProfessorPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [funcionarioCompleto, setFuncionarioCompleto] = useState<FuncionarioCompleto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<
-    'geral' | 'documentos' | 'contratos'
-  >('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'documentos' | 'contratos'>('geral');
   const [sidebarAberta, setSidebarAberta] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // --- FUNÇÃO DE BUSCA ATUALIZADA ---
   const fetchFuncionarioData = async () => {
     if (!id) return;
     setIsLoading(true);
 
-    // Simulação de chamada API com mock
-    console.log(`Buscando dados mockados para o funcionário com ID: ${id}`);
-    setTimeout(() => {
-      setFuncionarioCompleto(mockFuncionarioCompleto);
+    try {
+      // Chamada real à API
+      const response = await axios.get(`/api/funcionarios/${id}/detalhes-completos`);
+      setFuncionarioCompleto(response.data);
+      toast.success("Dados do funcionário carregados com sucesso!");
+    } catch (error) {
+      console.error("Erro ao buscar dados do funcionário:", error);
+      toast.error("Falha ao carregar os dados do funcionário.");
+      setFuncionarioCompleto(null); // Garante que não haverá dados antigos na tela
+    } finally {
       setIsLoading(false);
-      toast.info("Dados mockados carregados para visualização.");
-    }, 1000); // Simula um delay de 1 segundo
+    }
   };
 
   useEffect(() => {
     fetchFuncionarioData();
   }, [id]);
 
+  // --- O RESTANTE DO COMPONENTE PERMANECE O MESMO ---
+  // (Funções handleUpdateDocument, triggerFileInput, renderEndereco, TabButton, e o JSX de renderização)
+
   const handleUpdateDocument = async (documentoId: number, file: File) => {
-    if (!file) {
+    if (!file || !id) {
       toast.info("Nenhum arquivo selecionado.");
       return;
     }
-    toast.info(`(Mock) Atualizando documento ${documentoId} com o arquivo ${file.name}.`);
-    // Em um cenário real, aqui iria a lógica de upload
+    
+    const formData = new FormData();
+    formData.append('documento', file);
+
+    toast.promise(axios.post(`/api/alunos/${id}/documentos/${documentoId}/atualizar`, formData), {
+        loading: 'Enviando documento...',
+        success: () => {
+            fetchFuncionarioData(); // Recarrega os dados para mostrar o novo arquivo
+            return 'Documento atualizado com sucesso!';
+        },
+        error: 'Falha ao atualizar o documento.',
+    });
   };
 
   const triggerFileInput = (documentoId: number) => {
@@ -157,8 +123,8 @@ const VisualizarProfessorPage = () => {
   };
 
   const renderEndereco = (endereco: FuncionarioDetalhes['endereco']) => {
-    if (!endereco) return "Não informado";
-    return `${endereco.logradouro}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade}/${endereco.uf}, CEP: ${endereco.cep}`;
+    if (!endereco || !endereco.logradouro) return "Não informado";
+    return `${endereco.logradouro}, ${endereco.numero || 's/n'} - ${endereco.bairro}, ${endereco.cidade}/${endereco.uf}, CEP: ${endereco.cep}`;
   };
 
   const TabButton = ({ tabName, label, icon: Icon }: { tabName: typeof activeTab, label: string, icon: React.ElementType }) => (
@@ -183,7 +149,9 @@ const VisualizarProfessorPage = () => {
   if (!funcionarioCompleto) {
     return (
       <div className="text-center mt-10 p-4">
-        <p className="text-red-500">Dados do funcionário não encontrados.</p>
+        <p className="text-red-500 font-semibold text-lg">Funcionário não encontrado.</p>
+        <p className="text-gray-600">O funcionário com o ID solicitado não existe ou não pôde ser carregado.</p>
+        <Button onClick={() => navigate('/gestor')} className="mt-4">Voltar para o Início</Button>
       </div>
     );
   }
@@ -204,13 +172,13 @@ const VisualizarProfessorPage = () => {
             isMenuOpen={sidebarAberta}
             setIsMenuOpen={setSidebarAberta}
           />
-          <main className={`flex-1 transition-all duration-500 pt-20 ${isMenuOpen ? 'sm:ml-[220px]' : 'sm:ml-[60px]'}`}>
+          <main className={`flex-1 transition-all duration-500 pt-20 ${sidebarAberta ? 'sm:ml-[220px]' : 'sm:ml-[60px]'}`}>
             <div className="container mx-auto p-4 sm:p-6 lg:p-8">
               <div className="bg-white shadow-xl rounded-2xl overflow-hidden">
                 {/* --- Cabeçalho do Funcionário --- */}
                 <div className="p-6 bg-gray-50 border-b border-gray-200 flex flex-col sm:flex-row items-center gap-6">
                   <img
-                    src={funcionario.foto ? `${import.meta.env.VITE_API_URL}${funcionario.foto}` : `https://ui-avatars.com/api/?name=${funcionario.nome.replace(' ', '+')}&background=e0e7ff&color=4f46e5`}
+                    src={funcionario.foto ? `${import.meta.env.VITE_API_URL}${funcionario.foto}` : `https://ui-avatars.com/api/?name=${funcionario.nome.replace(' ', '+' )}&background=e0e7ff&color=4f46e5`}
                     alt={`Foto de ${funcionario.nome}`}
                     className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
                   />
@@ -271,7 +239,7 @@ const VisualizarProfessorPage = () => {
                                 </div>
                               </div>
                               <div className="flex gap-2">
-                                <a href={doc.caminho_arquivo} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 transition-colors"><Download size={20} /></a>
+                                <a href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 transition-colors"><Download size={20} /></a>
                                 <button onClick={() => triggerFileInput(doc.id)} className="text-gray-600 hover:text-gray-800 transition-colors"><RefreshCw size={20} /></button>
                               </div>
                             </div>
@@ -298,7 +266,7 @@ const VisualizarProfessorPage = () => {
                                 </div>
                               </div>
                               {contrato.contrato_url && (
-                                <a href={contrato.contrato_url} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 transition-colors"><Download size={20} /></a>
+                                <a href={`${import.meta.env.VITE_API_URL}${contrato.contrato_url}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 transition-colors"><Download size={20} /></a>
                               )}
                             </div>
                           ))}

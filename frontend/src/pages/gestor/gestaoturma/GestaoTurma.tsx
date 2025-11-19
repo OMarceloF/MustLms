@@ -69,7 +69,7 @@ export default function GestorTurma() {
     
     // O estado 'alunos' foi removido, usaremos 'dadosNotas.alunosComNotas' diretamente.
 
-    const fetchDadosCompletos = useCallback(async () => {
+  const fetchDadosCompletos = useCallback(async () => {
         if (!turmaId) return;
         setLoading(true);
         setLoadingNotas(true);
@@ -77,15 +77,23 @@ export default function GestorTurma() {
 
         try {
             const cacheBuster = `?_=${new Date().getTime()}`;
+            
+            // 1. Busca os dados da turma (sem alterações aqui)
             const turmaResponse = await axios.get<Turma>(`/api/turmas-novo/${turmaId}${cacheBuster}`);
             const turmaData = turmaResponse.data;
             setTurma(turmaData);
 
+            // --- CORREÇÃO PRINCIPAL AQUI ---
+            // 2. Verifica se a turmaData existe e se ela possui os IDs necessários diretamente.
             if (turmaData && turmaData.materiaId && turmaData.semestreId) {
+                
+                // 3. Monta a URL usando as propriedades corretas: turmaData.materiaId e turmaData.semestreId
                 const url = `/api/turmas/${turmaData.id}/disciplinas/${turmaData.materiaId}/periodos/${turmaData.semestreId}/dados-academicos${cacheBuster}`;
+                
                 const notasResponse = await axios.get<DadosCompletosNotas>(url);
                 setDadosNotas(notasResponse.data);
 
+                // Lógica para preencher as notas editáveis (sem alterações)
                 const initialEditableNotas: Record<string, string> = {};
                 if (notasResponse.data && notasResponse.data.alunosComNotas) {
                     notasResponse.data.alunosComNotas.forEach(aluno => {
@@ -98,12 +106,16 @@ export default function GestorTurma() {
                     });
                 }
                 setEditableNotas(initialEditableNotas);
+
             } else {
+                // Se a turma não tiver disciplina ou período vinculado, não busca notas.
                 setDadosNotas(null);
+                console.warn("Turma não possui disciplina ou período letivo vinculado. Não é possível buscar notas.");
             }
         } catch (err) {
             setErro('Erro ao carregar informações da turma.');
             toast.error("Falha ao buscar dados da turma ou das notas.");
+            console.error("Erro detalhado:", err); // Adiciona log para depuração
         } finally {
             setLoading(false);
             setLoadingNotas(false);
