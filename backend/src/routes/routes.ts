@@ -106,6 +106,12 @@ import {
 } from '../controllers/professoresController';
 import { responderPerguntaIA } from '../controllers/ia';
 import {
+  listarInformacoes,
+  criarInformacao,
+  atualizarInformacao,
+  excluirInformacao
+} from '../controllers/informacoesComplementaresController';
+import {
   contarAlunos,
   contarFuncionarios,
   contarResponsaveis,
@@ -1094,5 +1100,13 @@ router.get('/api/aulas-gravadas', listarAulasGravadas);
 router.post('/api/aulas-gravadas', uploadAulas.single('arquivo'), criarAulaGravada);
 router.put('/api/aulas-gravadas/:id', uploadAulas.single('arquivo'), atualizarAulaGravada);
 router.delete('/api/aulas-gravadas/:id', excluirAulaGravada);
+
+// ==============================================================================
+// ROTAS PARA INFORMAÇÕES COMPLEMENTARES (DISCIPLINA)
+// ==============================================================================
+router.get('/api/disciplinas/:disciplinaId/informacoes', listarInformacoes);
+router.post('/api/disciplinas/:disciplinaId/informacoes', criarInformacao);
+router.put('/api/informacoes/:id', atualizarInformacao);
+router.delete('/api/informacoes/:id', excluirInformacao);
 
 export default router;

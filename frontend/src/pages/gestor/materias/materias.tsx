@@ -2,20 +2,20 @@
 
 "use client"
 
-import React, { useState } from "react"; // Adicionado React para o useEffect
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 // Ícones...
-import { BarChart3, GraduationCap, FileText, Video, BookOpen, Info, ClipboardList, Bell } from "lucide-react"
+import { BarChart3, GraduationCap, FileText, Video, BookOpen, Info, ClipboardList, Bell } from "lucide-react";
 // Componentes das abas...
-import Relatorios from "./Relatorios"
-import NotasAvaliacoes from "./NotasAvaliacoes"
-import ProducaoAcademica from "./ProducaoAcademica"
-import AulasGravadas from "./AulasGravadas"
-import MateriaisDidaticos from "./MateriaisDidaticos"
-import InformacoesComplementares from "./InformacoesComplementares"
-import PlanoDeEnsino from "./PlanoDeEnsino"
-import Avisos from "./Avisos"
+import Relatorios from "./Relatorios";
+import NotasAvaliacoes from "./NotasAvaliacoes";
+import ProducaoAcademica from "./ProducaoAcademica";
+import AulasGravadas from "./AulasGravadas";
+import MateriaisDidaticos from "./MateriaisDidaticos";
+import InformacoesComplementares from "./InformacoesComplementares";
+import PlanoDeEnsino from "./PlanoDeEnsino";
+import Avisos from "./Avisos";
 // Componentes de layout
 import SidebarGestor from '../../gestor/components/Sidebar';
 import TopbarGestorAuto from '../components/TopbarGestorAuto';
@@ -65,12 +65,9 @@ export default function PainelAcademico() {
                 <div className="min-h-screen bg-background">
                     {/* Header */}
                     <header className="border-b bg-card shadow-sm">
-                        {/* Padding ajustado para mobile */}
                         <div className="container mx-auto px-4 py-6 md:px-6">
-                            {/* Layout flexível com quebra de linha para o header em telas pequenas */}
                             <div className="flex flex-wrap items-center justify-between gap-y-2">
                                 <div>
-                                    {/* Tamanho da fonte ajustado para mobile */}
                                     <h1 className="text-2xl font-bold text-foreground md:text-3xl">Painel Acadêmico</h1>
                                     <p className="text-muted-foreground mt-1 text-sm md:text-base">Unidade Central • Período: 2024.1</p>
                                 </div>
@@ -81,22 +78,12 @@ export default function PainelAcademico() {
                     {/* Main Content */}
                     <main className="container mx-auto px-4 py-8 md:px-6">
                         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                            {/*
-                                --- CORREÇÃO PRINCIPAL PARA RESPONSIVIDADE ---
-                                - Substituímos 'grid' por 'flex flex-wrap' para permitir que os botões quebrem a linha.
-                                - 'lg:flex-nowrap' garante que em telas grandes o layout volte a ser uma linha única.
-                                - 'justify-center lg:justify-start' centraliza os botões no mobile para um visual mais agradável e alinha à esquerda no desktop.
-                                - 'h-auto' permite que a altura do container cresça conforme os itens quebram a linha.
-                            */}
                             <TabsList className="flex h-auto flex-wrap justify-center gap-2 rounded-lg bg-muted/50 p-2 lg:flex-nowrap lg:justify-start">
+                                {/* ... Seus TabsTriggers ... */}
                                 <TabsTrigger value="relatorios" className="flex flex-1 items-center justify-center gap-2 data-[state=active]:bg-background sm:flex-none">
                                     <BarChart3 className="h-4 w-4" />
                                     <span className="hidden sm:inline">Relatórios</span>
                                 </TabsTrigger>
-                                {/* <TabsTrigger value="notas" className="flex flex-1 items-center justify-center gap-2 data-[state=active]:bg-background sm:flex-none">
-                                    <GraduationCap className="h-4 w-4" />
-                                    <span className="hidden sm:inline">Notas</span>
-                                </TabsTrigger> */}
                                 <TabsTrigger value="producao" className="flex flex-1 items-center justify-center gap-2 data-[state=active]:bg-background sm:flex-none">
                                     <FileText className="h-4 w-4" />
                                     <span className="hidden sm:inline">Atividades</span>
@@ -124,30 +111,35 @@ export default function PainelAcademico() {
                             </TabsList>
 
                             <div className="mt-8">
-                                <TabsContent value="relatorios" className="mt-0">
-                                    <Relatorios />
-                                </TabsContent>
-                                <TabsContent value="notas" className="mt-0">
-                                    <NotasAvaliacoes />
-                                </TabsContent>
-                                <TabsContent value="producao" className="mt-0">
-                                    <ProducaoAcademica />
-                                </TabsContent>
-                                <TabsContent value="aulas" className="mt-0">
-                                    <AulasGravadas />
-                                </TabsContent>
-                                <TabsContent value="materiais" className="mt-0">
-                                    <MateriaisDidaticos />
-                                </TabsContent>
-                                <TabsContent value="informacoes" className="mt-0">
-                                    <InformacoesComplementares />
-                                </TabsContent>
-                                <TabsContent value="plano" className="mt-0">
-                                    <PlanoDeEnsino />
-                                </TabsContent>
-                                <TabsContent value="avisos" className="mt-0">
-                                    <Avisos />
-                                </TabsContent>
+                                {/* A MUDANÇA NECESSÁRIA É ENVOLVER OS COMPONENTES EM UMA VERIFICAÇÃO */}
+                                {id && (
+                                    <>
+                                        <TabsContent value="relatorios" className="mt-0">
+                                            <Relatorios />
+                                        </TabsContent>
+                                        <TabsContent value="notas" className="mt-0">
+                                            <NotasAvaliacoes />
+                                        </TabsContent>
+                                        <TabsContent value="producao" className="mt-0">
+                                            <ProducaoAcademica />
+                                        </TabsContent>
+                                        <TabsContent value="aulas" className="mt-0">
+                                            <AulasGravadas />
+                                        </TabsContent>
+                                        <TabsContent value="materiais" className="mt-0">
+                                            <MateriaisDidaticos />
+                                        </TabsContent>
+                                        <TabsContent value="informacoes" className="mt-0">
+                                            <InformacoesComplementares disciplinaId={id} />
+                                        </TabsContent>
+                                        <TabsContent value="plano" className="mt-0">
+                                            <PlanoDeEnsino />
+                                        </TabsContent>
+                                        <TabsContent value="avisos" className="mt-0">
+                                            <Avisos />
+                                        </TabsContent>
+                                    </>
+                                )}
                             </div>
                         </Tabs>
                     </main>
