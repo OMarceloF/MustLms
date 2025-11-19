@@ -133,7 +133,7 @@ export default function PainelAcademico() {
                                             <InformacoesComplementares disciplinaId={id} />
                                         </TabsContent>
                                         <TabsContent value="plano" className="mt-0">
-                                            <PlanoDeEnsino />
+                                            <PlanoDeEnsino disciplinaId={id} />
                                         </TabsContent>
                                         <TabsContent value="avisos" className="mt-0">
                                             <Avisos />

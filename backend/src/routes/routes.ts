@@ -386,6 +386,12 @@ import {
 } from '../controllers/cursosController';
 
 import {
+  getPlanoDeEnsino,
+  upsertPlanoDeEnsino,
+  deletePlanoDeEnsino
+} from '../controllers/planoEnsinoController';
+
+import {
   listarDisciplinasCurso,
   adicionarDisciplinaCurso,
   atualizarDisciplinaCurso,
@@ -1108,5 +1114,12 @@ router.get('/api/disciplinas/:disciplinaId/informacoes', listarInformacoes);
 router.post('/api/disciplinas/:disciplinaId/informacoes', criarInformacao);
 router.put('/api/informacoes/:id', atualizarInformacao);
 router.delete('/api/informacoes/:id', excluirInformacao);
+
+// ==============================================================================
+// ROTAS PARA PLANO DE ENSINO (DISCIPLINA)
+// ==============================================================================
+router.get('/api/disciplinas/:disciplinaId/plano-ensino', getPlanoDeEnsino);
+router.post('/api/disciplinas/:disciplinaId/plano-ensino', upsertPlanoDeEnsino);
+router.delete('/api/disciplinas/:disciplinaId/plano-ensino', deletePlanoDeEnsino);
 
 export default router;
