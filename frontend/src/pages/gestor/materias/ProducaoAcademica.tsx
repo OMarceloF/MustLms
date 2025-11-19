@@ -1,30 +1,34 @@
 // app/producao-academica/ProducaoAcademica.tsx
+
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 // Ícones
 import { Search, HelpCircle, X, Frown } from "lucide-react"
+// Componentes UI (shadcn/ui)
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { Separator } from "../components/ui/separator"
-// Componentes locais
+// Componentes locais da página
 import { ActivityCard } from "./components/activity-card"
 import { HelpModal } from "./components/help-modal"
 import { CreatedActivityItem } from "./components/created-activity-item"
-import { ActivityModal } from "./components/ActivityModal" // 1. Importe o novo modal
+import { ActivityModal } from "./components/ActivityModal"
 // Mocks e Tipos
-import { ACTIVITY_TYPES, ActivityType } from "../../lib/activity-types" // Importe também o tipo
+import { ACTIVITY_TYPES, ActivityType } from "../../lib/activity-types"
 import { CREATED_ACTIVITIES_MOCK } from "../../lib/created-activities"
 
-export default function ProducaoAcademica() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sortBy, setSortBy] = useState<"used" | "alpha" | "favorites">("used")
-  const [showHelpModal, setShowHelpModal] = useState(false)
-  
-  // 2. Estado para controlar o modal da atividade
-  const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null)
+type SortByType = "used" | "alpha" | "favorites";
 
+export default function ProducaoAcademica() {
+  // --- Estados do Componente ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortByType>("used");
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
+  
+  // Estado para gerenciar os favoritos, inicializado a partir do localStorage
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem("favoriteActivities");
@@ -33,7 +37,16 @@ export default function ProducaoAcademica() {
     return new Set();
   });
 
-  // ... (lógica de filteredActivities, sortedActivities, toggleFavorite permanece a mesma)
+  // Efeito para salvar os favoritos no localStorage sempre que eles mudarem
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("favoriteActivities", JSON.stringify(Array.from(favorites)));
+    }
+  }, [favorites]);
+
+  // --- Lógica de Manipulação de Dados ---
+
+  // Filtra as atividades com base na busca do usuário
   const filteredActivities = useMemo(() => {
     if (!searchQuery) return ACTIVITY_TYPES;
     const query = searchQuery.toLowerCase().trim();
@@ -43,31 +56,55 @@ export default function ProducaoAcademica() {
     );
   }, [searchQuery]);
 
+  // Ordena as atividades filtradas com base no critério selecionado
   const sortedActivities = useMemo(() => {
     const sorted = [...filteredActivities];
-    // ... (sua lógica de ordenação)
-    return sorted;
+    switch (sortBy) {
+      case "alpha":
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      case "favorites":
+        return sorted.sort((a, b) => {
+          const aIsFav = favorites.has(a.id);
+          const bIsFav = favorites.has(b.id);
+          if (aIsFav === bIsFav) return 0;
+          return aIsFav ? -1 : 1;
+        });
+      case "used": // "Mais usados" (ordem padrão do mock)
+      default:
+        return sorted;
+    }
   }, [filteredActivities, sortBy, favorites]);
 
+  // Adiciona ou remove uma atividade dos favoritos
   const toggleFavorite = (id: string) => {
-    // ... (sua lógica de favoritar)
+    setFavorites(prevFavorites => {
+      const newFavorites = new Set(prevFavorites);
+      if (newFavorites.has(id)) {
+        newFavorites.delete(id);
+      } else {
+        newFavorites.add(id);
+      }
+      return newFavorites;
+    });
   };
 
-  // 3. Função para abrir o modal
+  // --- Funções de Controle do Modal ---
+
+  // Abre o modal com a atividade selecionada
   const handleSelectActivity = (activity: ActivityType) => {
-    setSelectedActivity(activity)
-  }
+    setSelectedActivity(activity);
+  };
 
-  // 4. Função para fechar o modal
+  // Fecha o modal
   const handleCloseModal = () => {
-    setSelectedActivity(null)
-  }
+    setSelectedActivity(null);
+  };
 
+  // --- Renderização do Componente ---
   return (
     <>
-      {/* Seção 1: Adicionar Atividade ou Recurso (sem alterações) */}
+      {/* Seção 1: Adicionar Atividade ou Recurso */}
       <div className="border-b border-border bg-card p-6">
-        {/* ... seu código JSX existente para o cabeçalho e filtros ... */}
         <div className="mx-auto max-w-7xl">
           {/* Cabeçalho da seção */}
           <div className="mb-6 flex items-start justify-between gap-4">
@@ -78,10 +115,10 @@ export default function ProducaoAcademica() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={() => setShowHelpModal(true)} title="Ajuda">
+              <Button variant="outline" size="icon" onClick={() => setShowHelpModal(true)} aria-label="Ajuda">
                 <HelpCircle className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => window.history.back()} title="Fechar">
+              <Button variant="outline" size="icon" onClick={() => window.history.back()} aria-label="Fechar">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -99,7 +136,7 @@ export default function ProducaoAcademica() {
                 className="pl-9"
               />
             </div>
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <Select value={sortBy} onValueChange={(value: SortByType) => setSortBy(value)}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue />
               </SelectTrigger>
@@ -130,7 +167,6 @@ export default function ProducaoAcademica() {
                   activity={activity}
                   isFavorite={favorites.has(activity.id)}
                   onToggleFavorite={() => toggleFavorite(activity.id)}
-                  // 5. Atualize o onSelect para passar o objeto da atividade completo
                   onSelect={() => handleSelectActivity(activity)}
                 />
               ))}
@@ -139,10 +175,12 @@ export default function ProducaoAcademica() {
         </div>
       </div>
 
-      {/* ... Separador e Seção 2 (sem alterações) ... */}
+      {/* Separador */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Separator className="my-8" />
       </div>
+
+      {/* Seção 2: Atividades já criadas no curso */}
       <div className="bg-background px-4 pb-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <h2 className="mb-6 text-2xl font-bold text-foreground">Atividades do Curso</h2>
@@ -157,7 +195,6 @@ export default function ProducaoAcademica() {
       {/* Modais */}
       <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
       
-      {/* 6. Renderize o novo modal de atividade */}
       <ActivityModal
         isOpen={!!selectedActivity}
         onClose={handleCloseModal}
