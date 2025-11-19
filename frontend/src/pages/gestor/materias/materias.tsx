@@ -1,25 +1,29 @@
-// frontend/src/pages/gestor/materias/materias.tsx
-
 "use client"
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Adicionado useEffect
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios"; // Adicionado axios
+import { toast } from "sonner"; // Adicionado sonner para feedback de erro
+
+// ... (outros imports)
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-// Ícones...
-import { BarChart3, GraduationCap, FileText, Video, BookOpen, Info, ClipboardList, Bell } from "lucide-react";
-// Componentes das abas...
+import { BarChart3, FileText, Video, BookOpen, Info, ClipboardList, Bell } from "lucide-react";
 import Relatorios from "./Relatorios";
-import NotasAvaliacoes from "./NotasAvaliacoes";
 import ProducaoAcademica from "./ProducaoAcademica";
 import AulasGravadas from "./AulasGravadas";
 import MateriaisDidaticos from "./MateriaisDidaticos";
 import InformacoesComplementares from "./InformacoesComplementares";
 import PlanoDeEnsino from "./PlanoDeEnsino";
 import Avisos from "./Avisos";
-// Componentes de layout
 import SidebarGestor from '../../gestor/components/Sidebar';
 import TopbarGestorAuto from '../components/TopbarGestorAuto';
 import { useAuth } from '../../../hooks/useAuth';
+
+// Nova interface para o período
+interface PeriodoLetivo {
+    id: number;
+    nome: string;
+}
 
 export default function PainelAcademico() {
 
@@ -29,15 +33,31 @@ export default function PainelAcademico() {
 
     // --- ESTADOS ---
     const [sidebarAberta, setSidebarAberta] = useState(false);
-    const [activeTab, setActiveTab] = useState("relatorios");
+    const [activeTab, setActiveTab] = useState("avisos"); // Mudei para 'avisos' para testar
+    const [periodoAtual, setPeriodoAtual] = useState<PeriodoLetivo | null>(null); // <-- NOVO ESTADO
 
-    // --- VARIÁVEIS DE CONTROLE DE UI ---
+    // --- EFEITO PARA BUSCAR O PERÍODO ATUAL ---
+    useEffect(() => {
+        const fetchPeriodoAtual = async () => {
+            try {
+                const response = await axios.get('/api/periodos-letivos/atual');
+                setPeriodoAtual(response.data);
+            } catch (error) {
+                console.error("Não foi possível buscar o período letivo atual:", error);
+                // Opcional: mostrar um toast se não encontrar
+                // toast.info("Nenhum período letivo ativo no momento.");
+            }
+        };
+
+        fetchPeriodoAtual();
+    }, []); // Executa apenas uma vez, quando o componente monta
+
+    // ... (resto do seu componente, como as variáveis de UI e o outro useEffect)
     const isGestor = currentUser?.role === 'gestor';
     const isPerfilPrincipal = String(currentUser?.id) === id;
     const podeVisualizarInfoPrivada = isPerfilPrincipal || isGestor || currentUser?.role === 'professor';
     const showSidebar = !['responsavel', 'aluno'].includes(currentUser?.role ?? '');
 
-    // Efeito para controle de scroll no mobile (boa prática)
     React.useEffect(() => {
         if (sidebarAberta && window.innerWidth < 768) {
             document.body.style.overflow = 'hidden';
@@ -48,6 +68,7 @@ export default function PainelAcademico() {
             document.body.style.overflow = 'auto';
         };
     }, [sidebarAberta]);
+
 
     return (
         <div className={`dashboard-container flex min-h-screen w-full overflow-x-hidden ${showSidebar ? 'md:pl-15' : 'pl-0'}`}>
@@ -69,7 +90,10 @@ export default function PainelAcademico() {
                             <div className="flex flex-wrap items-center justify-between gap-y-2">
                                 <div>
                                     <h1 className="text-2xl font-bold text-foreground md:text-3xl">Painel Acadêmico</h1>
-                                    <p className="text-muted-foreground mt-1 text-sm md:text-base">Unidade Central • Período: 2024.1</p>
+                                    {/* AQUI ESTÁ A MUDANÇA */}
+                                    <p className="text-muted-foreground mt-1 text-sm md:text-base">
+                                        Unidade Central • Período: {periodoAtual ? periodoAtual.nome : 'Não definido'}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -111,14 +135,10 @@ export default function PainelAcademico() {
                             </TabsList>
 
                             <div className="mt-8">
-                                {/* A MUDANÇA NECESSÁRIA É ENVOLVER OS COMPONENTES EM UMA VERIFICAÇÃO */}
-                                {id && (
+                                {id ? (
                                     <>
                                         <TabsContent value="relatorios" className="mt-0">
                                             <Relatorios />
-                                        </TabsContent>
-                                        <TabsContent value="notas" className="mt-0">
-                                            <NotasAvaliacoes />
                                         </TabsContent>
                                         <TabsContent value="producao" className="mt-0">
                                             <ProducaoAcademica />
@@ -136,9 +156,13 @@ export default function PainelAcademico() {
                                             <PlanoDeEnsino disciplinaId={id} />
                                         </TabsContent>
                                         <TabsContent value="avisos" className="mt-0">
-                                            <Avisos />
+                                            <Avisos disciplinaId={id} />
                                         </TabsContent>
                                     </>
+                                ) : (
+                                    <div className="text-center p-8 text-muted-foreground">
+                                        <p>Selecione uma disciplina para ver os detalhes.</p>
+                                    </div>
                                 )}
                             </div>
                         </Tabs>

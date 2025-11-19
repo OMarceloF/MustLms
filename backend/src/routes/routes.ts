@@ -109,7 +109,8 @@ import {
   listarInformacoes,
   criarInformacao,
   atualizarInformacao,
-  excluirInformacao
+  excluirInformacao,
+  getTurmasParaInfo
 } from '../controllers/informacoesComplementaresController';
 import {
   contarAlunos,
@@ -233,6 +234,14 @@ import {
 } from './../controllers/diarioController';
 
 import {
+  listarAvisos,
+  criarAviso,
+  atualizarAviso,
+  excluirAviso,
+  getTurmasParaAvisos
+} from '../controllers/avisosController';
+
+import {
   getCalendarConfig,
   updateCalendarConfig,
 } from '../controllers/configuracoesCalendarioController';
@@ -330,7 +339,7 @@ import {
     getGradesByCurso
 } from '../controllers/gradeCurricularController';
 
-import { getPeriodosLetivos, syncPeriodosLetivos,getAllPeriodosLetivos } from '../controllers/periodosLetivosController';
+import { getPeriodosLetivos, syncPeriodosLetivos,getAllPeriodosLetivos,getPeriodoLetivoAtual } from '../controllers/periodosLetivosController';
 
 import {
   createContrato,
@@ -386,9 +395,11 @@ import {
 } from '../controllers/cursosController';
 
 import {
-  getPlanoDeEnsino,
-  upsertPlanoDeEnsino,
-  deletePlanoDeEnsino
+  listarPlanosDeEnsino,
+  criarPlanoDeEnsino,
+  atualizarPlanoDeEnsino,
+  excluirPlanoDeEnsino,
+  getTurmasParaPlano
 } from '../controllers/planoEnsinoController';
 
 import {
@@ -709,6 +720,7 @@ router.put('/api/configuracoes/calendario', updateCalendarConfig);
 router.get('/api/periodos-letivos', getPeriodosLetivos);
 router.post('/api/periodos-letivos', syncPeriodosLetivos);
 router.get('/api/periodos-letivos/todos', getAllPeriodosLetivos);
+router.get('/api/periodos-letivos/atual', getPeriodoLetivoAtual);
 
 // // 🔹 Criação de grupo
 // router.post('/api/grupos', criarGrupo);
@@ -1114,12 +1126,24 @@ router.get('/api/disciplinas/:disciplinaId/informacoes', listarInformacoes);
 router.post('/api/disciplinas/:disciplinaId/informacoes', criarInformacao);
 router.put('/api/informacoes/:id', atualizarInformacao);
 router.delete('/api/informacoes/:id', excluirInformacao);
+router.get('/api/disciplinas/:disciplinaId/turmas-para-info', getTurmasParaInfo);
 
 // ==============================================================================
 // ROTAS PARA PLANO DE ENSINO (DISCIPLINA)
 // ==============================================================================
-router.get('/api/disciplinas/:disciplinaId/plano-ensino', getPlanoDeEnsino);
-router.post('/api/disciplinas/:disciplinaId/plano-ensino', upsertPlanoDeEnsino);
-router.delete('/api/disciplinas/:disciplinaId/plano-ensino', deletePlanoDeEnsino);
+router.get('/api/disciplinas/:disciplinaId/planos-ensino', listarPlanosDeEnsino);
+router.post('/api/disciplinas/:disciplinaId/planos-ensino', criarPlanoDeEnsino);
+router.put('/api/planos-ensino/:planoId', atualizarPlanoDeEnsino);
+router.delete('/api/planos-ensino/:planoId', excluirPlanoDeEnsino);
+router.get('/api/disciplinas/:disciplinaId/turmas-para-plano', getTurmasParaPlano);
+
+// ==============================================================================
+// ROTAS PARA AVISOS (DISCIPLINA)
+// ==============================================================================
+router.get('/api/disciplinas/:disciplinaId/avisos', listarAvisos);
+router.post('/api/disciplinas/:disciplinaId/avisos', criarAviso);
+router.put('/api/avisos/:avisoId', atualizarAviso);
+router.delete('/api/avisos/:avisoId', excluirAviso);
+router.get('/api/disciplinas/:disciplinaId/turmas-para-avisos', getTurmasParaAvisos);
 
 export default router;

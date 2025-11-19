@@ -5,100 +5,136 @@ import pool from '../config/db';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 
 /**
- * @description Busca o plano de ensino de uma disciplina específica.
- * @route GET /api/disciplinas/:disciplinaId/plano-ensino
+ * @description Lista TODOS os planos de ensino de uma disciplina específica.
+ * @route GET /api/disciplinas/:disciplinaId/planos-ensino
  */
-export const getPlanoDeEnsino = async (req: Request, res: Response) => {
+export const listarPlanosDeEnsino = async (req: Request, res: Response) => {
     const { disciplinaId } = req.params;
     try {
         const [rows] = await pool.query<RowDataPacket[]>(
             `SELECT 
                 pe.id,
-                cd.nome as disciplina,
                 pe.objetivos,
                 pe.competencias,
                 pe.conteudos,
                 pe.cronograma,
-                pe.avaliacoes
+                pe.avaliacoes,
+                pe.turma_id,
+                t.nome_turma AS turma_nome
              FROM planos_ensino pe
-             JOIN cursos_disciplinas cd ON pe.disciplina_id = cd.id
-             WHERE pe.disciplina_id = ?`,
+             LEFT JOIN turmas t ON pe.turma_id = t.id
+             WHERE pe.disciplina_id = ?
+             ORDER BY t.nome_turma ASC, pe.id ASC`,
             [disciplinaId]
         );
-
-        if (rows.length > 0) {
-            res.status(200).json(rows[0]);
-        } else {
-            // Se não encontrar, retorna um objeto vazio para o frontend não quebrar
-            res.status(200).json(null);
-        }
+        res.status(200).json(rows);
     } catch (error) {
-        console.error("Erro ao buscar plano de ensino:", error);
-        res.status(500).json({ message: 'Erro interno ao buscar o plano de ensino.' });
+        console.error("Erro ao listar planos de ensino:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar os planos de ensino.' });
     }
 };
 
 /**
- * @description Cria ou atualiza o plano de ensino de uma disciplina.
- * @route POST /api/disciplinas/:disciplinaId/plano-ensino
+ * @description Cria um novo plano de ensino para uma disciplina.
+ * @route POST /api/disciplinas/:disciplinaId/planos-ensino
  */
-export const upsertPlanoDeEnsino = async (req: Request, res: Response) => {
+export const criarPlanoDeEnsino = async (req: Request, res: Response) => {
     const { disciplinaId } = req.params;
-    const { objetivos, competencias, conteudos, cronograma, avaliacoes } = req.body;
+    const { objetivos, competencias, conteudos, cronograma, avaliacoes, turma_id } = req.body;
 
-    if (!disciplinaId) {
-        return res.status(400).json({ message: 'O ID da disciplina é obrigatório.' });
+    if (!objetivos || !competencias || !conteudos) {
+        return res.status(400).json({ message: 'Campos essenciais (objetivos, competências, conteúdos) são obrigatórios.' });
     }
-
-    try {
-        // A cláusula ON DUPLICATE KEY UPDATE faz a mágica de criar ou atualizar
-        const query = `
-            INSERT INTO planos_ensino (disciplina_id, objetivos, competencias, conteudos, cronograma, avaliacoes)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-                objetivos = VALUES(objetivos),
-                competencias = VALUES(competencias),
-                conteudos = VALUES(conteudos),
-                cronograma = VALUES(cronograma),
-                avaliacoes = VALUES(avaliacoes);
-        `;
-        
-        const values = [disciplinaId, objetivos, competencias, conteudos, cronograma, avaliacoes];
-        const [result] = await pool.query<ResultSetHeader>(query, values);
-
-        // Se insertId > 0, um novo registro foi criado. Se affectedRows > 1, um registro foi atualizado.
-        if (result.insertId > 0 || result.affectedRows > 0) {
-             res.status(200).json({ message: 'Plano de ensino salvo com sucesso!' });
-        } else {
-             res.status(200).json({ message: 'Nenhuma alteração detectada.' });
-        }
-
-    } catch (error) {
-        console.error("Erro ao salvar plano de ensino:", error);
-        res.status(500).json({ message: 'Erro interno ao salvar o plano de ensino.' });
-    }
-};
-
-/**
- * @description Exclui o plano de ensino de uma disciplina.
- * @route DELETE /api/disciplinas/:disciplinaId/plano-ensino
- */
-export const deletePlanoDeEnsino = async (req: Request, res: Response) => {
-    const { disciplinaId } = req.params;
 
     try {
         const [result] = await pool.query<ResultSetHeader>(
-            'DELETE FROM planos_ensino WHERE disciplina_id = ?',
-            [disciplinaId]
+            'INSERT INTO planos_ensino (disciplina_id, objetivos, competencias, conteudos, cronograma, avaliacoes, turma_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [disciplinaId, objetivos, competencias, conteudos, cronograma, avaliacoes, turma_id || null]
+        );
+        res.status(201).json({ id: result.insertId, ...req.body });
+    } catch (error) {
+        console.error("Erro ao criar plano de ensino:", error);
+        res.status(500).json({ message: 'Erro interno ao criar o plano de ensino.' });
+    }
+};
+
+/**
+ * @description Atualiza um plano de ensino existente pelo seu ID.
+ * @route PUT /api/planos-ensino/:planoId
+ */
+export const atualizarPlanoDeEnsino = async (req: Request, res: Response) => {
+    const { planoId } = req.params;
+    const { objetivos, competencias, conteudos, cronograma, avaliacoes, turma_id } = req.body;
+
+    if (!objetivos || !competencias || !conteudos) {
+        return res.status(400).json({ message: 'Campos essenciais são obrigatórios.' });
+    }
+
+    try {
+        const [result] = await pool.query<ResultSetHeader>(
+            'UPDATE planos_ensino SET objetivos = ?, competencias = ?, conteudos = ?, cronograma = ?, avaliacoes = ?, turma_id = ? WHERE id = ?',
+            [objetivos, competencias, conteudos, cronograma, avaliacoes, turma_id || null, planoId]
         );
 
         if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Plano de ensino não encontrado para esta disciplina.' });
+            return res.status(404).json({ message: 'Plano de ensino não encontrado.' });
         }
+        res.status(200).json({ message: 'Plano de ensino atualizado com sucesso.' });
+    } catch (error) {
+        console.error("Erro ao atualizar plano de ensino:", error);
+        res.status(500).json({ message: 'Erro interno ao atualizar o plano.' });
+    }
+};
 
+/**
+ * @description Exclui um plano de ensino pelo seu ID.
+ * @route DELETE /api/planos-ensino/:planoId
+ */
+export const excluirPlanoDeEnsino = async (req: Request, res: Response) => {
+    const { planoId } = req.params;
+    try {
+        const [result] = await pool.query<ResultSetHeader>(
+            'DELETE FROM planos_ensino WHERE id = ?',
+            [planoId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Plano de ensino não encontrado.' });
+        }
         res.status(200).json({ message: 'Plano de ensino excluído com sucesso.' });
     } catch (error) {
         console.error("Erro ao excluir plano de ensino:", error);
         res.status(500).json({ message: 'Erro interno ao excluir o plano.' });
+    }
+};
+
+/**
+ * @description Lista apenas as turmas ATIVAS de uma disciplina para o seletor do Plano de Ensino.
+ * @route GET /api/disciplinas/:disciplinaId/turmas-para-plano
+ */
+export const getTurmasParaPlano = async (req: Request, res: Response) => {
+    const { disciplinaId } = req.params;
+
+    if (!disciplinaId) {
+        return res.status(400).json({ message: "O ID da disciplina é obrigatório." });
+    }
+
+    try {
+        const query = `
+            SELECT 
+                t.id, 
+                t.nome_turma AS nome
+            FROM turmas t
+            WHERE 
+                t.disciplina_id = ? 
+                AND t.status = 'Ativa'
+            ORDER BY t.nome_turma ASC;
+        `;
+        
+        const [turmas] = await pool.query<RowDataPacket[]>(query, [disciplinaId]);
+        res.status(200).json(turmas);
+    } catch (error) {
+        console.error("Erro ao buscar turmas ativas para o plano de ensino:", error);
+        res.status(500).json({ message: "Erro interno ao buscar as turmas." });
     }
 };
