@@ -103,6 +103,7 @@ import {
   getProfessorStats,
   getNotasByProfessor,
   getFaltasMensaisByProfessor,
+  getFuncionarioDetalhesCompletos,
 } from '../controllers/professoresController';
 import { responderPerguntaIA } from '../controllers/ia';
 import {
@@ -209,6 +210,7 @@ import {
     adicionarAlunosTurma,
     removerAlunoDaTurma,
     updateAlunoTurmaStatus,
+    getTurmasAtivasParaFiltro,
 } from '../controllers/turmasControllerNovo';
 
 import { getRelatoriosDisciplina } from '../controllers/relatoriosDisciplinasController';
@@ -777,6 +779,7 @@ router.get('/api/professores/:id/alunos', getAlunosByProfessor);
 router.get('/api/professores/:id/turmas', getTurmasByProfessor);
 router.get('/api/professores/:id/notas', getNotasByProfessor);
 router.get('/api/professores/:id/faltas-mensais', getFaltasMensaisByProfessor);
+router.get('/api/funcionarios/:id/detalhes-completos', getFuncionarioDetalhesCompletos);
 
 router.post('/api/criar-envios', uploadAny.single('arquivo'), criarEnvio);
 router.get('/api/envios/professor/:id', listarEnviosPorProfessor);
@@ -916,6 +919,7 @@ router.get('/api/alunos/:id/dashboard', getAlunoDashboardData);
 router.get('/api/responsaveis/cpf/:cpf', buscarResponsavelPorCPF);
 router.get('/api/usuarios/:id/perfil', getPerfilUsuario);
 router.get('/api/funcionarios/:id/edit-data', getFuncionarioEditData);
+router.get('/api/turmas-ativas-para-filtro', getTurmasAtivasParaFiltro);
 router.post('/api/funcionarios', uploadSingleImage('foto'), criarFuncionario);
 router.put(
   '/api/funcionarios/:id',

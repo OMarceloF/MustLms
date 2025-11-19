@@ -2,12 +2,10 @@
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import bcrypt from 'bcryptjs';
-import db from '../config/db' // seu client/instância do pg
-import { QueryResult } from 'pg'
-import { RowDataPacket } from 'mysql2'
+import { RowDataPacket } from 'mysql2';
 
 interface CountRow extends RowDataPacket {
-  count: number
+  count: number;
 }
 
 /**
@@ -38,7 +36,6 @@ export const getProfessorById = async (req: Request, res: Response) => {
    WHERE u.id = ? AND u.role = 'professor' AND u.status = 'ativo'`,
       [id]
     );
-
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Professor não encontrado." });
@@ -198,15 +195,12 @@ WHERE
     // ================================
     // 9) TRATAMENTO DO SALÁRIO (pagamentos_funcionarios)
     // ================================
-    // Se vier valor e data, fazemos upsert; se não vier nenhum, removemos registro antigo
     if (salario_valor && salario_data_inicial) {
-      // Primeiro, checamos se já existe registro para este funcionario
       const [rowsPag]: any = await pool.query(
         `SELECT id FROM pagamentos_funcionarios WHERE funcionario_id = ?`,
         [id]
       );
       if (rowsPag.length > 0) {
-        // Já existe: atualiza o registro existente
         const pagamentoId = rowsPag[0].id;
         await pool.query(
           `UPDATE pagamentos_funcionarios
@@ -215,7 +209,6 @@ WHERE
           [salario_valor, salario_data_inicial, pagamentoId]
         );
       } else {
-        // Não existe: insere novo registro
         await pool.query(
           `INSERT INTO pagamentos_funcionarios
              (funcionario_id, valor, data_inicial)
@@ -224,7 +217,6 @@ WHERE
         );
       }
     } else {
-      // Se não veio salário ou data, removemos qualquer pagamento antigo
       await pool.query(
         `DELETE FROM pagamentos_funcionarios WHERE funcionario_id = ?`,
         [id]
@@ -246,13 +238,9 @@ export const excluirProfessor = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    // Remove vínculo em professores_materias
     await pool.query(`DELETE FROM professores_materias WHERE professor_id = ?`, [id]);
-    // Remove registro em pagamentos_funcionarios, caso exista
     await pool.query(`DELETE FROM pagamentos_funcionarios WHERE funcionario_id = ?`, [id]);
-    // Remove de funcionarios
     await pool.query(`DELETE FROM funcionarios WHERE id = ?`, [id]);
-    // Remove de users
     await pool.query(`DELETE FROM users WHERE id = ?`, [id]);
 
     return res.status(200).json({ message: "Professor excluído com sucesso." });
@@ -346,9 +334,9 @@ export const getAlunosByProfessor = async (req: Request, res: Response) => {
         u.email,
         u.login,
         u.role,
-        al.turma       AS turma,      -- agora vem direto da coluna turma de alunos
-        al.serie       AS serie,      -- idem para série
-        al.matricula   AS matricula,  -- já vinha de alunos
+        al.turma       AS turma,
+        al.serie       AS serie,
+        al.matricula   AS matricula,
         u.foto_url     AS foto,
         u.created_at
       FROM professores_turmas pt
@@ -365,9 +353,6 @@ export const getAlunosByProfessor = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Erro interno ao buscar alunos' });
   }
 };
-
-
-// src/controllers/professoresController.ts
 
 export const getTurmasByProfessor = async (req: Request, res: Response) => {
   const professorId = Number(req.params.id);
@@ -402,8 +387,6 @@ export const getTurmasByProfessor = async (req: Request, res: Response) => {
   }
 };
 
-
-// controllers/professoresController.ts
 export async function getProfessorStats(req: Request, res: Response) {
   const profId = Number(req.params.id);
   if (isNaN(profId)) {
@@ -411,7 +394,6 @@ export async function getProfessorStats(req: Request, res: Response) {
   }
 
   try {
-    // 1) contar turmas
     const [turmasRows] = await pool.query<CountRow[]>(
       `SELECT COUNT(*) AS count
          FROM turmas
@@ -420,7 +402,6 @@ export async function getProfessorStats(req: Request, res: Response) {
     );
     const turmasCount: number = Number(turmasRows[0].count);
 
-    // 2) contar alunos
     const [alunosRows] = await pool.query<CountRow[]>(
       `SELECT COUNT(DISTINCT at.aluno_id) AS count
          FROM alunos_turmas AS at
@@ -430,7 +411,6 @@ export async function getProfessorStats(req: Request, res: Response) {
     );
     const alunosCount: number = Number(alunosRows[0].count);
 
-    // 3) contar aulas pendentes
     const [aulasRows] = await pool.query<CountRow[]>(
       `SELECT COUNT(*) AS count
          FROM aulas AS au
@@ -442,7 +422,6 @@ export async function getProfessorStats(req: Request, res: Response) {
     );
     const aulasPendentes: number = Number(aulasRows[0].count);
 
-    // 4) contar avaliações sem notas (já ajustado)
     const [avalRows] = await pool.query<CountRow[]>(
       `SELECT COUNT(*) AS count
          FROM avaliacoes AS av
@@ -454,7 +433,6 @@ export async function getProfessorStats(req: Request, res: Response) {
     );
     const avaliacoesPendentes: number = Number(avalRows[0].count);
 
-    // AGORA sim você tem todas as variáveis no escopo:
     return res.json({
       turmasCount,
       alunosCount,
@@ -482,7 +460,6 @@ export const getNotasByProfessor = async (req: Request, res: Response) => {
       WHERE pm.professor_id = ?
     `;
     const [rows]: any = await pool.query(sql, [profId]);
-    // devolve só o array de números
     const notas = rows.map((r: any) => Number(r.nota));
     return res.json(notas);
   } catch (err) {
@@ -518,4 +495,71 @@ export const getFaltasMensaisByProfessor = async (req: Request, res: Response) =
     console.error('Erro ao buscar faltas mensais do professor:', err);
     return res.status(500).json({ error: 'Erro interno ao buscar faltas mensais' });
   }
+};
+
+/**
+ * @description Obtém todos os detalhes de um funcionário para a página de visualização.
+ * @route GET /api/funcionarios/:id/detalhes-completos
+ */
+export const getFuncionarioDetalhesCompletos = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    if (!id) {
+        return res.status(400).json({ message: "O ID do funcionário é obrigatório." });
+    }
+
+    try {
+        // 1. Buscar dados principais do funcionário (Query já corrigida)
+        const [funcionarioRows] = await pool.query<RowDataPacket[]>(
+            `SELECT 
+                u.id, u.nome, u.cpf, u.login, u.email, u.foto_url as foto, u.telefone, u.role, u.status,
+                f.biografia, f.endereco, f.data_nascimento, f.cargo, f.departamento, f.data_contratacao as data_admissao,
+                f.registro, f.formacao_academica, f.especialidades, f.instituicao
+             FROM users u
+             LEFT JOIN funcionarios f ON u.id = f.id
+             WHERE u.id = ?`,
+            [id]
+        );
+
+        if (funcionarioRows.length === 0) {
+            return res.status(404).json({ message: "Funcionário não encontrado." });
+        }
+
+        const funcionario = funcionarioRows[0];
+        if (funcionario.endereco && typeof funcionario.endereco === 'string') {
+            try {
+                funcionario.endereco = JSON.parse(funcionario.endereco);
+            } catch (e) {
+                console.error("Erro ao fazer parse do endereço JSON:", e);
+                funcionario.endereco = null;
+            }
+        }
+
+        // --- CORREÇÃO PRINCIPAL AQUI ---
+
+        // 2. Buscar documentos da NOVA tabela 'documentos_funcionarios'
+        const [documentos] = await pool.query<RowDataPacket[]>(
+            'SELECT id, tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_funcionarios WHERE funcionario_id = ?',
+            [id]
+        );
+
+        // 3. Buscar contratos da NOVA tabela 'contratos_funcionarios'
+        const [contratos] = await pool.query<RowDataPacket[]>(
+            'SELECT id, nome_contrato, tipo, situacao_contrato, contrato_url, criado_em FROM contratos_funcionarios WHERE funcionario_id = ?',
+            [id]
+        );
+
+        // 4. Montar e retornar o objeto completo
+        const respostaCompleta = {
+            funcionario,
+            documentos,
+            contratos
+        };
+
+        res.status(200).json(respostaCompleta);
+
+    } catch (error) {
+        console.error("Erro ao buscar detalhes completos do funcionário:", error);
+        res.status(500).json({ message: "Erro interno ao buscar os detalhes do funcionário." });
+    }
 };

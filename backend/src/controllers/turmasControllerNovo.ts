@@ -337,3 +337,19 @@ export const updateAlunoTurmaStatus = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Erro interno ao atualizar o status.' });
     }
 };
+
+/**
+ * @description Lista apenas as turmas com status 'Ativa' para uso em filtros.
+ * @route GET /api/turmas-ativas-para-filtro
+ */
+export const getTurmasAtivasParaFiltro = async (req: Request, res: Response) => {
+    try {
+        const [turmas] = await pool.query<RowDataPacket[]>(
+            "SELECT id, nome_turma AS nome FROM turmas WHERE status = 'Ativa' ORDER BY nome_turma ASC"
+        );
+        res.status(200).json(turmas);
+    } catch (error) {
+        console.error("Erro ao buscar turmas ativas para filtro:", error);
+        res.status(500).json({ message: "Erro interno ao buscar as turmas." });
+    }
+};

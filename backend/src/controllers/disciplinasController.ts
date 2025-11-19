@@ -9,7 +9,7 @@ import { ResultSetHeader, RowDataPacket } from 'mysql2';
 //==============================================================================
 
 /**
- * @description Lista as disciplinas de um curso específico, incluindo as turmas vinculadas.
+ * @description Lista as disciplinas de um curso específico, incluindo as turmas vinculadas em uma única query.
  * @route GET /api/cursos/:cursoId/disciplinas
  */
 export const listarDisciplinasCurso = async (req: Request, res: Response) => {
@@ -20,25 +20,35 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
   }
 
   try {
-    // ALTERAÇÃO: Substituído JSON_ARRAYAGG por GROUP_CONCAT para compatibilidade
+    // --- QUERY OTIMIZADA ---
+    // Usamos LEFT JOIN para incluir turmas e GROUP_CONCAT para agregá-las em um JSON.
     const query = `
       SELECT 
-        d.*,
-        CONCAT('[', 
-          GROUP_CONCAT(
-            IF(t.id IS NULL, '', 
-              CONCAT(
-                '{"id":', t.id, 
-                ', "nome":"', t.nome_turma, 
-                '", "ano_letivo":', IFNULL(t.ano_letivo, 'null'), 
-                '}'
-              )
-            )
-          ),
-        ']') AS turmas
+        d.id,
+        d.nome,
+        d.codigo,
+        d.creditos,
+        d.carga_horaria,
+        d.semestre,
+        d.ementa,
+        -- Agrega as turmas em um array JSON. Se não houver turmas, retorna um array vazio '[]'.
+        JSON_UNQUOTE(
+          IFNULL(
+            CONCAT('[', 
+              GROUP_CONCAT(
+                DISTINCT JSON_OBJECT(
+                  'id', t.id, 
+                  'nome', t.nome_turma,
+                  'semestre_nome', cpl.nome
+                )
+              ), 
+            ']'),
+            '[]'
+          )
+        ) AS turmas
       FROM cursos_disciplinas d
-      LEFT JOIN disciplinas_turmas dt ON d.id = dt.disciplina_id
-      LEFT JOIN turmas t ON dt.turma_id = t.id
+      LEFT JOIN turmas t ON d.id = t.disciplina_id
+      LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
       WHERE d.curso_id = ?
       GROUP BY d.id
       ORDER BY d.semestre, d.nome;
@@ -46,18 +56,13 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
     
     const [rows] = await pool.query<RowDataPacket[]>(query, [cursoId]);
 
-    // O GROUP_CONCAT retorna uma string, então precisamos fazer o parse para JSON
+    // O resultado de 'turmas' já é uma string JSON, então precisamos fazer o parse.
     const disciplinas = rows.map(row => {
       try {
         // Se 'turmas' for '[]' ou '[{...}]', o parse funciona.
-        // Se for '[null]' (caso de disciplina sem turma), o parse também funciona.
-        const parsedTurmas = JSON.parse(row.turmas);
-        
-        // Remove o 'null' se a disciplina não tiver turmas vinculadas
-        row.turmas = parsedTurmas.filter((t: any) => t !== null);
-
+        row.turmas = JSON.parse(row.turmas);
       } catch (e) {
-        // Em caso de erro no parse, define como um array vazio para segurança
+        // Em caso de erro no parse (improvável com a query acima), define como array vazio.
         row.turmas = [];
       }
       return row;
