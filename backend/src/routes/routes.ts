@@ -109,7 +109,8 @@ import {
   listarInformacoes,
   criarInformacao,
   atualizarInformacao,
-  excluirInformacao
+  excluirInformacao,
+  getTurmasParaInfo
 } from '../controllers/informacoesComplementaresController';
 import {
   contarAlunos,
@@ -1125,6 +1126,7 @@ router.get('/api/disciplinas/:disciplinaId/informacoes', listarInformacoes);
 router.post('/api/disciplinas/:disciplinaId/informacoes', criarInformacao);
 router.put('/api/informacoes/:id', atualizarInformacao);
 router.delete('/api/informacoes/:id', excluirInformacao);
+router.get('/api/disciplinas/:disciplinaId/turmas-para-info', getTurmasParaInfo);
 
 // ==============================================================================
 // ROTAS PARA PLANO DE ENSINO (DISCIPLINA)

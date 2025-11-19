@@ -1,9 +1,7 @@
-// frontend/src/pages/gestor/materias/InformacoesComplementares.tsx
-
 "use client"
 
 // Hooks e libs
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -19,75 +17,103 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "../components/ui/badge";
 
 // Ícones
-import { Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, Frown, Users } from "lucide-react";
 
-// Definição da interface para os dados de uma informação
+// --- INTERFACES ---
 interface Informacao {
   id: number;
   titulo: string;
   conteudo: string;
   categoria: string;
+  turma_id: number | null; // Adicionado
+  turma_nome?: string; // Adicionado para exibição
 }
 
-// Definição da interface para as props que o componente espera receber
 interface InformacoesComplementaresProps {
   disciplinaId: string | number;
 }
 
-// Componente principal que agora recebe 'disciplinaId' como prop
+interface Turma {
+    id: number;
+    nome: string;
+}
+
 export default function InformacoesComplementares({ disciplinaId }: InformacoesComplementaresProps) {
   
-  // Estados do componente
+  // --- ESTADOS ---
   const [informacoes, setInformacoes] = useState<Informacao[]>([]);
+  const [turmas, setTurmas] = useState<Turma[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingInfo, setEditingInfo] = useState<Informacao | null>(null);
+  const [selectedTurma, setSelectedTurma] = useState("todos"); // Estado para o filtro
   const [formData, setFormData] = useState({
     titulo: "",
     conteudo: "",
     categoria: "",
+    turma_id: "" as string | number, // Adicionado
   });
 
-  // Função para buscar os dados da API
+  // --- FUNÇÕES DE API ---
   const fetchInformacoes = async () => {
-    // A verificação garante que não faremos chamadas com ID inválido
     if (!disciplinaId) return;
-    
-    setIsLoading(true);
     try {
       const response = await axios.get(`/api/disciplinas/${disciplinaId}/informacoes`);
       setInformacoes(response.data);
     } catch (error) {
       console.error("Erro ao buscar informações:", error);
       toast.error("Falha ao carregar as informações.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // Efeito que executa a busca de dados quando o componente é montado ou o disciplinaId muda
+  const fetchTurmas = async () => {
+    if (!disciplinaId) return;
+    try {
+        const response = await axios.get(`/api/disciplinas/${disciplinaId}/turmas-para-info`);
+        setTurmas(response.data);
+    } catch (error) {
+        console.error("Erro ao buscar turmas:", error);
+        toast.error("Não foi possível carregar as turmas.");
+    }
+  };
+
   useEffect(() => {
-    fetchInformacoes();
+    setIsLoading(true);
+    Promise.all([fetchInformacoes(), fetchTurmas()]).finally(() => setIsLoading(false));
   }, [disciplinaId]);
 
-  // Função para lidar com o envio do formulário (criação ou edição)
+  // --- LÓGICA DE FILTRAGEM ---
+  const filteredInformacoes = useMemo(() => {
+    if (selectedTurma === "todos") {
+        return informacoes;
+    }
+    if (selectedTurma === "geral") {
+        return informacoes.filter(info => info.turma_id === null);
+    }
+    return informacoes.filter(info => String(info.turma_id) === selectedTurma);
+  }, [informacoes, selectedTurma]);
+
+  // --- FUNÇÕES CRUD ---
   const handleFormSubmit = async () => {
     if (isSubmitting || !disciplinaId) return;
     setIsSubmitting(true);
 
+    const payload = {
+        ...formData,
+        turma_id: formData.turma_id === "geral" || !formData.turma_id ? null : Number(formData.turma_id),
+    };
+
     try {
       if (editingInfo) {
-        // Lógica de Edição (PUT)
-        await axios.put(`/api/informacoes/${editingInfo.id}`, formData);
+        await axios.put(`/api/informacoes/${editingInfo.id}`, payload);
         toast.success("Informação atualizada com sucesso!");
       } else {
-        // Lógica de Criação (POST)
-        await axios.post(`/api/disciplinas/${disciplinaId}/informacoes`, formData);
+        await axios.post(`/api/disciplinas/${disciplinaId}/informacoes`, payload);
         toast.success("Informação criada com sucesso!");
       }
-      fetchInformacoes(); // Recarrega a lista após a operação
-      resetForm();
+      fetchInformacoes();
+      setIsDialogOpen(false);
     } catch (error) {
       console.error("Erro ao salvar informação:", error);
       toast.error("Falha ao salvar. Verifique os campos e tente novamente.");
@@ -96,46 +122,36 @@ export default function InformacoesComplementares({ disciplinaId }: InformacoesC
     }
   };
 
-  // Função para deletar uma informação
   const handleDelete = async (id: number) => {
     if (!window.confirm("Tem certeza que deseja excluir esta informação?")) return;
-
     try {
       await axios.delete(`/api/informacoes/${id}`);
       toast.success("Informação excluída com sucesso!");
-      fetchInformacoes(); // Recarrega a lista
+      fetchInformacoes();
     } catch (error) {
       console.error("Erro ao excluir informação:", error);
       toast.error("Falha ao excluir a informação.");
     }
   };
 
-  // Abre o diálogo para edição, preenchendo o formulário com os dados existentes
+  // --- CONTROLE DO MODAL ---
   const openEditDialog = (info: Informacao) => {
     setEditingInfo(info);
     setFormData({
       titulo: info.titulo,
       conteudo: info.conteudo,
       categoria: info.categoria,
+      turma_id: info.turma_id || "geral",
     });
     setIsDialogOpen(true);
   };
   
-  // Abre o diálogo para criação, garantindo que o formulário esteja limpo
   const openNewDialog = () => {
     setEditingInfo(null);
-    setFormData({ titulo: "", conteudo: "", categoria: "" });
+    setFormData({ titulo: "", conteudo: "", categoria: "", turma_id: "geral" });
     setIsDialogOpen(true);
   };
 
-  // Reseta o estado do formulário e fecha o diálogo
-  const resetForm = () => {
-    setEditingInfo(null);
-    setFormData({ titulo: "", conteudo: "", categoria: "" });
-    setIsDialogOpen(false);
-  };
-
-  // Retorna a classe de cor para a badge com base na categoria
   const getCategoriaColor = (categoria: string) => {
     switch (categoria) {
       case "Administrativo": return "bg-blue-100 text-blue-800";
@@ -146,21 +162,21 @@ export default function InformacoesComplementares({ disciplinaId }: InformacoesC
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-6">
       {/* Cabeçalho e Botão de Nova Informação */}
       <div className="flex flex-wrap items-center justify-between gap-y-3 gap-x-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-foreground">Informações Complementares</h2>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">Comunicados e informações gerais da disciplina</p>
+          <h2 className="text-2xl font-bold text-foreground">Informações Complementares</h2>
+          <p className="text-muted-foreground mt-1">Comunicados e informações gerais da disciplina</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openNewDialog} className="gap-2 w-full sm:w-auto">
+            <Button onClick={openNewDialog} className="gap-2">
               <Plus className="h-4 w-4" />
               Nova Informação
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md md:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingInfo ? "Editar Informação" : "Nova Informação"}</DialogTitle>
             </DialogHeader>
@@ -168,6 +184,23 @@ export default function InformacoesComplementares({ disciplinaId }: InformacoesC
               <div>
                 <Label htmlFor="titulo">Título</Label>
                 <Input id="titulo" value={formData.titulo} onChange={(e) => setFormData({ ...formData, titulo: e.target.value })} placeholder="Ex: Calendário de Provas" />
+              </div>
+              {/* SELETOR DE TURMA ADICIONADO */}
+              <div>
+                <Label htmlFor="turma">Turma (Opcional)</Label>
+                <Select value={String(formData.turma_id)} onValueChange={(value) => setFormData({ ...formData, turma_id: value })}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma turma específica" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="geral">Informação Geral (para todas as turmas)</SelectItem>
+                        {turmas.map(turma => (
+                            <SelectItem key={turma.id} value={String(turma.id)}>
+                                {turma.nome}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="categoria">Categoria</Label>
@@ -185,7 +218,7 @@ export default function InformacoesComplementares({ disciplinaId }: InformacoesC
                 <Textarea id="conteudo" value={formData.conteudo} onChange={(e) => setFormData({ ...formData, conteudo: e.target.value })} placeholder="Escreva o conteúdo da informação..." rows={6} />
               </div>
               <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={resetForm}>Cancelar</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                 <Button onClick={handleFormSubmit} disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {editingInfo ? "Salvar" : "Criar"}
@@ -198,40 +231,71 @@ export default function InformacoesComplementares({ disciplinaId }: InformacoesC
 
       {/* Tabela de Informações Cadastradas */}
       <Card className="shadow-md rounded-2xl overflow-hidden">
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-base md:text-lg">Informações Cadastradas</CardTitle>
+        <CardHeader className="p-6 border-b">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <CardTitle className="text-lg">Informações Cadastradas</CardTitle>
+                {/* FILTRO DE TURMAS ADICIONADO */}
+                <div className="w-full sm:w-64">
+                    <Select value={selectedTurma} onValueChange={setSelectedTurma}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Filtrar por turma..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="todos">Mostrar Todas</SelectItem>
+                            <SelectItem value="geral">Apenas Informações Gerais</SelectItem>
+                            {turmas.map(turma => (
+                                <SelectItem key={turma.id} value={String(turma.id)}>
+                                    {turma.nome}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="px-4 md:px-6">Título</TableHead>
-                  <TableHead className="px-4 md:px-6">Categoria</TableHead>
-                  <TableHead className="px-4 md:px-6 hidden sm:table-cell">Conteúdo</TableHead>
-                  <TableHead className="px-4 md:px-6 text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8">Carregando...</TableCell></TableRow>
-                ) : informacoes.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8">Nenhuma informação cadastrada.</TableCell></TableRow>
-                ) : (
-                  informacoes.map((info) => (
+          {isLoading ? (
+            <div className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" /></div>
+          ) : filteredInformacoes.length === 0 ? (
+            <div className="p-12 text-center">
+                <Frown className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-semibold">Nenhuma Informação Encontrada</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                    Tente alterar o filtro ou crie uma nova informação.
+                </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="px-6">Título</TableHead>
+                    <TableHead className="px-6 hidden md:table-cell">Categoria</TableHead>
+                    <TableHead className="px-6 hidden lg:table-cell">Vínculo</TableHead>
+                    <TableHead className="px-6 text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredInformacoes.map((info) => (
                     <TableRow key={info.id}>
-                      <TableCell className="px-4 md:px-6 py-3 font-medium">{info.titulo}</TableCell>
-                      <TableCell className="px-4 md:px-6 py-3">
+                      <TableCell className="px-6 py-4 font-medium">{info.titulo}</TableCell>
+                      <TableCell className="px-6 py-4 hidden md:table-cell">
                         <Badge className={`${getCategoriaColor(info.categoria)} border-transparent`}>{info.categoria}</Badge>
                       </TableCell>
-                      <TableCell className="px-4 md:px-6 py-3 hidden sm:table-cell">
-                        <p className="line-clamp-2 text-sm text-muted-foreground max-w-md">{info.conteudo}</p>
+                      <TableCell className="px-6 py-4 hidden lg:table-cell">
+                        {info.turma_id ? (
+                            <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                                <span>{turmas.find(t => t.id === info.turma_id)?.nome || 'Turma Específica'}</span>
+                            </div>
+                        ) : (
+                            <span>Geral</span>
+                        )}
                       </TableCell>
-                      <TableCell className="px-4 md:px-6 py-3 text-right">
-                        <div className="flex justify-end gap-1 md:gap-2">
+                      <TableCell className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="sm" onClick={() => openEditDialog(info)}>
                             <Edit className="h-4 w-4" />
-                            <span className="hidden lg:inline ml-2">Editar</span>
                           </Button>
                           <Button variant="ghost" size="sm" onClick={() => handleDelete(info.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -239,11 +303,11 @@ export default function InformacoesComplementares({ disciplinaId }: InformacoesC
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
