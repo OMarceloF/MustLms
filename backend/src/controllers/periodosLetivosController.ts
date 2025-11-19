@@ -128,3 +128,35 @@ export const syncPeriodosLetivos = async (req: Request, res: Response) => {
     connection.release();
   }
 };
+
+// --- NOVA FUNÇÃO ADICIONADA ---
+
+/**
+ * @description Busca o período letivo que está ativo na data atual.
+ * @route GET /api/periodos-letivos/atual
+ */
+export const getPeriodoLetivoAtual = async (req: Request, res: Response) => {
+    console.log(`✅ [GET /api/periodos-letivos/atual] Buscando período letivo atual.`);
+    try {
+        const hoje = new Date().toISOString().split('T')[0]; // Formato 'YYYY-MM-DD'
+
+        const [rows] = await pool.query<RowDataPacket[]>(
+            `SELECT id, nome 
+             FROM configuracoes_periodos_letivos 
+             WHERE ? BETWEEN data_inicio AND data_fim
+             LIMIT 1`,
+            [hoje]
+        );
+
+        if (rows.length > 0) {
+            console.log(`🔍 [GET /api/periodos-letivos/atual] Período encontrado: ${rows[0].nome}`);
+            res.status(200).json(rows[0]);
+        } else {
+            console.log(`⚠️ [GET /api/periodos-letivos/atual] Nenhum período letivo ativo encontrado para hoje.`);
+            res.status(404).json({ message: 'Nenhum período letivo ativo encontrado para a data atual.' });
+        }
+    } catch (error) {
+        console.error("🚨 [GET /api/periodos-letivos/atual] Erro ao buscar período letivo atual:", error);
+        res.status(500).json({ message: 'Erro interno ao buscar o período letivo.' });
+    }
+};
