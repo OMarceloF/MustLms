@@ -10,6 +10,8 @@ import SidebarGestor from './components/Sidebar';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
 import FormField from './components/ui/FormField'; // Importe o novo componente
 import { toast } from 'sonner';
+import DocumentosContratacao from "./components/DocumentosContratacao";
+
 
 // --- Funções de formatação (sem alterações) ---
 const formatCPF = (value: string): string => {
@@ -63,11 +65,30 @@ type FormValues = z.infer<typeof formSchema>;
 
 const CriarProfessorPage = () => {
   const [sidebarAberta, setSidebarAberta] = useState(false);
+  const [documentos, setDocumentos] = useState<Record<string, File | null>>({
+    rg_frente: null,
+    rg_verso: null,
+    cpf: null,
+    comprovante_residencia: null,
+    contrato_trabalho: null,
+    termo_admissao: null,
+    diploma_certificacao: null,
+    outros: null,
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [foto, setFoto] = useState<File | null>(null);
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  const handleAddDocumento = (id: string, file: File | null) => {
+    setDocumentos((prev) => ({ ...prev, [id]: file }));
+  };
+
+  const handleRemoveDocumento = (id: string) => {
+    setDocumentos((prev) => ({ ...prev, [id]: null }));
+  };
+
 
   const {
     register,
@@ -122,6 +143,12 @@ const CriarProfessorPage = () => {
       });
       if (foto) form.append("foto", foto);
 
+      Object.entries(documentos).forEach(([key, file]) => {
+        if (file) form.append(`documentos_${key}`, file);
+      });
+
+
+
       await axios.post(`/api/funcionarios`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -138,7 +165,7 @@ const CriarProfessorPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-muted/30">
+    <div className="flex min-h-screen bg-muted/20">
       <SidebarGestor
         isMenuOpen={sidebarAberta}
         setActivePage={(page) => navigate('/gestor', { state: { activePage: page } })}
@@ -149,19 +176,43 @@ const CriarProfessorPage = () => {
       <div className="flex-1 flex flex-col pt-20 px-4 sm:px-6">
         <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
 
-        <main className="flex-1 flex justify-center py-8">
-          <div className="bg-card rounded-xl shadow-sm border border-border p-6 md:p-8 max-w-4xl w-full">
-            <h1 className="text-2xl font-bold text-foreground text-center mb-8">
-              Adicionar Novo Funcionário
+        <main className="flex-1 flex justify-center py-10 px-2 sm:px-0">
+          <div className="
+          bg-card 
+          rounded-2xl 
+          shadow-lg 
+          border 
+          border-border 
+          p-6 
+          md:p-10 
+          max-w-5xl 
+          w-full
+        ">
+            {/* HEADER */}
+            <h1 className="text-3xl font-bold text-foreground text-center mb-10 tracking-tight">
+              Cadastro de Novo Funcionário
             </h1>
 
-            {error && <p className="mb-4 text-destructive text-center font-medium">{error}</p>}
+            {error && (
+              <p className="mb-6 text-destructive text-center font-medium bg-destructive/10 py-2 rounded-lg">
+                {error}
+              </p>
+            )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-              {/* --- DADOS PESSOAIS --- */}
-              <section>
-                <h2 className="text-lg font-semibold text-primary mb-4 border-b pb-2">Dados Pessoais</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
+
+              {/* SEÇÃO */}
+              <section className="space-y-6">
+                <div className="border-b pb-3">
+                  <h2 className="text-xl font-semibold text-primary">
+                    Dados Pessoais
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Informações básicas do colaborador.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField id="nome" label="Nome Completo" register={register} error={errors.nome} containerClassName="md:col-span-2" />
                   <FormField id="data_nascimento" label="Data de Nascimento" type="date" register={register} error={errors.data_nascimento} />
                   <FormField id="cpf" label="CPF" placeholder="000.000.000-00" register={register} error={errors.cpf} onChange={(e) => e.target.value = formatCPF(e.target.value)} />
@@ -170,78 +221,108 @@ const CriarProfessorPage = () => {
                 </div>
               </section>
 
-              {/* --- ENDEREÇO --- */}
-              <section>
-                <h2 className="text-lg font-semibold text-primary mb-4 border-b pb-2">Endereço</h2>
-                <div className="grid grid-cols-1 md:grid-cols-6 gap-x-6 gap-y-4 pt-4">
+              {/* ENDEREÇO */}
+              <section className="space-y-6">
+                <div className="border-b pb-3">
+                  <h2 className="text-xl font-semibold text-primary">
+                    Endereço
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Endereço completo para cadastro formal.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
                   <FormField id="endereco_cep" label="CEP" placeholder="00000-000" register={register} error={errors.endereco_cep} onChange={(e) => e.target.value = formatCEP(e.target.value)} containerClassName="md:col-span-2" />
                   <FormField id="endereco_logradouro" label="Logradouro" register={register} error={errors.endereco_logradouro} containerClassName="md:col-span-4" />
                   <FormField id="endereco_numero" label="Número" register={register} error={errors.endereco_numero} containerClassName="md:col-span-2" />
-                  <FormField id="endereco_complemento" label="Complemento (Opcional)" register={register} error={errors.endereco_complemento} containerClassName="md:col-span-4" />
+                  <FormField id="endereco_complemento" label="Complemento" register={register} error={errors.endereco_complemento} containerClassName="md:col-span-4" />
                   <FormField id="endereco_bairro" label="Bairro" register={register} error={errors.endereco_bairro} containerClassName="md:col-span-3" />
                   <FormField id="endereco_cidade" label="Cidade" register={register} error={errors.endereco_cidade} containerClassName="md:col-span-2" />
                   <FormField id="endereco_uf" label="UF" register={register} error={errors.endereco_uf} containerClassName="md:col-span-1" />
                 </div>
               </section>
 
-              {/* --- DADOS PROFISSIONAIS --- */}
-              <section>
-                <h2 className="text-lg font-semibold text-primary mb-4 border-b pb-2">Dados Profissionais</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
+              {/* DADOS PROFISSIONAIS */}
+              <section className="space-y-6">
+                <div className="border-b pb-3">
+                  <h2 className="text-xl font-semibold text-primary">
+                    Dados Profissionais
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Informações relacionadas à função e contratação.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField id="cargo" label="Cargo" as="select" options={cargos} register={register} error={errors.cargo} />
                   <FormField id="departamento" label="Departamento" as="select" options={departamentosCompletos} register={register} error={errors.departamento} />
                   <FormField id="data_contratacao" label="Data de Contratação" type="date" register={register} error={errors.data_contratacao} />
-                  <FormField id="registro" label="Registro Profissional (Opcional)" register={register} error={errors.registro} />
+                  <FormField id="registro" label="Registro Profissional" register={register} error={errors.registro} />
                   <FormField id="formacao_academica" label="Formação Acadêmica" register={register} error={errors.formacao_academica} containerClassName="md:col-span-2" />
                   <FormField id="especialidades" label="Especialidades" register={register} error={errors.especialidades} containerClassName="md:col-span-2" />
                   <FormField id="biografia" label="Biografia" as="textarea" rows={3} register={register} error={errors.biografia} containerClassName="md:col-span-2" />
                 </div>
               </section>
 
-              {/* --- ACESSO E FOTO --- */}
-              <section>
-                <h2 className="text-lg font-semibold text-primary mb-4 border-b pb-2">Acesso e Foto</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4">
-                  <FormField id="login" label="Login" register={register} error={errors.login} autoComplete="off" />
-                  <FormField id="senha" label="Senha" type="password" register={register} error={errors.senha} autoComplete="new-password" />
-                  <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-medium text-foreground">
-                      Foto do Funcionário
-                    </label>
+              {/* FOTO E ACESSO */}
+              <section className="space-y-6">
+                <div className="border-b pb-3">
+                  <h2 className="text-xl font-semibold text-primary">
+                    Acesso ao Sistema & Foto
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField id="login" label="Login" register={register} error={errors.login} />
+                  <FormField id="senha" label="Senha" type="password" register={register} error={errors.senha} />
+
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-sm font-medium text-foreground">Foto do Funcionário</label>
+
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleFotoChange}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm
+                    ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 focus-visible:ring-offset-2"
                     />
+
                     {previewFoto && (
                       <img
                         src={previewFoto}
                         alt="Prévia"
-                        // 3. Prévia da imagem com borda arredondada
-                        className="mt-3 h-24 w-24 object-cover rounded-md border border-border"
+                        className="mt-3 h-24 w-24 object-cover rounded-md border shadow-sm"
                       />
                     )}
                   </div>
                 </div>
               </section>
-              {/* --- BOTÕES --- */}
-              <div className="flex justify-end gap-4 pt-4">
+
+              {/* DOCUMENTOS */}
+              <DocumentosContratacao
+                documentos={documentos}
+                onAdd={handleAddDocumento}
+                onRemove={handleRemoveDocumento}
+              />
+
+              {/* BOTÕES */}
+              <div className="flex justify-end gap-4 pt-6 border-t">
                 <button
                   type="button"
                   onClick={() => navigate('/gestor', { state: { activePage: 'professores' } })}
-                  // 4. Estilos do botão secundário
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50"
+                  className="rounded-md h-11 px-5 border bg-background text-sm hover:bg-accent transition"
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
-                  // 5. Estilos do botão primário
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
                   disabled={isSubmitting}
+                  className="rounded-md h-11 px-6 bg-primary text-primary-foreground text-sm font-medium shadow hover:bg-primary/90 transition disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Salvando...' : 'Salvar Funcionário'}
+                  {isSubmitting ? "Salvando..." : "Salvar Funcionário"}
                 </button>
               </div>
             </form>
