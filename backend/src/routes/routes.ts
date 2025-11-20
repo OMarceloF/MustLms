@@ -310,6 +310,11 @@ import { vincularAlunoCursoPosGraduacao,
 // } from '../controllers/chatController';
 
 import {
+  listarAlunosParaTrancamento,
+  atualizarStatusMatricula,
+} from '../controllers/trancamentoController'
+
+import {
   apagarNotificacaoEvento,
   criarNotificacaoEvento,
   listarNotificacoesEventos,
@@ -1149,5 +1154,12 @@ router.post('/api/disciplinas/:disciplinaId/avisos', criarAviso);
 router.put('/api/avisos/:avisoId', atualizarAviso);
 router.delete('/api/avisos/:avisoId', excluirAviso);
 router.get('/api/disciplinas/:disciplinaId/turmas-para-avisos', getTurmasParaAvisos);
+
+// ==============================================================================
+// ROTAS PARA TRANCAMENTO DE MATRÍCULA
+// ==============================================================================
+router.get('/api/trancamento/alunos', listarAlunosParaTrancamento);
+router.patch('/api/trancamento/vinculos/:vinculoId/status', atualizarStatusMatricula); 
+
 
 export default router;
