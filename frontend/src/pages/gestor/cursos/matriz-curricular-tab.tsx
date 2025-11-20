@@ -18,6 +18,7 @@ import { Input } from "../components/ui/input"
 import { Label } from "../components/ui/label"
 import { Textarea } from "../components/ui/textarea"
 import { Plus, Pencil, Trash2, Loader2, BookCopy, Eye } from "lucide-react"
+import { MultiSelect } from "../components/ui/MultiSelect"
 
 // --- Interfaces ---
 interface Turma {
@@ -34,7 +35,8 @@ interface Disciplina {
   carga_horaria: number
   semestre: number
   ementa: string
-  turmas?: Turma[] // Armazenará as turmas buscadas da API
+  requisitos?: number[]            // <— ADICIONE ESTA LINHA
+  turmas?: Turma[]
 }
 
 interface DisciplinaFormData {
@@ -45,7 +47,9 @@ interface DisciplinaFormData {
   cargaHoraria: number
   semestre: number
   ementa: string
+  requisitos: number[]
 }
+
 
 // --- O mockTurmas não é mais necessário e pode ser removido ---
 // const mockTurmas: Turma[] = [ ... ];
@@ -58,6 +62,7 @@ export function MatrizCurricularTab() {
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingDisciplina, setEditingDisciplina] = useState<DisciplinaFormData | null>(null)
+  const [todasDisciplinas, setTodasDisciplinas] = useState<Disciplina[]>([]);
 
   const semestres = [...new Set(disciplinas.map(d => d.semestre))].sort((a, b) => a - b);
 
@@ -94,6 +99,14 @@ export function MatrizCurricularTab() {
     fetchDisciplinas();
   }, [cursoId]);
 
+  useEffect(() => {
+    if (!cursoId) return;
+    axios.get(`/api/cursos/${cursoId}/disciplinas`)
+      .then(res => setTodasDisciplinas(res.data))
+      .catch(() => setTodasDisciplinas([]));
+  }, [cursoId]);
+
+
   // ... (funções handleOpenDialog, handleDelete, handleSave, handleFormChange permanecem as mesmas) ...
   const handleOpenDialog = (disciplina: Disciplina | null) => {
     if (disciplina) {
@@ -105,10 +118,17 @@ export function MatrizCurricularTab() {
         cargaHoraria: disciplina.carga_horaria,
         semestre: disciplina.semestre,
         ementa: disciplina.ementa,
+        requisitos: disciplina.requisitos || []
       })
     } else {
       setEditingDisciplina({
-        nome: "", codigo: "", creditos: 0, cargaHoraria: 0, semestre: 1, ementa: ""
+        nome: "",
+        codigo: "",
+        creditos: 0,
+        cargaHoraria: 0,
+        semestre: 1,
+        ementa: "",
+        requisitos: []
       })
     }
     setIsDialogOpen(true)
@@ -137,8 +157,8 @@ export function MatrizCurricularTab() {
       carga_horaria: editingDisciplina.cargaHoraria,
       semestre: editingDisciplina.semestre,
       ementa: editingDisciplina.ementa,
+      requisitos: editingDisciplina.requisitos || [],
     };
-
     try {
       if (editingDisciplina.id) {
         await axios.put(`/api/cursos/disciplinas/${editingDisciplina.id}`, payload)
@@ -155,7 +175,7 @@ export function MatrizCurricularTab() {
     }
   }
 
-  const handleFormChange = (field: keyof DisciplinaFormData, value: string | number) => {
+  const handleFormChange = (field: keyof DisciplinaFormData, value: string | number | number[]) => {
     if (editingDisciplina) {
       setEditingDisciplina({ ...editingDisciplina, [field]: value });
     }
@@ -283,48 +303,137 @@ export function MatrizCurricularTab() {
       })}
 
       {/* O Dialog de edição permanece o mesmo */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl bg-card">
-          <DialogHeader>
-            <DialogTitle>{editingDisciplina?.id ? "Editar Disciplina" : "Nova Disciplina"}</DialogTitle>
-            <DialogDescription>Preencha as informações da disciplina.</DialogDescription>
-          </DialogHeader>
-          {editingDisciplina && (
-            <div className="grid gap-6 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="nome">Nome da Disciplina</Label>
-                <Input id="nome" value={editingDisciplina.nome} onChange={(e) => handleFormChange('nome', e.target.value)} className="bg-background" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="codigo">Código</Label>
-                <Input id="codigo" value={editingDisciplina.codigo} onChange={(e) => handleFormChange('codigo', e.target.value)} className="bg-background" />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="cargaHoraria">Carga Horária (h)</Label>
-                  <Input id="cargaHoraria" type="number" value={editingDisciplina.cargaHoraria} onChange={(e) => handleFormChange('cargaHoraria', Number(e.target.value))} className="bg-background" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="creditos">Créditos</Label>
-                  <Input id="creditos" type="number" value={editingDisciplina.creditos} onChange={(e) => handleFormChange('creditos', Number(e.target.value))} className="bg-background" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="semestre">Semestre</Label>
-                  <Input id="semestre" type="number" value={editingDisciplina.semestre} onChange={(e) => handleFormChange('semestre', Number(e.target.value))} className="bg-background" />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="ementa">Ementa</Label>
-                <Textarea id="ementa" value={editingDisciplina.ementa} onChange={(e) => handleFormChange('ementa', e.target.value)} rows={4} className="bg-background" />
-              </div>
+      {isDialogOpen && editingDisciplina && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent
+            className="
+      w-[95vw]
+      max-w-2xl
+      max-h-[90vh]
+      overflow-y-auto
+      rounded-2xl
+      border border-border/40
+      bg-card shadow-2xl
+      p-0
+    "
+          >
+            <div className="p-6 border-b">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold">
+                  {editingDisciplina?.id ? "Editar Disciplina" : "Nova Disciplina"}
+                </DialogTitle>
+                <DialogDescription>
+                  Configure os detalhes acadêmicos e operacionais da disciplina.
+                </DialogDescription>
+              </DialogHeader>
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} className="bg-primary text-primary-foreground">Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+            <div className="p-6 space-y-6">
+
+              {/* CARD - Informações */}
+              <div className="bg-muted/40 border rounded-xl p-5 space-y-4 shadow-sm">
+                <h3 className="font-semibold text-lg">Informações Gerais</h3>
+
+                <div className="space-y-3">
+
+                  <div>
+                    <Label>Nome da Disciplina</Label>
+                    <Input
+                      className="rounded-lg bg-background mt-1"
+                      value={editingDisciplina!.nome}
+                      onChange={(e) => handleFormChange("nome", e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Código</Label>
+                    <Input
+                      className="rounded-lg bg-background mt-1"
+                      value={editingDisciplina!.codigo}
+                      onChange={(e) => handleFormChange("codigo", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+
+                    <div>
+                      <Label>Carga Horária</Label>
+                      <Input
+                        type="number"
+                        className="rounded-lg bg-background mt-1"
+                        value={editingDisciplina!.cargaHoraria}
+                        onChange={(e) => handleFormChange("cargaHoraria", Number(e.target.value))}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Créditos</Label>
+                      <Input
+                        type="number"
+                        className="rounded-lg bg-background mt-1"
+                        value={editingDisciplina!.creditos}
+                        onChange={(e) => handleFormChange("creditos", Number(e.target.value))}
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Semestre</Label>
+                      <Input
+                        type="number"
+                        className="rounded-lg bg-background mt-1"
+                        value={editingDisciplina!.semestre}
+                        onChange={(e) => handleFormChange("semestre", Number(e.target.value))}
+                      />
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+              {/* CARD - Ementa */}
+              <div className="bg-muted/40 border rounded-xl p-5 space-y-3 shadow-sm">
+                <h3 className="font-semibold text-lg">Ementa</h3>
+                <Textarea
+                  rows={5}
+                  className="rounded-lg bg-background"
+                  value={editingDisciplina!.ementa}
+                  onChange={(e) => handleFormChange("ementa", e.target.value)}
+                />
+              </div>
+
+              {/* CARD - Requisitos */}
+              <div className="bg-muted/40 border rounded-xl p-5 space-y-3 shadow-sm">
+                <h3 className="font-semibold text-lg">Pré-requisitos</h3>
+                <p className="text-sm text-muted-foreground">
+                  Marque as disciplinas que devem ser concluídas anteriormente.
+                </p>
+
+                <MultiSelect
+                  placeholder="Selecione os pré-requisitos..."
+                  value={editingDisciplina!.requisitos || []}
+                  onChange={(v) => handleFormChange("requisitos", v)}
+                  options={todasDisciplinas
+                    .filter(d => d.id !== editingDisciplina!.id)
+                    .map(d => ({ id: d.id, label: d.nome }))}
+                />
+              </div>
+
+            </div>
+
+            <DialogFooter className="p-6 border-t flex justify-end gap-2 bg-card">
+              <Button variant="outline" className="rounded-lg" onClick={() => setIsDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button className="rounded-lg bg-primary text-primary-foreground" onClick={handleSave}>
+                Salvar Disciplina
+              </Button>
+            </DialogFooter>
+
+          </DialogContent>
+        </Dialog>)}
+
+
 
     </div>
   )
