@@ -7,7 +7,7 @@ import { toast } from "sonner"; // Adicionado sonner para feedback de erro
 
 // ... (outros imports)
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { BarChart3, FileText, Video, BookOpen, Info, ClipboardList, Bell } from "lucide-react";
+import { BarChart3, FileText, Video, BookOpen, Info, ClipboardList, Bell, Users } from "lucide-react";
 import Relatorios from "./Relatorios";
 import ProducaoAcademica from "./ProducaoAcademica";
 import AulasGravadas from "./AulasGravadas";
@@ -15,6 +15,7 @@ import MateriaisDidaticos from "./MateriaisDidaticos";
 import InformacoesComplementares from "./InformacoesComplementares";
 import PlanoDeEnsino from "./PlanoDeEnsino";
 import Avisos from "./Avisos";
+import { VinculadosTab } from "./Vinculados";
 import SidebarGestor from '../../gestor/components/Sidebar';
 import TopbarGestorAuto from '../components/TopbarGestorAuto';
 import { useAuth } from '../../../hooks/useAuth';
@@ -128,6 +129,10 @@ export default function PainelAcademico() {
                                     <ClipboardList className="h-4 w-4" />
                                     <span className="hidden sm:inline">Plano</span>
                                 </TabsTrigger>
+                                <TabsTrigger value="vinculados" className="flex flex-1 items-center justify-center gap-2 data-[state=active]:bg-background sm:flex-none">
+                                    <Users className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Vinculados</span>
+                                </TabsTrigger>
                                 <TabsTrigger value="avisos" className="flex flex-1 items-center justify-center gap-2 data-[state=active]:bg-background sm:flex-none">
                                     <Bell className="h-4 w-4" />
                                     <span className="hidden sm:inline">Avisos</span>
@@ -154,6 +159,9 @@ export default function PainelAcademico() {
                                         </TabsContent>
                                         <TabsContent value="plano" className="mt-0">
                                             <PlanoDeEnsino disciplinaId={id} />
+                                        </TabsContent>
+                                        <TabsContent value="vinculados" className="mt-0">
+                                            <VinculadosTab />
                                         </TabsContent>
                                         <TabsContent value="avisos" className="mt-0">
                                             <Avisos disciplinaId={id} />

@@ -69,20 +69,20 @@ export const ACTIVITY_TYPES: ActivityType[] = [
   //   icon: MessageSquare,
   // },
 
-  {
-    id: "task",
-    name: "Tarefa",
-    description: "Crie tarefas para os alunos entregarem trabalhos",
-    category: "assessment",
-    icon: CheckSquare,
-  },
-  {
-    id: "lesson",
-    name: "Lição",
-    description: "Criador de aulas com questões e ramificações",
-    category: "assessment",
-    icon: Zap,
-  },
+  // {
+  //   id: "task",
+  //   name: "Tarefa",
+  //   description: "Crie tarefas para os alunos entregarem trabalhos",
+  //   category: "assessment",
+  //   icon: CheckSquare,
+  // },
+  // {
+  //   id: "lesson",
+  //   name: "Lição",
+  //   description: "Criador de aulas com questões e ramificações",
+  //   category: "assessment",
+  //   icon: Zap,
+  // },
   {
     id: "quiz",
     name: "Questionário",
