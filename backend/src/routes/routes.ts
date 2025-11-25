@@ -214,6 +214,9 @@ import {
 } from '../controllers/turmasControllerNovo';
 
 import { getRelatoriosDisciplina } from '../controllers/relatoriosDisciplinasController';
+import {
+  getVinculadosByDisciplina,
+} from '../controllers/disciplinasController';
 
 import {
   getAvaliacoesByTurmaMateria,
@@ -1160,6 +1163,11 @@ router.get('/api/disciplinas/:disciplinaId/turmas-para-avisos', getTurmasParaAvi
 // ==============================================================================
 router.get('/api/trancamento/alunos', listarAlunosParaTrancamento);
 router.patch('/api/trancamento/vinculos/:vinculoId/status', atualizarStatusMatricula); 
+
+// ==============================================================================
+// ROTAS PARA A ABA DE VINCULADOS (DISCIPLINA)
+// ==============================================================================
+router.get('/api/disciplinas/:disciplinaId/vinculados', getVinculadosByDisciplina);
 
 
 export default router;
