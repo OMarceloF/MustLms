@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 import HomeGestorNovo from './gestor/homepage/homepage';
 import ProfessoresPage from './gestor/ProfessoresPage';
 import AlunosPage from './gestor/AlunosPage';
-import RelatoriosPage from './gestor/RelatoriosPage';
+import RelatoriosPage from './gestor/relatorios/Relatorios';
 import PlanoPage from './gestor/PlanoPage';
 import CalendarioPage from './gestor/CalendarioPage';
 import FinanceiroPage from './gestor/FinanceiroPage';
