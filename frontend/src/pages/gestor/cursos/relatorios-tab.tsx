@@ -1,3 +1,5 @@
+// src/pages/gestor/cursos/relatorios-tab.tsx
+
 "use client"
 
 import {
