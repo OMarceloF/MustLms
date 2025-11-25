@@ -257,3 +257,86 @@ export const obterDisciplinaPorId = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Erro interno.' });
     }
 };
+
+/**
+ * @description Obtém alunos, professores e turmas vinculados a uma disciplina específica.
+ * @route GET /api/disciplinas/:disciplinaId/vinculados
+ */
+export const getVinculadosByDisciplina = async (req: Request, res: Response) => {
+  const { disciplinaId } = req.params;
+
+  if (!disciplinaId) {
+    return res.status(400).json({ message: "O ID da disciplina é obrigatório." });
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    // Query de Professores (mantida como na versão anterior)
+    const [professores] = await connection.query<RowDataPacket[]>(`
+      SELECT DISTINCT
+          f.id,
+          f.nome,
+          f.departamento,
+          (SELECT COUNT(DISTINCT va.aluno_id) 
+           FROM vincular_aluno_curso va
+           JOIN cursos_posgraduacao cp ON va.curso_posgraduacao_id = cp.id
+           WHERE cp.coordenador_id = f.id) as orientandos
+      FROM funcionarios f
+      WHERE f.id IN (
+          SELECT DISTINCT professor_responsavel 
+          FROM turmas 
+          WHERE disciplina_id = ? AND professor_responsavel IS NOT NULL
+          UNION
+          SELECT DISTINCT c.coordenador_id
+          FROM cursos_posgraduacao c
+          JOIN cursos_disciplinas d ON c.id = d.curso_id
+          WHERE d.id = ? AND c.coordenador_id IS NOT NULL
+      ) 
+      AND f.status = 'ativo'
+      ORDER BY f.nome;
+    `, [disciplinaId, disciplinaId]);
+
+    // 🔥 CORREÇÃO APLICADA AQUI: Adicionamos 'at.status_vinculo' à query de alunos.
+    const [alunos] = await connection.query<RowDataPacket[]>(`
+      SELECT
+        u.id,
+        u.nome,
+        a.matricula,
+        at.status_vinculo as status_vinculo, -- <-- MUDANÇA AQUI
+        at.id as vinculoId
+      FROM users u
+      JOIN alunos a ON u.id = a.id
+      JOIN alunos_turmas at ON u.id = at.aluno_id
+      JOIN turmas t ON at.turma_id = t.id
+      WHERE t.disciplina_id = ? AND u.status = 'ativo'
+      ORDER BY u.nome;
+    `, [disciplinaId]);
+
+    // Query de Turmas (mantida)
+    const [turmas] = await connection.query<RowDataPacket[]>(`
+      SELECT
+        t.id,
+        t.nome_turma as codigo,
+        cpl.nome as periodo,
+        (SELECT COUNT(*) FROM alunos_turmas at WHERE at.turma_id = t.id) as alunos,
+        d.nome as disciplina
+      FROM turmas t
+      LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
+      LEFT JOIN cursos_disciplinas d ON t.disciplina_id = d.id
+      WHERE t.disciplina_id = ?
+      ORDER BY t.nome_turma;
+    `, [disciplinaId]);
+
+    res.status(200).json({
+      professores,
+      alunos,
+      turmas,
+    });
+
+  } catch (error) {
+    console.error("Erro ao buscar vinculados da disciplina:", error);
+    res.status(500).json({ message: "Erro interno ao buscar os dados vinculados." });
+  } finally {
+    connection.release();
+  }
+};
