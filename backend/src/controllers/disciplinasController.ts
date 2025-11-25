@@ -1,5 +1,3 @@
-// src/controllers/disciplinasController.ts
-
 import { Request, Response } from 'express';
 import pool from '../config/db';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
@@ -9,7 +7,7 @@ import { ResultSetHeader, RowDataPacket } from 'mysql2';
 //==============================================================================
 
 /**
- * @description Lista as disciplinas de um curso específico, incluindo as turmas vinculadas em uma única query.
+ * @description Lista as disciplinas de um curso, incluindo turmas e pré-requisitos.
  * @route GET /api/cursos/:cursoId/disciplinas
  */
 export const listarDisciplinasCurso = async (req: Request, res: Response) => {
@@ -20,8 +18,7 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
   }
 
   try {
-    // --- QUERY OTIMIZADA ---
-    // Usamos LEFT JOIN para incluir turmas e GROUP_CONCAT para agregá-las em um JSON.
+    // A query busca disciplinas, agrega turmas em um JSON e agrega requisitos em outro JSON
     const query = `
       SELECT 
         d.id,
@@ -31,7 +28,13 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
         d.carga_horaria,
         d.semestre,
         d.ementa,
-        -- Agrega as turmas em um array JSON. Se não houver turmas, retorna um array vazio '[]'.
+        -- Busca os IDs dos pré-requisitos como um array JSON simples [1, 2, 3]
+        (
+            SELECT JSON_ARRAYAGG(dr.requisito_id)
+            FROM disciplina_requisitos dr
+            WHERE dr.disciplina_id = d.id
+        ) AS requisitos,
+        -- Agrega as turmas em um array JSON de objetos
         JSON_UNQUOTE(
           IFNULL(
             CONCAT('[', 
@@ -56,106 +59,145 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
     
     const [rows] = await pool.query<RowDataPacket[]>(query, [cursoId]);
 
-    // O resultado de 'turmas' já é uma string JSON, então precisamos fazer o parse.
+    // Processa os resultados para garantir que sejam arrays válidos
     const disciplinas = rows.map(row => {
       try {
-        // Se 'turmas' for '[]' ou '[{...}]', o parse funciona.
-        row.turmas = JSON.parse(row.turmas);
+        // Parse das Turmas
+        row.turmas = typeof row.turmas === 'string' ? JSON.parse(row.turmas) : row.turmas;
+        
+        // Parse dos Requisitos
+        // O MySQL pode retornar null se não houver requisitos, ou uma string JSON
+        if (!row.requisitos) {
+            row.requisitos = [];
+        } else if (typeof row.requisitos === 'string') {
+            row.requisitos = JSON.parse(row.requisitos);
+        }
+        // Se já for array (dependendo do driver), mantém.
       } catch (e) {
-        // Em caso de erro no parse (improvável com a query acima), define como array vazio.
-        row.turmas = [];
+        console.error("Erro ao fazer parse de turmas ou requisitos:", e);
+        row.turmas = row.turmas || [];
+        row.requisitos = row.requisitos || [];
       }
       return row;
     });
 
     res.json(disciplinas);
   } catch (error) {
-    console.error("Erro ao listar disciplinas com turmas:", error);
+    console.error("Erro ao listar disciplinas com detalhes:", error);
     res.status(500).json({ message: "Erro interno ao buscar as disciplinas." });
   }
 };
 
 /**
- * @description Adiciona uma nova disciplina a um curso.
+ * @description Adiciona uma nova disciplina a um curso com seus pré-requisitos.
  * @route POST /api/cursos/:cursoId/disciplinas
  */
 export const adicionarDisciplinaCurso = async (req: Request, res: Response) => {
   const { cursoId } = req.params;
-  const { nome, codigo, carga_horaria, creditos, semestre, ementa } = req.body;
+  const { nome, codigo, carga_horaria, creditos, semestre, ementa, requisitos } = req.body;
 
-  if (!cursoId) {
-    return res.status(400).json({ message: "ID do curso não foi encontrado na requisição." });
-  }
-
+  if (!cursoId) return res.status(400).json({ message: "ID do curso obrigatório." });
   if (!nome || carga_horaria === undefined || creditos === undefined || semestre === undefined) {
-      return res.status(400).json({ message: "Campos obrigatórios (nome, carga horária, créditos, semestre) não foram preenchidos." });
+      return res.status(400).json({ message: "Campos obrigatórios (nome, carga horária, créditos, semestre) faltando." });
   }
 
+  const connection = await pool.getConnection();
   try {
+      await connection.beginTransaction();
+
+      // 1. Insere a disciplina
       const query = `
         INSERT INTO cursos_disciplinas 
           (curso_id, nome, codigo, carga_horaria, creditos, semestre, ementa) 
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `;
-      const values = [cursoId, nome, codigo, carga_horaria, creditos, semestre, ementa];
+      const [result] = await connection.query<ResultSetHeader>(query, [cursoId, nome, codigo, carga_horaria, creditos, semestre, ementa]);
+      const novoId = result.insertId;
+
+      // 2. Insere os pré-requisitos na tabela de junção
+      if (requisitos && Array.isArray(requisitos) && requisitos.length > 0) {
+          const valores = requisitos.map((reqId: number) => [novoId, reqId]);
+          await connection.query(
+              `INSERT INTO disciplina_requisitos (disciplina_id, requisito_id) VALUES ?`,
+              [valores]
+          );
+      }
       
-      const [result] = await pool.query<ResultSetHeader>(query, values);
-      
-      res.status(201).json({ id: result.insertId, ...req.body });
+      await connection.commit();
+      res.status(201).json({ id: novoId, ...req.body });
   } catch (error) {
+      await connection.rollback();
       console.error("Erro ao adicionar disciplina:", error);
       res.status(500).json({ message: "Erro interno ao adicionar a disciplina." });
+  } finally {
+      connection.release();
   }
 };
 
 /**
- * @description Atualiza uma disciplina existente.
+ * @description Atualiza uma disciplina e seus pré-requisitos.
  * @route PUT /api/cursos/disciplinas/:disciplinaId
  */
 export const atualizarDisciplinaCurso = async (req: Request, res: Response) => {
   const { disciplinaId } = req.params;
-  const { nome, codigo, carga_horaria, creditos, semestre, ementa } = req.body;
+  const { nome, codigo, carga_horaria, creditos, semestre, ementa, requisitos } = req.body;
 
-  if (!disciplinaId) {
-    return res.status(400).json({ message: "ID da disciplina não fornecido." });
-  }
-  if (!nome || carga_horaria === undefined || creditos === undefined || semestre === undefined) {
-      return res.status(400).json({ message: "Campos obrigatórios não foram preenchidos." });
-  }
+  if (!disciplinaId) return res.status(400).json({ message: "ID da disciplina não fornecido." });
 
+  const connection = await pool.getConnection();
   try {
+      await connection.beginTransaction();
+
+      // 1. Atualiza dados básicos
       const query = `
         UPDATE cursos_disciplinas SET 
           nome = ?, codigo = ?, carga_horaria = ?, creditos = ?, semestre = ?, ementa = ? 
         WHERE id = ?
       `;
-      const values = [nome, codigo, carga_horaria, creditos, semestre, ementa, disciplinaId];
-      
-      const [result] = await pool.query<ResultSetHeader>(query, values);
+      const [result] = await connection.query<ResultSetHeader>(query, [nome, codigo, carga_horaria, creditos, semestre, ementa, disciplinaId]);
 
       if (result.affectedRows === 0) {
+          await connection.rollback();
           return res.status(404).json({ message: "Disciplina não encontrada." });
       }
+
+      // 2. Atualiza Pré-requisitos:
+      // Estratégia: Remove todos os existentes para esta disciplina e insere os novos.
+      await connection.query(`DELETE FROM disciplina_requisitos WHERE disciplina_id = ?`, [disciplinaId]);
+
+      if (requisitos && Array.isArray(requisitos) && requisitos.length > 0) {
+          const valores = requisitos.map((reqId: number) => [disciplinaId, reqId]);
+          await connection.query(
+              `INSERT INTO disciplina_requisitos (disciplina_id, requisito_id) VALUES ?`,
+              [valores]
+          );
+      }
+
+      await connection.commit();
       res.status(200).json({ message: "Disciplina atualizada com sucesso." });
   } catch (error) {
+      await connection.rollback();
       console.error("Erro ao atualizar disciplina:", error);
       res.status(500).json({ message: "Erro interno ao atualizar a disciplina." });
+  } finally {
+      connection.release();
   }
 };
 
 /**
- * @description Deleta uma disciplina de um curso.
+ * @description Deleta uma disciplina.
  * @route DELETE /api/cursos/disciplinas/:disciplinaId
  */
 export const deletarDisciplinaCurso = async (req: Request, res: Response) => {
   const { disciplinaId } = req.params;
 
-  if (!disciplinaId) {
-    return res.status(400).json({ message: "ID da disciplina não fornecido." });
-  }
+  if (!disciplinaId) return res.status(400).json({ message: "ID da disciplina não fornecido." });
 
   try {
+      // Nota: Se houver FK com ON DELETE CASCADE configurado no banco, 
+      // os registros em disciplina_requisitos serão apagados automaticamente.
       const [result] = await pool.query<ResultSetHeader>("DELETE FROM cursos_disciplinas WHERE id = ?", [disciplinaId]);
+      
       if (result.affectedRows === 0) {
           return res.status(404).json({ message: "Disciplina não encontrada." });
       }
@@ -166,22 +208,12 @@ export const deletarDisciplinaCurso = async (req: Request, res: Response) => {
   }
 };
 
-//==============================================================================
-// FUNÇÃO para a página de Gestão Escolar
-//==============================================================================
+// --- Funções Auxiliares existentes (mantidas para compatibilidade) ---
 
-/**
- * @description Lista TODAS as disciplinas de pós-graduação para a página de gestão.
- * @route GET /api/disciplinas-posgraduacao
- */
 export const listarTodasDisciplinasPosGraduacao = async (req: Request, res: Response) => {
   try {
     const query = `
-      SELECT 
-        d.id, 
-        d.nome, 
-        d.codigo,
-        c.nome AS breve_descricao 
+      SELECT d.id, d.nome, d.codigo, c.nome AS breve_descricao 
       FROM cursos_disciplinas AS d
       JOIN cursos_posgraduacao AS c ON d.curso_id = c.id
       ORDER BY d.nome ASC;
@@ -189,73 +221,39 @@ export const listarTodasDisciplinasPosGraduacao = async (req: Request, res: Resp
     const [rows] = await pool.query(query);
     res.status(200).json(rows);
   } catch (error) {
-    console.error("Erro ao listar todas as disciplinas de pós-graduação:", error);
-    res.status(500).json({ message: "Erro interno ao buscar as disciplinas." });
+    console.error("Erro ao listar todas:", error);
+    res.status(500).json({ message: "Erro interno." });
   }
 };
 
-/**
- * @description Lista todas as disciplinas de um curso, agrupadas por semestre.
- * @route GET /api/cursos/:cursoId/disciplinas-agrupadas
- */
 export const listarDisciplinasAgrupadasPorSemestre = async (req: Request, res: Response) => {
     const { cursoId } = req.params;
-    if (!cursoId) {
-        return res.status(400).json({ message: 'O ID do curso é obrigatório.' });
-    }
+    if (!cursoId) return res.status(400).json({ message: 'ID do curso obrigatório.' });
 
     try {
-        const query = `
-            SELECT id, nome, codigo, carga_horaria, semestre 
-            FROM cursos_disciplinas 
-            WHERE curso_id = ? 
-            ORDER BY semestre, nome;
-        `;
+        const query = `SELECT id, nome, codigo, carga_horaria, semestre FROM cursos_disciplinas WHERE curso_id = ? ORDER BY semestre, nome`;
         const [disciplinas] = await pool.query<RowDataPacket[]>(query, [cursoId]);
 
-        // Agrupa as disciplinas por semestre em um objeto
-        const agrupado = disciplinas.reduce((acc, disciplina) => {
-            // Disciplinas com semestre 0 ou null são agrupadas como 'Optativas'
-            const semestreKey = disciplina.semestre || 0; 
-            if (!acc[semestreKey]) {
-                acc[semestreKey] = [];
-            }
-            acc[semestreKey].push(disciplina);
+        const agrupado = disciplinas.reduce((acc, d) => {
+            const key = d.semestre || 0; 
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(d);
             return acc;
         }, {} as Record<number, any[]>);
 
         res.status(200).json(agrupado);
-
     } catch (error) {
-        console.error("Erro ao buscar disciplinas agrupadas:", error);
-        res.status(500).json({ message: 'Erro interno ao buscar as disciplinas.' });
+        res.status(500).json({ message: 'Erro interno.' });
     }
 };
 
-/**
- * @description Obtém os detalhes de uma disciplina específica pelo seu ID.
- * @route GET /api/disciplinas/:id
- */
 export const obterDisciplinaPorId = async (req: Request, res: Response) => {
     const { id } = req.params;
-
-    if (!id) {
-        return res.status(400).json({ message: "O ID da disciplina é obrigatório." });
-    }
-
     try {
-        const [rows] = await pool.query<RowDataPacket[]>(
-            'SELECT id, nome FROM cursos_disciplinas WHERE id = ?',
-            [id]
-        );
-
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Disciplina não encontrada.' });
-        }
-
+        const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM cursos_disciplinas WHERE id = ?', [id]);
+        if (rows.length === 0) return res.status(404).json({ message: 'Não encontrada.' });
         res.status(200).json(rows[0]);
     } catch (error) {
-        console.error("Erro ao obter detalhes da disciplina:", error);
-        res.status(500).json({ message: 'Erro interno ao buscar a disciplina.' });
+        res.status(500).json({ message: 'Erro interno.' });
     }
 };
