@@ -10,31 +10,34 @@ import { toast } from "sonner";
 // ========================================================================
 
 const IconX = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18" /><path d="m6 6 18 18" /></svg>
 );
 const IconPlus = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14" /><path d="M12 5v14" /></svg>
 );
 const IconPencil = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
 );
 const IconTrash2 = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>
 );
 const IconLoader2 = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
 );
 const IconBookCopy = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 16V4a2 2 0 0 1 2-2h11"/><path d="M5 14H4a2 2 0 1 0 0 4h16a2 2 0 0 0 0-4h-5"/><path d="M2 8h18"/><path d="M22 21a1 1 0 0 0 1-1v-8a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v8a1 1 0 0 0 1 1Z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 16V4a2 2 0 0 1 2-2h11" /><path d="M5 14H4a2 2 0 1 0 0 4h16a2 2 0 0 0 0-4h-5" /><path d="M2 8h18" /><path d="M22 21a1 1 0 0 0 1-1v-8a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v8a1 1 0 0 0 1 1Z" /></svg>
 );
 const IconEye = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></svg>
 );
 const IconChevronDown = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6" /></svg>
 );
 const IconCheck = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 6 9 17l-5-5"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M20 6 9 17l-5-5" /></svg>
+);
+const IconListChecks = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M10 17l5-5-5-5" /><path d="M8 10h12" /><path d="M8 6h12" /><path d="M8 14h12" /></svg>
 );
 
 // ========================================================================
@@ -277,7 +280,7 @@ function MultiSelectComponent({
               key={option.id}
               className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100"
               onMouseDown={(e) => {
-                e.preventDefault(); 
+                e.preventDefault();
               }}
               onClick={() => handleAdd(option.id)}
             >
@@ -347,17 +350,21 @@ export function MatrizCurricularTab() {
       setIsLoading(true);
       // Simulate fetching or use actual axios if backend is reachable
       const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas`);
-      
+
       setTodasDisciplinas(response.data);
 
       const disciplinasComTurmas = await Promise.all(
         response.data.map(async (disciplina) => {
           try {
+            // Use the 'requisitos' from the initial fetch if available, or default to an empty array
+            const requisitos = disciplina.requisitos || [];
+
+            // Simulação de busca de turmas
             const turmasResponse = await axios.get<Turma[]>(`/api/disciplinas/${disciplina.id}/turmas`);
-            return { ...disciplina, turmas: turmasResponse.data };
+            return { ...disciplina, turmas: turmasResponse.data, requisitos };
           } catch (error) {
-            console.error(`Erro ao buscar turmas para a disciplina ${disciplina.id}:`, error);
-            return { ...disciplina, turmas: [] };
+            console.error(`Erro ao buscar dados adicionais para a disciplina ${disciplina.id}:`, error);
+            return { ...disciplina, turmas: [], requisitos: disciplina.requisitos || [] };
           }
         })
       );
@@ -451,6 +458,16 @@ export function MatrizCurricularTab() {
     navigate(`/gestor/gestao-turma/${turmaId}`);
   };
 
+  // 1. Função de mapeamento para os pré-requisitos
+  const getRequisitoNames = (requisitoIds: number[] | undefined): string[] => {
+    if (!requisitoIds || requisitoIds.length === 0) return [];
+
+    return requisitoIds.map(id => {
+      const req = todasDisciplinas.find(d => d.id === id);
+      return req ? req.nome : `[Disciplina ID ${id} não encontrada]`;
+    });
+  }
+
   // Prepare options for MultiSelect
   const opcoesRequisitos = useMemo(() => {
     return todasDisciplinas
@@ -521,6 +538,25 @@ export function MatrizCurricularTab() {
                             <h4 className="mb-2 font-semibold">Ementa:</h4>
                             <p className="text-sm leading-relaxed text-muted-foreground">{disciplina.ementa || "Nenhuma ementa cadastrada."}</p>
                           </div>
+                          {/* Início da nova visualização de Pré-requisitos */}
+                          <div className="border-t border-border/50 pt-4">
+                            <h4 className="mb-3 font-semibold flex items-center">
+                              <IconListChecks className="mr-2 h-4 w-4 text-primary" />
+                              Pré-requisitos
+                            </h4>
+                            {disciplina.requisitos && disciplina.requisitos.length > 0 ? (
+                              <div className="flex flex-wrap gap-2">
+                                {getRequisitoNames(disciplina.requisitos).map((nome, index) => (
+                                  <Badge key={index} variant="outline" className="text-xs bg-white border-primary/50 text-primary">
+                                    {nome}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">Esta disciplina não possui pré-requisitos.</p>
+                            )}
+                          </div>
+                          {/* Fim da nova visualização de Pré-requisitos */}
                           <div className="border-t border-border/50 pt-4">
                             <h4 className="mb-3 font-semibold flex items-center">
                               <IconBookCopy className="mr-2 h-4 w-4" />
