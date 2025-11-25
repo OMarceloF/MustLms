@@ -3,7 +3,8 @@
 // Incluído todos os mocks necessários para as abas Cursos, Disciplinas, Professores, Alunos e Institucional.
 // =====================================================
 
-import type { Disciplina, Professor, Turma, Aluno } from './types';
+import type { Disciplina, Professor, Turma, Aluno, Category, Comunicado } from './types';
+
 
 // --- MOCKS DE CURSOS (Usado em CursosTab, DisciplinasTab e AlunosTab) ---
 export const cursos: {
@@ -383,7 +384,7 @@ export const eventos = [
 ];
 
 // --- MOCK DE COMUNICADOS (Usado em AvisosPanel) ---
-export const comunicados = [
+export const comunicados: Comunicado[] = [
   {
     id: '1',
     title: 'Atualização do Calendário Escolar 2025',
@@ -403,11 +404,11 @@ export const comunicados = [
   },
   {
     id: '3',
-    title: 'Matrículas Abertas para 2026',
-    author: 'Secretaria',
-    date: new Date(2025, 0, 13),
-    category: 'geral',
-    excerpt: 'Estão abertas as matrículas...',
+    title: 'Aviso Importante ao Segmento',
+    author: 'Coordenação Geral',
+    date: new Date(2025, 0, 11),
+    category: 'segmento',
+    excerpt: 'Informações relevantes para o segmento institucional...',
   },
   {
     id: '4',
@@ -416,22 +417,6 @@ export const comunicados = [
     date: new Date(2025, 0, 12),
     category: 'alunos',
     excerpt: 'Novos horários para as atividades...',
-  },
-  {
-    id: '5',
-    title: 'Formação Continuada - BNCC',
-    author: 'Coordenação Pedagógica',
-    date: new Date(2025, 0, 10),
-    category: 'professores',
-    excerpt: 'Workshop sobre implementação...',
-  },
-  {
-    id: '6',
-    title: 'Aviso Importante ao Segmento',
-    author: 'Coordenação Geral',
-    date: new Date(2025, 0, 11),
-    category: 'segmento',
-    excerpt: 'Informações relevantes para o segmento institucional...',
   },
 ];
 
