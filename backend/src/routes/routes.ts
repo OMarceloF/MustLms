@@ -1,5 +1,4 @@
 // backend/src/routes/routes.ts
-
 import { Router } from 'express';
 import path from 'path';
 import {
@@ -17,7 +16,7 @@ import {
 } from '../controllers/uploadController';
 import {
   criarFuncionario,
-  uploadFuncionarioFoto,
+  uploadFuncionarioFiles,
 } from '../controllers/criarProfessorController';
 import {
   getAlunoById,
@@ -104,6 +103,7 @@ import {
   getNotasByProfessor,
   getFaltasMensaisByProfessor,
   getFuncionarioDetalhesCompletos,
+  atualizarDocumentoFuncionario,
 } from '../controllers/professoresController';
 import { responderPerguntaIA } from '../controllers/ia';
 import {
@@ -467,6 +467,24 @@ const storage = multer.diskStorage({
 
 const upload = multer({ dest: "public/materiais_novos/" });
 
+const documentosUpdateStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // Define o caminho absoluto para a pasta 'uploads' na raiz do projeto
+    const uploadPath = path.resolve(__dirname, '..', '..', 'uploads');
+    
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'doc_update-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const uploadDocUpdate = multer({ storage: documentosUpdateStorage });
+
 const router = Router();
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -699,7 +717,7 @@ router.get('/api/escola/nome', getNomeEscola);
 router.get('/api/professores', getProfessores);
 router.post(
   '/api/funcionarios',
-  uploadFuncionarioFoto.single('foto'),
+  uploadFuncionarioFiles,
   criarFuncionario
 );
 router.get('/api/professores/:id', getProfessorById);
@@ -934,6 +952,12 @@ router.put(
   uploadSingleImage('foto'),
   updateFuncionario
 );
+
+router.put(
+  '/api/funcionarios/:funcionarioId/documentos/:documentoId/atualizar',
+  uploadAny.single('documento'),
+  atualizarDocumentoFuncionario
+);
 router.delete('/api/funcionarios/:id', desativarFuncionario);
 router.get('/api/ext/feriados/:ano', getFeriados);
 // Rotas de configuração de cores
@@ -1097,12 +1121,6 @@ router.get('/api/cursos/:cursoId/alunos-vinculados', listarAlunosVinculados);
 
 //Update Vinculo
 router.patch('/api/vincular-aluno-curso/:vinculoId/status', updateStatusVinculo);
-
-router.post(
-  '/api/alunos/:alunoId/documentos/:documentoId/atualizar',
-  uploadSingleDoc('documento'),
-  atualizarDocumentoAluno
-);
 
 // ==============================================================================
 // ROTAS PARA GESTÃO DE GRADES CURRICULARES

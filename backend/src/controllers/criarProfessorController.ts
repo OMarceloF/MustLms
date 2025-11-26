@@ -1,31 +1,47 @@
+// src/controllers/criarProfessorController.ts
+
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import pool from '../config/db';
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
-// A configuração do Multer pode ser mantida ou importada de um arquivo central
+// CORREÇÃO: Ajuste na configuração do Multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../uploads/')),
+  destination: (req, file, cb) => {
+    const destPath = path.join(__dirname, '../../uploads/');
+    // Cria o diretório se não existir
+    if (!fs.existsSync(destPath)) {
+      fs.mkdirSync(destPath, { recursive: true });
+    }
+    cb(null, destPath);
+  },
   filename: (req, file, cb) => {
+    // Extrai o tipo de documento do fieldname (ex: 'documentos_rg_frente' -> 'rg_frente')
+    const tipoDocumento = file.fieldname.startsWith('documentos_')
+      ? file.fieldname.replace('documentos_', '')
+      : file.fieldname;
+
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    // Monta o nome do arquivo usando o tipo de documento extraído
+    cb(null, tipoDocumento + '-' + uniqueSuffix + path.extname(file.originalname));
   },
 });
-export const uploadFuncionarioFoto = multer({ storage });
 
+// O resto do arquivo permanece o mesmo
+export const uploadFuncionarioFiles = multer({ storage }).any();
 
-// NOVA FUNÇÃO 'criarFuncionario'
 export const criarFuncionario = async (req: Request, res: Response) => {
   const data = req.body;
-  const fotoFile = req.file; // req.file, não req.files, se você usar upload.single()
+  const files = req.files as Express.Multer.File[];
 
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    // --- 1. LIMPEZA E PREPARAÇÃO DOS DADOS ---
+    // --- 1. PREPARAÇÃO DOS DADOS ---
     const cpfLimpo = data.cpf ? data.cpf.replace(/\D/g, '') : null;
     const telefoneLimpo = data.telefone ? data.telefone.replace(/\D/g, '') : null;
     const enderecoJson = JSON.stringify({
@@ -48,10 +64,15 @@ export const criarFuncionario = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Login, Email ou CPF já cadastrado no sistema.' });
     }
 
-    // --- 3. CRIAÇÃO DO REGISTRO NA TABELA 'users' ---
-    const senhaHash = await bcrypt.hash(data.senha, 10);
+    // --- 3. SEPARAR ARQUIVO DE FOTO DOS DOCUMENTOS ---
+    const fotoFile = files.find(file => file.fieldname === 'foto');
+    const documentosFiles = files.filter(file => file.fieldname.startsWith('documentos_'));
+    
     const fotoUrl = fotoFile ? `/uploads/${fotoFile.filename}` : null;
-    const role = data.cargo.toLowerCase(); // 'professor', 'gestor', 'secretaria'
+
+    // --- 4. CRIAÇÃO DO REGISTRO NA TABELA 'users' ---
+    const senhaHash = await bcrypt.hash(data.senha, 10);
+    const role = data.cargo.toLowerCase();
 
     const [userResult]: any = await connection.query(
       `INSERT INTO users (nome, email, login, senha, cpf, telefone, role, foto_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ativo')`,
@@ -59,7 +80,7 @@ export const criarFuncionario = async (req: Request, res: Response) => {
     );
     const funcionarioId = userResult.insertId;
 
-    // --- 4. CRIAÇÃO DO REGISTRO NA TABELA 'funcionarios' ---
+    // --- 5. CRIAÇÃO DO REGISTRO NA TABELA 'funcionarios' ---
     await connection.query(
       `INSERT INTO funcionarios (
          id, nome, email, cargo, departamento, foto, registro, biografia, 
@@ -73,12 +94,41 @@ export const criarFuncionario = async (req: Request, res: Response) => {
       ]
     );
 
+    // --- 6. INSERÇÃO DOS DOCUMENTOS NA TABELA 'documentos_funcionarios' ---
+    if (documentosFiles.length > 0) {
+      const documentosValues = documentosFiles.map(file => {
+        const tipoDocumento = file.fieldname.replace('documentos_', '');
+        // O caminho do arquivo agora está correto porque o filename foi corrigido no multer
+        return [funcionarioId, tipoDocumento, `/uploads/${file.filename}`, file.originalname];
+      });
+
+      await connection.query(
+        `INSERT INTO documentos_funcionarios (funcionario_id, tipo_documento, caminho_arquivo, nome_original) VALUES ?`,
+        [documentosValues]
+      );
+    }
+
+    // --- 7. INSERÇÃO DE CONTRATO (Exemplo) ---
+    await connection.query(
+        `INSERT INTO contratos_funcionarios (funcionario_id, nome_contrato, tipo, situacao_contrato) VALUES (?, ?, ?, ?)`,
+        [funcionarioId, 'Contrato de Trabalho Inicial', 'Admissão', 'Pendente de Assinatura']
+    );
+
     await connection.commit();
     res.status(201).json({ message: 'Funcionário criado com sucesso!', id: funcionarioId });
 
   } catch (error: any) {
     await connection.rollback();
     console.error('Erro ao criar funcionário:', error);
+    
+    if (files && files.length > 0) {
+        for (const file of files) {
+            fs.unlink(file.path, (err) => {
+                if (err) console.error(`Erro ao limpar arquivo ${file.path}:`, err);
+            });
+        }
+    }
+
     res.status(500).json({ message: error.message || 'Erro interno ao criar funcionário.' });
   } finally {
     connection.release();
