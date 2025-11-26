@@ -3,6 +3,8 @@ import { Request, Response } from 'express';
 import pool from '../config/db';
 import bcrypt from 'bcryptjs';
 import { RowDataPacket } from 'mysql2';
+import fs from 'fs/promises';
+import path from 'path';
 
 interface CountRow extends RowDataPacket {
   count: number;
@@ -509,7 +511,7 @@ export const getFuncionarioDetalhesCompletos = async (req: Request, res: Respons
     }
 
     try {
-        // 1. Buscar dados principais do funcionário (Query já corrigida)
+        // 1. Buscar dados principais do funcionário
         const [funcionarioRows] = await pool.query<RowDataPacket[]>(
             `SELECT 
                 u.id, u.nome, u.cpf, u.login, u.email, u.foto_url as foto, u.telefone, u.role, u.status,
@@ -525,41 +527,118 @@ export const getFuncionarioDetalhesCompletos = async (req: Request, res: Respons
             return res.status(404).json({ message: "Funcionário não encontrado." });
         }
 
-        const funcionario = funcionarioRows[0];
-        if (funcionario.endereco && typeof funcionario.endereco === 'string') {
+        const funcionario = funcionarioRows[0];
+        if (funcionario.endereco && typeof funcionario.endereco === 'string') {
+            try {
+                funcionario.endereco = JSON.parse(funcionario.endereco);
+            } catch (e) {
+                console.error("Erro ao fazer parse do endereço JSON:", e);
+                funcionario.endereco = null;
+            }
+        }
+
+        // 2. Buscar documentos da tabela 'documentos_funcionarios'
+        const [documentos] = await pool.query<RowDataPacket[]>(
+            'SELECT id, tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_funcionarios WHERE funcionario_id = ?',
+            [id]
+        );
+
+        // 3. Buscar contratos da tabela 'contratos_funcionarios'
+        const [contratos] = await pool.query<RowDataPacket[]>(
+            'SELECT id, nome_contrato, tipo, situacao_contrato, contrato_url, criado_em FROM contratos_funcionarios WHERE funcionario_id = ?',
+            [id]
+        );
+
+        // 4. Montar e retornar o objeto completo
+        const respostaCompleta = {
+            funcionario,
+            documentos,
+            contratos
+        };
+
+        res.status(200).json(respostaCompleta);
+
+    } catch (error) {
+        console.error("Erro ao buscar detalhes completos do funcionário:", error);
+        res.status(500).json({ message: "Erro interno ao buscar os detalhes do funcionário." });
+    }
+};
+
+/**
+ * @description Atualiza um documento específico de um funcionário.
+ * @route POST /api/funcionarios/:funcionarioId/documentos/:documentoId/atualizar
+ */
+export const atualizarDocumentoFuncionario = async (req: Request, res: Response) => {
+    // 1. Converter IDs para número para garantir compatibilidade com a query
+    const funcionarioId = Number(req.params.funcionarioId);
+    const documentoId = Number(req.params.documentoId);
+    const file = req.file;
+
+    if (!file) {
+        return res.status(400).json({ message: "Nenhum arquivo enviado." });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 2. Busca o caminho do documento antigo
+        const [docRows] = await connection.query<RowDataPacket[]>(
+            'SELECT caminho_arquivo FROM documentos_funcionarios WHERE id = ? AND funcionario_id = ?',
+            [documentoId, funcionarioId]
+        );
+
+        if (docRows.length === 0) {
+            await connection.rollback();
+            // Limpa o arquivo enviado se não encontrou o registro no banco para evitar lixo no servidor
+            await fs.unlink(file.path).catch(() => {}); 
+            return res.status(404).json({ message: "Documento não encontrado para este funcionário." });
+        }
+
+        const caminhoAntigo = docRows[0].caminho_arquivo; // Ex: /uploads/arquivo_velho.pdf
+
+        // 3. Caminho relativo para salvar no banco (padronizado com /uploads/)
+        const novoCaminhoRelativo = `/uploads/${file.filename}`;
+        
+        // 4. Atualiza o banco de dados
+        await connection.query(
+            'UPDATE documentos_funcionarios SET caminho_arquivo = ?, nome_original = ?, data_upload = NOW() WHERE id = ?',
+            [novoCaminhoRelativo, file.originalname, documentoId]
+        );
+
+        // 5. Apaga o arquivo antigo do disco
+        if (caminhoAntigo) {
+            // CORREÇÃO CRÍTICA: Remove a barra inicial se existir para garantir que o path.join use a pasta do projeto
+            // Se deixar a barra inicial, o path.join pode tentar deletar na raiz do sistema (ex: C:\uploads ou /uploads)
+            const caminhoRelativoLimpo = caminhoAntigo.startsWith('/') || caminhoAntigo.startsWith('\\') 
+                ? caminhoAntigo.slice(1) 
+                : caminhoAntigo;
+
+            const fullPathAntigo = path.join(process.cwd(), caminhoRelativoLimpo);
+            
             try {
-                funcionario.endereco = JSON.parse(funcionario.endereco);
-            } catch (e) {
-                console.error("Erro ao fazer parse do endereço JSON:", e);
-                funcionario.endereco = null;
+                // Verifica se o arquivo existe antes de tentar apagar
+                await fs.access(fullPathAntigo); 
+                await fs.unlink(fullPathAntigo);
+            } catch (unlinkError) {
+                console.warn(`Aviso: Arquivo antigo não encontrado ou erro ao apagar: ${fullPathAntigo}`);
+                // Não damos throw aqui para não cancelar a transação se for apenas erro de arquivo não encontrado
             }
         }
 
-        // --- CORREÇÃO PRINCIPAL AQUI ---
-
-        // 2. Buscar documentos da NOVA tabela 'documentos_funcionarios'
-        const [documentos] = await pool.query<RowDataPacket[]>(
-            'SELECT id, tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_funcionarios WHERE funcionario_id = ?',
-            [id]
-        );
-
-        // 3. Buscar contratos da NOVA tabela 'contratos_funcionarios'
-        const [contratos] = await pool.query<RowDataPacket[]>(
-            'SELECT id, nome_contrato, tipo, situacao_contrato, contrato_url, criado_em FROM contratos_funcionarios WHERE funcionario_id = ?',
-            [id]
-        );
-
-        // 4. Montar e retornar o objeto completo
-        const respostaCompleta = {
-            funcionario,
-            documentos,
-            contratos
-        };
-
-        res.status(200).json(respostaCompleta);
+        await connection.commit();
+        res.status(200).json({ message: "Documento atualizado com sucesso!", novoCaminho: novoCaminhoRelativo });
 
     } catch (error) {
-        console.error("Erro ao buscar detalhes completos do funcionário:", error);
-        res.status(500).json({ message: "Erro interno ao buscar os detalhes do funcionário." });
+        await connection.rollback();
+        // Se deu erro na transação, apaga o arquivo NOVO que acabou de subir
+        if (file) {
+            await fs.unlink(file.path).catch(() => {});
+        }
+        console.error("Erro ao atualizar documento do funcionário:", error);
+        res.status(500).json({ message: "Erro interno ao atualizar o documento." });
+    } finally {
+        connection.release();
     }
 };

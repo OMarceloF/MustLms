@@ -1,4 +1,4 @@
-// src/pages/gestor/CriarProfessorPage.tsx (VERSÃO ATUALIZADA)
+// src/pages/gestor/CriarProfessorPage.tsx
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -8,12 +8,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import SidebarGestor from './components/Sidebar';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
-import FormField from './components/ui/FormField'; // Importe o novo componente
+import FormField from './components/ui/FormField';
 import { toast } from 'sonner';
 import DocumentosContratacao from "./components/DocumentosContratacao";
 
-
-// --- Funções de formatação (sem alterações) ---
+// --- Funções de formatação ---
 const formatCPF = (value: string): string => {
   const numericValue = value.replace(/\D/g, '').slice(0, 11);
   if (numericValue.length > 9) return numericValue.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -36,7 +35,7 @@ const formatCEP = (value: string): string => {
   return numericValue;
 };
 
-// --- Validação Zod (sem alterações) ---
+// --- Validação Zod ---
 const formSchema = z.object({
   nome: z.string().min(3, "O nome é obrigatório."),
   email: z.string().email("Email inválido."),
@@ -63,6 +62,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Interface para os dados dos cursos vindos da API
+interface Curso {
+  id: number;
+  nome: string;
+}
+
 const CriarProfessorPage = () => {
   const [sidebarAberta, setSidebarAberta] = useState(false);
   const [documentos, setDocumentos] = useState<Record<string, File | null>>({
@@ -81,15 +86,9 @@ const CriarProfessorPage = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleAddDocumento = (id: string, file: File | null) => {
-    setDocumentos((prev) => ({ ...prev, [id]: file }));
-  };
-
-  const handleRemoveDocumento = (id: string) => {
-    setDocumentos((prev) => ({ ...prev, [id]: null }));
-  };
-
-
+  // Estado para a lista de departamentos, que será preenchida dinamicamente
+  const [departamentos, setDepartamentos] = useState<string[]>([]);
+  
   const {
     register,
     handleSubmit,
@@ -99,15 +98,40 @@ const CriarProfessorPage = () => {
   } = useForm<FormValues>({ resolver: zodResolver(formSchema) });
 
   const cepValue = watch('endereco_cep');
+  const cargos = ['Professor', 'Gestor', 'Secretaria', 'Financeiro'];
 
-  const departamentosCompletos = [
-    'Matemática', 'Português', 'Biologia', 'Física', 'Química',
-    'História', 'Geografia', 'Ciências', 'Educação Física',
-    'Artes', 'Inglês', 'Redação'
-  ];
-  const cargos = ['Professor', 'Gestor'];
+  // --- HOOKS DE EFEITO ---
 
-  // --- Hooks e lógica (sem alterações) ---
+  // Hook para buscar os cursos e montar a lista de departamentos
+  useEffect(() => {
+    const fetchDepartamentos = async () => {
+      try {
+        const response = await axios.get<Curso[]>('/api/cursos-posgraduacao');
+        const nomesDosCursos = response.data.map(curso => curso.nome);
+
+        const departamentosBase = [
+          'Graduação',
+          'Administrativo',
+          'Financeiro',
+          'Secretaria',
+          'Recursos Humanos',
+          'Tecnologia da Informação'
+        ];
+
+        const listaCompleta = [...new Set([...departamentosBase, ...nomesDosCursos])].sort();
+        setDepartamentos(listaCompleta);
+
+      } catch (err) {
+        console.error("Erro ao buscar departamentos:", err);
+        toast.error("Falha ao carregar a lista de departamentos.");
+        setDepartamentos(['Graduação', 'Pós-Graduação', 'Administrativo', 'Financeiro']); // Fallback
+      }
+    };
+
+    fetchDepartamentos();
+  }, []);
+
+  // Hook para buscar dados do CEP
   useEffect(() => {
     const fetchCep = async (cep: string) => {
       try {
@@ -124,6 +148,16 @@ const CriarProfessorPage = () => {
     const cepLimpo = cepValue ? cepValue.replace(/\D/g, "") : "";
     if (cepLimpo.length === 8) fetchCep(cepLimpo);
   }, [cepValue, setValue]);
+
+  // --- HANDLERS ---
+
+  const handleAddDocumento = (id: string, file: File | null) => {
+    setDocumentos((prev) => ({ ...prev, [id]: file }));
+  };
+
+  const handleRemoveDocumento = (id: string) => {
+    setDocumentos((prev) => ({ ...prev, [id]: null }));
+  };
 
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -146,8 +180,6 @@ const CriarProfessorPage = () => {
       Object.entries(documentos).forEach(([key, file]) => {
         if (file) form.append(`documentos_${key}`, file);
       });
-
-
 
       await axios.post(`/api/funcionarios`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -177,18 +209,7 @@ const CriarProfessorPage = () => {
         <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
 
         <main className="flex-1 flex justify-center py-10 px-2 sm:px-0">
-          <div className="
-          bg-card 
-          rounded-2xl 
-          shadow-lg 
-          border 
-          border-border 
-          p-6 
-          md:p-10 
-          max-w-5xl 
-          w-full
-        ">
-            {/* HEADER */}
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-6 md:p-10 max-w-5xl w-full">
             <h1 className="text-3xl font-bold text-foreground text-center mb-10 tracking-tight">
               Cadastro de Novo Funcionário
             </h1>
@@ -201,17 +222,12 @@ const CriarProfessorPage = () => {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
 
-              {/* SEÇÃO */}
+              {/* DADOS PESSOAIS */}
               <section className="space-y-6">
                 <div className="border-b pb-3">
-                  <h2 className="text-xl font-semibold text-primary">
-                    Dados Pessoais
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Informações básicas do colaborador.
-                  </p>
+                  <h2 className="text-xl font-semibold text-primary">Dados Pessoais</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Informações básicas do colaborador.</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField id="nome" label="Nome Completo" register={register} error={errors.nome} containerClassName="md:col-span-2" />
                   <FormField id="data_nascimento" label="Data de Nascimento" type="date" register={register} error={errors.data_nascimento} />
@@ -224,14 +240,9 @@ const CriarProfessorPage = () => {
               {/* ENDEREÇO */}
               <section className="space-y-6">
                 <div className="border-b pb-3">
-                  <h2 className="text-xl font-semibold text-primary">
-                    Endereço
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Endereço completo para cadastro formal.
-                  </p>
+                  <h2 className="text-xl font-semibold text-primary">Endereço</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Endereço completo para cadastro formal.</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
                   <FormField id="endereco_cep" label="CEP" placeholder="00000-000" register={register} error={errors.endereco_cep} onChange={(e) => e.target.value = formatCEP(e.target.value)} containerClassName="md:col-span-2" />
                   <FormField id="endereco_logradouro" label="Logradouro" register={register} error={errors.endereco_logradouro} containerClassName="md:col-span-4" />
@@ -246,17 +257,12 @@ const CriarProfessorPage = () => {
               {/* DADOS PROFISSIONAIS */}
               <section className="space-y-6">
                 <div className="border-b pb-3">
-                  <h2 className="text-xl font-semibold text-primary">
-                    Dados Profissionais
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Informações relacionadas à função e contratação.
-                  </p>
+                  <h2 className="text-xl font-semibold text-primary">Dados Profissionais</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Informações relacionadas à função e contratação.</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField id="cargo" label="Cargo" as="select" options={cargos} register={register} error={errors.cargo} />
-                  <FormField id="departamento" label="Departamento" as="select" options={departamentosCompletos} register={register} error={errors.departamento} />
+                  <FormField id="departamento" label="Departamento" as="select" options={departamentos} register={register} error={errors.departamento} />
                   <FormField id="data_contratacao" label="Data de Contratação" type="date" register={register} error={errors.data_contratacao} />
                   <FormField id="registro" label="Registro Profissional" register={register} error={errors.registro} />
                   <FormField id="formacao_academica" label="Formação Acadêmica" register={register} error={errors.formacao_academica} containerClassName="md:col-span-2" />
@@ -268,27 +274,19 @@ const CriarProfessorPage = () => {
               {/* FOTO E ACESSO */}
               <section className="space-y-6">
                 <div className="border-b pb-3">
-                  <h2 className="text-xl font-semibold text-primary">
-                    Acesso ao Sistema & Foto
-                  </h2>
+                  <h2 className="text-xl font-semibold text-primary">Acesso ao Sistema & Foto</h2>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField id="login" label="Login" register={register} error={errors.login} />
                   <FormField id="senha" label="Senha" type="password" register={register} error={errors.senha} />
-
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-sm font-medium text-foreground">Foto do Funcionário</label>
-
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleFotoChange}
-                      className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm
-                    ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 focus-visible:ring-offset-2"
+                      className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 focus-visible:ring-offset-2"
                     />
-
                     {previewFoto && (
                       <img
                         src={previewFoto}
@@ -316,7 +314,6 @@ const CriarProfessorPage = () => {
                 >
                   Cancelar
                 </button>
-
                 <button
                   type="submit"
                   disabled={isSubmitting}

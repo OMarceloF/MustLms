@@ -1,4 +1,4 @@
-// src/pages/gestor/EditarProfessorPage.tsx (VERSÃO REFATORADA ESPELHO)
+// src/pages/gestor/EditarProfessorPage.tsx
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,12 +8,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import SidebarGestor from './components/Sidebar';
 import TopbarGestorAuto from './components/TopbarGestorAuto';
-import FormField from './components/ui/FormField'; // NOVO: Usando FormField
+import FormField from './components/ui/FormField';
 import { toast } from 'sonner';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
-// --- FUNÇÕES DE FORMATAÇÃO (REUTILIZADAS) ---
+// --- Funções de formatação (reutilizadas) ---
 const formatCPF = (value: string): string => {
   const numericValue = value.replace(/\D/g, '').slice(0, 11);
   if (numericValue.length > 9) return numericValue.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -36,18 +36,7 @@ const formatCEP = (value: string): string => {
   return numericValue;
 };
 
-// --- LISTAS ESTÁTICAS (SINCRONIZADAS COM CRIARPROFESSOR) ---
-const CARGOS = ['Professor', 'Gestor'];
-const DEPARTAMENTOS_ACADEMICOS = [
-  'Matemática', 'Português', 'Biologia', 'Física', 'Química',
-  'História', 'Geografia', 'Ciências', 'Educação Física',
-  'Artes', 'Inglês', 'Redação'
-];
-// Em edição, geralmente mostramos todos os departamentos/cargos possíveis.
-const TODOS_DEPARTAMENTOS = [...DEPARTAMENTOS_ACADEMICOS].sort();
-
-// --- PASSO 1: DEFINIR O SCHEMA ZOD COMPLETO ---
-// A senha na EDIÇÃO é OPCIONAL.
+// --- Schema de Validação Zod (senha opcional na edição) ---
 const formSchema = z.object({
   nome: z.string().min(3, "O nome é obrigatório."),
   email: z.string().email("Email inválido."),
@@ -60,7 +49,7 @@ const formSchema = z.object({
   endereco_complemento: z.string().optional(),
   endereco_bairro: z.string().min(1, "Bairro é obrigatório."),
   endereco_cidade: z.string().min(1, "Cidade é obrigatória."),
-  endereco_uf: z.string().min(2, "UF é obrigatório."),
+  endereco_uf: z.string().min(2, "UF é obrigatória."),
   cargo: z.string().min(1, "Selecione um cargo."),
   departamento: z.string().min(1, "Selecione um departamento."),
   data_contratacao: z.string().min(1, "Data de contratação é obrigatória."),
@@ -69,24 +58,32 @@ const formSchema = z.object({
   especialidades: z.string().optional(),
   biografia: z.string().optional(),
   login: z.string().min(3, "O login é obrigatório."),
-  senha: z.string().optional(), // Senha é opcional na edição
+  senha: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+// Interface para os dados dos cursos vindos da API
+interface Curso {
+    id: number;
+    nome: string;
+}
 
 const EditarProfessorPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // --- ESTADOS DE UI ---
+  // --- Estados de UI ---
   const [sidebarAberta, setSidebarAberta] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  
+  // Estado para a lista de departamentos
+  const [departamentos, setDepartamentos] = useState<string[]>([]);
 
-  // --- IMPLEMENTAR REACT-HOOK-FORM ---
   const {
     register,
     handleSubmit,
@@ -98,28 +95,39 @@ const EditarProfessorPage = () => {
     resolver: zodResolver(formSchema),
   });
 
-  const selectedCargo = watch('cargo');
   const cepValue = watch('endereco_cep');
+  const cargos = ['Professor', 'Gestor', 'Secretaria', 'Financeiro'];
 
-  // --- BUSCA DE DADOS (POPULAÇÃO DO FORMULÁRIO) ---
+  // --- HOOKS DE EFEITO ---
+
+  // Hook para buscar os dados iniciais do funcionário e os departamentos
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
       setIsLoading(true);
       try {
-        // Assumindo que este endpoint retorna os dados preenchidos corretamente
-        const response = await axios.get(`/api/funcionarios/${id}/edit-data`);
-        const data = response.data;
-
-        // Popula todo o formulário com os dados recebidos
-        reset(data);
-
-        // Define o preview da foto inicial
-        if (data.foto_url) {
-          setPreviewUrl(`/${data.foto_url}`);
+        // Busca os dados do funcionário para preencher o formulário
+        const funcionarioResponse = await axios.get(`/api/funcionarios/${id}/edit-data`);
+        const funcionarioData = funcionarioResponse.data;
+        reset(funcionarioData);
+        if (funcionarioData.foto_url) {
+          setPreviewUrl(`/${funcionarioData.foto_url}`);
         }
+
+        // Busca os cursos para popular os departamentos
+        const cursosResponse = await axios.get<Curso[]>('/api/cursos-posgraduacao');
+        const nomesDosCursos = cursosResponse.data.map(curso => curso.nome);
+        const departamentosBase = [
+          'Graduação', 'Administrativo', 'Financeiro', 'Secretaria', 'Recursos Humanos', 'Tecnologia da Informação'
+        ];
+        
+        // Garante que o departamento atual do funcionário esteja na lista, caso tenha sido removido
+        const departamentoAtual = funcionarioData.departamento || '';
+        const listaCompleta = [...new Set([...departamentosBase, ...nomesDosCursos, departamentoAtual])].sort();
+        setDepartamentos(listaCompleta);
+
       } catch (err) {
-        console.error('Erro ao buscar dados do funcionário:', err);
+        console.error('Erro ao carregar dados para edição:', err);
         setError('Não foi possível carregar os dados para edição.');
         toast.error('Falha ao carregar dados do funcionário.');
       } finally {
@@ -129,7 +137,7 @@ const EditarProfessorPage = () => {
     fetchData();
   }, [id, reset]);
 
-  // Lógica para buscar CEP (mantida)
+  // Hook para buscar dados do CEP
   useEffect(() => {
     const fetchCep = async (cep: string) => {
       try {
@@ -141,7 +149,6 @@ const EditarProfessorPage = () => {
         if (uf) setValue("endereco_uf", uf);
       } catch (error) {
         console.error("Erro ao buscar CEP:", error);
-        // Mantido: Não exibe toast para não interromper se a API externa falhar, mas o usuário preenche manualmente
       }
     };
     const cepLimpo = cepValue ? cepValue.replace(/\D/g, "") : "";
@@ -150,6 +157,8 @@ const EditarProfessorPage = () => {
     }
   }, [cepValue, setValue]);
 
+  // --- HANDLERS ---
+
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -157,22 +166,18 @@ const EditarProfessorPage = () => {
     setPreviewUrl(URL.createObjectURL(file));
   };
 
-  // --- FUNÇÃO DE SUBMISSÃO (ATUALIZADA) ---
   const onSubmit = async (data: FormValues) => {
     setIsSaving(true);
     setError(null);
     try {
       const formPayload = new FormData();
       Object.entries(data).forEach(([key, value]) => {
-        // Regra de edição: se o campo é a senha e está vazio, não o envie para não sobrescrever a senha existente.
         if (key === 'senha' && !value) return;
         if (value) formPayload.append(key, value as string);
       });
 
-      // Envia o novo arquivo de foto (se houver)
       if (fotoFile) formPayload.append('foto', fotoFile);
 
-      // Endpoint PUT para atualizar os dados
       await axios.put(`/api/funcionarios/${id}`, formPayload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
@@ -196,7 +201,6 @@ const EditarProfessorPage = () => {
     return <div className="p-8 text-center text-red-500">{error}</div>;
   }
 
-  // --- JSX ATUALIZADO (ESPELHO DO CRIAR) ---
   return (
     <div className="flex min-h-screen bg-muted/20">
       <SidebarGestor
@@ -210,18 +214,7 @@ const EditarProfessorPage = () => {
         <TopbarGestorAuto isMenuOpen={sidebarAberta} setIsMenuOpen={setSidebarAberta} />
 
         <main className="flex-1 flex justify-center py-10 px-2 sm:px-0">
-          <div className="
-          bg-card 
-          rounded-2xl 
-          shadow-lg 
-          border 
-          border-border 
-          p-6 
-          md:p-10 
-          max-w-5xl 
-          w-full
-        ">
-            {/* HEADER */}
+          <div className="bg-card rounded-2xl shadow-lg border border-border p-6 md:p-10 max-w-5xl w-full">
             <h1 className="text-3xl font-bold text-foreground text-center mb-10 tracking-tight">
               Editar Cadastro de Funcionário
             </h1>
@@ -237,14 +230,9 @@ const EditarProfessorPage = () => {
               {/* DADOS PESSOAIS */}
               <section className="space-y-6">
                 <div className="border-b pb-3">
-                  <h2 className="text-xl font-semibold text-primary">
-                    Dados Pessoais
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Informações básicas do colaborador.
-                  </p>
+                  <h2 className="text-xl font-semibold text-primary">Dados Pessoais</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Informações básicas do colaborador.</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField id="nome" label="Nome Completo" register={register} error={errors.nome} containerClassName="md:col-span-2" />
                   <FormField id="data_nascimento" label="Data de Nascimento" type="date" register={register} error={errors.data_nascimento} />
@@ -257,14 +245,9 @@ const EditarProfessorPage = () => {
               {/* ENDEREÇO */}
               <section className="space-y-6">
                 <div className="border-b pb-3">
-                  <h2 className="text-xl font-semibold text-primary">
-                    Endereço
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Endereço completo para cadastro formal.
-                  </p>
+                  <h2 className="text-xl font-semibold text-primary">Endereço</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Endereço completo para cadastro formal.</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
                   <FormField id="endereco_cep" label="CEP" placeholder="00000-000" register={register} error={errors.endereco_cep} onChange={(e) => e.target.value = formatCEP(e.target.value)} containerClassName="md:col-span-2" />
                   <FormField id="endereco_logradouro" label="Logradouro" register={register} error={errors.endereco_logradouro} containerClassName="md:col-span-4" />
@@ -279,18 +262,12 @@ const EditarProfessorPage = () => {
               {/* DADOS PROFISSIONAIS */}
               <section className="space-y-6">
                 <div className="border-b pb-3">
-                  <h2 className="text-xl font-semibold text-primary">
-                    Dados Profissionais
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Informações relacionadas à função e contratação.
-                  </p>
+                  <h2 className="text-xl font-semibold text-primary">Dados Profissionais</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Informações relacionadas à função e contratação.</p>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField id="cargo" label="Cargo" as="select" options={CARGOS} register={register} error={errors.cargo} />
-                  {/* Usa TODOS_DEPARTAMENTOS na edição, mas pode ser filtrado se necessário */}
-                  <FormField id="departamento" label="Departamento" as="select" options={TODOS_DEPARTAMENTOS} register={register} error={errors.departamento} />
+                  <FormField id="cargo" label="Cargo" as="select" options={cargos} register={register} error={errors.cargo} />
+                  <FormField id="departamento" label="Departamento" as="select" options={departamentos} register={register} error={errors.departamento} />
                   <FormField id="data_contratacao" label="Data de Contratação" type="date" register={register} error={errors.data_contratacao} />
                   <FormField id="registro" label="Registro Profissional" register={register} error={errors.registro} />
                   <FormField id="formacao_academica" label="Formação Acadêmica" register={register} error={errors.formacao_academica} containerClassName="md:col-span-2" />
@@ -302,27 +279,19 @@ const EditarProfessorPage = () => {
               {/* FOTO E ACESSO */}
               <section className="space-y-6">
                 <div className="border-b pb-3">
-                  <h2 className="text-xl font-semibold text-primary">
-                    Acesso ao Sistema & Foto
-                  </h2>
+                  <h2 className="text-xl font-semibold text-primary">Acesso ao Sistema & Foto</h2>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField id="login" label="Login" register={register} error={errors.login} />
                   <FormField id="senha" label="Nova Senha (opcional)" type="password" register={register} error={errors.senha} placeholder="Deixe em branco para manter a atual" />
-
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-sm font-medium text-foreground">Foto do Funcionário</label>
-
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleFotoChange}
-                      className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm
-                    ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 focus-visible:ring-offset-2"
+                      className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 focus-visible:ring-offset-2"
                     />
-
                     {previewUrl && (
                       <img
                         src={previewUrl}
@@ -334,8 +303,6 @@ const EditarProfessorPage = () => {
                 </div>
               </section>
 
-              {/* NOTA: A seção de Documentos foi omitida na edição para simplificar */}
-
               {/* BOTÕES */}
               <div className="flex justify-end gap-4 pt-6 border-t">
                 <button
@@ -345,7 +312,6 @@ const EditarProfessorPage = () => {
                 >
                   Cancelar
                 </button>
-
                 <button
                   type="submit"
                   disabled={isSaving}
