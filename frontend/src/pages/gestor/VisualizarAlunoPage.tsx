@@ -38,7 +38,8 @@ interface Disciplina {
     notas: Nota[];
     nota_final: number;
     nota_recuperacao: number | null;
-    status: 'Aprovado' | 'Reprovado' | 'Em Andamento' | 'Pendente';
+    status: 'Aprovado' | 'Reprovado' | 'Cursando' | 'Pendente' | 'Não Cursado' | 'Trancado';
+    status_vinculo: string | null;
 }
 
 interface DadosAcademicos {
@@ -46,7 +47,7 @@ interface DadosAcademicos {
 }
 
 interface Documento {
-    id: number; 
+    id: number;
     tipo_documento: string;
     caminho_arquivo: string;
     nome_original: string;
@@ -100,7 +101,7 @@ const VisualizarAlunoPage = () => {
     }, [id, navigate]);
 
 
-     const handleUpdateDocument = async (documentoId: number, file: File) => {
+    const handleUpdateDocument = async (documentoId: number, file: File) => {
         if (!file) {
             toast.info("Nenhum arquivo selecionado.");
             return;
@@ -132,7 +133,7 @@ const VisualizarAlunoPage = () => {
         }
     };
 
-const triggerFileInput = (documentoId: number) => {
+    const triggerFileInput = (documentoId: number) => {
         const input = document.createElement('input');
         input.type = 'file';
         // Opcional: defina os tipos de arquivo aceitos
@@ -145,23 +146,6 @@ const triggerFileInput = (documentoId: number) => {
         };
         input.click();
     };
-
-    useEffect(() => {
-        const fetchAlunoData = async () => {
-            if (!id) return;
-            try {
-                setIsLoading(true);
-                const response = await axios.get<AlunoCompleto>(`/api/alunos/${id}/detalhes-completos`);
-                setAlunoCompleto(response.data);
-            } catch (error) {
-                console.error("Erro ao buscar detalhes do aluno:", error);
-                toast.error("Não foi possível carregar os dados do aluno.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchAlunoData();
-    }, [id, navigate]);
 
     const renderEndereco = (endereco: AlunoDetalhes['endereco']) => {
         if (!endereco) return "Não informado";
@@ -180,6 +164,18 @@ const triggerFileInput = (documentoId: number) => {
             {label}
         </button>
     );
+
+    // Função auxiliar para definir a cor do badge de status
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case 'Aprovado': return 'bg-green-100 text-green-800 border-green-200';
+            case 'Reprovado': return 'bg-red-100 text-red-800 border-red-200';
+            case 'Cursando': return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'Trancado': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'Não Cursado':
+            default: return 'bg-gray-100 text-gray-500 border-gray-200';
+        }
+    };
 
     if (isLoading) {
         return (
@@ -264,93 +260,127 @@ const triggerFileInput = (documentoId: number) => {
 
                                     {activeTab === 'academico' && (
                                         <div>
-                                            {Object.keys(academico).length > 0 ? Object.entries(academico).map(([semestre, disciplinas]) => (
+                                            {Object.keys(academico).length > 0 ? Object.entries(academico).sort().map(([semestre, disciplinas]) => (
                                                 <div key={semestre} className="mb-8">
-                                                    <h3 className="text-xl font-bold text-indigo-700 mb-4">{semestre}</h3>
-                                                    <div className="space-y-6">
+                                                    <h3 className="text-xl font-bold text-indigo-700 mb-4 border-b pb-2">{semestre}</h3>
+                                                    <div className="space-y-4">
                                                         {disciplinas && disciplinas.map(disciplina => {
-                                                            const statusColor = disciplina.status === 'Aprovado' ? 'text-green-600' : disciplina.status === 'Reprovado' ? 'text-red-600' : 'text-gray-500';
-                                                            const temRecuperacao = disciplina.nota_recuperacao !== null;
-                                                            const temNotasLancadas = disciplina.notas.some(n => n.nota !== null);
+                                                            const temNotasLancadas = disciplina.notas.length > 0;
+                                                            const badgeColor = getStatusBadge(disciplina.status);
+                                                            
+                                                            // CORREÇÃO: Calcula a soma das notas regulares
+                                                            const somaNotas = disciplina.notas.reduce((acc, curr) => acc + (curr.nota || 0), 0);
+                                                            
+                                                            // CORREÇÃO: Só mostra recuperação se a nota for menor que 60 E existir nota de rec.
+                                                            const temRecuperacao = disciplina.nota_recuperacao !== null && somaNotas < 60;
+
+                                                            // Lógica de vínculo (mantida da iteração anterior para exibir disciplinas não cursadas corretamente)
+                                                            const isMatriculado = disciplina.status_vinculo || 
+                                                                ['Aprovado', 'Reprovado', 'Cursando', 'Recuperação', 'Trancado'].includes(disciplina.status);
 
                                                             return (
-                                                                <div key={disciplina.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
-                                                                    <h4 className="font-semibold text-gray-800">{disciplina.nome}</h4>
-                                                                    {disciplina.notas.length > 0 ? (
-                                                                        <table className="mt-2 w-full text-sm">
-                                                                            <thead className="text-left text-gray-500">
-                                                                                <tr>
-                                                                                    <th className="py-1 font-medium">Avaliação</th>
-                                                                                    <th className="py-1 font-medium text-right">Nota</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                {disciplina.notas.map((n, index) => (
-                                                                                    <tr key={index} className="border-t">
-                                                                                        <td className="py-2">{n.tipo} (Valor: {n.valor})</td>
-                                                                                        <td className="py-2 text-right font-medium">
-                                                                                            {typeof n.nota === 'number' ? n.nota.toFixed(2) : '—'}
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                ))}
-                                                                                
-                                                                                <tr className={`border-t ${temRecuperacao ? 'bg-yellow-50' : ''}`}>
-                                                                                    <td className="py-2 font-semibold">Nota de Recuperação</td>
-                                                                                    <td className={`py-2 text-right font-bold ${temRecuperacao ? 'text-yellow-700' : 'text-gray-500'}`}>
-                                                                                        {typeof disciplina.nota_recuperacao === 'number' ? disciplina.nota_recuperacao.toFixed(2) : '—'}
-                                                                                    </td>
-                                                                                </tr>
+                                                                <div key={disciplina.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+                                                                    {/* Cabeçalho da Disciplina com Status */}
+                                                                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+                                                                        <h4 className="font-semibold text-gray-800">{disciplina.nome}</h4>
+                                                                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${badgeColor}`}>
+                                                                            {disciplina.status}
+                                                                        </span>
+                                                                    </div>
 
-                                                                                <tr className="border-t bg-gray-100">
-                                                                                    <td className="py-2 font-semibold">Nota Final</td>
-                                                                                    <td className="py-2 text-right font-bold text-gray-800">
-                                                                                        {temNotasLancadas ? disciplina.nota_final.toFixed(2) : '—'}
-                                                                                    </td>
-                                                                                </tr>
+                                                                    <div className="p-4">
+                                                                        {isMatriculado ? (
+                                                                            <div className="overflow-x-auto">
+                                                                                <table className="w-full text-sm">
+                                                                                    <thead>
+                                                                                        <tr className="text-left text-gray-500 border-b">
+                                                                                            <th className="pb-2 font-medium w-1/2">Avaliação</th>
+                                                                                            <th className="pb-2 font-medium text-right">Valor</th>
+                                                                                            <th className="pb-2 font-medium text-right">Nota</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody className="divide-y divide-gray-100">
+                                                                                        {temNotasLancadas ? (
+                                                                                            disciplina.notas.map((n, index) => (
+                                                                                                <tr key={index}>
+                                                                                                    <td className="py-2 text-gray-700">{n.tipo}</td>
+                                                                                                    <td className="py-2 text-right text-gray-500">{n.valor}</td>
+                                                                                                    <td className="py-2 text-right font-medium text-gray-800">
+                                                                                                        {typeof n.nota === 'number' ? n.nota.toFixed(1) : '—'}
+                                                                                                    </td>
+                                                                                                </tr>
+                                                                                            ))
+                                                                                        ) : (
+                                                                                            <tr>
+                                                                                                <td colSpan={3} className="py-4 text-center text-gray-400 italic">
+                                                                                                    Ainda não há notas lançadas.
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        )}
 
-                                                                                <tr className="border-t bg-gray-100">
-                                                                                    <td className="py-2 font-semibold">Status Final</td>
-                                                                                    <td className={`py-2 text-right font-bold ${statusColor}`}>
-                                                                                        {temNotasLancadas ? disciplina.status : 'Pendente'}
-                                                                                    </td>
-                                                                                </tr>
-                                                                            </tbody>
-                                                                        </table>
-                                                                    ) : <p className="text-sm text-gray-500 mt-2">Nenhuma nota lançada para esta disciplina.</p>}
+                                                                                        {/* Linha de Recuperação - Exibição Condicional Corrigida */}
+                                                                                        {temRecuperacao && (
+                                                                                            <tr className="bg-yellow-50">
+                                                                                                <td className="py-2 text-yellow-700 font-medium">Recuperação</td>
+                                                                                                <td className="py-2 text-right text-yellow-600">—</td>
+                                                                                                <td className="py-2 text-right font-bold text-yellow-700">
+                                                                                                    {disciplina.nota_recuperacao?.toFixed(1)}
+                                                                                                </td>
+                                                                                            </tr>
+                                                                                        )}
+                                                                                    </tbody>
+                                                                                    {/* Rodapé Nota Final */}
+                                                                                    <tfoot className="bg-gray-50 border-t border-gray-200">
+                                                                                        <tr>
+                                                                                            <td colSpan={2} className="py-2 pl-2 font-bold text-gray-700 text-right pr-4">Nota Final:</td>
+                                                                                            <td className={`py-2 text-right font-bold pr-1 ${disciplina.nota_final >= 60 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                                                {disciplina.nota_final.toFixed(1)}
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    </tfoot>
+                                                                                </table>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex items-center gap-2 text-gray-400 italic text-sm">
+                                                                                <BookOpen size={16} />
+                                                                                <p>Aluno ainda não matriculado nesta disciplina.</p>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             );
                                                         })}
                                                     </div>
                                                 </div>
-                                            )) : <p>Nenhuma informação acadêmica encontrada.</p>}
+                                            )) : <div className="text-center py-10 text-gray-500">Nenhuma informação acadêmica encontrada na grade curricular.</div>}
                                         </div>
                                     )}
 
                                     {activeTab === 'documentos' && (
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                {documentos.length > 0 ? documentos.map((doc) => (
-                                                    <div key={doc.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {documentos.length > 0 ? documentos.map((doc) => (
+                                                <div key={doc.id} className="bg-gray-50 border rounded-lg p-4 flex items-center justify-between">
                                                     <div>
                                                         <p className="font-semibold text-gray-700">{doc.tipo_documento.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</p>
                                                         <p className="text-xs text-gray-500 truncate" title={doc.nome_original}>{doc.nome_original}</p>
                                                     </div>
-                                                     <div className="flex items-center gap-3">
-                                                    <button
-                                                        onClick={() => triggerFileInput(doc.id)} // ✅ `doc.id` será um número válido
-                                                        className="text-blue-600 hover:text-blue-800 transition-colors"
-                                                        title="Atualizar Documento"
-                                                    >
-                                                        <RefreshCw size={20} />
-                                                    </button>
-                                                    <a
-                                                        href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-indigo-600 hover:text-indigo-800"
-                                                        title="Baixar Documento"
-                                                    >
-                                                        <Download size={20} />
-                                                    </a>
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => triggerFileInput(doc.id)}
+                                                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                                                            title="Atualizar Documento"
+                                                        >
+                                                            <RefreshCw size={20} />
+                                                        </button>
+                                                        <a
+                                                            href={`${import.meta.env.VITE_API_URL}${doc.caminho_arquivo}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-indigo-600 hover:text-indigo-800"
+                                                            title="Baixar Documento"
+                                                        >
+                                                            <Download size={20} />
+                                                        </a>
                                                     </div>
                                                 </div>
                                             )) : <p>Nenhum documento encontrado.</p>}
