@@ -2,9 +2,12 @@
 
 import { Card } from '../components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { frequenciaData } from '../../lib/mock-data';
 
-export function LineChartFrequencia() {
+interface LineChartFrequenciaProps {
+  data: any[];
+}
+
+export function LineChartFrequencia({ data }: LineChartFrequenciaProps) {
   return (
     <Card className="p-5 shadow-lg border-gray-200">
       <div className="mb-4">
@@ -17,7 +20,7 @@ export function LineChartFrequencia() {
       </div>
       
       <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={frequenciaData}>
+        <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis 
             dataKey="month" 
@@ -27,7 +30,7 @@ export function LineChartFrequencia() {
           <YAxis 
             stroke="#6b7280"
             style={{ fontSize: '11px' }}
-            domain={[80, 100]}
+            domain={[0, 100]} // Ajuste o domínio conforme a escala dos seus dados
           />
           <Tooltip 
             contentStyle={{ 
