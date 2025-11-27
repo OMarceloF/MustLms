@@ -146,6 +146,7 @@ import {
   atualizarLancamentos,
   pagarTransacao,
 } from '../controllers/financeiroController';
+import { getRelatoriosGeraisCurso } from '../controllers/relatoriosCursoController';
 
 // import {
 //   getOrCreateConversa,
@@ -1187,5 +1188,7 @@ router.patch('/api/trancamento/vinculos/:vinculoId/status', atualizarStatusMatri
 // ==============================================================================
 router.get('/api/disciplinas/:disciplinaId/vinculados', getVinculadosByDisciplina);
 
+// --- ROTA PARA DADOS DA ABA RELATÓRIOS DO CURSO ---
+router.get('/api/cursos/:cursoId/relatorios-gerais', getRelatoriosGeraisCurso);
 
 export default router;
