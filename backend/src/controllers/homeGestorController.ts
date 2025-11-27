@@ -11,15 +11,17 @@ export const getDashboardGestorData = async (req: Request, res: Response) => {
         const connection = await pool.getConnection();
         const currentYear = new Date().getFullYear();
 
-        // ---------------------------------------------------------
+        // =========================================================
         // 0. Captura de Filtros (Query Params)
-        // ---------------------------------------------------------
+        // =========================================================
         const cursoId = req.query.cursoId ? Number(req.query.cursoId) : null;
         const periodoId = req.query.periodoId ? Number(req.query.periodoId) : null;
+        const disciplinaId = req.query.disciplinaId ? Number(req.query.disciplinaId) : null;
 
         // Buscando listas para popular os Selects no Frontend
-        const [listaCursos] = await connection.query<RowDataPacket[]>('SELECT id, nome FROM cursos_posgraduacao WHERE status = "ativo"');
+        const [listaCursos] = await connection.query<RowDataPacket[]>('SELECT id, nome FROM cursos_posgraduacao WHERE status = "ativo" ORDER BY nome');
         const [listaPeriodos] = await connection.query<RowDataPacket[]>('SELECT id, nome FROM configuracoes_periodos_letivos ORDER BY data_inicio DESC');
+        const [listaDisciplinas] = await connection.query<RowDataPacket[]>('SELECT id, nome FROM cursos_disciplinas ORDER BY nome');
 
         // =========================================================
         // 1. KPIs (Cards do Topo)
@@ -55,7 +57,8 @@ export const getDashboardGestorData = async (req: Request, res: Response) => {
         `);
         const totalTurmas = totalTurmasResult[0].total;
 
-        // 6. Turmas Ativas (Apenas de semestres iniciados)
+        // 6. Turmas Ativas
+        // Filtra turmas 'Ativa' de semestres iniciados (não futuros)
         const [turmasAtivasResult] = await connection.query<RowDataPacket[]>(`
             SELECT COUNT(t.id) as total 
             FROM turmas t
@@ -104,7 +107,7 @@ export const getDashboardGestorData = async (req: Request, res: Response) => {
         }));
 
         // =========================================================
-        // 3. Gráfico e Tabela de Desempenho por Turma (COM FILTROS)
+        // 3. Desempenho por Turma (COM FILTROS E SUBQUERY)
         // =========================================================
         
         let whereClause = "WHERE 1=1";
@@ -118,19 +121,28 @@ export const getDashboardGestorData = async (req: Request, res: Response) => {
             whereClause += " AND t.semestre_id = ?";
             queryParams.push(periodoId);
         }
+        if (disciplinaId) {
+            whereClause += " AND t.disciplina_id = ?";
+            queryParams.push(disciplinaId);
+        }
 
         const queryDesempenho = `
             SELECT 
                 t.nome_turma as turma,
                 u.nome as professor,
-                SUM(CASE WHEN COALESCE(n.nota, 0) >= 60 THEN 1 ELSE 0 END) as aprovados,
-                SUM(CASE WHEN COALESCE(n.nota, 0) < 60 AND n.id IS NOT NULL THEN 1 ELSE 0 END) as reprovados,
-                0 as desistentes, -- Placeholder (ajustar se houver lógica de status 'trancado' na tabela de notas/vinculo)
-                COALESCE(AVG(n.nota), 0) as media
+                SUM(CASE WHEN COALESCE(student_grades.nota_total, 0) >= 60 THEN 1 ELSE 0 END) as aprovados,
+                SUM(CASE WHEN COALESCE(student_grades.nota_total, 0) < 60 AND student_grades.aluno_id IS NOT NULL THEN 1 ELSE 0 END) as reprovados,
+                0 as desistentes,
+                COALESCE(AVG(student_grades.nota_total), 0) as media
             FROM turmas t
             LEFT JOIN funcionarios f ON t.professor_responsavel = f.id
-            LEFT JOIN users u ON f.id = u.id 
-            LEFT JOIN notas n ON t.id = n.turma_id
+            LEFT JOIN users u ON f.id = u.id
+            -- Subquery para somar as notas de cada aluno na turma antes de fazer a média da turma
+            LEFT JOIN (
+                SELECT turma_id, aluno_id, SUM(nota) as nota_total
+                FROM notas
+                GROUP BY turma_id, aluno_id
+            ) student_grades ON t.id = student_grades.turma_id
             ${whereClause}
             GROUP BY t.id, t.nome_turma, u.nome
             ORDER BY media DESC
@@ -145,14 +157,13 @@ export const getDashboardGestorData = async (req: Request, res: Response) => {
             aprovados: Number(row.aprovados),
             reprovados: Number(row.reprovados),
             desistentes: Number(row.desistentes),
-            desempenho: parseFloat(row.media).toFixed(1), // String formatada para a tabela
-            desempenhoNum: Number(row.media) // Número float para o gráfico
+            desempenho: parseFloat(row.media).toFixed(1), // String para tabela
+            desempenhoNum: Number(Number(row.media).toFixed(1)) // Número arredondado para gráfico (Ex: 70.7)
         }));
 
         // =========================================================
         // 4. Calendário / Próximos Eventos
         // =========================================================
-        // Seleciona ec.data explicitamente para corrigir erro de ORDER BY com DISTINCT
         const [eventosRows] = await connection.query<RowDataPacket[]>(`
             SELECT DISTINCT
                 ec.id, 
@@ -222,10 +233,10 @@ export const getDashboardGestorData = async (req: Request, res: Response) => {
         connection.release();
 
         res.json({
-            filtros: { cursos: listaCursos, periodos: listaPeriodos }, // Dados para os selects
+            filtros: { cursos: listaCursos, periodos: listaPeriodos, disciplinas: listaDisciplinas }, // Lista atualizada
             kpiData,
             ciclosData,
-            desempenhoTurmasData, // Dados corrigidos (Tabela + Gráfico)
+            desempenhoTurmasData,
             eventos: eventosRows,
             atividadesRecentes: atividadesRows,
             comunicados: avisosRows,
