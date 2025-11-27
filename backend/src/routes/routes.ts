@@ -36,6 +36,7 @@ import {
   getDetalhesCompletosAluno,
   atualizarDocumentoAluno,
 } from '../controllers/alunosControllerNovo';
+import { getDashboardGestorData } from '../controllers/homeGestorController';
 // import { criarAluno } from '../controllers/criarAlunoController';
 import { criarResponsavel } from '../controllers/criarResponsavelController';
 import {
@@ -1190,5 +1191,8 @@ router.get('/api/disciplinas/:disciplinaId/vinculados', getVinculadosByDisciplin
 
 // --- ROTA PARA DADOS DA ABA RELATÓRIOS DO CURSO ---
 router.get('/api/cursos/:cursoId/relatorios-gerais', getRelatoriosGeraisCurso);
+
+// --- ROTA DA DASHBOARD / HOMEPAGE DO GESTOR ---
+router.get('/api/dashboard/gestor', getDashboardGestorData);
 
 export default router;

@@ -3,24 +3,30 @@
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Activity, UserPlus, Users, MessageSquare, CalendarCheck, Download } from 'lucide-react';
-import { atividadesRecentes } from '../../lib/mock-data';
 
-const activityIcons = {
+const activityIcons: any = {
   matricula: UserPlus,
   turma: Users,
   post: MessageSquare,
   evento: CalendarCheck,
 };
 
-const activityColors = {
+const activityColors: any = {
   matricula: 'text-green-600 bg-green-50',
   turma: 'text-blue-600 bg-blue-50',
   post: 'text-purple-600 bg-purple-50',
   evento: 'text-amber-600 bg-amber-50',
 };
 
-export function AtividadesRecentes() {
-  const formatTimestamp = (date: Date) => {
+interface AtividadesRecentesProps {
+  data: any[];
+}
+
+export function AtividadesRecentes({ data }: AtividadesRecentesProps) {
+  
+  const formatTimestamp = (dateInput: string) => {
+    if (!dateInput) return '';
+    const date = new Date(dateInput);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -59,9 +65,9 @@ export function AtividadesRecentes() {
         <div className="absolute left-[13px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-[#363776] via-gray-300 to-transparent" />
         
         <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2">
-          {atividadesRecentes.map((atividade, index) => {
-            const Icon = activityIcons[atividade.type];
-            const colorClass = activityColors[atividade.type];
+          {data && data.map((atividade) => {
+            const Icon = activityIcons[atividade.type] || Activity;
+            const colorClass = activityColors[atividade.type] || 'text-gray-500 bg-gray-100';
 
             return (
               <div
@@ -87,6 +93,9 @@ export function AtividadesRecentes() {
               </div>
             );
           })}
+          {(!data || data.length === 0) && (
+             <p className="text-xs text-center text-gray-500 py-4 ml-4">Nenhuma atividade recente.</p>
+          )}
         </div>
       </div>
 

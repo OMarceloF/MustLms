@@ -2,13 +2,25 @@
 
 import { Card } from '../components/ui/card';
 import { ArrowUp, ArrowDown, Users, UserCheck, UserCircle, Layers, CheckCircle, Activity } from 'lucide-react';
-import { KpiData } from '../../lib/mock-data';
+
+// CORREÇÃO: Removemos o import do mock-data e definimos a interface aqui
+// import { KpiData } from '../../lib/mock-data'; <--- REMOVIDO
+
+// Definindo a interface localmente para descrever o formato dos dados que vêm do banco
+export interface KpiData {
+  id: number;
+  title: string;
+  value: number;
+  icon: string;
+  trend: number;
+  period: string;
+}
 
 interface KpiCardProps {
   data: KpiData;
 }
 
-const iconMap = {
+const iconMap: any = {
   users: Users,
   'user-check': UserCheck,
   'user-circle': UserCircle,
@@ -18,7 +30,8 @@ const iconMap = {
 };
 
 export function KpiCard({ data }: KpiCardProps) {
-  const Icon = iconMap[data.icon as keyof typeof iconMap] || Users;
+  // Fallback para 'Users' se o ícone não existir no mapa
+  const Icon = iconMap[data.icon] || Users;
   const isPositive = data.trend >= 0;
 
   return (
@@ -42,6 +55,7 @@ export function KpiCard({ data }: KpiCardProps) {
                 {data.value}
               </p>
               
+              {/* Só exibe a tendência se for diferente de 0 */}
               {data.trend !== 0 && (
                 <div className={`flex items-center gap-1 pb-1 ${isPositive ? 'text-[#9dba32]' : 'text-red-400'}`}>
                   {isPositive ? (
