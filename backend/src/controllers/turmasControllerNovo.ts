@@ -193,7 +193,9 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
     try {
         const [turmaRows] = await pool.query<RowDataPacket[]>(`
             SELECT 
-                t.id, t.nome_turma, t.ano_letivo, t.modalidade, t.status, t.descricao,
+                t.id, t.nome_turma, 
+                cc.ano_letivo, /* CORREÇÃO: Busca da tabela de calendario (cc), não de turmas (t) */
+                t.modalidade, t.status, t.descricao,
                 t.disciplina_id,
                 t.semestre_id,
                 cp.nome AS curso_nome,
@@ -204,6 +206,7 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
             LEFT JOIN cursos_posgraduacao cp ON t.curso_id = cp.id
             LEFT JOIN cursos_disciplinas d ON t.disciplina_id = d.id
             LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
+            LEFT JOIN configuracoes_calendario cc ON cpl.config_calendario_id = cc.id /* CORREÇÃO: Join adicionado para pegar o ano */
             LEFT JOIN funcionarios f ON t.professor_responsavel = f.id
             WHERE t.id = ?
         `, [id]);
@@ -218,7 +221,7 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
             : [];
 
         const [alunosRows] = await pool.query<RowDataPacket[]>(`
-            SELECT u.id, u.nome, u.foto_url, a.matricula
+            SELECT u.id, u.nome, u.foto_url, a.matricula, 'aluno' as role
             FROM alunos_turmas at
             JOIN users u ON at.aluno_id = u.id
             JOIN alunos a ON u.id = a.id
@@ -228,7 +231,7 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
         const responseData = {
             id: turma.id,
             nome: turma.nome_turma,
-            ano_letivo: turma.ano_letivo,
+            ano_letivo: turma.ano_letivo ? String(turma.ano_letivo) : '', // Converte para string pois o front espera string
             professor_responsavel: turma.professor_nome,
             alunos: alunosRows,
             materias: disciplina,
@@ -237,6 +240,7 @@ export const getTurmaByIdNovo = async (req: Request, res: Response) => {
             materiaId: turma.disciplina_id,
             semestreId: turma.semestre_id,
             semestre_nome: turma.semestre_nome,
+            qtd_alunos: alunosRows.length // Atualiza qtd real baseada nos alunos retornados
         };
 
         return res.status(200).json(responseData);
@@ -253,11 +257,22 @@ export const getAlunosDisponiveisParaTurma = async (req: Request, res: Response)
 
     try {
         const [alunos] = await pool.query<RowDataPacket[]>(`
-            SELECT u.id, u.nome, u.foto_url FROM users u
-            WHERE u.role = 'aluno' AND u.status = 'ativo'
-              AND u.id NOT IN (SELECT aluno_id FROM alunos_turmas WHERE turma_id = ?)
+            SELECT DISTINCT u.id, u.nome, u.foto_url 
+            FROM users u
+            INNER JOIN vincular_aluno_curso vac ON u.id = vac.aluno_id
+            INNER JOIN turmas t ON t.curso_id = vac.curso_posgraduacao_id
+            WHERE t.id = ? 
+              AND u.role = 'aluno' 
+              AND u.status = 'ativo'
+              AND vac.status_matricula = 'Ativa' -- Opcional: Garante que só traga alunos com matrícula ativa no curso
+              AND u.id NOT IN (
+                  SELECT aluno_id 
+                  FROM alunos_turmas 
+                  WHERE turma_id = ?
+              )
             ORDER BY u.nome ASC;
-        `, [turmaId]);
+        `, [turmaId, turmaId]);
+
         res.json(alunos);
     } catch (error) {
         console.error('Erro ao buscar alunos disponíveis:', error);
