@@ -26,7 +26,7 @@ interface TurmaIngresso {
     curso_posgraduacao_id: number;
 }
 
-// NOVA TIPAGEM PARA A GRADE
+// Interface para a Grade
 interface Grade {
     id: number;
     periodoAcademico: string;
@@ -36,7 +36,7 @@ interface Grade {
 const vincularSchema = z.object({
     cursoId: z.coerce.number({ required_error: "Selecione um curso." }).min(1, "Selecione um curso."),
     turmaId: z.coerce.number({ required_error: "Selecione uma turma." }).min(1, "Selecione uma turma."),
-    gradeId: z.coerce.number({ required_error: "Selecione uma grade." }).min(1, "Selecione uma grade."), // Alterado para gradeId
+    gradeId: z.coerce.number({ required_error: "Selecione uma grade." }).min(1, "Selecione uma grade."),
 });
 
 type VincularFormData = z.infer<typeof vincularSchema>;
@@ -49,7 +49,7 @@ export function VincularAlunoCursoForm() {
     const [cursos, setCursos] = useState<Curso[]>([]);
     const [todasTurmasIngresso, setTodasTurmasIngresso] = useState<TurmaIngresso[]>([]);
     const [turmasFiltradas, setTurmasFiltradas] = useState<TurmaIngresso[]>([]);
-    const [grades, setGrades] = useState<Grade[]>([]); // <-- NOVO ESTADO PARA GRADES
+    const [grades, setGrades] = useState<Grade[]>([]);
     const [loading, setLoading] = useState({ cursos: true, turmas: true, grades: false, submit: false });
     const [error, setError] = useState<string | null>(null);
 
@@ -60,18 +60,21 @@ export function VincularAlunoCursoForm() {
     const { watch, setValue } = form;
     const selectedCursoId = watch('cursoId');
 
+    // --- CORREÇÃO PRINCIPAL ---
+    // Converte ambos IDs para String para garantir que a comparação funcione (Select retorna string, API retorna number)
+    const selectedCurso = cursos.find(c => String(c.id) === String(selectedCursoId));
+
     // Função de callback para ser chamada após a criação bem-sucedida da turma
     const handleTurmaCreated = (newTurma: TurmaIngresso) => {
         // 1. Adiciona a nova turma à lista de todas as turmas
         setTodasTurmasIngresso(prev => [...prev, newTurma]);
 
-        // 2. Garante que ela apareça na lista filtrada, já que o cursoId está selecionado
+        // 2. Garante que ela apareça na lista filtrada
         setTurmasFiltradas(prev => [...prev, newTurma]);
 
         // 3. Define a nova turma como selecionada no formulário
         setValue('turmaId', newTurma.id, { shouldValidate: true });
     };
-
 
     // Efeito para buscar dados iniciais (cursos e turmas)
     useEffect(() => {
@@ -122,7 +125,8 @@ export function VincularAlunoCursoForm() {
                     const gradesData = await response.json();
                     setGrades(gradesData);
                 } catch (err: any) {
-                    toast.error("Erro ao buscar grades", { description: err.message });
+                    // Não mostra erro se for apenas "nenhuma grade encontrada" (array vazio), apenas se a requisição falhar
+                    console.error(err);
                     setGrades([]);
                 } finally {
                     setLoading(prev => ({ ...prev, grades: false }));
@@ -132,13 +136,13 @@ export function VincularAlunoCursoForm() {
 
         } else {
             setTurmasFiltradas([]);
-            setGrades([]); // Limpa as grades se nenhum curso estiver selecionado
+            setGrades([]);
         }
-        // Reseta os campos dependentes
-        setValue('turmaId', undefined as any);
-        setValue('gradeId', undefined as any);
-    }, [selectedCursoId, todasTurmasIngresso, setValue]);
-    const selectedCurso = cursos.find(c => c.id === selectedCursoId);
+        
+        // Nota: Não resetamos o 'turmaId' aqui automaticamente para evitar loops de re-renderização,
+        // mas o usuário terá que selecionar uma nova turma se mudar o curso.
+    }, [selectedCursoId, todasTurmasIngresso]);
+
     const goBack = () => setCurrentStep('documents');
 
     const onSubmit = async (data: VincularFormData) => {
@@ -155,11 +159,12 @@ export function VincularAlunoCursoForm() {
                     alunoId: student.id,
                     cursoId: data.cursoId,
                     turmaId: data.turmaId,
-                    gradeId: data.gradeId, // Enviando o ID da grade
+                    gradeId: data.gradeId,
                 }),
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Falha ao vincular aluno.');
+            
             toast.success("Aluno vinculado com sucesso!");
             completeStep('vincularAluno');
             setCurrentStep('contract');
@@ -171,7 +176,6 @@ export function VincularAlunoCursoForm() {
     };
 
     return (
-        // FRAGMENTO ABERTO AQUI: Permite retornar o <form> e o <CreateTurmaIngressoModal>
         <>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <Card>
@@ -192,7 +196,7 @@ export function VincularAlunoCursoForm() {
                             </div>
                         )}
 
-                        {/* Campo de Curso (sem alteração) */}
+                        {/* Campo de Curso */}
                         <div>
                             <Label htmlFor="cursoId">Curso *</Label>
                             <Controller
@@ -217,23 +221,19 @@ export function VincularAlunoCursoForm() {
                         {/* Turma de Ingresso com Botão de Criação */}
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center justify-between">
-                                {/* Label da Turma */}
                                 <Label htmlFor="turmaId">Turma de Ingresso *</Label>
-
-                                {/* Botão para abrir o Modal - Agora mais visível e descritivo */}
                                 <Button
                                     type="button"
-                                    // variant="outline"
+                                    // variant="outline" // Removido para usar o estilo padrão (mais visível) ou descomente se preferir outline
                                     onClick={() => setIsModalOpen(true)}
                                     disabled={!selectedCursoId || loading.cursos || loading.turmas}
-                                    className="h-8 px-3 text-xs" // Estilo compacto
+                                    className="h-8 px-3 text-xs flex items-center gap-1"
                                 >
-                                    <Plus className="mr-1 h-3 w-3" />
+                                    <Plus className="h-3 w-3" />
                                     Criar Turma de Ingresso
                                 </Button>
                             </div>
 
-                            {/* Campo de Seleção da Turma (Select) */}
                             <Controller
                                 name="turmaId"
                                 control={form.control}
@@ -243,11 +243,15 @@ export function VincularAlunoCursoForm() {
                                             <SelectValue placeholder={!selectedCursoId ? "Selecione um curso primeiro" : (loading.turmas ? "Carregando..." : "Selecione a turma")} />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {turmasFiltradas.map(turma => (
-                                                <SelectItem key={turma.id} value={String(turma.id)}>
-                                                    {turma.nome}
-                                                </SelectItem>
-                                            ))}
+                                            {turmasFiltradas.length > 0 ? (
+                                                turmasFiltradas.map(turma => (
+                                                    <SelectItem key={turma.id} value={String(turma.id)}>
+                                                        {turma.nome}
+                                                    </SelectItem>
+                                                ))
+                                            ) : (
+                                                <div className="p-2 text-sm text-muted-foreground text-center">Nenhuma turma encontrada</div>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                 )}
@@ -255,19 +259,7 @@ export function VincularAlunoCursoForm() {
                             {form.formState.errors.turmaId && <p className="text-destructive text-sm mt-1">{form.formState.errors.turmaId.message}</p>}
                         </div>
 
-                        {/* Botão + para Abrir o Modal
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setIsModalOpen(true)}
-                            disabled={!selectedCursoId || loading.cursos || loading.turmas}
-                            className="mt-1 h-9 flex-shrink-0 p-3" // Ajuste para ficar do mesmo tamanho do input
-                        >
-                            <Plus className="h-4 w-4" />
-                        </Button>
- */}
-
-                        {/* Campo de Grade (mantido) */}
+                        {/* Campo de Grade */}
                         <div>
                             <Label htmlFor="gradeId">Grade *</Label>
                             <Controller
@@ -286,7 +278,7 @@ export function VincularAlunoCursoForm() {
                                                     </SelectItem>
                                                 ))
                                             ) : (
-                                                !loading.grades && <p className="p-4 text-sm text-muted-foreground">Nenhuma grade encontrada para este curso.</p>
+                                                !loading.grades && <div className="p-2 text-sm text-muted-foreground text-center">Nenhuma grade encontrada para este curso</div>
                                             )}
                                         </SelectContent>
                                     </Select>
@@ -307,18 +299,16 @@ export function VincularAlunoCursoForm() {
                         Continuar para o Contrato
                     </Button>
                 </div>
-            </form >
+            </form>
 
-            {/* Modal de Criação da Turma, passando nome e sigla */}
             <CreateTurmaIngressoModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 cursoId={Number(selectedCursoId)}
-                cursoNome={selectedCurso?.nome} // NOVO
-                cursoSigla={selectedCurso?.sigla} // NOVO
+                cursoNome={selectedCurso?.nome}
+                cursoSigla={selectedCurso?.sigla}
                 onTurmaCreated={handleTurmaCreated}
             />
         </>
-        // FRAGMENTO FECHADO AQUI: Envolvendo <form> e <CreateTurmaIngressoModal>
     );
 }

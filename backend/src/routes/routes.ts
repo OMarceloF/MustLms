@@ -18,6 +18,10 @@ import {
   criarFuncionario,
   uploadFuncionarioFiles,
 } from '../controllers/criarProfessorController';
+import { 
+    createTurmaIngresso, 
+    getPeriodosLetivosParaSelect 
+} from '../controllers/turmasIngressoController';
 import {
   getAlunoById,
   listarAlunos,
@@ -1194,5 +1198,15 @@ router.get('/api/cursos/:cursoId/relatorios-gerais', getRelatoriosGeraisCurso);
 
 // --- ROTA DA DASHBOARD / HOMEPAGE DO GESTOR ---
 router.get('/api/dashboard/gestor', getDashboardGestorData);
+
+// ==============================================================================
+// ROTAS PARA TURMAS DE INGRESSO (MODAL)
+// ==============================================================================
+
+// Rota para criar a turma (Ação do botão "Criar Turma" do modal)
+router.post('/api/turmas-ingresso', createTurmaIngresso);
+
+// Rota para popular o dropdown "Período Acadêmico (Grade)" dentro do modal
+router.get('/api/form-data/periodos-letivos', getPeriodosLetivosParaSelect);
 
 export default router;

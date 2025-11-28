@@ -1,124 +1,119 @@
-import React, { useState, useEffect } from 'react';
+// frontend/src/pages/gestor/cadastro/components/forms/CreateTurmaIngressoModal.tsx
+
+import React, { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../../components/ui/dialog';
 import { Button } from '../../../components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../../components/ui/dialog';
-import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select'; // Importar Select
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Input } from '../../../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
+import { Loader2, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
 
-// --- Tipagens de suporte ---
-interface CursoInfo {
-    nome: string;
-    sigla: string;
-}
-
-interface Grade {
-    id: number;
-    periodoAcademico: string;
-}
-
-// --- Schema de Validação (Atualizado) ---
-const createTurmaSchema = z.object({
-    nome: z.string().min(3, "O nome da turma deve ter pelo menos 3 caracteres."),
-    gradeId: z.coerce.number({ required_error: "Selecione um período/grade." }).min(1, "Selecione um período/grade."),
-});
-
-type CreateTurmaFormData = z.infer<typeof createTurmaSchema>;
-
+// --- Interfaces ---
 interface CreateTurmaIngressoModalProps {
     isOpen: boolean;
     onClose: () => void;
     cursoId: number;
-    // Adicione cursoSigla e cursoNome para exibição
-    cursoSigla: string | undefined;
-    cursoNome: string | undefined;
-    onTurmaCreated: (newTurma: { id: number; nome: string; curso_posgraduacao_id: number; }) => void;
+    cursoNome?: string;
+    cursoSigla?: string;
+    onTurmaCreated: (turma: { id: number; nome: string; curso_posgraduacao_id: number }) => void;
 }
 
-export function CreateTurmaIngressoModal({ isOpen, onClose, cursoId, cursoSigla, cursoNome, onTurmaCreated }: CreateTurmaIngressoModalProps) {
-    const [grades, setGrades] = useState<Grade[]>([]);
-    const [loadingGrades, setLoadingGrades] = useState(false);
+interface PeriodoLetivo {
+    id: number;
+    nome: string;
+}
 
-    const form = useForm<CreateTurmaFormData>({
-        resolver: zodResolver(createTurmaSchema),
+// --- Schema de Validação ---
+const turmaSchema = z.object({
+    nome: z.string().min(3, "O nome da turma deve ter pelo menos 3 caracteres."),
+    periodoLetivoId: z.string({ required_error: "Selecione um período acadêmico." }).min(1, "Selecione um período."),
+});
+
+type TurmaFormData = z.infer<typeof turmaSchema>;
+
+export function CreateTurmaIngressoModal({
+    isOpen,
+    onClose,
+    cursoId,
+    cursoNome,
+    cursoSigla,
+    onTurmaCreated
+}: CreateTurmaIngressoModalProps) {
+    const [loading, setLoading] = useState(false);
+    const [loadingPeriodos, setLoadingPeriodos] = useState(false);
+    const [periodos, setPeriodos] = useState<PeriodoLetivo[]>([]);
+
+    const form = useForm<TurmaFormData>({
+        resolver: zodResolver(turmaSchema),
         defaultValues: {
             nome: '',
-            gradeId: undefined as any,
+            periodoLetivoId: ''
         }
     });
 
-    const { handleSubmit, formState: { isSubmitting, errors }, reset, control, setError } = form;
-
-    // Efeito para buscar as grades do curso selecionado assim que o modal abrir
+    // 1. Buscar Períodos Letivos ao abrir o modal
     useEffect(() => {
-        if (isOpen && cursoId) {
-            const fetchGrades = async () => {
-                setLoadingGrades(true);
-                setGrades([]);
+        if (isOpen) {
+            const fetchPeriodos = async () => {
+                setLoadingPeriodos(true);
                 try {
-                    // Reutiliza o endpoint de grades
-                    const response = await fetch(`/api/grades/por-curso/${cursoId}`);
-                    if (!response.ok) throw new Error('Falha ao buscar as grades para a nova turma.');
-                    const gradesData = await response.json();
-                    setGrades(gradesData);
-                } catch (err: any) {
-                    toast.error("Erro ao carregar grades", { description: err.message });
-                    setError('gradeId', { message: "Erro ao carregar grades." });
+                    const response = await fetch('/api/form-data/periodos-letivos');
+                    if (!response.ok) throw new Error('Erro ao buscar períodos.');
+                    const data = await response.json();
+                    setPeriodos(data);
+                } catch (error) {
+                    console.error(error);
+                    toast.error("Erro", { description: "Não foi possível carregar os períodos letivos." });
                 } finally {
-                    setLoadingGrades(false);
+                    setLoadingPeriodos(false);
                 }
             };
-            fetchGrades();
+            fetchPeriodos();
+            form.reset(); // Limpa o formulário sempre que abre
         }
+    }, [isOpen, form]);
 
-        // Limpa o formulário quando o modal fechar
-        if (!isOpen) {
-            reset();
-            setGrades([]);
-        }
-    }, [isOpen, cursoId, reset, setError]);
-
-    const onSubmit = async (data: CreateTurmaFormData) => {
+    // 2. Enviar dados para o Backend
+    const onSubmit = async (data: TurmaFormData) => {
         if (!cursoId) {
-            toast.error("Erro", { description: "É necessário selecionar um curso para criar a turma." });
+            toast.error("Erro interno", { description: "ID do curso não informado." });
             return;
         }
 
+        setLoading(true);
         try {
-            const payload = {
-                nome: data.nome,
-                curso_posgraduacao_id: cursoId,
-                grade_id: data.gradeId, // NOVO: Enviando a grade/período selecionado
-            };
-
-            const response = await fetch('/api/turmas-ingresso', { // **Ajuste o endpoint se for diferente**
+            const response = await fetch('/api/turmas-ingresso', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({
+                    nome: data.nome,
+                    periodoLetivoId: Number(data.periodoLetivoId),
+                    cursoId: cursoId
+                })
             });
 
             const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.message || "Falha ao criar a nova turma.");
+                throw new Error(result.message || 'Erro ao criar turma.');
             }
 
-            toast.success(`Turma "${data.nome}" criada com sucesso!`);
+            toast.success("Sucesso!", { description: "Turma de ingresso criada." });
 
-            // Assume que a API retorna o objeto da nova turma com 'id', 'nome' e 'curso_posgraduacao_id'
+            // Atualiza o select do formulário pai
             onTurmaCreated(result.turma);
-
+            
             onClose();
-        } catch (err: any) {
-            toast.error("Erro na Criação da Turma", { description: err.message });
+        } catch (error: any) {
+            toast.error("Erro ao criar turma", { description: error.message });
+        } finally {
+            setLoading(false);
         }
     };
-
-    const isFormDisabled = isSubmitting || loadingGrades || !cursoId;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -129,58 +124,63 @@ export function CreateTurmaIngressoModal({ isOpen, onClose, cursoId, cursoSigla,
                         Crie uma turma e defina o período acadêmico (grade) para o curso selecionado.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
-                    {/* Exibição do Curso/Sigla (apenas leitura) */}
-                    <div className="p-3 bg-muted/30 rounded-md">
-                        <Label className="font-semibold text-sm">Curso Selecionado:</Label>
-                        <p className="text-md font-medium mt-1">
-                            {cursoNome || '...'} **({cursoSigla || '...'})**
-                        </p>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                    
+                    {/* Exibição do Curso Selecionado (Read-Only) */}
+                    <div className="grid gap-2">
+                        <Label className="text-muted-foreground">Curso Selecionado:</Label>
+                        <div className="p-3 bg-muted/50 rounded-md text-sm font-medium border">
+                            {cursoSigla ? `${cursoNome} (${cursoSigla})` : cursoNome || "..."}
+                        </div>
                     </div>
 
-                    {/* Campo: Nome da Turma */}
-                    <div className="space-y-2">
+                    {/* Nome da Turma */}
+                    <div className="grid gap-2">
                         <Label htmlFor="nome">Nome da Turma *</Label>
-                        <Input
-                            id="nome"
-                            placeholder="Ex: 2024/1, Turma B"
-                            {...form.register('nome')}
-                            disabled={isFormDisabled}
+                        <Input 
+                            id="nome" 
+                            placeholder="Ex: 2025/1, Turma B" 
+                            {...form.register('nome')} 
                         />
-                        {errors.nome && <p className="text-destructive text-sm">{errors.nome.message}</p>}
+                        {form.formState.errors.nome && (
+                            <span className="text-xs text-destructive">{form.formState.errors.nome.message}</span>
+                        )}
                     </div>
 
-                    {/* Campo: Período (Grade) */}
-                    <div className="space-y-2">
-                        <Label htmlFor="gradeId">Período Acadêmico (Grade) *</Label>
+                    {/* Select de Período Acadêmico */}
+                    <div className="grid gap-2">
+                        <Label htmlFor="periodo">Período Acadêmico (Grade) *</Label>
                         <Controller
-                            name="gradeId"
-                            control={control}
+                            name="periodoLetivoId"
+                            control={form.control}
                             render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={String(field.value || '')} disabled={isFormDisabled || grades.length === 0}>
-                                    <SelectTrigger id="gradeId">
-                                        <SelectValue placeholder={loadingGrades ? "Carregando períodos..." : (grades.length === 0 ? "Nenhuma grade encontrada" : "Selecione o período")} />
+                                <Select onValueChange={field.onChange} value={field.value} disabled={loadingPeriodos}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={loadingPeriodos ? "Carregando..." : "Selecione o período"} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {grades.map(grade => (
-                                            <SelectItem key={grade.id} value={String(grade.id)}>
-                                                {grade.periodoAcademico}
+                                        {periodos.map((periodo) => (
+                                            <SelectItem key={periodo.id} value={String(periodo.id)}>
+                                                {periodo.nome}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             )}
                         />
-                        {errors.gradeId && <p className="text-destructive text-sm">{errors.gradeId.message}</p>}
+                        {form.formState.errors.periodoLetivoId && (
+                            <span className="text-xs text-destructive">{form.formState.errors.periodoLetivoId.message}</span>
+                        )}
                     </div>
 
-                    <DialogFooter className="mt-6">
-                        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+                    <DialogFooter className="pt-4">
+                        <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+                            <X className="mr-2 h-4 w-4" />
                             Cancelar
                         </Button>
-                        <Button type="submit" disabled={isFormDisabled || grades.length === 0}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        <Button type="submit" disabled={loading || loadingPeriodos}>
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                             Criar Turma
                         </Button>
                     </DialogFooter>
