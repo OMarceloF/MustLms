@@ -21,14 +21,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../..
 import { Checkbox } from '../../../components/ui/checkbox';
 import { cn } from '../../../../lib/utils';
 
-// Schema de validação (matricula não é mais validada aqui)
+// Schema de validação
 const studentSchema = z.object({
   nomeCompleto: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   cpf: z.string().min(14, 'CPF inválido, preencha completamente').max(14),
   rg: z.string().min(1, 'RG é obrigatório'),
   email: z.string().email('Email inválido'),
   biografia: z.string().max(500, 'Biografia deve ter no máximo 500 caracteres').optional().or(z.literal('')),
-  telefone: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
+  telefone: z.string().min(14, 'Telefone inválido (mínimo 10 dígitos)'), // Ajustado para validar com máscara
   sexo: z.enum(['Masculino', 'Feminino'], { required_error: 'Sexo é obrigatório' }),
   login: z.string().min(3, 'Login deve ter pelo menos 3 caracteres'),
   senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
@@ -46,9 +46,27 @@ const studentSchema = z.object({
 
 type StudentFormData = z.infer<typeof studentSchema>;
 
-// Funções auxiliares
+// Funções auxiliares de Formatação e Limpeza
+const cleanString = (val: string) => val.replace(/\D/g, '');
+
 const formatCPF = (value: string) => value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2').slice(0, 14);
-const formatRG = (value: string) => value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1})$/, '$1-$2').slice(0, 12);
+
+const formatRG = (value: string) => value.replace(/\D/g, '').replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1})$/, '$1-$2').slice(0, 13);
+
+const formatTelefone = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d{4})/, '$1-$2')
+    .replace(/(-\d{4})\d+?$/, '$1');
+};
+
+const formatCEP = (value: string) => {
+  return value
+    .replace(/\D/g, '')
+    .replace(/^(\d{5})(\d)/, '$1-$2')
+    .substring(0, 9);
+};
 
 export function StudentForm() {
   const { state, updateStudent, setCurrentStep, completeStep } = useRegistration();
@@ -65,16 +83,19 @@ export function StudentForm() {
     resolver: zodResolver(studentSchema),
     defaultValues: {
       nomeCompleto: student.nomeCompleto || '',
-      cpf: student.cpf || '',
-      rg: student.rg || '',
+      cpf: formatCPF(student.cpf || ''), // Aplica máscara inicial
+      rg: formatRG(student.rg || ''),    // Aplica máscara inicial
       email: student.email || '',
       biografia: student.biografia || '',
-      telefone: student.telefone || '',
+      telefone: formatTelefone(student.telefone || ''), // Aplica máscara inicial
       sexo: student.sexo === 'M' ? 'Masculino' : student.sexo === 'F' ? 'Feminino' : undefined,
       login: student.login || '',
       senha: student.senha || '',
       restricoesMedicas: student.restricoesMedicas || '',
-      endereco: student.endereco || {},
+      endereco: {
+        ...student.endereco,
+        cep: formatCEP(student.endereco?.cep || '') // Aplica máscara inicial
+      },
     },
   });
 
@@ -111,13 +132,24 @@ export function StudentForm() {
       const yyyyMMdd = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
       const fotoFile = fileInputRef.current?.files?.[0];
 
+      // Sanitização: Remove formatação antes de enviar
       const payload: any = {
-        nome: data.nomeCompleto, cpf: data.cpf, rg: data.rg,
-        data_nascimento: yyyyMMdd, email: data.email, telefone: data.telefone, sexo: data.sexo,
+        nome: data.nomeCompleto,
+        cpf: cleanString(data.cpf),
+        rg: cleanString(data.rg),
+        data_nascimento: yyyyMMdd,
+        email: data.email,
+        telefone: cleanString(data.telefone),
+        sexo: data.sexo,
         biografia: data.biografia ?? '',
-        restricoes_medicas: data.restricoesMedicas ?? '', login: data.login, senha: data.senha,
+        restricoes_medicas: data.restricoesMedicas ?? '',
+        login: data.login,
+        senha: data.senha,
         aluno_e_responsavel: isSelfResponsible,
-        endereco: data.endereco,
+        endereco: {
+          ...data.endereco,
+          cep: data.endereco?.cep ? cleanString(data.endereco.cep) : '',
+        },
       };
 
       if (fotoFile) payload.foto = fotoFile;
@@ -146,8 +178,13 @@ export function StudentForm() {
       }
       const response = await res.json();
 
+      // Atualiza o contexto com os dados sanitizados
       const updatedStudentData = {
         ...data,
+        cpf: cleanString(data.cpf), // Salva no contexto sem máscara se preferir, ou com máscara
+        rg: cleanString(data.rg),
+        telefone: cleanString(data.telefone),
+        endereco: { ...data.endereco, cep: cleanString(data.endereco?.cep || '') },
         sexo: data.sexo === 'Masculino' ? 'M' : 'F' as 'M' | 'F',
         dataNascimento: selectedDate || null,
         id: response.id || studentId,
@@ -207,19 +244,16 @@ export function StudentForm() {
             
             <div>
               <Label htmlFor="cpf">CPF *</Label>
-              <Controller name="cpf" control={form.control} render={({ field }) => ( <Input {...field} id="cpf" placeholder="000.000.000-00" className="mt-1" onChange={(e) => field.onChange(formatCPF(e.target.value))} /> )} />
+              <Controller name="cpf" control={form.control} render={({ field }) => ( <Input {...field} id="cpf" placeholder="000.000.000-00" maxLength={14} className="mt-1" onChange={(e) => field.onChange(formatCPF(e.target.value))} /> )} />
               {form.formState.errors.cpf && <p className="text-destructive text-sm mt-1">{form.formState.errors.cpf.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="rg">RG *</Label>
-              <Controller name="rg" control={form.control} render={({ field }) => ( <Input {...field} id="rg" placeholder="00.000.000-0" className="mt-1" onChange={(e) => field.onChange(formatRG(e.target.value))} /> )} />
+              <Controller name="rg" control={form.control} render={({ field }) => ( <Input {...field} id="rg" placeholder="00.000.000-0" maxLength={13} className="mt-1" onChange={(e) => field.onChange(formatRG(e.target.value))} /> )} />
               {form.formState.errors.rg && <p className="text-destructive text-sm mt-1">{form.formState.errors.rg.message}</p>}
             </div>
             
-            {/* ======================================================================= */}
-            {/* MODIFICAÇÃO: Campo de Matrícula alterado para exibição */}
-            {/* ======================================================================= */}
             <div>
               <Label htmlFor="matricula">Matrícula</Label>
               {student.matricula ? (
@@ -269,7 +303,17 @@ export function StudentForm() {
 
             <div className="lg:col-span-3">
               <Label htmlFor="telefone">Telefone *</Label>
-              <Input id="telefone" {...form.register('telefone')} placeholder="(00) 00000-0000" className="mt-1" />
+              <Input 
+                id="telefone" 
+                {...form.register('telefone')} 
+                placeholder="(00) 00000-0000" 
+                maxLength={15}
+                className="mt-1"
+                onChange={(e) => {
+                  e.target.value = formatTelefone(e.target.value);
+                  form.setValue('telefone', e.target.value);
+                }}
+              />
               {form.formState.errors.telefone && <p className="text-destructive text-sm mt-1">{form.formState.errors.telefone.message}</p>}
             </div>
           </div>
@@ -283,7 +327,20 @@ export function StudentForm() {
         </CardHeader>
         <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-                <div className="md:col-span-2"><Label htmlFor="cep">CEP</Label><Input id="cep" {...form.register('endereco.cep')} placeholder="00000-000" className="mt-1" /></div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input 
+                    id="cep" 
+                    {...form.register('endereco.cep')} 
+                    placeholder="00000-000" 
+                    maxLength={9}
+                    className="mt-1" 
+                    onChange={(e) => {
+                      e.target.value = formatCEP(e.target.value);
+                      form.setValue('endereco.cep', e.target.value);
+                    }}
+                  />
+                </div>
                 <div className="md:col-span-4"><Label htmlFor="logradouro">Logradouro (Rua/Avenida)</Label><Input id="logradouro" {...form.register('endereco.logradouro')} className="mt-1" /></div>
                 <div className="md:col-span-2"><Label htmlFor="numero">Número</Label><Input id="numero" {...form.register('endereco.numero')} className="mt-1" /></div>
                 <div className="md:col-span-4"><Label htmlFor="complemento">Complemento</Label><Input id="complemento" {...form.register('endereco.complemento')} placeholder="Apto, Bloco, Casa" className="mt-1" /></div>

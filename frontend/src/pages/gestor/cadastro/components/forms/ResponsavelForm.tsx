@@ -11,29 +11,74 @@ import { Label } from '../../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../components/ui/select';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { ArrowLeft, Crown, Pencil, Trash2, Search, Info, ShieldCheck, User2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Crown, Pencil, Trash2, Search, Info, User2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+// --- HELPERS DE MÁSCARA ---
+const normalizeCpf = (value: string | undefined) => {
+  if (!value) return '';
+  return value
+    .replace(/[\D]/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+    .replace(/(-\d{2})\d+?$/, '$1'); // Limita ao formato XXX.XXX.XXX-XX
+};
+
+const normalizeRg = (value: string | undefined) => {
+  if (!value) return '';
+  return value
+    .replace(/[\D]/g, '')
+    // Máscara genérica de RG: XX.XXX.XXX-X (pode variar por estado, mas esta é comum)
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+    .substring(0, 13); // Limita tamanho visual
+};
+
+const normalizePhone = (value: string | undefined) => {
+  if (!value) return '';
+  return value
+    .replace(/[\D]/g, '')
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d{4})/, '$1-$2')
+    .replace(/(-\d{4})\d+?$/, '$1'); // Limita ao formato (XX) XXXXX-XXXX
+};
+
+const normalizeCep = (value: string | undefined) => {
+  if (!value) return '';
+  return value
+    .replace(/[\D]/g, '')
+    .replace(/^(\d{5})(\d)/, '$1-$2')
+    .substring(0, 9); // Limita ao formato XXXXX-XXX
+};
+
+// Remove formatação para envio ao backend
+const cleanString = (str: string | undefined | null) => {
+  return str ? str.replace(/\D/g, '') : str;
+};
+// --------------------------
 
 // Helper local para classnames
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
 
-// Schema de validação Zod para os dados do formulário
+// Schema de validação Zod
 const responsibleSchema = z.object({
   nomeResponsavel: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  cpf: z.string().min(11, 'CPF deve ter 11 dígitos'),
+  cpf: z.string().min(11, 'CPF inválido'), // Valida pelo menos a quantidade de dígitos
   rg: z.string().min(1, 'RG é obrigatório'),
   email: z.string().email('Email inválido'),
-  numero1: z.string().min(10, 'Número deve ter pelo menos 10 dígitos'),
+  numero1: z.string().min(10, 'Número inválido'),
   numero2: z.string().optional(),
   logradouro: z.string().min(1, 'Logradouro é obrigatório'),
   numeroEndereco: z.string().min(1, 'Número é obrigatório'),
   bairro: z.string().min(1, 'Bairro é obrigatório'),
   cidade: z.string().min(1, 'Cidade é obrigatória'),
-  cep: z.string().min(8, 'CEP deve ter 8 dígitos'),
+  cep: z.string().min(8, 'CEP inválido'),
   grauParentesco: z.string().min(1, 'Grau de parentesco é obrigatório'),
-  telefoneContato: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
+  telefoneContato: z.string().min(10, 'Telefone inválido'),
   nacionalidade: z.string().min(1, 'Nacionalidade é obrigatória'),
   estadoCivil: z.string().min(1, 'Estado civil é obrigatório'),
   profissao: z.string().min(1, 'Profissão é obrigatória'),
@@ -137,23 +182,24 @@ export function ResponsibleForm() {
     try {
       const checkedFinanceiro = Boolean(responsible.responsavelFinanceiro);
 
+      // Limpa as máscaras antes de enviar o payload para o banco
       const payload = {
         nomeResponsavel: data.nomeResponsavel,
-        cpf: data.cpf,
-        rg: data.rg,
+        cpf: cleanString(data.cpf),
+        rg: cleanString(data.rg), // Se o RG no banco aceita letras/formatos, remova o cleanString aqui
         email: data.email,
         grauParentesco: data.grauParentesco,
         estadoCivil: data.estadoCivil,
-        numero1: data.numero1,
-        numero2: data.numero2 || null,
-        telefoneContato: data.telefoneContato,
+        numero1: cleanString(data.numero1),
+        numero2: cleanString(data.numero2) || null,
+        telefoneContato: cleanString(data.telefoneContato),
         nacionalidade: data.nacionalidade,
         profissao: data.profissao,
         logradouro: data.logradouro,
         numeroEndereco: data.numeroEndereco,
         bairro: data.bairro,
         cidade: data.cidade,
-        cep: data.cep,
+        cep: cleanString(data.cep),
         responsavelFinanceiro: checkedFinanceiro,
         id_aluno1: alunoId,
       };
@@ -216,18 +262,19 @@ export function ResponsibleForm() {
     setEditingId(r.id);
     form.reset({
       nomeResponsavel: r.nome || '',
-      cpf: r.cpf || '',
-      rg: r.rg || '',
+      // Aplica máscaras ao carregar dados do backend para edição
+      cpf: normalizeCpf(r.cpf || ''),
+      rg: normalizeRg(r.rg || ''),
       email: r.email || '',
-      numero1: r.numero1 || '',
-      numero2: r.numero2 || '',
+      numero1: normalizePhone(r.numero1 || ''),
+      numero2: normalizePhone(r.numero2 || ''),
       logradouro: r.logradouro || '',
       numeroEndereco: r.numero_casa || '',
       bairro: r.bairro || '',
       cidade: r.cidade || '',
-      cep: r.cep || '',
+      cep: normalizeCep(r.cep || ''),
       grauParentesco: r.grau_parentesco || '',
-      telefoneContato: r.telefone_contato || '',
+      telefoneContato: normalizePhone(r.telefone_contato || ''),
       nacionalidade: r.nacionalidade || '',
       estadoCivil: r.estado_civil || '',
       profissao: r.profissao || '',
@@ -277,10 +324,9 @@ export function ResponsibleForm() {
         </div>
       )}
 
-      {/* AJUSTE: O grid agora é flex-col em mobile e grid-cols-2 em desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-        {/* AJUSTE: A lista de responsáveis agora vem primeiro em mobile (order-2) e segunda em desktop (lg:order-1) */}
+        {/* Lista de Responsáveis */}
         <div className="space-y-6 lg:sticky lg:top-6 h-fit order-2 lg:order-1">
           <Card>
             <CardHeader className="pb-2">
@@ -343,7 +389,7 @@ export function ResponsibleForm() {
           </Button>
         </div>
 
-        {/* AJUSTE: O formulário agora é o primeiro em mobile (order-1) e o primeiro em desktop (lg:order-2) */}
+        {/* Formulário de Cadastro/Edição */}
         <div className="space-y-6 order-1 lg:order-2">
           <Card>
             <CardHeader>
@@ -369,7 +415,6 @@ export function ResponsibleForm() {
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {/* AJUSTE: Grid de campos agora é sempre 1 coluna em mobile e 2 a partir de 'md' */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <Label htmlFor="nomeResponsavel">Nome Completo *</Label>
@@ -378,12 +423,31 @@ export function ResponsibleForm() {
                 </div>
                 <div>
                   <Label htmlFor="cpf">CPF *</Label>
-                  <Input id="cpf" {...form.register('cpf')} placeholder="000.000.000-00" className="mt-1" />
+                  <Input
+                    id="cpf"
+                    {...form.register('cpf')}
+                    onChange={(e) => {
+                      e.target.value = normalizeCpf(e.target.value);
+                      form.setValue('cpf', e.target.value);
+                    }}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    className="mt-1"
+                  />
                   {form.formState.errors.cpf && <p className="text-destructive text-sm mt-1">{form.formState.errors.cpf.message}</p>}
                 </div>
                 <div>
                   <Label htmlFor="rg">RG *</Label>
-                  <Input id="rg" {...form.register('rg')} className="mt-1" />
+                  <Input
+                    id="rg"
+                    {...form.register('rg')}
+                    onChange={(e) => {
+                      e.target.value = normalizeRg(e.target.value);
+                      form.setValue('rg', e.target.value);
+                    }}
+                    maxLength={13}
+                    className="mt-1"
+                  />
                   {form.formState.errors.rg && <p className="text-destructive text-sm mt-1">{form.formState.errors.rg.message}</p>}
                 </div>
                 <div>
@@ -422,16 +486,46 @@ export function ResponsibleForm() {
                 </div>
                 <div>
                   <Label htmlFor="numero1">Telefone Principal *</Label>
-                  <Input id="numero1" {...form.register('numero1')} placeholder="(00) 00000-0000" className="mt-1" />
+                  <Input
+                    id="numero1"
+                    {...form.register('numero1')}
+                    onChange={(e) => {
+                      e.target.value = normalizePhone(e.target.value);
+                      form.setValue('numero1', e.target.value);
+                    }}
+                    placeholder="(00) 00000-0000"
+                    maxLength={15}
+                    className="mt-1"
+                  />
                   {form.formState.errors.numero1 && <p className="text-destructive text-sm mt-1">{form.formState.errors.numero1.message}</p>}
                 </div>
                 <div>
                   <Label htmlFor="numero2">Telefone Secundário</Label>
-                  <Input id="numero2" {...form.register('numero2')} placeholder="(00) 00000-0000" className="mt-1" />
+                  <Input
+                    id="numero2"
+                    {...form.register('numero2')}
+                    onChange={(e) => {
+                      e.target.value = normalizePhone(e.target.value);
+                      form.setValue('numero2', e.target.value);
+                    }}
+                    placeholder="(00) 00000-0000"
+                    maxLength={15}
+                    className="mt-1"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="telefoneContato">Telefone de Contato *</Label>
-                  <Input id="telefoneContato" {...form.register('telefoneContato')} placeholder="(00) 00000-0000" className="mt-1" />
+                  <Input
+                    id="telefoneContato"
+                    {...form.register('telefoneContato')}
+                    onChange={(e) => {
+                      e.target.value = normalizePhone(e.target.value);
+                      form.setValue('telefoneContato', e.target.value);
+                    }}
+                    placeholder="(00) 00000-0000"
+                    maxLength={15}
+                    className="mt-1"
+                  />
                   {form.formState.errors.telefoneContato && <p className="text-destructive text-sm mt-1">{form.formState.errors.telefoneContato.message}</p>}
                 </div>
                 <div>
@@ -448,7 +542,6 @@ export function ResponsibleForm() {
 
               <div className="pt-4 border-t">
                 <h3 className="text-lg font-semibold mb-3">Endereço Completo</h3>
-                {/* AJUSTE: Grid de endereço agora é 1 coluna em mobile e 3 a partir de 'md' */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2">
                     <Label htmlFor="logradouro">Logradouro *</Label>
@@ -472,7 +565,17 @@ export function ResponsibleForm() {
                   </div>
                   <div>
                     <Label htmlFor="cep">CEP *</Label>
-                    <Input id="cep" {...form.register('cep')} placeholder="00000-000" className="mt-1" />
+                    <Input
+                      id="cep"
+                      {...form.register('cep')}
+                      onChange={(e) => {
+                        e.target.value = normalizeCep(e.target.value);
+                        form.setValue('cep', e.target.value);
+                      }}
+                      placeholder="00000-000"
+                      maxLength={9}
+                      className="mt-1"
+                    />
                     {form.formState.errors.cep && <p className="text-destructive text-sm mt-1">{form.formState.errors.cep.message}</p>}
                   </div>
                 </div>
@@ -495,7 +598,6 @@ export function ResponsibleForm() {
             </CardContent>
           </Card>
 
-          {/* AJUSTE: Botões agora se empilham em mobile e ficam em linha a partir de 'sm' */}
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
             <Button type="button" variant="outline" onClick={goBack} className="w-full sm:w-auto" disabled={saving}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
