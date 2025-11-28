@@ -56,7 +56,7 @@ export const getTurmas = async (req: Request, res: Response) => {
                 cpl.data_inicio AS semestre_data_inicio,
                 cpl.data_fim AS semestre_data_fim,
                 t.professor_responsavel, f.nome AS professor_nome, t.modalidade,
-                t.quantidade_alunos, t.descricao
+                t.quantidade_alunos, t.descricao, t.status AS status_db
             FROM turmas t
             LEFT JOIN cursos_posgraduacao cp ON t.curso_id = cp.id
             LEFT JOIN cursos_disciplinas d ON t.disciplina_id = d.id
@@ -66,16 +66,13 @@ export const getTurmas = async (req: Request, res: Response) => {
             ORDER BY t.id DESC;
         `);
 
-        const dataAtual = new Date();
-        dataAtual.setHours(0, 0, 0, 0);
-
         const turmasFormatadas = turmasRows.map(turma => {
-            let status: 'Ativa' | 'Em Planejamento' | 'Encerrada' = 'Em Planejamento';
+            // Prioridade: Calcula baseado na data atual vs datas do semestre
+            // Se não tiver datas (erro de cadastro), usa o status que está no banco
+            let statusExibicao: string = turma.status_db || 'Em Planejamento';
+
             if (turma.semestre_data_inicio && turma.semestre_data_fim) {
-                const dataInicio = new Date(turma.semestre_data_inicio);
-                const dataFim = new Date(turma.semestre_data_fim);
-                if (dataAtual >= dataInicio && dataAtual <= dataFim) status = 'Ativa';
-                else if (dataAtual > dataFim) status = 'Encerrada';
+                statusExibicao = determinarStatusPorDatas(turma.semestre_data_inicio, turma.semestre_data_fim);
             }
 
             return {
@@ -91,7 +88,7 @@ export const getTurmas = async (req: Request, res: Response) => {
                 responsavelNome: turma.professor_nome,
                 modalidade: turma.modalidade,
                 quantidadeAlunos: turma.quantidade_alunos ?? undefined,
-                status: status,
+                status: statusExibicao, // Retorna o status calculado em tempo real
                 descricao: turma.descricao ?? undefined,
             };
         });
@@ -103,16 +100,60 @@ export const getTurmas = async (req: Request, res: Response) => {
     }
 };
 
+const determinarStatusPorDatas = (inicio: string | Date, fim: string | Date): 'Ativa' | 'Em Planejamento' | 'Encerrada' => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0); // Zera hora para comparar apenas datas
+
+    const dataInicio = new Date(inicio);
+    const dataFim = new Date(fim);
+
+    if (hoje < dataInicio) {
+        return 'Em Planejamento';
+    } else if (hoje > dataFim) {
+        return 'Encerrada';
+    } else {
+        return 'Ativa';
+    }
+};
+
 export const createTurma = async (req: Request, res: Response) => {
+    // Removemos 'status' do body, pois ele será calculado
     const { nomeTurma, cursoId, disciplinaId, semestre, responsavelId, modalidade, quantidadeAlunos, descricao }: TurmaAPI = req.body;
 
     try {
-        const [result] = await pool.execute(
-            `INSERT INTO turmas (nome_turma, curso_id, disciplina_id, semestre_id, professor_responsavel, modalidade, quantidade_alunos, descricao, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Em Planejamento')`,
-            [nomeTurma, cursoId, disciplinaId, semestre, responsavelId, modalidade, quantidadeAlunos ?? null, descricao ?? null]
+        // 1. Buscar as datas do semestre selecionado para calcular o status inicial correto
+        const [semestreRows] = await pool.query<RowDataPacket[]>(
+            'SELECT data_inicio, data_fim FROM configuracoes_periodos_letivos WHERE id = ?',
+            [semestre]
         );
+
+        let statusCalculado = 'Em Planejamento'; // Default
+
+        if (semestreRows.length > 0) {
+            const { data_inicio, data_fim } = semestreRows[0];
+            statusCalculado = determinarStatusPorDatas(data_inicio, data_fim);
+        }
+
+        // 2. Inserir com o status calculado
+        const [result] = await pool.execute(
+            `INSERT INTO turmas (nome_turma, curso_id, disciplina_id, semestre_id, professor_responsavel, modalidade, quantidade_alunos, descricao, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                nomeTurma, 
+                cursoId, 
+                disciplinaId, 
+                semestre, 
+                responsavelId, 
+                modalidade, 
+                quantidadeAlunos ?? null, 
+                descricao ?? null, 
+                statusCalculado // Usa o status calculado pelo backend, ignora o do front
+            ]
+        );
+        
         const insertId = (result as ResultSetHeader).insertId;
-        res.status(201).json({ id: String(insertId), ...req.body });
+        
+        // Retorna o objeto criado com o status real
+        res.status(201).json({ id: String(insertId), ...req.body, status: statusCalculado });
     } catch (error) {
         console.error('Erro ao criar turma:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
@@ -124,11 +165,37 @@ export const updateTurma = async (req: Request, res: Response) => {
     const { nomeTurma, cursoId, disciplinaId, semestre, responsavelId, modalidade, quantidadeAlunos, descricao }: TurmaAPI = req.body;
 
     try {
-        await pool.execute(
-            `UPDATE turmas SET nome_turma = ?, curso_id = ?, disciplina_id = ?, semestre_id = ?, professor_responsavel = ?, modalidade = ?, quantidade_alunos = ?, descricao = ? WHERE id = ?`,
-            [nomeTurma, cursoId, disciplinaId, semestre, responsavelId, modalidade, quantidadeAlunos ?? null, descricao ?? null, id]
+        // 1. Buscar as datas do semestre (caso o usuário tenha trocado o semestre na edição)
+        const [semestreRows] = await pool.query<RowDataPacket[]>(
+            'SELECT data_inicio, data_fim FROM configuracoes_periodos_letivos WHERE id = ?',
+            [semestre]
         );
-        res.status(200).json({ id, ...req.body });
+
+        let statusCalculado = 'Em Planejamento'; 
+
+        if (semestreRows.length > 0) {
+            const { data_inicio, data_fim } = semestreRows[0];
+            statusCalculado = determinarStatusPorDatas(data_inicio, data_fim);
+        }
+
+        // 2. Atualizar no banco com o status correto
+        await pool.execute(
+            `UPDATE turmas SET nome_turma = ?, curso_id = ?, disciplina_id = ?, semestre_id = ?, professor_responsavel = ?, modalidade = ?, quantidade_alunos = ?, descricao = ?, status = ? WHERE id = ?`,
+            [
+                nomeTurma, 
+                cursoId, 
+                disciplinaId, 
+                semestre, 
+                responsavelId, 
+                modalidade, 
+                quantidadeAlunos ?? null, 
+                descricao ?? null, 
+                statusCalculado, // Força a atualização do status baseado na data
+                id
+            ]
+        );
+
+        res.status(200).json({ id, ...req.body, status: statusCalculado });
     } catch (error) {
         console.error('Erro ao atualizar turma:', error);
         res.status(500).json({ message: 'Erro interno no servidor' });
@@ -365,6 +432,42 @@ export const getTurmasAtivasParaFiltro = async (req: Request, res: Response) => 
         res.status(200).json(turmas);
     } catch (error) {
         console.error("Erro ao buscar turmas ativas para filtro:", error);
+        res.status(500).json({ message: "Erro interno ao buscar as turmas." });
+    }
+};
+
+/**
+ * @description Busca turmas ativas vinculadas a uma disciplina específica para o dropdown de aulas gravadas.
+ * @route GET /api/disciplinas/:disciplinaId/turmas-ativas-para-aulas
+ */
+export const getTurmasAtivasPorDisciplina = async (req: Request, res: Response) => {
+    const { disciplinaId } = req.params;
+
+    if (!disciplinaId) {
+        return res.status(400).json({ message: "ID da disciplina é obrigatório." });
+    }
+
+    try {
+        // CORREÇÃO: A busca agora verifica se a data atual está dentro do período letivo (Status calculado: Ativa)
+        // Isso alinha o dropdown com a lógica da listagem principal, ignorando status estáticos desatualizados no banco.
+        const [turmas] = await pool.query<RowDataPacket[]>(`
+            SELECT 
+                t.id, 
+                t.nome_turma, 
+                t.professor_responsavel AS professor_id
+            FROM turmas t
+            JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
+            WHERE t.disciplina_id = ? 
+            AND CURDATE() BETWEEN cpl.data_inicio AND cpl.data_fim
+            ORDER BY t.nome_turma ASC
+        `, [disciplinaId]);
+
+        // Log para debug
+        console.log(`Buscando turmas ativas (por data) para disciplina ${disciplinaId}:`, turmas);
+
+        res.status(200).json(turmas);
+    } catch (error) {
+        console.error("Erro ao buscar turmas por disciplina:", error);
         res.status(500).json({ message: "Erro interno ao buscar as turmas." });
     }
 };

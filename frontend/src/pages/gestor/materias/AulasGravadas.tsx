@@ -34,11 +34,11 @@ interface Professor {
   nome: string
 }
 
-// 👇 --- INTERFACE CORRIGIDA --- 👇
+// 👇 --- INTERFACE CORRIGIDA E SINCRONIZADA COM CONTROLLER --- 👇
 interface Turma {
   id: number
   nome_turma: string
-  professor_id: number // A API já envia este campo, garantimos que a interface o espere.
+  professor_id: number // Campo essencial para o autofill do professor
 }
 
 interface Disciplina {
@@ -47,7 +47,7 @@ interface Disciplina {
 }
 
 // --- Componente Principal ---
-export default function AulasGravadas(  ) {
+export default function AulasGravadas() {
   const { id: materiaId } = useParams<{ id: string }>()
 
   // Estados da UI e de dados
@@ -108,11 +108,10 @@ export default function AulasGravadas(  ) {
       setLoadingRefs(true);
       setErrorMsg(null);
 
-      // 👇 --- ALTERE A ROTA DE BUSCA DE TURMAS AQUI --- 👇
       const [profRes, disciplinaRes, turmasRes] = await Promise.all([
         fetch(`${API_URL}/api/professores`),
         fetch(`${API_URL}/api/disciplinas/${materiaId}`),
-        // Use a nova rota específica
+        // Rota que deve retornar o array de turmas com { id, nome_turma, professor_id }
         fetch(`${API_URL}/api/disciplinas/${materiaId}/turmas-ativas-para-aulas`) 
       ]);
 
@@ -125,6 +124,9 @@ export default function AulasGravadas(  ) {
         disciplinaRes.json(),
         turmasRes.json(),
       ]);
+
+      // Logs de debug para confirmar no console do navegador se os dados chegaram
+      console.log("Turmas recebidas da API:", turmasData);
 
       setProfessores(Array.isArray(profData) ? profData : []);
       setDisciplinaAtual(disciplinaData);
@@ -245,11 +247,11 @@ export default function AulasGravadas(  ) {
     setIsDialogOpen(false)
   }
 
-  // 👇 --- FUNÇÃO CORRIGIDA E ROBUSTA PARA LIDAR COM A SELEÇÃO DE TURMA --- 👇
+  // 👇 --- FUNÇÃO CORRIGIDA PARA SELEÇÃO DE TURMA --- 👇
   const handleTurmaChange = (turmaId: string) => {
     const turmaSelecionada = turmas.find(t => t.id.toString() === turmaId);
     
-    // Verifica se a turma foi encontrada e se ela tem um professor_id antes de tentar acessá-lo
+    // Verifica se a turma tem professor_id vinculado
     const professorId = turmaSelecionada && turmaSelecionada.professor_id 
       ? turmaSelecionada.professor_id.toString() 
       : "";
@@ -290,7 +292,6 @@ export default function AulasGravadas(  ) {
                 </div>
                 <div>
                   <Label>Turma</Label>
-                  {/* O Select de Turma agora usa a função corrigida */}
                   <Select value={formData.turma_id} onValueChange={handleTurmaChange} disabled={loadingRefs}>
                     <SelectTrigger>
                       <SelectValue placeholder={loadingRefs ? "Carregando..." : "Selecione a turma"} />
@@ -312,7 +313,6 @@ export default function AulasGravadas(  ) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Professor</Label>
-                  {/* O Select de Professor é atualizado automaticamente */}
                   <Select value={formData.professor_id} onValueChange={(v) => setFormData({ ...formData, professor_id: v })} disabled={loadingRefs}>
                     <SelectTrigger>
                       <SelectValue placeholder={loadingRefs ? "Carregando..." : "Selecione o professor"} />

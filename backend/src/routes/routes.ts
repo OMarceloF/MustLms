@@ -217,6 +217,7 @@ import {
     removerAlunoDaTurma,
     updateAlunoTurmaStatus,
     getTurmasAtivasParaFiltro,
+    getTurmasAtivasPorDisciplina,
 } from '../controllers/turmasControllerNovo';
 
 import { getRelatoriosDisciplina } from '../controllers/relatoriosDisciplinasController';
@@ -404,7 +405,6 @@ import {
   salvarPPC,
   obterVinculadosCurso,
   listarTurmasPorDisciplina,
-  listarTurmasAtivasParaAulas,
   listarTurmasDeIngresso,
   listarAlunosVinculados,
   getEventosDeCursosParaGestor,
@@ -1097,7 +1097,6 @@ router.get('/api/form-data/professores', getProfessoresParaForm);
 
 // ROTA PARA BUSCAR TURMAS VINCULADAS A UMA DISCIPLINA
 router.get('/api/disciplinas/:disciplinaId/turmas', listarTurmasPorDisciplina);
-router.get('/api/disciplinas/:disciplinaId/turmas-ativas-para-aulas', listarTurmasAtivasParaAulas);
 
 //PÁGINA DE VISUALIZAÇÃO COMPLETA
 router.get('/api/alunos/:id/detalhes-completos', getDetalhesCompletosAluno);
@@ -1208,5 +1207,8 @@ router.post('/api/turmas-ingresso', createTurmaIngresso);
 
 // Rota para popular o dropdown "Período Acadêmico (Grade)" dentro do modal
 router.get('/api/form-data/periodos-letivos', getPeriodosLetivosParaSelect);
+
+router.get('/api/disciplinas/:disciplinaId/turmas-ativas-para-aulas', getTurmasAtivasPorDisciplina);
+
 
 export default router;
