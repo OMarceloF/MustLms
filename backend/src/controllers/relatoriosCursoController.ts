@@ -59,23 +59,37 @@ export const getRelatoriosGeraisCurso = async (req: Request, res: Response) => {
         `;
         const [rowsEvolucao] = await pool.query<RowDataPacket[]>(queryEvolucao, [cursoId]);
 
-        // 4. Desempenho
-        const queryDesempenho = `
+        // 4. Desempenho (CORRIGIDO)
+        // Lógica Ajustada: Prioriza a nota de Recuperação (>=60) se existir.
+        // Se MAX(nota) >= 60, o aluno passou na REC, então a nota considerada é a da REC.
+        // Caso contrário, soma-se as notas parciais (P1 + P2).
+const queryDesempenho = `
             SELECT 
                 cpl.nome as semestre,
-                SUM(CASE WHEN media_final >= 60 THEN 1 ELSE 0 END) as aprovados,
-                SUM(CASE WHEN media_final < 60 THEN 1 ELSE 0 END) as reprovados
+                SUM(CASE WHEN situacao_final = 'Aprovado' THEN 1 ELSE 0 END) as aprovados,
+                SUM(CASE WHEN situacao_final = 'Reprovado' THEN 1 ELSE 0 END) as reprovados
             FROM (
                 SELECT 
                     t.semestre_id,
                     n.aluno_id,
-                    AVG(n.nota) as media_final
+                    t.id as turma_id,
+                    CASE 
+                        -- 1. Prioridade Absoluta: Se existir nota na coluna 'nota_rec' >= 60, o aluno está Aprovado.
+                        WHEN MAX(n.nota_rec) >= 60 THEN 'Aprovado'
+                        
+                        -- 2. Aprovação Direta: Se a SOMA das notas normais (P1+P2...) for >= 60.
+                        WHEN SUM(n.nota) >= 60 THEN 'Aprovado'
+                        
+                        -- 3. Caso contrário, Reprovado.
+                        ELSE 'Reprovado'
+                    END as situacao_final
                 FROM notas n
                 JOIN turmas t ON n.turma_id = t.id
                 WHERE t.curso_id = ?
-                GROUP BY t.semestre_id, n.aluno_id
-            ) as medias
-            JOIN configuracoes_periodos_letivos cpl ON medias.semestre_id = cpl.id
+                -- Agrupamos por Turma e Aluno para calcular a situação de cada matéria individualmente
+                GROUP BY t.semestre_id, t.id, n.aluno_id
+            ) as consolidado
+            JOIN configuracoes_periodos_letivos cpl ON consolidado.semestre_id = cpl.id
             GROUP BY cpl.id, cpl.nome
             ORDER BY cpl.data_inicio ASC
         `;
