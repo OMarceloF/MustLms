@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useForm, FormProvider, Controller } from "react-hook-form";
-import axios from "axios"; // Necessário para a chamada direta à API corrigida
+import axios from "axios";
 
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -69,7 +69,7 @@ const mapActivityType = {
 declare module "../../../../services/turmaService" {
   interface Turma {
     disciplinaTurmaId?: number;
-    curso_id?: number; // Fundamental para corrigir o erro de salvamento
+    curso_id?: number;
   }
 }
 
@@ -93,10 +93,10 @@ export function ActivityForm({
   } = methods;
 
   const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [estrutura, setEstrutura] = useState<any>(initialData?.estrutura || {});
 
   /* ============================================================
-     CARREGAR TURMAS (CORRIGIDO)
-     Busca apenas turmas ativas e garante que o curso_id venha junto
+     CARREGAR TURMAS
   ============================================================ */
   useEffect(() => {
     const loadTurmas = async () => {
@@ -104,12 +104,9 @@ export function ActivityForm({
         let data: Turma[] = [];
 
         if (materiaId) {
-          // CORREÇÃO: Chama a rota específica que filtra por status 'Ativa' e retorna curso_id.
-          // Isso resolve o problema de mostrar turmas antigas e o erro de FK ao salvar.
           const response = await axios.get(`/api/disciplinas/${materiaId}/turmas-ativas-para-aulas`);
           data = response.data;
         } else {
-          // Fallback para listar todas se não houver matéria (comportamento original para admin/geral)
           data = await turmaService.listar();
         }
 
@@ -143,6 +140,10 @@ export function ActivityForm({
             : "",
         ...config,
       });
+
+      if (initialData.estrutura) {
+        setEstrutura(initialData.estrutura);
+      }
     } else {
       reset({
         materia_id: materiaId || "",
@@ -157,17 +158,13 @@ export function ActivityForm({
   const onSubmit = async (data: any) => {
     let finalCursoId = cursoId;
 
-    // Se não houver cursoId explícito nas props, tenta inferir pela turma selecionada
     if (!finalCursoId && data.turma_id) {
       const turmaIdNumber = Number(data.turma_id);
-
-      // Busca a turma no estado local (que agora contém o curso_id graças à correção no backend)
       const selected = turmas.find((t) => Number(t.id) === turmaIdNumber);
 
       if (selected?.curso_id) {
         finalCursoId = selected.curso_id;
       } else {
-        // Fallback de segurança: tenta buscar detalhes se por acaso não veio na lista
         try {
           const detalhes = await turmaService.obter(turmaIdNumber);
           if ((detalhes as any).curso_id) {
@@ -179,7 +176,6 @@ export function ActivityForm({
       }
     }
 
-    // Se ainda não achou, tenta via disciplina
     if (!finalCursoId && materiaId) {
       try {
         const disciplina = await disciplinaService.obter(materiaId);
@@ -199,7 +195,6 @@ export function ActivityForm({
     try {
       let config: any = {};
 
-      // Configuração por tipo de atividade
       switch (tipoMapeado) {
         case "arquivo":
           config = {
@@ -254,10 +249,10 @@ export function ActivityForm({
         nome: data.nome,
         descricao: data.descricao || "",
         materia_id: data.materia_id ? Number(data.materia_id) : null,
-        // Garante envio do ID numérico da turma
         turma_id: data.turma_id ? Number(data.turma_id) : null,
         tipo: tipoMapeado,
         config,
+        estrutura, // Inclui a estrutura (perguntas/opções)
       };
 
       console.log("[ActivityForm] payload enviado:", payload);
@@ -282,7 +277,7 @@ export function ActivityForm({
   };
 
   /* ============================================================
-     FORM ESPECÍFICO POR TIPO
+     FORM ESPECÍFICO
   ============================================================ */
   const renderSpecificForm = () => {
     switch (activityType) {
@@ -291,9 +286,19 @@ export function ActivityForm({
       case "url":
         return <UrlForm />;
       case "quiz":
-        return <QuestionarioForm initialData={initialData} />;
+        return (
+          <QuestionarioForm
+            initialData={initialData}
+            onChange={(data) => setEstrutura((prev: any) => ({ ...prev, ...data }))}
+          />
+        );
       case "survey":
-        return <PesquisaForm initialData={initialData} />;
+        return (
+          <PesquisaForm
+            initialData={initialData}
+            onChange={(data) => setEstrutura((prev: any) => ({ ...prev, ...data }))}
+          />
+        );
       case "page":
         return <PaginaForm />;
       case "task":
@@ -305,9 +310,6 @@ export function ActivityForm({
     }
   };
 
-  /* ============================================================
-     RENDER
-  ============================================================ */
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -331,7 +333,7 @@ export function ActivityForm({
                 <Textarea rows={5} {...register("descricao")} />
               </div>
 
-              {/* MATÉRIA (quando não vem travada por props) */}
+              {/* MATÉRIA */}
               <div className={materiaId ? "hidden" : "space-y-2"}>
                 <Label>Matéria</Label>
                 <Input
@@ -341,10 +343,9 @@ export function ActivityForm({
                 />
               </div>
 
-              {/* TURMA (Select) */}
+              {/* TURMA */}
               <div className="space-y-2">
                 <Label>Turma</Label>
-
                 <Controller
                   name="turma_id"
                   control={control}
@@ -357,13 +358,9 @@ export function ActivityForm({
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma turma" />
                       </SelectTrigger>
-
                       <SelectContent>
                         {turmas.map((t) => (
-                          <SelectItem
-                            key={t.id}
-                            value={String(t.id)}
-                          >
+                          <SelectItem key={t.id} value={String(t.id)}>
                             {t.nome}
                           </SelectItem>
                         ))}
@@ -423,7 +420,7 @@ export function ActivityForm({
         </Accordion>
 
         <DialogFooter className="pt-4 flex justify-end gap-3">
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel} type="button">
             Cancelar
           </Button>
 

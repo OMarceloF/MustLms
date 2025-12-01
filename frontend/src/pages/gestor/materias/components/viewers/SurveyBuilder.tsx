@@ -10,17 +10,16 @@ import { API_URL } from "@/config";
 
 interface SurveyBuilderProps {
     activity: any;     // atividade
-    config: any;       // config de pesquisa
+    config: any;       // config de pesquisa (atividade_pesquisa)
     estrutura: any;    // perguntas e opcoes
     onUpdate?: (data: any) => void;
 }
 
-export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyBuilderProps) {
-
+export function SurveyBuilder({ activity, config, estrutura }: SurveyBuilderProps) {
     const [answers, setAnswers] = useState<any>({});
     const [submitted, setSubmitted] = useState(false);
 
-    if (!estrutura || !estrutura.perguntas) {
+    if (!estrutura || !Array.isArray(estrutura.perguntas) || estrutura.perguntas.length === 0) {
         return (
             <div className="text-center text-muted-foreground p-6">
                 Nenhuma pergunta configurada para esta pesquisa.
@@ -28,7 +27,7 @@ export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyB
         );
     }
 
-    const perguntas = estrutura.perguntas.sort((a: any, b: any) => a.ordem - b.ordem);
+    const perguntas = [...estrutura.perguntas].sort((a: any, b: any) => a.ordem - b.ordem);
 
     const handleChange = (perguntaId: number, resposta: any) => {
         setAnswers((prev: any) => ({
@@ -44,15 +43,17 @@ export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyB
                 resposta: answers
             };
 
-            await fetch(`${API_URL}/api/producao-academica/survey/${activity.id}/respostas`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
+            await fetch(
+                `${API_URL}/api/producao-academica/survey/${activity.id}/respostas`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                }
+            );
 
             setSubmitted(true);
             toast.success("Pesquisa enviada com sucesso!");
-
         } catch (err) {
             console.error(err);
             toast.error("Erro ao enviar pesquisa.");
@@ -72,7 +73,11 @@ export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyB
 
                     {config?.proxima_url && (
                         <Button asChild>
-                            <a href={config.proxima_url} target="_blank" rel="noopener noreferrer">
+                            <a
+                                href={config.proxima_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
                                 Continuar
                             </a>
                         </Button>
@@ -85,8 +90,8 @@ export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyB
     return (
         <div className="space-y-8">
 
-            {/* DESCRIÇÃO DA ATIVIDADE */}
-            {config?.mostrar_descricao && activity.descricao && (
+            {/* DESCRIÇÃO DA ATIVIDADE – sempre visível se existir */}
+            {activity.descricao && (
                 <p className="text-muted-foreground">{activity.descricao}</p>
             )}
 
@@ -100,7 +105,6 @@ export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyB
                     </CardHeader>
 
                     <CardContent className="space-y-4">
-
                         {/* QUESTÃO ABERTA - RESPOSTA CURTA */}
                         {p.tipo === "texto" && (
                             <Input
@@ -120,7 +124,7 @@ export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyB
                             />
                         )}
 
-                        {/* MÚLTIPLA ESCOLHA (RADI0) */}
+                        {/* MÚLTIPLA ESCOLHA (RADIO) */}
                         {p.tipo === "multipla" && (
                             <RadioGroup
                                 value={answers[p.id] || ""}
@@ -160,19 +164,13 @@ export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyB
                                     };
 
                                     return (
-                                        <div
-                                            key={op.id}
-                                            className="flex items-center gap-3"
-                                        >
+                                        <div key={op.id} className="flex items-center gap-3">
                                             <Checkbox
                                                 id={`chk-${op.id}`}
                                                 checked={selected.includes(op.texto)}
                                                 onCheckedChange={toggle}
                                             />
-                                            <label
-                                                htmlFor={`chk-${op.id}`}
-                                                className="text-sm"
-                                            >
+                                            <label htmlFor={`chk-${op.id}`} className="text-sm">
                                                 {op.texto}
                                             </label>
                                         </div>
@@ -180,7 +178,6 @@ export function SurveyBuilder({ activity, config, estrutura, onUpdate }: SurveyB
                                 })}
                             </div>
                         )}
-
                     </CardContent>
                 </Card>
             ))}

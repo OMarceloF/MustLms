@@ -50,7 +50,7 @@ export function UrlViewer({ activity, config }: UrlViewerProps) {
     const renderOpenButton = () => (
         <div className="flex flex-col items-center gap-4 p-10 border rounded bg-muted/40">
             <span className="text-sm text-muted-foreground">
-                Esta página não permite exibição por embed.
+                Esta URL não permite exibição por embed.
             </span>
 
             <Button asChild>
