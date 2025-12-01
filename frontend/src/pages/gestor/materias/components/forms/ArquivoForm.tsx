@@ -1,48 +1,54 @@
 // app/producao-academica/components/forms/ArquivoForm.tsx
-"use client"
+"use client";
 
+import { useFormContext } from "react-hook-form";
 import { Label } from "../../../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
-import { Checkbox } from "../../../components/ui/checkbox";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "../../../components/ui/accordion";
+import { Switch } from "../../../components/ui/switch";
+import { Card, CardContent } from "../../../components/ui/card";
 
 export function ArquivoForm() {
-    return (
-        <>
-            <AccordionItem value="aparencia">
-                <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">
-                    Aparência
-                </AccordionTrigger>
-                {/* 
-          - bg-muted/50: Um fundo cinza muito sutil para o conteúdo.
-          - rounded-b-md: Arredonda os cantos inferiores para um visual mais suave.
-          - p-4: Aumenta o padding interno.
-        */}
-                <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-6">
-                    <div className="space-y-3">
-                        <Label htmlFor="display-mode" className="font-semibold">Exibir</Label>
-                        <Select defaultValue="auto">
-                            <SelectTrigger id="display-mode">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="auto">Automático</SelectItem>
-                                <SelectItem value="embed">Incorporar</SelectItem>
-                                <SelectItem value="force">Forçar o download</SelectItem>
-                                <SelectItem value="open">Abrir</SelectItem>
-                                <SelectItem value="popup">Em uma janela pop-up</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+    const { watch, setValue } = useFormContext();
 
-                    <div className="flex items-center space-x-3">
-                        <Checkbox id="show-resource-description" />
-                        <Label htmlFor="show-resource-description" className="font-normal">
-                            Exibir a descrição dos recursos
-                        </Label>
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        </>
+    const displayMode = watch("display_mode") || "auto";
+    const mostrarDescricao = watch("mostrar_descricao") || false;
+
+    return (
+        <Card className="border bg-card">
+            <CardContent className="space-y-6 p-6">
+
+                {/* DISPLAY MODE */}
+                <div className="space-y-2">
+                    <Label className="font-semibold">Modo de exibição</Label>
+                    <Select
+                        value={displayMode}
+                        onValueChange={(v) => setValue("display_mode", v)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione um modo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="auto">Automático</SelectItem>
+                            <SelectItem value="embed">Incorporado</SelectItem>
+                            <SelectItem value="download">Somente download</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* MOSTRAR DESCRIÇÃO */}
+                <div className="flex items-center gap-3">
+                    <Switch
+                        checked={!!mostrarDescricao}
+                        onCheckedChange={(v) => setValue("mostrar_descricao", v)}
+                    />
+                    <Label>Exibir descrição junto ao arquivo</Label>
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                    O arquivo é enviado na seção &quot;Geral&quot; do formulário através da área de upload.
+                </p>
+
+            </CardContent>
+        </Card>
     );
 }

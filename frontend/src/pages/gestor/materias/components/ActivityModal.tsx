@@ -1,71 +1,109 @@
-// app/producao-academica/components/ActivityModal.tsx
-"use client"
+"use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog"
-import { Button } from "../../components/ui/button"
-import { ActivityForm } from "./ActivityForm"
-import { ActivityType } from "../../../lib/activity-types"
+import { useEffect, useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../../components/ui/dialog";
+import { ActivityForm } from "./ActivityForm";
+import { obterAtividade } from "../../../../services/producaoAcademicaService";
+import { Loader2 } from "lucide-react";
 
 interface ActivityModalProps {
-  isOpen: boolean
-  onClose: () => void
-  activity: ActivityType | null
+  isOpen: boolean;
+  onClose: () => void;
+  activityId?: number | null;   // agora usamos ID, não o objeto inteiro
+  activityType: string;
+  cursoId?: number;
+  materiaId?: number | null;
+  turmaId?: number | null;
+  onSuccess?: () => void;
 }
 
-export function ActivityModal({ isOpen, onClose, activity }: ActivityModalProps) {
-  if (!activity) {
-    return null
-  }
+export function ActivityModal({
+  isOpen,
+  onClose,
+  activityId,
+  activityType,
+  cursoId,
+  materiaId = null,
+  turmaId = null,
+  onSuccess,
+}: ActivityModalProps) {
+  const [initialData, setInitialData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  // ... (funções de salvar)
+  // DEBUG
+  useEffect(() => {
+    console.log("[ActivityModal] open:", isOpen, "activityId:", activityId);
+  }, [isOpen, activityId]);
+
+  // CARREGAR DADOS DA ATIVIDADE QUANDO FOR EDIÇÃO
+  useEffect(() => {
+    const fetchActivity = async () => {
+      if (!isOpen) return;
+
+      // Se for criação, não precisa carregar nada
+      if (!activityId) {
+        setInitialData(null);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const data = await obterAtividade(activityId);
+        setInitialData(data); // contém { atividade, config, estrutura }
+      } catch (err) {
+        console.error("Erro ao carregar atividade:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivity();
+  }, [isOpen, activityId]);
+
+  const handleClose = () => {
+    setInitialData(null);
+    onClose();
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* 
-        A responsividade do DialogContent é controlada aqui.
-        - Em telas pequenas (padrão): ocupa quase toda a tela com um pequeno espaçamento.
-        - Em telas 'sm' (small) e maiores: tem uma largura máxima de '4xl'.
-      */}
-      <DialogContent className="sm:max-w-4xl">
-        <DialogHeader>
-          {/* O tamanho da fonte também pode ser responsivo */}
-          <DialogTitle className="text-xl sm:text-2xl">Adicionando: {activity.name}</DialogTitle>
-          <DialogDescription className="hidden sm:block"> {/* Opcional: Ocultar descrição em telas muito pequenas */}
-            {activity.description}
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="max-w-3xl p-0">
+        <DialogHeader className="px-6 py-4 border-b">
+          <DialogTitle className="text-xl font-semibold">
+            {activityId ? "Editar Atividade" : "Nova Atividade"}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Criar ou editar atividade de curso
           </DialogDescription>
         </DialogHeader>
 
-        {/* 
-          Garante que o conteúdo do formulário seja rolável em qualquer dispositivo
-          se ele exceder a altura da tela.
-          - `max-h-[80vh]`: Define a altura máxima como 80% da altura da viewport (tela).
-        */}
-        <div className="py-4 max-h-[80vh] overflow-y-auto pr-2 sm:pr-6">
-          <ActivityForm activityType={activity.id} />
+        <div className="p-6">
+          {loading ? (
+            <div className="flex justify-center items-center h-40">
+              <Loader2 className="w-6 h-6 animate-spin" />
+            </div>
+          ) : (
+            <ActivityForm
+              activityType={activityType}
+              initialData={initialData}
+              cursoId={cursoId}
+              materiaId={materiaId}
+              turmaId={turmaId}
+              onSuccess={() => {
+                if (onSuccess) onSuccess();
+                handleClose();
+              }}
+              onCancel={handleClose}
+            />
+          )}
         </div>
-
-        {/* 
-          Rodapé Responsivo:
-          - Padrão (mobile): `flex-col-reverse` para empilhar botões verticalmente (Cancelar por último).
-          - `sm` e maior: `flex-row` e `justify-between` para o layout de desktop.
-        */}
-        <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between sm:gap-0">
-          <div>
-            {/* Futuro checkbox de notificação */}
-          </div>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row">
-            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
-              Cancelar
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => {}} className="w-full sm:w-auto">
-              Salvar e mostrar
-            </Button>
-            <Button type="button" onClick={() => {}} className="w-full sm:w-auto">
-              Salvar e voltar ao curso
-            </Button>
-          </div>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

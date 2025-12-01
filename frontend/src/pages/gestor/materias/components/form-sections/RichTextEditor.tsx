@@ -6,13 +6,13 @@ import { Bold, Italic, Underline, List, ListOrdered, Link, Image as ImageIcon, C
 import { ToggleGroup, ToggleGroupItem } from "../../../components/ui/toggle-group";
 import { Separator } from "../../../components/ui/separator";
 
-interface RichTextEditorProps {
+interface RichTextEditorProps extends React.ComponentProps<typeof Textarea> {
   id: string;
   placeholder: string;
   rows?: number;
 }
 
-export function RichTextEditor({ id, placeholder, rows = 10 }: RichTextEditorProps) {
+export function RichTextEditor({ id, placeholder, rows = 10, className, ...props }: RichTextEditorProps) {
   return (
     <div className="rounded-md border bg-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
       {/* Barra de Ferramentas Simulada */}
@@ -30,14 +30,15 @@ export function RichTextEditor({ id, placeholder, rows = 10 }: RichTextEditorPro
           <ToggleGroupItem value="code" aria-label="Code block"><Code className="h-4 w-4" /></ToggleGroupItem>
         </ToggleGroup>
       </div>
-      
+
       {/* Área de Texto */}
       <Textarea
         id={id}
         placeholder={placeholder}
         rows={rows}
         // Remove a borda e o anel de foco do textarea para que o contêiner principal controle a aparência
-        className="w-full rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-y"
+        className={`w-full rounded-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 resize-y ${className}`}
+        {...props}
       />
     </div>
   );
