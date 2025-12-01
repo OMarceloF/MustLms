@@ -1,3 +1,5 @@
+// src/pages/gestor/materias/components/ActivityViewerModal.tsx
+
 import { useEffect, useState } from "react";
 import {
     Dialog,
@@ -7,12 +9,9 @@ import {
     DialogDescription
 } from "../../components/ui/dialog";
 
-import { Button } from "../../components/ui/button";
-import { Loader2, Maximize2, Minimize2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-import {
-    obterAtividade
-} from "../../../../services/producaoAcademicaService";
+import { obterAtividade } from "../../../../services/producaoAcademicaService";
 
 import { FileViewer } from "./viewers/file-viewer";
 import { UrlViewer } from "./viewers/url-viewer";
@@ -32,52 +31,75 @@ export function ActivityViewerModal({
     activityId,
     activityName
 }: ActivityViewerModalProps) {
-
     const [atividade, setAtividade] = useState<any>(null);   // atividade do BD
     const [config, setConfig] = useState<any>(null);         // config específica por tipo
     const [estrutura, setEstrutura] = useState<any>(null);   // perguntas/itens
     const [loading, setLoading] = useState(false);
-    const [isFullscreen, setIsFullscreen] = useState(false);
 
     // DEBUG
     useEffect(() => {
         console.log("[ActivityViewerModal] -> open:", isOpen, "id:", activityId);
     }, [isOpen, activityId]);
 
-    // Carregar dados completos da atividade
+    // Carregar dados completos da atividade quando abrir
     useEffect(() => {
-        const loadActivity = async () => {
-            if (!isOpen || !activityId) return;
+        if (!isOpen || !activityId) {
+            return;
+        }
 
+        let cancelled = false;
+
+        const loadActivity = async () => {
             try {
                 setLoading(true);
                 const data = await obterAtividade(activityId);
 
+                if (cancelled) return;
+
                 setAtividade(data.atividade || null);
                 setConfig(data.config || null);
                 setEstrutura(data.estrutura || null);
-
             } catch (err) {
-                console.error("Erro ao carregar atividade:", err);
+                if (!cancelled) {
+                    console.error("Erro ao carregar atividade:", err);
+                }
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         };
 
         loadActivity();
 
-        if (!isOpen) {
-            setAtividade(null);
-            setConfig(null);
-            setEstrutura(null);
-            setIsFullscreen(false);
-        }
-
+        return () => {
+            cancelled = true;
+        };
     }, [isOpen, activityId]);
 
-    // Renderizador principal por tipo
+    // Limpar tudo quando o modal for fechado
+    const handleClose = () => {
+        setAtividade(null);
+        setConfig(null);
+        setEstrutura(null);
+        setLoading(false);
+        onClose();
+    };
+
+    // Se não tiver ID, não renderiza nada (mas se tiver ID e isOpen=false, renderiza Dialog fechado para animação)
+    if (!activityId) {
+        return null;
+    }
+
+    // Render específico por tipo de atividade
     const renderViewer = () => {
-        if (!atividade) return null;
+        if (!atividade) {
+            return (
+                <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+                    Nenhuma atividade carregada.
+                </div>
+            );
+        }
 
         switch (atividade.tipo) {
             case "arquivo":
@@ -125,45 +147,23 @@ export function ActivityViewerModal({
         <Dialog
             open={isOpen}
             onOpenChange={(open) => {
-                if (!open) onClose();
+                // clique fora, ESC, botão X padrão do DialogContent
+                if (!open) handleClose();
             }}
         >
             <DialogContent
-                className={`flex flex-col gap-0 p-0 sm:max-w-4xl transition-all duration-300 
-                ${isFullscreen ? "w-screen h-screen max-w-none rounded-none m-0" : "max-h-[90vh]"}`}
+                className="flex flex-col gap-0 p-0 sm:max-w-4xl max-h-[90vh]"
             >
-                <DialogHeader
-                    className="flex flex-row items-center justify-between border-b px-6 py-4 space-y-0"
-                >
-                    <div className="flex flex-col gap-1">
-                        <DialogTitle className="text-xl font-semibold">
-                            {atividade?.nome || activityName || "Carregando..."}
-                        </DialogTitle>
-                        <DialogDescription className="sr-only">
-                            Visualização da atividade
-                        </DialogDescription>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setIsFullscreen(!isFullscreen)}
-                            className="h-8 w-8"
-                        >
-                            {isFullscreen ? (
-                                <Minimize2 className="h-4 w-4" />
-                            ) : (
-                                <Maximize2 className="h-4 w-4" />
-                            )}
-                        </Button>
-                    </div>
+                <DialogHeader className="border-b px-6 py-4">
+                    <DialogTitle className="text-xl font-semibold truncate">
+                        {atividade?.nome || activityName || "Visualizar atividade"}
+                    </DialogTitle>
+                    <DialogDescription className="sr-only">
+                        Visualização da atividade
+                    </DialogDescription>
                 </DialogHeader>
 
-                <div
-                    className={`flex-1 overflow-y-auto p-6
-                    ${isFullscreen ? "h-[calc(100vh-65px)]" : "max-h-[calc(90vh-65px)]"}`}
-                >
+                <div className="flex-1 overflow-y-auto p-6">
                     {loading ? (
                         <div className="flex h-64 items-center justify-center">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />

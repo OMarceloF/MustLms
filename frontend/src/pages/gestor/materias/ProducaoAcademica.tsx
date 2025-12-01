@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Separator } from "../components/ui/separator"
 // Componentes locais da página
 import { ActivityCard } from "./components/activity-card"
-import { HelpModal } from "./components/help-modal"
+// import { HelpModal } from "./components/help-modal"
 import { CreatedActivityItem } from "./components/created-activity-item"
 import { ActivityModal } from "./components/ActivityModal"
 import { ActivityViewerModal } from "./components/ActivityViewerModal"
@@ -180,29 +180,7 @@ export default function ProducaoAcademica() {
         </div>
       </div>
 
-      {/* Filtros e Busca */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar atividade ou recurso…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select value={sortBy} onValueChange={(value: SortByType) => setSortBy(value)}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="used">Mais usados</SelectItem>
-            <SelectItem value="alpha">Ordem alfabética</SelectItem>
-            <SelectItem value="favorites">Favoritos</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+  
 
       {/* Grid de Cards para Adicionar */}
       <div className="bg-background px-4 py-8 sm:px-6 lg:px-8">
@@ -266,23 +244,28 @@ export default function ProducaoAcademica() {
       </div>
 
       {/* Modais */}
-      <HelpModal isOpen={showHelpModal} onClose={() => setShowHelpModal(false)} />
 
-      <ActivityModal
-        isOpen={!!selectedActivity}
-        onClose={handleCloseModal}
-        activityId={editingActivity?.id}
-        activityType={selectedActivity?.id || ""}
-        onSuccess={handleActivityCreated}
-        materiaId={materiaId}
-      />
+      {selectedActivity && (
+        <ActivityModal
+          key={editingActivity?.id ?? "new"}
+          isOpen={!!selectedActivity}
+          onClose={handleCloseModal}
+          activityId={editingActivity?.id}
+          activityType={selectedActivity.id}
+          onSuccess={handleActivityCreated}
+          materiaId={materiaId}
+        />
+      )}
 
-      <ActivityViewerModal
-        isOpen={!!viewingActivityId}
-        onClose={() => setViewingActivityId(null)}
-        activityId={viewingActivityId}
-        activityName={viewingActivityName}
-      />
+      {viewingActivityId !== null && (
+        <ActivityViewerModal
+          key={viewingActivityId}                // força remount a cada atividade
+          isOpen={true}                          // se está montado, está aberto
+          onClose={() => setViewingActivityId(null)}
+          activityId={viewingActivityId}
+          activityName={viewingActivityName}
+        />
+      )}
     </>
   )
 }

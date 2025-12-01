@@ -8,9 +8,9 @@ export const criarAtividade = async (req: Request, res: Response) => {
   const conn = await pool.getConnection();
 
   try {
-    const { curso_id, materia_id, turma_id, nome, descricao, tipo, config } = req.body;
+    const { curso_id, materia_id, turma_id, nome, descricao, tipo, config, estrutura } = req.body;
 
-    // MODIFICAÇÃO: Garantir que IDs sejam números ou null (evita string vazia ou undefined quebrando a query)
+    // MODIFICAÇÃO: Garantir que IDs sejam números ou null
     const turmaIdFinal = turma_id ? Number(turma_id) : null;
     const materiaIdFinal = materia_id ? Number(materia_id) : null;
 
@@ -71,6 +71,26 @@ export const criarAtividade = async (req: Request, res: Response) => {
           config.proxima_url
         ]
       );
+
+      // Inserir Perguntas e Opções
+      if (estrutura && estrutura.perguntas && Array.isArray(estrutura.perguntas)) {
+        for (const [index, p] of estrutura.perguntas.entries()) {
+          const [pResult] = await conn.query(
+            `INSERT INTO survey_perguntas (atividade_id, enunciado, tipo, ordem) VALUES (?, ?, ?, ?)`,
+            [atividadeId, p.enunciado, p.tipo, index + 1]
+          );
+          const perguntaId = (pResult as any).insertId;
+
+          if (p.opcoes && Array.isArray(p.opcoes)) {
+            for (const op of p.opcoes) {
+              await conn.query(
+                `INSERT INTO survey_opcoes (pergunta_id, texto) VALUES (?, ?)`,
+                [perguntaId, op.texto]
+              );
+            }
+          }
+        }
+      }
     }
 
     /* --------------------------------------------------------
@@ -92,6 +112,26 @@ export const criarAtividade = async (req: Request, res: Response) => {
           JSON.stringify(config.feedback_final || {})
         ]
       );
+
+      // Inserir Perguntas e Opções
+      if (estrutura && estrutura.perguntas && Array.isArray(estrutura.perguntas)) {
+        for (const [index, p] of estrutura.perguntas.entries()) {
+          const [pResult] = await conn.query(
+            `INSERT INTO quiz_perguntas (atividade_id, enunciado, tipo, ordem) VALUES (?, ?, ?, ?)`,
+            [atividadeId, p.enunciado, p.tipo, index + 1]
+          );
+          const perguntaId = (pResult as any).insertId;
+
+          if (p.opcoes && Array.isArray(p.opcoes)) {
+            for (const op of p.opcoes) {
+              await conn.query(
+                `INSERT INTO quiz_opcoes (pergunta_id, texto, correta) VALUES (?, ?, ?)`,
+                [perguntaId, op.texto, op.correta ? 1 : 0]
+              );
+            }
+          }
+        }
+      }
     }
 
     await conn.commit();
@@ -176,16 +216,25 @@ export const obterAtividade = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Atividade não encontrada" });
     }
 
-    let config = null;
-    let estrutura = null;
+    let config: any = {};
+    let estrutura: any = { perguntas: [], itens: [], entregas: [] };
 
     switch (atividade.tipo) {
+
       case "arquivo": {
         const [cfg] = await pool.query(
           `SELECT * FROM atividade_arquivo WHERE atividade_id = ?`,
           [id]
         );
-        config = (cfg as any[])[0];
+
+        const c = (cfg as any[])[0] || {};
+
+        config = {
+          url: c.arquivo || "",
+          display_mode: c.display_mode || "auto",
+          mostrar_descricao: !!c.mostrar_descricao
+        };
+
         break;
       }
 
@@ -194,11 +243,24 @@ export const obterAtividade = async (req: Request, res: Response) => {
           `SELECT * FROM atividade_url WHERE atividade_id = ?`,
           [id]
         );
-        config = (cfg as any[])[0];
 
-        if (config?.parametros) {
-          try { config.parametros = JSON.parse(config.parametros); } catch { }
+        const c = (cfg as any[])[0] || {};
+
+        config = {
+          url: c.url || "",
+          display_mode: c.display_mode || "auto",
+          mostrar_descricao: !!c.mostrar_descricao,
+          parametros: []
+        };
+
+        if (c.parametros) {
+          try {
+            config.parametros = JSON.parse(c.parametros);
+          } catch {
+            config.parametros = [];
+          }
         }
+
         break;
       }
 
@@ -207,10 +269,13 @@ export const obterAtividade = async (req: Request, res: Response) => {
           `SELECT * FROM atividade_pesquisa WHERE atividade_id = ?`,
           [id]
         );
-        config = (cfg as any[])[0];
+
+        config = (cfg as any[])[0] || {};
 
         const [perguntas] = await pool.query(
-          `SELECT * FROM survey_perguntas WHERE atividade_id = ? ORDER BY ordem ASC`,
+          `SELECT * FROM survey_perguntas 
+           WHERE atividade_id = ? 
+           ORDER BY ordem ASC`,
           [id]
         );
 
@@ -219,10 +284,12 @@ export const obterAtividade = async (req: Request, res: Response) => {
             `SELECT * FROM survey_opcoes WHERE pergunta_id = ?`,
             [p.id]
           );
-          p.opcoes = opcoes;
+
+          p.opcoes = opcoes || [];
         }
 
         estrutura = { perguntas };
+
         break;
       }
 
@@ -231,14 +298,13 @@ export const obterAtividade = async (req: Request, res: Response) => {
           `SELECT * FROM atividade_questionario WHERE atividade_id = ?`,
           [id]
         );
-        config = (cfg as any[])[0];
 
-        if (config?.opcoes_revisao) {
-          try { config.opcoes_revisao = JSON.parse(config.opcoes_revisao); } catch { }
-        }
-        if (config?.feedback_final) {
-          try { config.feedback_final = JSON.parse(config.feedback_final); } catch { }
-        }
+        const c = (cfg as any[])[0] || {};
+
+        try { c.opcoes_revisao = JSON.parse(c.opcoes_revisao || "{}"); } catch { }
+        try { c.feedback_final = JSON.parse(c.feedback_final || "{}"); } catch { }
+
+        config = c;
 
         const [perguntas] = await pool.query(
           `SELECT * FROM quiz_perguntas WHERE atividade_id = ? ORDER BY ordem ASC`,
@@ -250,10 +316,12 @@ export const obterAtividade = async (req: Request, res: Response) => {
             `SELECT * FROM quiz_opcoes WHERE pergunta_id = ?`,
             [p.id]
           );
-          p.opcoes = opcoes;
+
+          p.opcoes = opcoes || [];
         }
 
         estrutura = { perguntas };
+
         break;
       }
 
@@ -262,7 +330,8 @@ export const obterAtividade = async (req: Request, res: Response) => {
           `SELECT * FROM tarefa_entregas WHERE atividade_id = ?`,
           [id]
         );
-        estrutura = { entregas };
+
+        estrutura = { entregas: entregas || [] };
         config = {};
         break;
       }
@@ -288,7 +357,7 @@ export const atualizarAtividade = async (req: Request, res: Response) => {
 
   try {
     const id = Number(req.params.id);
-    const { materia_id, turma_id, nome, descricao, tipo, config } = req.body;
+    const { materia_id, turma_id, nome, descricao, tipo, config, estrutura } = req.body;
 
     // MODIFICAÇÃO: Sanitização também na atualização
     const turmaIdFinal = turma_id ? Number(turma_id) : null;
@@ -335,6 +404,28 @@ export const atualizarAtividade = async (req: Request, res: Response) => {
           id
         ]
       );
+
+      // Atualizar Perguntas (Estratégia: Deletar tudo e recriar)
+      if (estrutura && estrutura.perguntas && Array.isArray(estrutura.perguntas)) {
+        await conn.query(`DELETE FROM survey_perguntas WHERE atividade_id = ?`, [id]);
+
+        for (const [index, p] of estrutura.perguntas.entries()) {
+          const [pResult] = await conn.query(
+            `INSERT INTO survey_perguntas (atividade_id, enunciado, tipo, ordem) VALUES (?, ?, ?, ?)`,
+            [id, p.enunciado, p.tipo, index + 1]
+          );
+          const perguntaId = (pResult as any).insertId;
+
+          if (p.opcoes && Array.isArray(p.opcoes)) {
+            for (const op of p.opcoes) {
+              await conn.query(
+                `INSERT INTO survey_opcoes (pergunta_id, texto) VALUES (?, ?)`,
+                [perguntaId, op.texto]
+              );
+            }
+          }
+        }
+      }
     }
 
     if (tipo === "questionario") {
@@ -353,6 +444,28 @@ export const atualizarAtividade = async (req: Request, res: Response) => {
           id
         ]
       );
+
+      // Atualizar Perguntas (Estratégia: Deletar tudo e recriar)
+      if (estrutura && estrutura.perguntas && Array.isArray(estrutura.perguntas)) {
+        await conn.query(`DELETE FROM quiz_perguntas WHERE atividade_id = ?`, [id]);
+
+        for (const [index, p] of estrutura.perguntas.entries()) {
+          const [pResult] = await conn.query(
+            `INSERT INTO quiz_perguntas (atividade_id, enunciado, tipo, ordem) VALUES (?, ?, ?, ?)`,
+            [id, p.enunciado, p.tipo, index + 1]
+          );
+          const perguntaId = (pResult as any).insertId;
+
+          if (p.opcoes && Array.isArray(p.opcoes)) {
+            for (const op of p.opcoes) {
+              await conn.query(
+                `INSERT INTO quiz_opcoes (pergunta_id, texto, correta) VALUES (?, ?, ?)`,
+                [perguntaId, op.texto, op.correta ? 1 : 0]
+              );
+            }
+          }
+        }
+      }
     }
 
     await conn.commit();

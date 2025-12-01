@@ -1,3 +1,4 @@
+// app/producao-academica/components/ActivityModal.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -41,12 +42,12 @@ export function ActivityModal({
     console.log("[ActivityModal] open:", isOpen, "activityId:", activityId);
   }, [isOpen, activityId]);
 
-  // CARREGAR DADOS DA ATIVIDADE QUANDO FOR EDIÇÃO
+  // Carregar dados da atividade quando for edição
   useEffect(() => {
     const fetchActivity = async () => {
       if (!isOpen) return;
 
-      // Se for criação, não precisa carregar nada
+      // Criação → não carrega nada
       if (!activityId) {
         setInitialData(null);
         return;
@@ -55,7 +56,8 @@ export function ActivityModal({
       try {
         setLoading(true);
         const data = await obterAtividade(activityId);
-        setInitialData(data); // contém { atividade, config, estrutura }
+        // data = { atividade, config, estrutura }
+        setInitialData(data);
       } catch (err) {
         console.error("Erro ao carregar atividade:", err);
       } finally {
@@ -68,11 +70,21 @@ export function ActivityModal({
 
   const handleClose = () => {
     setInitialData(null);
+    setLoading(false);
     onClose();
   };
 
+  // Se não está aberto, não renderiza nada
+  // REMOVIDO: if (!isOpen) return null; 
+  // Isso causava problemas com o Radix UI que precisa controlar o estado de saída.
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+    >
       <DialogContent className="max-w-3xl p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="text-xl font-semibold">
@@ -91,12 +103,12 @@ export function ActivityModal({
           ) : (
             <ActivityForm
               activityType={activityType}
-              initialData={initialData}
+              initialData={initialData}   // { atividade, config, estrutura } ou null
               cursoId={cursoId}
               materiaId={materiaId}
               turmaId={turmaId}
               onSuccess={() => {
-                if (onSuccess) onSuccess();
+                onSuccess?.();
                 handleClose();
               }}
               onCancel={handleClose}

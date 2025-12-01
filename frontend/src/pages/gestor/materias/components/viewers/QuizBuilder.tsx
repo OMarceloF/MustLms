@@ -15,14 +15,13 @@ interface QuizBuilderProps {
     onUpdate?: (data: any) => void;
 }
 
-export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuilderProps) {
-
+export function QuizBuilder({ activity, config, estrutura }: QuizBuilderProps) {
     const [answers, setAnswers] = useState<any>({});
     const [attemptId, setAttemptId] = useState<number | null>(null);
     const [isFinished, setIsFinished] = useState(false);
     const [notaFinal, setNotaFinal] = useState<number | null>(null);
 
-    if (!estrutura || !estrutura.perguntas) {
+    if (!estrutura || !Array.isArray(estrutura.perguntas) || estrutura.perguntas.length === 0) {
         return (
             <div className="text-center p-6 text-muted-foreground">
                 Nenhuma pergunta configurada para este questionário.
@@ -30,7 +29,7 @@ export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuild
         );
     }
 
-    const perguntas = estrutura.perguntas.sort((a: any, b: any) => a.ordem - b.ordem);
+    const perguntas = [...estrutura.perguntas].sort((a: any, b: any) => a.ordem - b.ordem);
 
     const handleSingleAnswer = (perguntaId: number, value: string) => {
         setAnswers((prev: any) => ({
@@ -55,11 +54,14 @@ export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuild
 
     const iniciarTentativa = async () => {
         try {
-            const resp = await fetch(`${API_URL}/api/producao-academica/quiz/${activity.id}/tentativas`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ usuario_id: null }) // futuro: puxar do auth
-            });
+            const resp = await fetch(
+                `${API_URL}/api/producao-academica/quiz/${activity.id}/tentativas`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ usuario_id: null }) // futuro: puxar do auth
+                }
+            );
 
             const data = await resp.json();
             setAttemptId(data.tentativa_id);
@@ -77,20 +79,21 @@ export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuild
         }
 
         try {
-            for (let pergunta of perguntas) {
-
+            for (const pergunta of perguntas) {
                 const resposta = answers[pergunta.id] ?? null;
 
-                await fetch(`${API_URL}/api/producao-academica/quiz/tentativa/${attemptId}/respostas`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        pergunta_id: pergunta.id,
-                        resposta
-                    })
-                });
+                await fetch(
+                    `${API_URL}/api/producao-academica/quiz/tentativa/${attemptId}/respostas`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            pergunta_id: pergunta.id,
+                            resposta
+                        })
+                    }
+                );
             }
-
         } catch (err) {
             console.error(err);
             toast.error("Erro ao registrar respostas.");
@@ -101,16 +104,13 @@ export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuild
         let total = 0;
         let corretas = 0;
 
-        for (let pergunta of perguntas) {
+        for (const pergunta of perguntas) {
             total++;
 
-            // resposta do aluno
             const respostaAluno = answers[pergunta.id];
+            const opcoesCorretas =
+                pergunta.opcoes?.filter((x: any) => x.correta).map((o: any) => o.texto) || [];
 
-            // verificar opções corretas
-            const opcoesCorretas = pergunta.opcoes?.filter((x: any) => x.correta).map((o: any) => o.texto) || [];
-
-            // múltipla com checkbox
             if (pergunta.tipo === "multipla-escolha-multipla") {
                 if (Array.isArray(respostaAluno)) {
                     const isCorrect =
@@ -119,30 +119,15 @@ export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuild
 
                     if (isCorrect) corretas++;
                 }
-            }
-
-            // múltipla com radio
-            else if (pergunta.tipo === "multipla") {
+            } else if (pergunta.tipo === "multipla" || pergunta.tipo === "vf") {
                 if (opcoesCorretas.includes(respostaAluno)) corretas++;
-            }
-
-            // verdadeiro/falso
-            else if (pergunta.tipo === "vf") {
-                if (opcoesCorretas.includes(respostaAluno)) corretas++;
-            }
-
-            // resposta curta — não corrigível automaticamente
-            else if (pergunta.tipo === "texto") {
-                total--; // não conta para cálculo automático
-            }
-
-            // parágrafo — idem
-            else if (pergunta.tipo === "paragrafo") {
+            } else if (pergunta.tipo === "texto" || pergunta.tipo === "paragrafo") {
+                // não corrige automaticamente → não participa da nota
                 total--;
             }
         }
 
-        const nota = total > 0 ? ((corretas / total) * 100) : 0;
+        const nota = total > 0 ? (corretas / total) * 100 : 0;
         return nota;
     };
 
@@ -153,15 +138,17 @@ export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuild
             const nota = calcularNota();
             setNotaFinal(nota);
 
-            await fetch(`${API_URL}/api/producao-academica/quiz/tentativa/${attemptId}/finalizar`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nota })
-            });
+            await fetch(
+                `${API_URL}/api/producao-academica/quiz/tentativa/${attemptId}/finalizar`,
+                {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ nota })
+                }
+            );
 
             setIsFinished(true);
             toast.success("Questionário finalizado!");
-
         } catch (err) {
             console.error(err);
             toast.error("Erro ao finalizar tentativa.");
@@ -176,18 +163,21 @@ export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuild
                 </CardHeader>
 
                 <CardContent className="space-y-4 text-muted-foreground">
-                    <p>Sua nota final: <strong>{notaFinal?.toFixed(2)}%</strong></p>
+                    <p>
+                        Sua nota final: <strong>{notaFinal?.toFixed(2)}%</strong>
+                    </p>
 
-                    {notaFinal !== null && notaFinal >= config?.nota_aprovacao ? (
+                    {notaFinal !== null && notaFinal >= (config?.nota_aprovacao ?? 0) ? (
                         <p className="text-emerald-600 font-medium">
-                            {config?.feedback_final?.texto_aprovado || "Parabéns! Você atingiu a nota mínima."}
+                            {config?.feedback_final?.texto_aprovado ||
+                                "Parabéns! Você atingiu a nota mínima."}
                         </p>
                     ) : (
                         <p className="text-red-600 font-medium">
-                            {config?.feedback_final?.texto_reprovado || "Você não atingiu a nota mínima."}
+                            {config?.feedback_final?.texto_reprovado ||
+                                "Você não atingiu a nota mínima."}
                         </p>
                     )}
-
                 </CardContent>
             </Card>
         );
@@ -208,95 +198,103 @@ export function QuizBuilder({ activity, config, estrutura, onUpdate }: QuizBuild
             )}
 
             {/* PERGUNTAS */}
-            {attemptId && perguntas.map((p: any) => (
-                <Card key={p.id} className="shadow-md">
-                    <CardHeader>
-                        <CardTitle className="text-base font-semibold">
-                            {p.enunciado}
-                        </CardTitle>
-                    </CardHeader>
+            {attemptId &&
+                perguntas.map((p: any) => (
+                    <Card key={p.id} className="shadow-md">
+                        <CardHeader>
+                            <CardTitle className="text-base font-semibold">
+                                {p.enunciado}
+                            </CardTitle>
+                        </CardHeader>
 
-                    <CardContent className="space-y-4">
-
-                        {/* MULTIPLA ESCOLHA (RADIO) */}
-                        {p.tipo === "multipla" && (
-                            <RadioGroup
-                                value={answers[p.id] || ""}
-                                onValueChange={(v) => handleSingleAnswer(p.id, v)}
-                            >
-                                {p.opcoes?.map((op: any) => (
-                                    <div key={op.id} className="flex items-center gap-3">
-                                        <RadioGroupItem value={op.texto} id={`opt-${op.id}`} />
-                                        <label htmlFor={`opt-${op.id}`} className="text-sm">{op.texto}</label>
-                                    </div>
-                                ))}
-                            </RadioGroup>
-                        )}
-
-                        {/* MULTIPLA COM MULTIPLAS (CHECKBOX) */}
-                        {p.tipo === "multipla-escolha-multipla" && (
-                            <div className="space-y-2">
-                                {p.opcoes?.map((op: any) => {
-                                    const selected = answers[p.id] || [];
-
-                                    return (
+                        <CardContent className="space-y-4">
+                            {/* MULTIPLA ESCOLHA (RADIO) */}
+                            {p.tipo === "multipla" && (
+                                <RadioGroup
+                                    value={answers[p.id] || ""}
+                                    onValueChange={(v) => handleSingleAnswer(p.id, v)}
+                                >
+                                    {p.opcoes?.map((op: any) => (
                                         <div key={op.id} className="flex items-center gap-3">
-                                            <Checkbox
-                                                checked={selected.includes(op.texto)}
-                                                onCheckedChange={() => handleMultipleAnswer(p.id, op.texto)}
-                                            />
-                                            <span className="text-sm">{op.texto}</span>
+                                            <RadioGroupItem value={op.texto} id={`opt-${op.id}`} />
+                                            <label htmlFor={`opt-${op.id}`} className="text-sm">
+                                                {op.texto}
+                                            </label>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                                    ))}
+                                </RadioGroup>
+                            )}
 
-                        {/* VERDADEIRO OU FALSO */}
-                        {p.tipo === "vf" && (
-                            <RadioGroup
-                                value={answers[p.id] || ""}
-                                onValueChange={(v) => handleSingleAnswer(p.id, v)}
-                            >
-                                {p.opcoes?.map((op: any) => (
-                                    <div key={op.id} className="flex items-center gap-3">
-                                        <RadioGroupItem value={op.texto} id={`vf-${op.id}`} />
-                                        <label htmlFor={`vf-${op.id}`} className="text-sm">{op.texto}</label>
-                                    </div>
-                                ))}
-                            </RadioGroup>
-                        )}
+                            {/* MULTIPLA COM MÚLTIPLAS (CHECKBOX) */}
+                            {p.tipo === "multipla-escolha-multipla" && (
+                                <div className="space-y-2">
+                                    {p.opcoes?.map((op: any) => {
+                                        const selected = answers[p.id] || [];
 
-                        {/* TEXTO CURTO */}
-                        {p.tipo === "texto" && (
-                            <Input
-                                value={answers[p.id] || ""}
-                                onChange={(e) => handleSingleAnswer(p.id, e.target.value)}
-                                placeholder="Digite sua resposta..."
-                            />
-                        )}
+                                        return (
+                                            <div key={op.id} className="flex items-center gap-3">
+                                                <Checkbox
+                                                    checked={selected.includes(op.texto)}
+                                                    onCheckedChange={() =>
+                                                        handleMultipleAnswer(p.id, op.texto)
+                                                    }
+                                                />
+                                                <span className="text-sm">{op.texto}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
-                        {/* PARÁGRAFO */}
-                        {p.tipo === "paragrafo" && (
-                            <Textarea
-                                rows={4}
-                                value={answers[p.id] || ""}
-                                onChange={(e) => handleSingleAnswer(p.id, e.target.value)}
-                                placeholder="Digite sua resposta completa..."
-                            />
-                        )}
+                            {/* VERDADEIRO/FALSO */}
+                            {p.tipo === "vf" && (
+                                <RadioGroup
+                                    value={answers[p.id] || ""}
+                                    onValueChange={(v) => handleSingleAnswer(p.id, v)}
+                                >
+                                    {p.opcoes?.map((op: any) => (
+                                        <div key={op.id} className="flex items-center gap-3">
+                                            <RadioGroupItem value={op.texto} id={`vf-${op.id}`} />
+                                            <label htmlFor={`vf-${op.id}`} className="text-sm">
+                                                {op.texto}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </RadioGroup>
+                            )}
 
-                    </CardContent>
-                </Card>
-            ))}
+                            {/* TEXTO CURTO */}
+                            {p.tipo === "texto" && (
+                                <Input
+                                    value={answers[p.id] || ""}
+                                    onChange={(e) => handleSingleAnswer(p.id, e.target.value)}
+                                    placeholder="Digite sua resposta..."
+                                />
+                            )}
+
+                            {/* PARÁGRAFO */}
+                            {p.tipo === "paragrafo" && (
+                                <Textarea
+                                    rows={4}
+                                    value={answers[p.id] || ""}
+                                    onChange={(e) => handleSingleAnswer(p.id, e.target.value)}
+                                    placeholder="Digite sua resposta completa..."
+                                />
+                            )}
+                        </CardContent>
+                    </Card>
+                ))}
 
             {/* BOTÃO DE FINALIZAÇÃO */}
             {attemptId && (
                 <div className="flex justify-end">
-                    <Button onClick={async () => {
-                        await enviarRespostas();
-                        await finalizarTentativa();
-                    }} className="px-6">
+                    <Button
+                        onClick={async () => {
+                            await enviarRespostas();
+                            await finalizarTentativa();
+                        }}
+                        className="px-6"
+                    >
                         Finalizar Quiz
                     </Button>
                 </div>
