@@ -42,6 +42,7 @@ const formSchema = z.object({
   cpf: z.string().min(14, "CPF inválido."),
   telefone: z.string().min(14, "Telefone inválido."),
   data_nascimento: z.string().min(1, "Data de nascimento é obrigatória."),
+  genero: z.string().min(1, "Selecione o gênero."),
   endereco_cep: z.string().min(9, "CEP inválido."),
   endereco_logradouro: z.string().min(1, "Logradouro é obrigatório."),
   endereco_numero: z.string().min(1, "Número é obrigatório."),
@@ -99,6 +100,7 @@ const CriarProfessorPage = () => {
 
   const cepValue = watch('endereco_cep');
   const cargos = ['Professor', 'Gestor', 'Secretaria', 'Financeiro'];
+  const generos = ['Masculino', 'Feminino', 'Outro'];
 
   // --- HOOKS DE EFEITO ---
 
@@ -231,6 +233,7 @@ const CriarProfessorPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField id="nome" label="Nome Completo" register={register} error={errors.nome} containerClassName="md:col-span-2" />
                   <FormField id="data_nascimento" label="Data de Nascimento" type="date" register={register} error={errors.data_nascimento} />
+                  <FormField id="genero" label="Gênero" as="select" options={generos} register={register} error={errors.genero} />
                   <FormField id="cpf" label="CPF" placeholder="000.000.000-00" register={register} error={errors.cpf} onChange={(e) => e.target.value = formatCPF(e.target.value)} />
                   <FormField id="email" label="Email" type="email" register={register} error={errors.email} />
                   <FormField id="telefone" label="Telefone" placeholder="(00) 00000-0000" register={register} error={errors.telefone} onChange={(e) => e.target.value = formatTelefone(e.target.value)} />
