@@ -10,12 +10,16 @@ export const criarAtividade = async (req: Request, res: Response) => {
   try {
     const { curso_id, materia_id, turma_id, nome, descricao, tipo, config } = req.body;
 
+    // MODIFICAÇÃO: Garantir que IDs sejam números ou null (evita string vazia ou undefined quebrando a query)
+    const turmaIdFinal = turma_id ? Number(turma_id) : null;
+    const materiaIdFinal = materia_id ? Number(materia_id) : null;
+
     await conn.beginTransaction();
 
     const [result] = await conn.query(
       `INSERT INTO atividades (curso_id, materia_id, turma_id, nome, descricao, tipo)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [curso_id, materia_id, turma_id, nome, descricao, tipo]
+      [curso_id, materiaIdFinal, turmaIdFinal, nome, descricao, tipo]
     );
 
     const atividadeId = (result as any).insertId;
@@ -286,11 +290,15 @@ export const atualizarAtividade = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const { materia_id, turma_id, nome, descricao, tipo, config } = req.body;
 
+    // MODIFICAÇÃO: Sanitização também na atualização
+    const turmaIdFinal = turma_id ? Number(turma_id) : null;
+    const materiaIdFinal = materia_id ? Number(materia_id) : null;
+
     await conn.beginTransaction();
 
     await conn.query(
       `UPDATE atividades SET materia_id=?, turma_id=?, nome=?, descricao=? WHERE id=?`,
-      [materia_id, turma_id, nome, descricao, id]
+      [materiaIdFinal, turmaIdFinal, nome, descricao, id]
     );
 
     if (tipo === "arquivo") {

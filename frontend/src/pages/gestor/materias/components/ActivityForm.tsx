@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useForm, FormProvider, Controller } from "react-hook-form";
+import axios from "axios"; // Necessário para a chamada direta à API corrigida
 
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
@@ -53,7 +54,7 @@ interface ActivityFormProps {
   onCancel?: () => void;
 }
 
-// Mapeamento frontend → backend
+// Mapeamento frontend -> backend
 const mapActivityType = {
   file: "arquivo",
   url: "url",
@@ -64,12 +65,11 @@ const mapActivityType = {
   lesson: "licao",
 };
 
-// Patch tipagem Turma para incluir disciplinaTurmaId (FK pivot)
+// Patch tipagem Turma para incluir campos extras retornados pela query personalizada
 declare module "../../../../services/turmaService" {
   interface Turma {
     disciplinaTurmaId?: number;
-    // garantindo que curso_id exista aqui também
-    curso_id?: number;
+    curso_id?: number; // Fundamental para corrigir o erro de salvamento
   }
 }
 
@@ -95,7 +95,8 @@ export function ActivityForm({
   const [turmas, setTurmas] = useState<Turma[]>([]);
 
   /* ============================================================
-     CARREGAR TURMAS (COM POSSÍVEL DISCIPLINA-TURMA)
+     CARREGAR TURMAS (CORRIGIDO)
+     Busca apenas turmas ativas e garante que o curso_id venha junto
   ============================================================ */
   useEffect(() => {
     const loadTurmas = async () => {
@@ -103,16 +104,19 @@ export function ActivityForm({
         let data: Turma[] = [];
 
         if (materiaId) {
-          // lista turmas vinculadas à matéria
-          data = await turmaService.listarPorDisciplinaVinculada(materiaId);
+          // CORREÇÃO: Chama a rota específica que filtra por status 'Ativa' e retorna curso_id.
+          // Isso resolve o problema de mostrar turmas antigas e o erro de FK ao salvar.
+          const response = await axios.get(`/api/disciplinas/${materiaId}/turmas-ativas-para-aulas`);
+          data = response.data;
         } else {
-          // lista todas as turmas
+          // Fallback para listar todas se não houver matéria (comportamento original para admin/geral)
           data = await turmaService.listar();
         }
 
         setTurmas(data);
       } catch (error) {
         console.error("Erro ao carregar turmas:", error);
+        toast.error("Erro ao carregar lista de turmas.");
       }
     };
 
@@ -153,50 +157,42 @@ export function ActivityForm({
   const onSubmit = async (data: any) => {
     let finalCursoId = cursoId;
 
-    // Se não houver cursoId explícito, tenta inferir pela turma selecionada
+    // Se não houver cursoId explícito nas props, tenta inferir pela turma selecionada
     if (!finalCursoId && data.turma_id) {
       const turmaIdNumber = Number(data.turma_id);
 
-      // Aqui usamos o ID REAL DA TURMA (t.id), não o disciplinaTurmaId
+      // Busca a turma no estado local (que agora contém o curso_id graças à correção no backend)
       const selected = turmas.find((t) => Number(t.id) === turmaIdNumber);
 
       if (selected?.curso_id) {
         finalCursoId = selected.curso_id;
       } else {
+        // Fallback de segurança: tenta buscar detalhes se por acaso não veio na lista
         try {
-          const novas = await turmaService.listarNovo();
-          const turmaNova = novas.find((t: any) => t.id === turmaIdNumber);
-
-          if (turmaNova?.cursoId) {
-            finalCursoId = Number(turmaNova.cursoId);
-          } else {
-            const detalhes = await turmaService.obter(turmaIdNumber);
-            if ((detalhes as any).curso_id) {
-              finalCursoId = (detalhes as any).curso_id;
-            }
+          const detalhes = await turmaService.obter(turmaIdNumber);
+          if ((detalhes as any).curso_id) {
+            finalCursoId = (detalhes as any).curso_id;
           }
         } catch (err) {
-          console.error("Erro ao buscar detalhes da turma", err);
+          console.error("Erro ao buscar detalhes da turma para obter curso", err);
         }
       }
     }
 
-    if (!finalCursoId) {
-      // Tenta buscar via disciplinaService usando materiaId (que é o disciplinaId)
-      if (materiaId) {
-        try {
-          const disciplina = await disciplinaService.obter(materiaId);
-          if (disciplina && disciplina.curso_id) {
-            finalCursoId = disciplina.curso_id;
-          }
-        } catch (err) {
-          console.error("Erro ao buscar disciplina para obter curso_id", err);
+    // Se ainda não achou, tenta via disciplina
+    if (!finalCursoId && materiaId) {
+      try {
+        const disciplina = await disciplinaService.obter(materiaId);
+        if (disciplina && disciplina.curso_id) {
+          finalCursoId = disciplina.curso_id;
         }
+      } catch (err) {
+        console.error("Erro ao buscar disciplina para obter curso_id", err);
       }
     }
 
     if (!finalCursoId) {
-      toast.error("Não foi possível identificar o Curso desta turma.");
+      toast.error("Não foi possível identificar o Curso desta turma. Verifique o cadastro.");
       return;
     }
 
@@ -258,15 +254,12 @@ export function ActivityForm({
         nome: data.nome,
         descricao: data.descricao || "",
         materia_id: data.materia_id ? Number(data.materia_id) : null,
-
-        // Agora turma_id é SEMPRE o ID da tabela turmas (t.id)
+        // Garante envio do ID numérico da turma
         turma_id: data.turma_id ? Number(data.turma_id) : null,
-
         tipo: tipoMapeado,
         config,
       };
 
-      // debug opcional
       console.log("[ActivityForm] payload enviado:", payload);
 
       if (initialData?.id) {
@@ -281,7 +274,7 @@ export function ActivityForm({
     } catch (e: any) {
       console.error(e);
       if (e.response?.data?.error?.code === "ER_NO_REFERENCED_ROW_2") {
-        toast.error("Erro: Matéria ou Turma não encontrada.");
+        toast.error("Erro: Vínculo inválido (Matéria ou Turma não pertencem ao curso informado).");
       } else {
         toast.error("Erro ao salvar atividade.");
       }
@@ -369,7 +362,7 @@ export function ActivityForm({
                         {turmas.map((t) => (
                           <SelectItem
                             key={t.id}
-                            value={String(t.id)} // ← ID REAL da turma
+                            value={String(t.id)}
                           >
                             {t.nome}
                           </SelectItem>

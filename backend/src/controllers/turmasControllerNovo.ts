@@ -448,22 +448,24 @@ export const getTurmasAtivasPorDisciplina = async (req: Request, res: Response) 
     }
 
     try {
-        // CORREÇÃO: A busca agora verifica se a data atual está dentro do período letivo (Status calculado: Ativa)
-        // Isso alinha o dropdown com a lógica da listagem principal, ignorando status estáticos desatualizados no banco.
+        // CORREÇÃO: 
+        // 1. Adicionado t.curso_id no SELECT para corrigir o erro de salvamento no frontend.
+        // 2. Adicionado filtro explícito t.status = 'Ativa'.
         const [turmas] = await pool.query<RowDataPacket[]>(`
             SELECT 
                 t.id, 
-                t.nome_turma, 
-                t.professor_responsavel AS professor_id
+                t.nome_turma as nome, -- Alias 'nome' para facilitar no frontend
+                t.professor_responsavel AS professor_id,
+                t.curso_id -- CRUCIAL: Necessário para o ActivityForm identificar o curso
             FROM turmas t
             JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
             WHERE t.disciplina_id = ? 
-            AND CURDATE() BETWEEN cpl.data_inicio AND cpl.data_fim
+            AND t.status = 'Ativa' -- Garante apenas turmas ativas
             ORDER BY t.nome_turma ASC
         `, [disciplinaId]);
 
         // Log para debug
-        console.log(`Buscando turmas ativas (por data) para disciplina ${disciplinaId}:`, turmas);
+        console.log(`Buscando turmas ativas para disciplina ${disciplinaId}:`, turmas);
 
         res.status(200).json(turmas);
     } catch (error) {
