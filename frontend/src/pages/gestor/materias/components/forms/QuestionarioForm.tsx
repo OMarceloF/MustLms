@@ -1,110 +1,337 @@
-// app/producao-academica/components/forms/QuestionarioForm.tsx
-"use client"
-
-import { Label } from "../../../components/ui/label";
-import { Input } from "../../../components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
-import { Checkbox } from "../../../components/ui/checkbox";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "../../../components/ui/accordion";
-import { HelpTooltip } from "../form-sections/HelpTooltip";
-import { RichTextEditor } from "../form-sections/RichTextEditor";
+import React, { useEffect, useState } from "react";
+import { Card, CardHeader, CardContent, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Textarea } from "../../../components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../../components/ui/select";
+import { Checkbox } from "../../../components/ui/checkbox";
+import { Plus, Trash2, Save } from "lucide-react";
+import { toast } from "sonner";
+import { API_URL } from "@/config";
 
-// Componente auxiliar para as opções de revisão
-const ReviewOptionsGrid = ({ title }: { title: string }) => (
-  <div className="space-y-2 rounded-md border p-3 bg-background">
-    <h4 className="font-semibold text-sm">{title}</h4>
-    <div className="space-y-2 pl-2">
-      <div className="flex items-center gap-3"><Checkbox defaultChecked /><Label className="font-normal">A tentativa</Label></div>
-      <div className="flex items-center gap-3"><Checkbox defaultChecked /><Label className="font-normal">Acertos/Erros</Label></div>
-      <div className="flex items-center gap-3"><Checkbox defaultChecked /><Label className="font-normal">Notas</Label></div>
-      <div className="flex items-center gap-3"><Checkbox defaultChecked /><Label className="font-normal">Feedback específico</Label></div>
-      <div className="flex items-center gap-3"><Checkbox defaultChecked /><Label className="font-normal">Feedback geral</Label></div>
-      <div className="flex items-center gap-3"><Checkbox defaultChecked /><Label className="font-normal">Resposta correta</Label></div>
-      <div className="flex items-center gap-3"><Checkbox defaultChecked /><Label className="font-normal">Feedback final</Label></div>
-    </div>
-  </div>
-);
+// Tipos de pergunta suportados
+const TIPOS_PERGUNTA = [
+  { value: "multipla", label: "Múltipla Escolha (Uma resposta)" },
+  { value: "multipla-escolha-multipla", label: "Múltipla Escolha (Múltiplas respostas)" },
+  { value: "vf", label: "Verdadeiro / Falso" },
+  { value: "texto", label: "Resposta curta" },
+  { value: "paragrafo", label: "Parágrafo longo" }
+];
 
-export function QuestionarioForm() {
+export function QuestionarioForm({ initialData }: any) {
+
+  const atividadeId = initialData?.atividade?.id;
+
+  const [perguntas, setPerguntas] = useState<any[]>(initialData?.estrutura?.perguntas || []);
+
+  useEffect(() => {
+    if (initialData?.estrutura?.perguntas) {
+      setPerguntas(initialData.estrutura.perguntas);
+    }
+  }, [initialData]);
+
+  // Salvar NOVA pergunta no banco
+  const salvarPergunta = async (index: number) => {
+    const p = perguntas[index];
+
+    // pergunta existente → atualizar
+    if (p.id) {
+      try {
+        await fetch(`${API_URL}/api/producao-academica/quiz/pergunta/${p.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(p)
+        });
+
+        toast.success("Pergunta atualizada.");
+      } catch (err) {
+        toast.error("Erro ao atualizar pergunta.");
+      }
+      return;
+    }
+
+    // nova pergunta → criar
+    try {
+      const resp = await fetch(`${API_URL}/api/producao-academica/quiz/${atividadeId}/perguntas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(p)
+      });
+
+      const data = await resp.json();
+      perguntas[index].id = data.pergunta_id;
+
+      setPerguntas([...perguntas]);
+      toast.success("Pergunta criada.");
+    } catch (err) {
+      toast.error("Erro ao criar pergunta.");
+    }
+  };
+
+  // Excluir pergunta do banco
+  const excluirPergunta = async (index: number) => {
+    const p = perguntas[index];
+
+    if (p.id) {
+      try {
+        await fetch(`${API_URL}/api/producao-academica/quiz/pergunta/${p.id}`, {
+          method: "DELETE"
+        });
+      } catch (err) {
+        toast.error("Erro ao excluir pergunta.");
+        return;
+      }
+    }
+
+    setPerguntas(perguntas.filter((_, i) => i !== index));
+    toast.success("Pergunta removida.");
+  };
+
+  // Criar nova pergunta
+  const adicionarPergunta = () => {
+    setPerguntas((prev) => [
+      ...prev,
+      {
+        id: null,
+        enunciado: "",
+        ordem: prev.length + 1,
+        tipo: "multipla",
+        opcoes: []
+      }
+    ]);
+  };
+
+  // --- OPÇÕES ---
+
+  const adicionarOpcao = (pIndex: number) => {
+    const novaLista = [...perguntas];
+    const pergunta = novaLista[pIndex];
+    pergunta.opcoes = pergunta.opcoes || [];
+    pergunta.opcoes.push({ id: null, texto: "", correta: false });
+    setPerguntas(novaLista);
+  };
+
+  const salvarOpcao = async (pIndex: number, oIndex: number) => {
+    const pergunta = perguntas[pIndex];
+    const opcao = pergunta.opcoes[oIndex];
+
+    if (!pergunta.id) {
+      toast.error("Salve a pergunta antes de criar opções!");
+      return;
+    }
+
+    // atualizar opção existente
+    if (opcao.id) {
+      try {
+        await fetch(`${API_URL}/api/producao-academica/quiz/opcao/${opcao.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(opcao)
+        });
+        toast.success("Opção atualizada.");
+      } catch (err) {
+        toast.error("Erro ao atualizar opção.");
+      }
+      return;
+    }
+
+    // nova opção
+    try {
+      const resp = await fetch(`${API_URL}/api/producao-academica/quiz/pergunta/${pergunta.id}/opcoes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(opcao)
+      });
+
+      const data = await resp.json();
+      pergunta.opcoes[oIndex].id = data.opcao_id;
+      setPerguntas([...perguntas]);
+      toast.success("Opção criada.");
+    } catch (err) {
+      toast.error("Erro ao criar opção.");
+    }
+  };
+
+  const excluirOpcao = async (pIndex: number, oIndex: number) => {
+    const opcao = perguntas[pIndex].opcoes[oIndex];
+
+    if (opcao.id) {
+      try {
+        await fetch(`${API_URL}/api/producao-academica/quiz/opcao/${opcao.id}`, {
+          method: "DELETE"
+        });
+      } catch (err) {
+        toast.error("Erro ao excluir opção.");
+        return;
+      }
+    }
+
+    // remover localmente
+    perguntas[pIndex].opcoes.splice(oIndex, 1);
+    setPerguntas([...perguntas]);
+    toast.success("Opção removida.");
+  };
+
   return (
-    <>
-      {/* Seção Duração (já existente, mas podemos refinar) */}
-      <AccordionItem value="duracao">
-        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">Duração</AccordionTrigger>
-        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-6">
-          {/* ... código da seção Duração ... */}
-        </AccordionContent>
-      </AccordionItem>
+    <div className="space-y-8">
+      <div className="flex justify-between">
+        <h2 className="text-lg font-semibold">Perguntas do Questionário</h2>
+        <Button onClick={adicionarPergunta}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nova pergunta
+        </Button>
+      </div>
 
-      {/* Seção Nota (Aprimorada) */}
-      <AccordionItem value="nota">
-        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">Nota</AccordionTrigger>
-        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-6">
-          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
-            <Label>Categoria de notas</Label>
-            <Select defaultValue="uncategorized"><SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="uncategorized">Não categorizado</SelectItem></SelectContent></Select>
-          </div>
-          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
-            <Label>Nota para aprovação</Label>
-            <Input type="number" placeholder="Ex: 7.0" className="max-w-xs" />
-          </div>
-          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
-            <Label>Tentativas permitidas</Label>
-            <Select defaultValue="unlimited"><SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="unlimited">Ilimitado</SelectItem><SelectItem value="1">1</SelectItem><SelectItem value="2">2</SelectItem></SelectContent></Select>
-          </div>
-          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
-            <Label>Método de avaliação</Label>
-            <Select defaultValue="highest"><SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="highest">Nota mais alta</SelectItem><SelectItem value="average">Média das notas</SelectItem><SelectItem value="first">Primeira tentativa</SelectItem><SelectItem value="last">Última tentativa</SelectItem></SelectContent></Select>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
+      {perguntas.length === 0 && (
+        <p className="text-muted-foreground">Nenhuma pergunta adicionada ainda.</p>
+      )}
 
-      {/* Seção Layout (Aprimorada) */}
-      <AccordionItem value="layout">
-        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">Layout</AccordionTrigger>
-        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-6">
-          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
-            <Label>Nova página</Label>
-            <Select defaultValue="every"><SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="every">Cada questão</SelectItem><SelectItem value="every2">A cada 2 questões</SelectItem></SelectContent></Select>
-          </div>
-          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
-            <Label>Método de navegação</Label>
-            <Select defaultValue="free"><SelectTrigger className="max-w-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="free">Livre</SelectItem><SelectItem value="sequential">Sequencial</SelectItem></SelectContent></Select>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
+      {perguntas.map((p, pIndex) => (
+        <Card key={pIndex} className="shadow-md">
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle className="text-base font-semibold">
+              Pergunta {pIndex + 1}
+            </CardTitle>
 
-      {/* Seção Opções de Revisão (Nova) */}
-      <AccordionItem value="review-options">
-        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">Opções de revisão</AccordionTrigger>
-        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-4">
-          <p className="text-sm text-muted-foreground">Controle quais informações os estudantes podem ver ao revisar uma tentativa.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <ReviewOptionsGrid title="Durante a tentativa" />
-            <ReviewOptionsGrid title="Após a tentativa" />
-            <ReviewOptionsGrid title="Mais tarde, enquanto o questionário estiver aberto" />
-            <ReviewOptionsGrid title="Depois do fechamento do questionário" />
-          </div>
-        </AccordionContent>
-      </AccordionItem>
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={() => excluirPergunta(pIndex)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </CardHeader>
 
-      {/* Seção Feedback Final (Nova) */}
-      <AccordionItem value="final-feedback">
-        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">Feedback final</AccordionTrigger>
-        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-4">
-          <p className="text-sm text-muted-foreground">Exibe um feedback geral ao final da tentativa, baseado na nota do estudante.</p>
-          <div className="space-y-3 p-4 border rounded-md bg-background">
-            <Label className="font-semibold">Feedback para nota 100%</Label>
-            <RichTextEditor id="feedback-100" placeholder="Parabéns, você gabaritou!" rows={3} />
-          </div>
-          <div className="space-y-3 p-4 border rounded-md bg-background">
-            <Label className="font-semibold">Feedback para nota 70%</Label>
-            <RichTextEditor id="feedback-70" placeholder="Bom trabalho, continue estudando!" rows={3} />
-          </div>
-          <Button variant="link" className="p-0 h-auto">Adicionar mais campos de feedback</Button>
-        </AccordionContent>
-      </AccordionItem>
-    </>
+          <CardContent className="space-y-6">
+
+            {/* ENUNCIADO */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Enunciado *</label>
+              <Textarea
+                value={p.enunciado}
+                onChange={(e) => {
+                  perguntas[pIndex].enunciado = e.target.value;
+                  setPerguntas([...perguntas]);
+                }}
+              />
+            </div>
+
+            {/* TIPO */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tipo *</label>
+              <Select
+                value={p.tipo}
+                onValueChange={(v) => {
+                  perguntas[pIndex].tipo = v;
+                  setPerguntas([...perguntas]);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIPOS_PERGUNTA.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* ORDEM */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Ordem *</label>
+              <Input
+                type="number"
+                value={p.ordem}
+                onChange={(e) => {
+                  perguntas[pIndex].ordem = parseInt(e.target.value || "1");
+                  setPerguntas([...perguntas]);
+                }}
+              />
+            </div>
+
+            {/* BOTÃO SALVAR */}
+            <div className="flex justify-end">
+              <Button onClick={() => salvarPergunta(pIndex)}>
+                <Save className="w-4 h-4 mr-2" />
+                Salvar pergunta
+              </Button>
+            </div>
+
+            {/* OPÇÕES (somente tipos que possuem opções) */}
+            {(p.tipo.includes("multipla") || p.tipo === "vf") && (
+              <div className="space-y-4 pt-6 border-t">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-semibold">Opções</h3>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => adicionarOpcao(pIndex)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar opção
+                  </Button>
+                </div>
+
+                {p.opcoes?.length === 0 && (
+                  <p className="text-muted-foreground">Nenhuma opção ainda.</p>
+                )}
+
+                {p.opcoes?.map((op: any, oIndex: number) => (
+                  <Card key={oIndex} className="border p-4 shadow-sm">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="font-medium text-sm">Opção {oIndex + 1}</span>
+
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => excluirOpcao(pIndex, oIndex)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    {/* TEXTO */}
+                    <Input
+                      placeholder="Texto da opção"
+                      value={op.texto}
+                      onChange={(e) => {
+                        op.texto = e.target.value;
+                        setPerguntas([...perguntas]);
+                      }}
+                      className="mb-4"
+                    />
+
+                    {/* CORRETA */}
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        checked={!!op.correta}
+                        onCheckedChange={(v) => {
+                          op.correta = !!v;
+                          setPerguntas([...perguntas]);
+                        }}
+                      />
+                      <span className="text-sm">Resposta correta</span>
+                    </div>
+
+                    {/* BOTÃO SALVAR */}
+                    <div className="flex justify-end pt-4">
+                      <Button size="sm" onClick={() => salvarOpcao(pIndex, oIndex)}>
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar opção
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }

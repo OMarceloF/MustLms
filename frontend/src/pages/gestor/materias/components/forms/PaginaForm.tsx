@@ -1,12 +1,12 @@
-// app/producao-academica/components/forms/PaginaForm.tsx
-"use client"
-
+import { useFormContext } from "react-hook-form";
 import { Label } from "../../../components/ui/label";
 import { Checkbox } from "../../../components/ui/checkbox";
 import { AccordionContent, AccordionItem, AccordionTrigger } from "../../../components/ui/accordion";
 import { RichTextEditor } from "../form-sections/RichTextEditor"; // 1. Importe o novo editor
 
 export function PaginaForm() {
+  const { register, setValue } = useFormContext();
+
   return (
     <>
       {/* Seção de Conteúdo */}
@@ -22,6 +22,7 @@ export function PaginaForm() {
               id="page-content"
               placeholder="Comece a escrever o conteúdo da sua página aqui..."
               rows={15}
+              {...register("conteudo")}
             />
           </div>
         </AccordionContent>
@@ -34,13 +35,13 @@ export function PaginaForm() {
         </AccordionTrigger>
         <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-4">
           <div className="flex items-center space-x-3">
-            <Checkbox id="show-page-name" defaultChecked />
+            <Checkbox id="show-page-name" defaultChecked onCheckedChange={(checked) => setValue("mostrar_nome_pagina", checked)} />
             <Label htmlFor="show-page-name" className="font-normal">
               Exibir o nome da página
             </Label>
           </div>
           <div className="flex items-center space-x-3">
-            <Checkbox id="show-last-modified" />
+            <Checkbox id="show-last-modified" onCheckedChange={(checked) => setValue("mostrar_ultima_alteracao", checked)} />
             <Label htmlFor="show-last-modified" className="font-normal">
               Mostrar a data da última alteração
             </Label>

@@ -18,9 +18,9 @@ import {
   criarFuncionario,
   uploadFuncionarioFiles,
 } from '../controllers/criarProfessorController';
-import { 
-    createTurmaIngresso, 
-    getPeriodosLetivosParaSelect 
+import {
+  createTurmaIngresso,
+  getPeriodosLetivosParaSelect
 } from '../controllers/turmasIngressoController';
 import {
   getAlunoById,
@@ -160,7 +160,7 @@ import { getRelatoriosGeraisCurso } from '../controllers/relatoriosCursoControll
 // } from '../controllers/chatController';
 // import { listarTodosUsuarios } from '../controllers/chatController';
 import {
-   listarMateriaisNovo,
+  listarMateriaisNovo,
   criarMaterialNovo,
   editarMaterialNovo,
   excluirMaterialNovo,
@@ -203,21 +203,21 @@ import {
 import fs from 'fs';
 
 import {
-    getTurmas as getTurmasNovo,
-    createTurma as createTurmaNovo,
-    updateTurma as updateTurmaNovo,
-    deleteTurma as deleteTurmaNovo,
-    getTurmaByIdNovo,
-    getCursosParaForm,
-    getMateriasPorCursoParaForm,
-    getSemestresParaForm,
-    getProfessoresParaForm,
-    getAlunosDisponiveisParaTurma,
-    adicionarAlunosTurma,
-    removerAlunoDaTurma,
-    updateAlunoTurmaStatus,
-    getTurmasAtivasParaFiltro,
-    getTurmasAtivasPorDisciplina,
+  getTurmas as getTurmasNovo,
+  createTurma as createTurmaNovo,
+  updateTurma as updateTurmaNovo,
+  deleteTurma as deleteTurmaNovo,
+  getTurmaByIdNovo,
+  getCursosParaForm,
+  getMateriasPorCursoParaForm,
+  getSemestresParaForm,
+  getProfessoresParaForm,
+  getAlunosDisponiveisParaTurma,
+  adicionarAlunosTurma,
+  removerAlunoDaTurma,
+  updateAlunoTurmaStatus,
+  getTurmasAtivasParaFiltro,
+  getTurmasAtivasPorDisciplina,
 } from '../controllers/turmasControllerNovo';
 
 import { getRelatoriosDisciplina } from '../controllers/relatoriosDisciplinasController';
@@ -293,9 +293,10 @@ import {
   getUltimoArquivoEnviado,
 } from '../controllers/enviosDeProfessorAlunoController';
 
-import { vincularAlunoCursoPosGraduacao,
-         updateStatusVinculo,
- } from '../controllers/vincularAlunoCursoController';
+import {
+  vincularAlunoCursoPosGraduacao,
+  updateStatusVinculo,
+} from '../controllers/vincularAlunoCursoController';
 
 // import {
 //   criarGrupo,
@@ -346,17 +347,17 @@ import {
 import { loginLimiter } from '../middlewares/rateLimiter';
 
 import {
-    createGrade,
-    getGrades,
-    updateGrade,
-    deleteGrade,
-    getMateriasForGradeForm,
-    getPeriodosLetivosForForm,
-    getDisciplinasByCursoGrouped,
-    getGradesByCurso
+  createGrade,
+  getGrades,
+  updateGrade,
+  deleteGrade,
+  getMateriasForGradeForm,
+  getPeriodosLetivosForForm,
+  getDisciplinasByCursoGrouped,
+  getGradesByCurso
 } from '../controllers/gradeCurricularController';
 
-import { getPeriodosLetivos, syncPeriodosLetivos,getAllPeriodosLetivos,getPeriodoLetivoAtual } from '../controllers/periodosLetivosController';
+import { getPeriodosLetivos, syncPeriodosLetivos, getAllPeriodosLetivos, getPeriodoLetivoAtual } from '../controllers/periodosLetivosController';
 
 import {
   createContrato,
@@ -435,6 +436,18 @@ import {
   excluirAulaGravada
 } from '../controllers/AulasGravadasController';
 
+// Produção Acadêmica
+import {
+  criarAtividade,
+  listarAtividadesPorCurso,
+  listarAtividadesPorMateria,
+  obterAtividade,
+  atualizarAtividade,
+  deletarAtividade
+} from "../controllers/producaoAcademicaController";
+import pool from '../config/db';
+
+
 const aulasUploadDir = path.resolve(__dirname, '..', '..', 'uploads', 'aulas');
 if (!fs.existsSync(aulasUploadDir)) {
   fs.mkdirSync(aulasUploadDir, { recursive: true });
@@ -474,19 +487,19 @@ const storage = multer.diskStorage({
 const upload = multer({ dest: "public/materiais_novos/" });
 
 const documentosUpdateStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Define o caminho absoluto para a pasta 'uploads' na raiz do projeto
-    const uploadPath = path.resolve(__dirname, '..', '..', 'uploads');
-    
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'doc_update-' + uniqueSuffix + path.extname(file.originalname));
-  }
+  destination: (req, file, cb) => {
+    // Define o caminho absoluto para a pasta 'uploads' na raiz do projeto
+    const uploadPath = path.resolve(__dirname, '..', '..', 'uploads');
+
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'doc_update-' + uniqueSuffix + path.extname(file.originalname));
+  }
 });
 
 const uploadDocUpdate = multer({ storage: documentosUpdateStorage });
@@ -960,9 +973,9 @@ router.put(
 );
 
 router.put(
-  '/api/funcionarios/:funcionarioId/documentos/:documentoId/atualizar',
-  uploadAny.single('documento'),
-  atualizarDocumentoFuncionario
+  '/api/funcionarios/:funcionarioId/documentos/:documentoId/atualizar',
+  uploadAny.single('documento'),
+  atualizarDocumentoFuncionario
 );
 router.delete('/api/funcionarios/:id', desativarFuncionario);
 router.get('/api/ext/feriados/:ano', getFeriados);
@@ -1011,7 +1024,7 @@ router.post('/api/cursos/:cursoId/ppc', salvarPPC);
 router.get('/api/cursos/:cursoId/vinculados', obterVinculadosCurso);
 
 router.post(
-  '/api/alunos/:id/documentos', 
+  '/api/alunos/:id/documentos',
   uploadAny.any(),
   uploadDocumentosAluno
 );
@@ -1185,7 +1198,7 @@ router.get('/api/disciplinas/:disciplinaId/turmas-para-avisos', getTurmasParaAvi
 // ROTAS PARA TRANCAMENTO DE MATRÍCULA
 // ==============================================================================
 router.get('/api/trancamento/alunos', listarAlunosParaTrancamento);
-router.patch('/api/trancamento/vinculos/:vinculoId/status', atualizarStatusMatricula); 
+router.patch('/api/trancamento/vinculos/:vinculoId/status', atualizarStatusMatricula);
 
 // ==============================================================================
 // ROTAS PARA A ABA DE VINCULADOS (DISCIPLINA)
@@ -1210,5 +1223,299 @@ router.get('/api/form-data/periodos-letivos', getPeriodosLetivosParaSelect);
 
 router.get('/api/disciplinas/:disciplinaId/turmas-ativas-para-aulas', getTurmasAtivasPorDisciplina);
 
+
+// ==============================================================================
+// ROTAS DE PRODUÇÃO ACADÊMICA
+// ==============================================================================
+
+router.post("/api/producao-academica", criarAtividade);
+router.get("/api/producao-academica/curso/:cursoId", listarAtividadesPorCurso);
+router.get("/api/producao-academica/materia/:materiaId", listarAtividadesPorMateria);
+router.get("/api/producao-academica/:id", obterAtividade);
+router.put("/api/producao-academica/:id", atualizarAtividade);
+router.delete("/api/producao-academica/:id", deletarAtividade);
+
+// ==============================================================================
+// ROTAS DE PRODUÇÃO ACADÊMICA — ESTRUTURAS (QUIZ, SURVEY, TAREFA)
+// ==============================================================================
+
+// ---------------------------------------------------------
+// QUIZ — PERGUNTAS
+// ---------------------------------------------------------
+
+router.post("/api/producao-academica/quiz/:atividadeId/perguntas", async (req, res) => {
+  try {
+    const atividadeId = Number(req.params.atividadeId);
+    const { enunciado, tipo, ordem } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO quiz_perguntas (atividade_id, enunciado, tipo, ordem)
+       VALUES (?, ?, ?, ?)`,
+      [atividadeId, enunciado, tipo, ordem]
+    );
+
+    res.json({ success: true, pergunta_id: (result as any).insertId });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.put("/api/producao-academica/quiz/pergunta/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { enunciado, tipo, ordem } = req.body;
+
+    await pool.query(
+      `UPDATE quiz_perguntas SET enunciado=?, tipo=?, ordem=? WHERE id=?`,
+      [enunciado, tipo, ordem, id]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.delete("/api/producao-academica/quiz/pergunta/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    await pool.query(`DELETE FROM quiz_opcoes WHERE pergunta_id = ?`, [id]);
+    await pool.query(`DELETE FROM quiz_perguntas WHERE id = ?`, [id]);
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+
+// ---------------------------------------------------------
+// QUIZ — OPÇÕES
+// ---------------------------------------------------------
+
+router.post("/api/producao-academica/quiz/pergunta/:perguntaId/opcoes", async (req, res) => {
+  try {
+    const perguntaId = Number(req.params.perguntaId);
+    const { texto, correta } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO quiz_opcoes (pergunta_id, texto, correta)
+       VALUES (?, ?, ?)`,
+      [perguntaId, texto, correta]
+    );
+
+    res.json({ success: true, opcao_id: (result as any).insertId });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.put("/api/producao-academica/quiz/opcao/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { texto, correta } = req.body;
+
+    await pool.query(
+      `UPDATE quiz_opcoes SET texto=?, correta=? WHERE id=?`,
+      [texto, correta, id]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.delete("/api/producao-academica/quiz/opcao/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await pool.query(`DELETE FROM quiz_opcoes WHERE id=?`, [id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+
+// ---------------------------------------------------------
+// QUIZ — TENTATIVAS & RESPOSTAS
+// ---------------------------------------------------------
+
+router.post("/api/producao-academica/quiz/:atividadeId/tentativas", async (req, res) => {
+  try {
+    const atividadeId = Number(req.params.atividadeId);
+    const { usuario_id } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO quiz_tentativas (atividade_id, usuario_id)
+       VALUES (?, ?)`,
+      [atividadeId, usuario_id]
+    );
+
+    res.json({ success: true, tentativa_id: (result as any).insertId });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.post("/api/producao-academica/quiz/tentativa/:tentativaId/respostas", async (req, res) => {
+  try {
+    const tentativaId = Number(req.params.tentativaId);
+    const { pergunta_id, resposta } = req.body;
+
+    await pool.query(
+      `INSERT INTO quiz_respostas (tentativa_id, pergunta_id, resposta)
+       VALUES (?, ?, ?)`,
+      [tentativaId, pergunta_id, resposta]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.put("/api/producao-academica/quiz/tentativa/:tentativaId/finalizar", async (req, res) => {
+  try {
+    const tentativaId = Number(req.params.tentativaId);
+    const { nota } = req.body;
+
+    await pool.query(
+      `UPDATE quiz_tentativas SET nota=? WHERE id=?`,
+      [nota, tentativaId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+
+// ---------------------------------------------------------
+// SURVEY — PERGUNTAS
+// ---------------------------------------------------------
+
+router.post("/api/producao-academica/survey/:atividadeId/perguntas", async (req, res) => {
+  try {
+    const atividadeId = Number(req.params.atividadeId);
+    const { enunciado, tipo, ordem } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO survey_perguntas (atividade_id, enunciado, tipo, ordem)
+       VALUES (?, ?, ?, ?)`,
+      [atividadeId, enunciado, tipo, ordem]
+    );
+
+    res.json({ success: true, pergunta_id: (result as any).insertId });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+// SURVEY — OPÇÕES
+router.post("/api/producao-academica/survey/pergunta/:perguntaId/opcoes", async (req, res) => {
+  try {
+    const perguntaId = Number(req.params.perguntaId);
+    const { texto } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO survey_opcoes (pergunta_id, texto)
+       VALUES (?, ?)`,
+      [perguntaId, texto]
+    );
+
+    res.json({ success: true, opcao_id: (result as any).insertId });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+// SURVEY — RESPOSTAS
+router.post("/api/producao-academica/survey/:atividadeId/respostas", async (req, res) => {
+  try {
+    const atividadeId = Number(req.params.atividadeId);
+    const { usuario_id, resposta } = req.body;
+
+    await pool.query(
+      `INSERT INTO survey_respostas (atividade_id, usuario_id, resposta)
+       VALUES (?, ?, ?)`,
+      [atividadeId, usuario_id ?? null, JSON.stringify(resposta)]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+
+// ---------------------------------------------------------
+// TAREFAS — ENTREGAS
+// ---------------------------------------------------------
+
+router.post("/api/producao-academica/tarefa/:atividadeId/entrega", async (req, res) => {
+  try {
+    const atividadeId = Number(req.params.atividadeId);
+    const { usuario_id, arquivo_url, texto } = req.body;
+
+    await pool.query(
+      `INSERT INTO tarefa_entregas (atividade_id, usuario_id, arquivo_url, texto)
+       VALUES (?, ?, ?, ?)`,
+      [atividadeId, usuario_id, arquivo_url, texto]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.put("/api/producao-academica/tarefa/entrega/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { nota, feedback } = req.body;
+
+    await pool.query(
+      `UPDATE tarefa_entregas SET nota=?, feedback=? WHERE id=?`,
+      [nota, feedback, id]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.get("/api/producao-academica/tarefa/:atividadeId/entregas", async (req, res) => {
+  try {
+    const atividadeId = Number(req.params.atividadeId);
+
+    const [rows] = await pool.query(
+      `SELECT * FROM tarefa_entregas WHERE atividade_id=?`,
+      [atividadeId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
+
+router.delete("/api/producao-academica/tarefa/entrega/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    await pool.query(
+      `DELETE FROM tarefa_entregas WHERE id=?`,
+      [id]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+});
 
 export default router;

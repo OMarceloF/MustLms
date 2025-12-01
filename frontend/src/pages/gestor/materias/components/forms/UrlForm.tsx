@@ -1,97 +1,113 @@
 // app/producao-academica/components/forms/UrlForm.tsx
-"use client"
+"use client";
 
 import { useState } from "react";
+import { useFormContext } from "react-hook-form";
 import { Label } from "../../../components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../../components/ui/select";
+import { Switch } from "../../../components/ui/switch";
 import { Input } from "../../../components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
-import { Checkbox } from "../../../components/ui/checkbox";
 import { Button } from "../../../components/ui/button";
-import { AccordionContent, AccordionItem, AccordionTrigger } from "../../../components/ui/accordion";
-import { HelpTooltip } from "../form-sections/HelpTooltip";
-
-// Componente para uma única linha de parâmetro
-const UrlParameterRow = () => (
-  <div className="flex flex-col sm:flex-row items-center gap-2">
-    <div className="flex w-full items-center gap-2">
-      <span className="text-muted-foreground">&</span>
-      <Input placeholder="parâmetro" className="w-full sm:w-40" />
-      <span className="text-muted-foreground">=</span>
-    </div>
-    <Select>
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder="Escolha uma variável..." />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="user-id">ID do Usuário</SelectItem>
-        <SelectItem value="user-firstname">Primeiro Nome do Usuário</SelectItem>
-        <SelectItem value="user-lastname">Sobrenome do Usuário</SelectItem>
-        <SelectItem value="course-id">ID do Curso</SelectItem>
-      </SelectContent>
-    </Select>
-  </div>
-);
+import { Card, CardContent } from "../../../components/ui/card";
+import { Plus, Trash2 } from "lucide-react";
 
 export function UrlForm() {
-  const [parameterCount, setParameterCount] = useState(3); // Começa com 3 campos
+  const { watch, setValue } = useFormContext();
+
+  const displayMode = watch("display_mode") || "auto";
+  const mostrarDescricao = watch("mostrar_descricao") || false;
+  const parametros = watch("parametros") || [];
+
+  const addParametro = () => {
+    const updated = [...parametros, { nome: "", valor: "" }];
+    setValue("parametros", updated);
+  };
+
+  const updateParametro = (index: number, key: "nome" | "valor", val: string) => {
+    const updated = [...parametros];
+    updated[index][key] = val;
+    setValue("parametros", updated);
+  };
+
+  const removeParametro = (index: number) => {
+    const updated = parametros.filter((_: any, i: number) => i !== index);
+    setValue("parametros", updated);
+  };
 
   return (
-    <>
-      {/* Seção Aparência */}
-      <AccordionItem value="aparencia">
-        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">
-          Aparência
-        </AccordionTrigger>
-        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-6">
-          <div className="grid grid-cols-1 items-center gap-2 md:grid-cols-[1fr_2fr]">
-            <div className="flex items-center gap-2">
-              <Label>Exibir</Label>
-              <HelpTooltip text="Define como o recurso URL será exibido." />
-            </div>
-            <Select defaultValue="auto">
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Automático</SelectItem>
-                <SelectItem value="embed">Incorporar</SelectItem>
-                <SelectItem value="force">Forçar o download</SelectItem>
-                <SelectItem value="open">Abrir</SelectItem>
-                <SelectItem value="popup">Em uma janela pop-up</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Checkbox id="show-url-description" />
-            <Label htmlFor="show-url-description" className="font-normal">
-              Exibir descrição da URL
-            </Label>
-          </div>
-        </AccordionContent>
-      </AccordionItem>
+    <Card className="border bg-card">
+      <CardContent className="space-y-8 p-6">
 
-      {/* Seção Variáveis de URL */}
-      <AccordionItem value="variaveis">
-        <AccordionTrigger className="text-base font-medium text-foreground hover:no-underline">
-          Variáveis de URL
-        </AccordionTrigger>
-        <AccordionContent className="bg-muted/50 rounded-b-md p-4 space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Esta seção permite que você passe informações internas como parte da URL.
-          </p>
-          <div className="space-y-3">
-            {Array.from({ length: parameterCount }).map((_, index) => (
-              <UrlParameterRow key={index} />
-            ))}
-          </div>
-          <Button
-            type="button"
-            variant="link"
-            className="p-0 h-auto"
-            onClick={() => setParameterCount(prev => prev + 1)}
+        {/* DISPLAY MODE */}
+        <div className="space-y-2">
+          <Label className="font-semibold">Modo de exibição</Label>
+          <Select
+            value={displayMode}
+            onValueChange={(v) => setValue("display_mode", v)}
           >
-            Adicionar mais parâmetros...
-          </Button>
-        </AccordionContent>
-      </AccordionItem>
-    </>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um modo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Automático</SelectItem>
+              <SelectItem value="embed">Incorporado</SelectItem>
+              <SelectItem value="newtab">Abrir em nova aba</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* DESCRIÇÃO */}
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={!!mostrarDescricao}
+            onCheckedChange={(v) => setValue("mostrar_descricao", v)}
+          />
+          <Label>Exibir descrição junto da URL</Label>
+        </div>
+
+        {/* PARÂMETROS */}
+        <div className="space-y-4">
+          <div className="flex justify-between">
+            <Label className="font-semibold">Parâmetros GET (opcional)</Label>
+            <Button variant="outline" size="sm" onClick={addParametro}>
+              <Plus className="w-4 h-4 mr-1" /> Adicionar
+            </Button>
+          </div>
+
+          {parametros.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhum parâmetro adicionado.</p>
+          )}
+
+          {parametros.map((p: any, index: number) => (
+            <div key={index} className="grid grid-cols-5 gap-3 items-end border rounded p-3">
+              <div className="col-span-2">
+                <Label>Nome</Label>
+                <Input
+                  value={p.nome}
+                  onChange={(e) => updateParametro(index, "nome", e.target.value)}
+                />
+              </div>
+
+              <div className="col-span-2">
+                <Label>Valor</Label>
+                <Input
+                  value={p.valor}
+                  onChange={(e) => updateParametro(index, "valor", e.target.value)}
+                />
+              </div>
+
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => removeParametro(index)}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+
+      </CardContent>
+    </Card>
   );
 }

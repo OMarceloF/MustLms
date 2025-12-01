@@ -102,6 +102,7 @@ import CriarGrade from './pages/gestor/grade/criarGrade';
 import MateriasGestor from './pages/gestor/materias/materias';
 import GestaoTurma from './pages/gestor/gestaoturma/GestaoTurma';
 import Trancamento from './pages/gestor/Trancamento';
+import ActivityDetailsPage from './pages/gestor/materias/ActivityDetailsPage';
 
 const queryClient = new QueryClient();
 
@@ -164,6 +165,7 @@ const App: React.FC = () => {
 
               {/* === ESTA É A LINHA ESSENCIAL PARA A FUNCIONALIDADE === */}
               <Route path="/gestor/materiasgestor/:id" element={<MateriasGestor />} />
+              <Route path="/gestor/curso/:cursoId/atividade/:atividadeId" element={<ActivityDetailsPage />} />
 
               <Route path="/adicionar-curso/:id?" element={<AdicionarCursoPage />} />
 
