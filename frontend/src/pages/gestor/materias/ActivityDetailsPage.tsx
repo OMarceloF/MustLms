@@ -51,13 +51,32 @@ export default function ActivityDetailsPage() {
     const renderViewer = () => {
         switch (activity.tipo) {
             case 'arquivo':
-                return <FileViewer activity={activity} />;
+                return <FileViewer activity={activity} config={{
+                    arquivo: activity.arquivo || activity.url, // Fallback para url se arquivo não existir
+                    display_mode: activity.display_mode,
+                    mostrar_descricao: true // Default ou vindo do activity
+                }} />;
             case 'url':
-                return <UrlViewer activity={activity} />;
+                return <UrlViewer activity={activity} config={{
+                    url: activity.url,
+                    display_mode: activity.display_mode,
+                    mostrar_descricao: true, // Default ou vindo do activity
+                    parametros: activity.parametros
+                }} />;
             case 'questionario':
-                return <QuizBuilder activity={activity} onUpdate={setActivity} />;
+                return <QuizBuilder
+                    activity={activity}
+                    config={activity.config || {}}
+                    estrutura={activity.estrutura || {}}
+                    onUpdate={setActivity}
+                />;
             case 'pesquisa':
-                return <SurveyBuilder activity={activity} onUpdate={setActivity} />;
+                return <SurveyBuilder
+                    activity={activity}
+                    config={activity.config || {}}
+                    estrutura={activity.estrutura || {}}
+                    onUpdate={setActivity}
+                />;
             default:
                 return <div>Tipo de atividade não suportado: {activity.tipo}</div>;
         }
