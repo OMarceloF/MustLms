@@ -4,13 +4,10 @@ import { RowDataPacket } from 'mysql2';
 import bcrypt from 'bcryptjs';
 
 const formatCPF = (value: string | null): string => {
-  // AQUI ESTÁ A CORREÇÃO:
-  // Se o valor for nulo, indefinido ou uma string vazia, retorne uma string vazia imediatamente.
   if (!value) {
     return '';
   }
 
-  // O resto da função só será executado se 'value' for uma string válida.
   const numericValue = value.replace(/\D/g, '');
   const truncatedValue = numericValue.slice(0, 11);
 
@@ -26,12 +23,10 @@ const formatCPF = (value: string | null): string => {
 };
 
 const formatTelefone = (value: string | null): string => {
-  // AQUI ESTÁ A CORREÇÃO:
   if (!value) {
     return '';
   }
 
-  // O resto da função continua igual.
   const numericValue = value.replace(/\D/g, '');
   const truncatedValue = numericValue.slice(0, 11);
 
@@ -132,8 +127,6 @@ export const buscarUsuariosOnline = async (req: Request, res: Response) => {
   try {
     // Esta função seria integrada com o sistema de Socket.IO
     // Por enquanto, retornamos uma lista vazia
-    // Em produção, você manteria uma lista de usuários online em memória ou Redis
-
     res.status(200).json({
       usuariosOnline: [],
       total: 0,
@@ -222,12 +215,13 @@ export const getFuncionarioEditData = async (req: Request, res: Response) => {
 
   try {
     // 1. A Query Principal: Faz um JOIN entre 'users' e 'funcionarios'
+    // Alteração: Adicionado f.genero
     const query = `
       SELECT
         u.nome, u.email, u.login, u.foto_url,
         f.cpf, f.telefone, f.data_nascimento, f.endereco,
         f.cargo, f.departamento, f.data_contratacao, f.registro,
-        f.formacao_academica, f.especialidades, f.biografia
+        f.formacao_academica, f.especialidades, f.biografia, f.genero
       FROM users AS u
       LEFT JOIN funcionarios AS f ON u.id = f.id
       WHERE u.id = ? AND u.status = 'ativo'
@@ -250,9 +244,10 @@ export const getFuncionarioEditData = async (req: Request, res: Response) => {
       // Dados Pessoais
       nome: rawData.nome || '',
       email: rawData.email || '',
-      cpf: formatCPF(rawData.cpf),       // <-- CORRIGIDO
-      telefone: formatTelefone(rawData.telefone), // <-- CORRIGIDO
+      cpf: formatCPF(rawData.cpf),
+      telefone: formatTelefone(rawData.telefone),
       data_nascimento: rawData.data_nascimento ? new Date(rawData.data_nascimento).toISOString().split('T')[0] : '',
+      genero: rawData.genero || '', // <-- Alteração: Campo genero adicionado
 
       // Endereço
       endereco_cep: enderecoData.cep || '',
@@ -349,15 +344,17 @@ export const updateFuncionario = async (req: Request, res: Response) => {
     );
 
     // --- 4. ATUALIZAÇÃO DA TABELA 'funcionarios' ---
+    // Alteração: Adicionado data.genero ao array de parâmetros
     const queryParamsFuncionarios = [
       data.nome, data.email, data.cargo, data.departamento, data.registro, data.biografia,
       data.formacao_academica, data.especialidades, cpfLimpo, telefoneLimpo, data.data_nascimento,
-      data.data_contratacao, enderecoJson
+      data.data_contratacao, enderecoJson, data.genero 
     ];
 
     // Se uma nova foto foi enviada, atualiza o campo 'foto' também
     if (fotoFile) {
       const fotoUrl = `/uploads/${fotoFile.filename}`;
+      // Alteração: Adicionado f.genero = ? na query
       await connection.query(
         `UPDATE 
     funcionarios AS f
@@ -366,13 +363,14 @@ JOIN
 SET 
     f.nome = ?, f.email = ?, f.cargo = ?, f.departamento = ?, f.registro = ?, f.biografia = ?, 
     f.formacao_academica = ?, f.especialidades = ?, f.cpf = ?, f.telefone = ?, f.data_nascimento = ?, 
-    f.data_contratacao = ?, f.endereco = ?, f.foto = ?
+    f.data_contratacao = ?, f.endereco = ?, f.genero = ?, f.foto = ?
 WHERE 
     f.id = ? AND u.status = 'ativo';
 `,
         [...queryParamsFuncionarios, fotoUrl, id]
       );
     } else {
+      // Alteração: Adicionado f.genero = ? na query
       await connection.query(
         `UPDATE 
     funcionarios AS f
@@ -381,7 +379,7 @@ JOIN
 SET 
     f.nome = ?, f.email = ?, f.cargo = ?, f.departamento = ?, f.registro = ?, f.biografia = ?, 
     f.formacao_academica = ?, f.especialidades = ?, f.cpf = ?, f.telefone = ?, f.data_nascimento = ?, 
-    f.data_contratacao = ?, f.endereco = ?
+    f.data_contratacao = ?, f.endereco = ?, f.genero = ?
 WHERE 
     f.id = ? AND u.status = 'ativo';
 `,
@@ -415,7 +413,6 @@ export const desativarFuncionario = async (req: Request, res: Response) => {
     await connection.beginTransaction();
 
     // 1. Atualiza o status na tabela 'users'
-    // A tabela 'users' é a fonte da verdade para o status de login e visibilidade geral.
     const [updateResult]: any = await connection.query(
       `UPDATE users SET status = 'inativo' WHERE id = ?`,
       [id]
@@ -428,9 +425,9 @@ export const desativarFuncionario = async (req: Request, res: Response) => {
     }
 
     // 2. (Opcional, mas recomendado) Atualiza o status na tabela 'funcionarios' também
-    // Isso mantém a consistência se você consultar a tabela 'funcionarios' diretamente.
+    // Alteração: Corrigido nome da tabela para 'funcionarios'
     await connection.query(
-      `UPDATE users SET status = 'inativo' WHERE id = ?;`,
+      `UPDATE funcionarios SET status = 'inativo' WHERE id = ?;`,
       [id]
     );
 
@@ -446,4 +443,3 @@ export const desativarFuncionario = async (req: Request, res: Response) => {
     connection.release();
   }
 };
-

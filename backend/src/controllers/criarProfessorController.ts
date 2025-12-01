@@ -7,29 +7,25 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// CORREÇÃO: Ajuste na configuração do Multer
+// Configuração do Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const destPath = path.join(__dirname, '../../uploads/');
-    // Cria o diretório se não existir
     if (!fs.existsSync(destPath)) {
       fs.mkdirSync(destPath, { recursive: true });
     }
     cb(null, destPath);
   },
   filename: (req, file, cb) => {
-    // Extrai o tipo de documento do fieldname (ex: 'documentos_rg_frente' -> 'rg_frente')
     const tipoDocumento = file.fieldname.startsWith('documentos_')
       ? file.fieldname.replace('documentos_', '')
       : file.fieldname;
 
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    // Monta o nome do arquivo usando o tipo de documento extraído
     cb(null, tipoDocumento + '-' + uniqueSuffix + path.extname(file.originalname));
   },
 });
 
-// O resto do arquivo permanece o mesmo
 export const uploadFuncionarioFiles = multer({ storage }).any();
 
 export const criarFuncionario = async (req: Request, res: Response) => {
@@ -72,33 +68,33 @@ export const criarFuncionario = async (req: Request, res: Response) => {
 
     // --- 4. CRIAÇÃO DO REGISTRO NA TABELA 'users' ---
     const senhaHash = await bcrypt.hash(data.senha, 10);
-    const role = data.cargo.toLowerCase();
+    const role = data.cargo === 'Professor' ? 'professor' : (data.cargo === 'Gestor' ? 'gestor' : 'funcionario');
 
     const [userResult]: any = await connection.query(
-      `INSERT INTO users (nome, email, login, senha, cpf, telefone, role, foto_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ativo')`,
+      `INSERT INTO users (nome, email, login, senha, cpf, telefone, role, foto_url, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ativo', NOW())`,
       [data.nome, data.email, data.login, senhaHash, cpfLimpo, telefoneLimpo, role, fotoUrl]
     );
     const funcionarioId = userResult.insertId;
 
     // --- 5. CRIAÇÃO DO REGISTRO NA TABELA 'funcionarios' ---
+    // GARANTIA: Gênero incluído no INSERT
     await connection.query(
       `INSERT INTO funcionarios (
-         id, nome, email, cargo, departamento, foto, registro, biografia, 
-         formacao_academica, especialidades, cpf, telefone, data_nascimento, 
-         data_contratacao, endereco, status
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ativo')`,
+          id, nome, email, cargo, departamento, foto, registro, biografia, 
+          formacao_academica, especialidades, cpf, telefone, data_nascimento, 
+          data_contratacao, endereco, genero, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ativo')`,
       [
         funcionarioId, data.nome, data.email, data.cargo, data.departamento, fotoUrl, data.registro, data.biografia,
         data.formacao_academica, data.especialidades, cpfLimpo, telefoneLimpo, data.data_nascimento,
-        data.data_contratacao, enderecoJson
+        data.data_contratacao, enderecoJson, data.genero 
       ]
     );
 
-    // --- 6. INSERÇÃO DOS DOCUMENTOS NA TABELA 'documentos_funcionarios' ---
+    // --- 6. INSERÇÃO DOS DOCUMENTOS ---
     if (documentosFiles.length > 0) {
       const documentosValues = documentosFiles.map(file => {
         const tipoDocumento = file.fieldname.replace('documentos_', '');
-        // O caminho do arquivo agora está correto porque o filename foi corrigido no multer
         return [funcionarioId, tipoDocumento, `/uploads/${file.filename}`, file.originalname];
       });
 
@@ -108,9 +104,9 @@ export const criarFuncionario = async (req: Request, res: Response) => {
       );
     }
 
-    // --- 7. INSERÇÃO DE CONTRATO (Exemplo) ---
+    // --- 7. INSERÇÃO DE CONTRATO ---
     await connection.query(
-        `INSERT INTO contratos_funcionarios (funcionario_id, nome_contrato, tipo, situacao_contrato) VALUES (?, ?, ?, ?)`,
+        `INSERT INTO contratos_funcionarios (funcionario_id, nome_contrato, tipo, situacao_contrato, criado_em) VALUES (?, ?, ?, ?, NOW())`,
         [funcionarioId, 'Contrato de Trabalho Inicial', 'Admissão', 'Pendente de Assinatura']
     );
 
@@ -123,9 +119,11 @@ export const criarFuncionario = async (req: Request, res: Response) => {
     
     if (files && files.length > 0) {
         for (const file of files) {
-            fs.unlink(file.path, (err) => {
-                if (err) console.error(`Erro ao limpar arquivo ${file.path}:`, err);
-            });
+            if (file.path) {
+                fs.unlink(file.path, (err) => {
+                    if (err) console.error(`Erro ao limpar arquivo ${file.path}:`, err);
+                });
+            }
         }
     }
 

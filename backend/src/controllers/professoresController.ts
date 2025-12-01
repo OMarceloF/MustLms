@@ -512,11 +512,12 @@ export const getFuncionarioDetalhesCompletos = async (req: Request, res: Respons
 
     try {
         // 1. Buscar dados principais do funcionário
+        // CORREÇÃO: Adicionado 'f.genero' na lista de campos abaixo
         const [funcionarioRows] = await pool.query<RowDataPacket[]>(
             `SELECT 
                 u.id, u.nome, u.cpf, u.login, u.email, u.foto_url as foto, u.telefone, u.role, u.status,
                 f.biografia, f.endereco, f.data_nascimento, f.cargo, f.departamento, f.data_contratacao as data_admissao,
-                f.registro, f.formacao_academica, f.especialidades, f.instituicao
+                f.registro, f.formacao_academica, f.especialidades, f.instituicao, f.genero
              FROM users u
              LEFT JOIN funcionarios f ON u.id = f.id
              WHERE u.id = ?`,
@@ -527,41 +528,43 @@ export const getFuncionarioDetalhesCompletos = async (req: Request, res: Respons
             return res.status(404).json({ message: "Funcionário não encontrado." });
         }
 
-        const funcionario = funcionarioRows[0];
-        if (funcionario.endereco && typeof funcionario.endereco === 'string') {
-            try {
-                funcionario.endereco = JSON.parse(funcionario.endereco);
-            } catch (e) {
-                console.error("Erro ao fazer parse do endereço JSON:", e);
-                funcionario.endereco = null;
-            }
-        }
+        const funcionario = funcionarioRows[0];
+        
+        // Tratamento do endereço JSON
+        if (funcionario.endereco && typeof funcionario.endereco === 'string') {
+            try {
+                funcionario.endereco = JSON.parse(funcionario.endereco);
+            } catch (e) {
+                console.error("Erro ao fazer parse do endereço JSON:", e);
+                funcionario.endereco = null;
+            }
+        }
 
-        // 2. Buscar documentos da tabela 'documentos_funcionarios'
-        const [documentos] = await pool.query<RowDataPacket[]>(
-            'SELECT id, tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_funcionarios WHERE funcionario_id = ?',
-            [id]
-        );
+        // 2. Buscar documentos
+        const [documentos] = await pool.query<RowDataPacket[]>(
+            'SELECT id, tipo_documento, caminho_arquivo, nome_original, data_upload FROM documentos_funcionarios WHERE funcionario_id = ?',
+            [id]
+        );
 
-        // 3. Buscar contratos da tabela 'contratos_funcionarios'
-        const [contratos] = await pool.query<RowDataPacket[]>(
-            'SELECT id, nome_contrato, tipo, situacao_contrato, contrato_url, criado_em FROM contratos_funcionarios WHERE funcionario_id = ?',
-            [id]
-        );
+        // 3. Buscar contratos
+        const [contratos] = await pool.query<RowDataPacket[]>(
+            'SELECT id, nome_contrato, tipo, situacao_contrato, contrato_url, criado_em FROM contratos_funcionarios WHERE funcionario_id = ?',
+            [id]
+        );
 
-        // 4. Montar e retornar o objeto completo
-        const respostaCompleta = {
-            funcionario,
-            documentos,
-            contratos
-        };
+        // 4. Montar e retornar
+        const respostaCompleta = {
+            funcionario,
+            documentos,
+            contratos
+        };
 
-        res.status(200).json(respostaCompleta);
+        res.status(200).json(respostaCompleta);
 
-    } catch (error) {
-        console.error("Erro ao buscar detalhes completos do funcionário:", error);
-        res.status(500).json({ message: "Erro interno ao buscar os detalhes do funcionário." });
-    }
+    } catch (error) {
+        console.error("Erro ao buscar detalhes completos do funcionário:", error);
+        res.status(500).json({ message: "Erro interno ao buscar os detalhes do funcionário." });
+    }
 };
 
 /**
