@@ -51,22 +51,6 @@ export function ActivityCard({ activity, isFavorite, onToggleFavorite, onSelect 
         getCategoryBg(activity.category),
       )}
     >
-      {/* Favorite Button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onToggleFavorite()
-        }}
-        className="absolute right-3 top-3 rounded-full p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
-      >
-        <Star
-          className={cn(
-            "h-5 w-5 transition-colors",
-            isFavorite ? "fill-orange-400 text-orange-400" : "text-muted-foreground hover:text-orange-400",
-          )}
-        />
-      </button>
-
       {/* Content */}
       <div className="flex flex-1 flex-col gap-4 p-6">
         {/* Icon and Text */}

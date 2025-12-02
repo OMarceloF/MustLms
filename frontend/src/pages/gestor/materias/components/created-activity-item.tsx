@@ -1,4 +1,3 @@
-// components/created-activity-item.tsx
 
 import { File, Link, BarChart3, Award, MessageSquare, CheckSquare, MoreVertical, Pencil, Trash2, Eye } from "lucide-react";
 import { Badge } from "../../components/ui/badge";
@@ -42,6 +41,8 @@ interface CreatedActivityItemProps {
 }
 
 export function CreatedActivityItem({ activity, onEdit, onDelete, onView }: CreatedActivityItemProps) {
+
+
   const icon = activityIconMap[activity.type] || <File className="h-5 w-5 text-gray-500" />;
   const typeName = activityNameMap[activity.type] || activity.type;
 
@@ -105,6 +106,10 @@ export function CreatedActivityItem({ activity, onEdit, onDelete, onView }: Crea
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+
     </div>
   );
 }
+
+

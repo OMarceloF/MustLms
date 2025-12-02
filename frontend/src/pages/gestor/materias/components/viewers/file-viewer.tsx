@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Button } from "../../../components/ui/button";
 import { Download } from "lucide-react";
@@ -97,7 +99,7 @@ export function FileViewer({ activity, config }: FileViewerProps) {
           <img
             src={url}
             alt={activity.nome}
-            className="rounded shadow max-h-[70vh] object-contain"
+            className="rounded shadow max-h-[70vh] object-contain w-full"
           />
         </div>
       )}
@@ -116,7 +118,7 @@ export function FileViewer({ activity, config }: FileViewerProps) {
           <video
             src={url}
             controls
-            className="rounded shadow max-h-[70vh]"
+            className="rounded shadow max-h-[70vh] w-full"
           />
         </div>
       )}
