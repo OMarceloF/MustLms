@@ -1,4 +1,3 @@
-// app/producao-academica/components/ActivityForm.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -18,8 +17,6 @@ import { Button } from "../../components/ui/button";
 import { DialogFooter } from "../../components/ui/dialog";
 import { toast } from "sonner";
 
-import { ArquivoForm } from "./forms/ArquivoForm";
-import { UrlForm } from "./forms/UrlForm";
 import { QuestionarioForm } from "./forms/QuestionarioForm";
 import { PesquisaForm } from "./forms/PesquisaForm";
 import { PaginaForm } from "./forms/PaginaForm";
@@ -281,10 +278,7 @@ export function ActivityForm({
   ============================================================ */
   const renderSpecificForm = () => {
     switch (activityType) {
-      case "file":
-        return <ArquivoForm />;
-      case "url":
-        return <UrlForm />;
+
       case "quiz":
         return (
           <QuestionarioForm
@@ -391,28 +385,28 @@ export function ActivityForm({
           {renderSpecificForm()}
 
           <AccordionItem value="common">
-            <AccordionTrigger>Configurações comuns</AccordionTrigger>
+            {/* <AccordionTrigger>Configurações comuns</AccordionTrigger> */}
             <AccordionContent className="p-4">
               <CommonModuleSettings />
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="restrict">
-            <AccordionTrigger>Restringir acesso</AccordionTrigger>
+            {/* <AccordionTrigger>Restringir acesso</AccordionTrigger> */}
             <AccordionContent className="p-4">
               <RestrictAccess />
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="completion">
-            <AccordionTrigger>Conclusão da atividade</AccordionTrigger>
+            {/* <AccordionTrigger>Conclusão da atividade</AccordionTrigger> */}
             <AccordionContent className="p-4">
               <ActivityCompletion />
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="tags">
-            <AccordionTrigger>Tags</AccordionTrigger>
+            {/* <AccordionTrigger>Tags</AccordionTrigger> */}
             <AccordionContent className="p-4">
               <Tags />
             </AccordionContent>

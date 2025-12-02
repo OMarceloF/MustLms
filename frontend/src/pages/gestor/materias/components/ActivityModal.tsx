@@ -1,22 +1,15 @@
-// app/producao-academica/components/ActivityModal.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { ActivityForm } from "./ActivityForm";
-import { obterAtividade } from "../../../../services/producaoAcademicaService";
 import { Loader2 } from "lucide-react";
+import { obterAtividade } from "../../../../services/producaoAcademicaService";
 
 interface ActivityModalProps {
   isOpen: boolean;
   onClose: () => void;
-  activityId?: number | null;   // agora usamos ID, não o objeto inteiro
+  activityId?: number | null;
   activityType: string;
   cursoId?: number;
   materiaId?: number | null;
@@ -37,17 +30,9 @@ export function ActivityModal({
   const [initialData, setInitialData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  // DEBUG
-  useEffect(() => {
-    console.log("[ActivityModal] open:", isOpen, "activityId:", activityId);
-  }, [isOpen, activityId]);
-
-  // Carregar dados da atividade quando for edição
   useEffect(() => {
     const fetchActivity = async () => {
       if (!isOpen) return;
-
-      // Criação → não carrega nada
       if (!activityId) {
         setInitialData(null);
         return;
@@ -56,7 +41,6 @@ export function ActivityModal({
       try {
         setLoading(true);
         const data = await obterAtividade(activityId);
-        // data = { atividade, config, estrutura }
         setInitialData(data);
       } catch (err) {
         console.error("Erro ao carregar atividade:", err);
@@ -74,10 +58,6 @@ export function ActivityModal({
     onClose();
   };
 
-  // Se não está aberto, não renderiza nada
-  // REMOVIDO: if (!isOpen) return null; 
-  // Isso causava problemas com o Radix UI que precisa controlar o estado de saída.
-
   return (
     <Dialog
       open={isOpen}
@@ -85,7 +65,7 @@ export function ActivityModal({
         if (!open) handleClose();
       }}
     >
-      <DialogContent className="max-w-3xl p-0">
+      <DialogContent className="w-full sm:max-w-3xl max-h-[90vh] overflow-auto p-6 z-[500] mt-[80px] rounded-lg">
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle className="text-xl font-semibold">
             {activityId ? "Editar Atividade" : "Nova Atividade"}
@@ -95,7 +75,7 @@ export function ActivityModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-6">
+        <div className="flex-1 overflow-auto p-6">
           {loading ? (
             <div className="flex justify-center items-center h-40">
               <Loader2 className="w-6 h-6 animate-spin" />
@@ -103,7 +83,7 @@ export function ActivityModal({
           ) : (
             <ActivityForm
               activityType={activityType}
-              initialData={initialData}   // { atividade, config, estrutura } ou null
+              initialData={initialData}
               cursoId={cursoId}
               materiaId={materiaId}
               turmaId={turmaId}

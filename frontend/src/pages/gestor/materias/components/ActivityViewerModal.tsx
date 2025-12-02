@@ -1,16 +1,8 @@
-// src/pages/gestor/materias/components/ActivityViewerModal.tsx
+"use client";
 
 import { useEffect, useState } from "react";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription
-} from "../../components/ui/dialog";
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 import { Loader2 } from "lucide-react";
-
 import { obterAtividade } from "../../../../services/producaoAcademicaService";
 
 import { FileViewer } from "./viewers/file-viewer";
@@ -36,7 +28,6 @@ export function ActivityViewerModal({
     const [estrutura, setEstrutura] = useState<any>(null);   // perguntas/itens
     const [loading, setLoading] = useState(false);
 
-    // DEBUG
     useEffect(() => {
         console.log("[ActivityViewerModal] -> open:", isOpen, "id:", activityId);
     }, [isOpen, activityId]);
@@ -83,7 +74,7 @@ export function ActivityViewerModal({
         setConfig(null);
         setEstrutura(null);
         setLoading(false);
-        onClose();
+        onClose();  // A função onClose agora irá atualizar o estado de `isOpen` no componente pai
     };
 
     // Se não tiver ID, não renderiza nada (mas se tiver ID e isOpen=false, renderiza Dialog fechado para animação)
@@ -147,12 +138,11 @@ export function ActivityViewerModal({
         <Dialog
             open={isOpen}
             onOpenChange={(open) => {
-                // clique fora, ESC, botão X padrão do DialogContent
-                if (!open) handleClose();
+                if (!open) handleClose();  // Fechar modal corretamente quando o estado mudar para "false"
             }}
         >
             <DialogContent
-                className="flex flex-col gap-0 p-0 sm:max-w-4xl max-h-[90vh]"
+                className="flex flex-col gap-0 p-0 sm:max-w-4xl max-h-[90vh] overflow-auto rounded-lg z-[500] mt-[80px]"
             >
                 <DialogHeader className="border-b px-6 py-4">
                     <DialogTitle className="text-xl font-semibold truncate">
