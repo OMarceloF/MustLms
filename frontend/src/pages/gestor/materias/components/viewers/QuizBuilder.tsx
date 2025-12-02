@@ -15,7 +15,10 @@ interface QuizBuilderProps {
   onUpdate?: (data: any) => void;
 }
 
+import { useAuth } from "../../../../../hooks/useAuth";
+
 export function QuizBuilder({ activity, config, estrutura }: QuizBuilderProps) {
+  const { user: currentUser } = useAuth();
   const [answers, setAnswers] = useState<any>({});
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [isFinished, setIsFinished] = useState(false);
@@ -59,7 +62,7 @@ export function QuizBuilder({ activity, config, estrutura }: QuizBuilderProps) {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ usuario_id: null }) // futuro: puxar do auth
+          body: JSON.stringify({ usuario_id: currentUser?.id ?? null })
         }
       );
 

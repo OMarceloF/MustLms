@@ -1228,13 +1228,6 @@ router.get('/api/disciplinas/:disciplinaId/turmas-ativas-para-aulas', getTurmasA
 // ROTAS DE PRODUÇÃO ACADÊMICA
 // ==============================================================================
 
-router.post("/api/producao-academica", criarAtividade);
-router.get("/api/producao-academica/curso/:cursoId", listarAtividadesPorCurso);
-router.get("/api/producao-academica/materia/:materiaId", listarAtividadesPorMateria);
-router.get("/api/producao-academica/:id", obterAtividade);
-router.put("/api/producao-academica/:id", atualizarAtividade);
-router.delete("/api/producao-academica/:id", deletarAtividade);
-
 // ==============================================================================
 // ROTAS DE PRODUÇÃO ACADÊMICA — ESTRUTURAS (QUIZ, SURVEY, TAREFA)
 // ==============================================================================
@@ -1517,5 +1510,15 @@ router.delete("/api/producao-academica/tarefa/entrega/:id", async (req, res) => 
     res.status(500).json({ error });
   }
 });
+
+
+router.post("/api/producao-academica", criarAtividade);
+router.get("/api/producao-academica/curso/:cursoId", listarAtividadesPorCurso);
+router.get("/api/producao-academica/materia/:materiaId", listarAtividadesPorMateria);
+router.get("/api/producao-academica/:id", obterAtividade);
+router.put("/api/producao-academica/:id", atualizarAtividade);
+router.delete("/api/producao-academica/:id", deletarAtividade);
+
+
 
 export default router;
