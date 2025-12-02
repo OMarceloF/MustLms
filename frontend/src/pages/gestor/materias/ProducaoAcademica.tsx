@@ -18,8 +18,6 @@ import { Separator } from "../components/ui/separator"
 import { ActivityCard } from "./components/activity-card"
 // import { HelpModal } from "./components/help-modal"
 import { CreatedActivityItem } from "./components/created-activity-item"
-import { ActivityModal } from "./components/ActivityModal"
-import { ActivityViewerModal } from "./components/ActivityViewerModal"
 
 // Mocks e Tipos
 import { ACTIVITY_TYPES, ActivityType } from "../../lib/activity-types"
@@ -40,9 +38,9 @@ export default function ProducaoAcademica() {
   const [sortBy, setSortBy] = useState<SortByType>("used");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
-  const [editingActivity, setEditingActivity] = useState<Atividade | null>(null);
-  const [viewingActivityId, setViewingActivityId] = useState<number | null>(null);
-  const [viewingActivityName, setViewingActivityName] = useState<string>("");
+  // const [editingActivity, setEditingActivity] = useState<Atividade | null>(null); // Não precisa mais de estado local para edição
+  // const [viewingActivityId, setViewingActivityId] = useState<number | null>(null); // Não precisa mais de estado local para visualização
+  // const [viewingActivityName, setViewingActivityName] = useState<string>("");
 
   // Estados de dados
   const [activities, setActivities] = useState<Atividade[]>([]);
@@ -81,34 +79,17 @@ export default function ProducaoAcademica() {
   };
 
   const handleSelectActivity = (activity: ActivityType) => {
-    setSelectedActivity(activity);
+    // Navegar para a página de criação com o tipo selecionado
+    navigate(`/gestor/materias/${materiaId}/atividades/nova?type=${activity.id}`);
   };
 
-  const handleCloseModal = () => {
-    setSelectedActivity(null);
-    setEditingActivity(null);
-  };
+  // const handleCloseModal = () => {
+  //   setSelectedActivity(null);
+  //   setEditingActivity(null);
+  // };
 
   const handleEdit = (activity: Atividade) => {
-    const typeMap: Record<string, string> = {
-      arquivo: "file",
-      url: "url",
-      questionario: "quiz",
-      pesquisa: "survey",
-      tarefa: "task",
-      licao: "lesson",
-      pagina: "page",
-    };
-
-    const frontendType = typeMap[activity.tipo];
-    const activityType = ACTIVITY_TYPES.find((t) => t.id === frontendType);
-
-    if (activityType) {
-      setEditingActivity(activity);
-      setSelectedActivity(activityType);
-    } else {
-      toast.error(`Tipo de atividade desconhecido: ${activity.tipo}`);
-    }
+    navigate(`/gestor/materias/${materiaId}/atividades/${activity.id}/editar`);
   };
 
   const handleDelete = async (id: number) => {
@@ -125,22 +106,19 @@ export default function ProducaoAcademica() {
   };
 
   const handleView = (activity: Atividade) => {
-    if (activity.id) {
-      setViewingActivityId(activity.id);
-      setViewingActivityName(activity.nome);
-    }
+    navigate(`/gestor/materias/${materiaId}/atividades/${activity.id}`);
   };
 
-  const handleActivityCreated = async () => {
-    // Recarregar lista de atividades
-    try {
-      const data = await producaoAcademicaService.listarPorMateria(materiaId);
-      setActivities(data);
-    } catch (error) {
-      console.error("Erro ao recarregar atividades:", error);
-    }
-    handleCloseModal();
-  };
+  // const handleActivityCreated = async () => {
+  //   // Recarregar lista de atividades
+  //   try {
+  //     const data = await producaoAcademicaService.listarPorMateria(materiaId);
+  //     setActivities(data);
+  //   } catch (error) {
+  //     console.error("Erro ao recarregar atividades:", error);
+  //   }
+  //   handleCloseModal();
+  // };
 
   // Filtrar e ordenar atividades (cards de criação)
   const sortedActivities = useMemo(() => {
@@ -262,27 +240,7 @@ export default function ProducaoAcademica() {
 
       {/* Modais */}
 
-      {selectedActivity && (
-        <ActivityModal
-          key={editingActivity?.id ?? "new"}
-          isOpen={!!selectedActivity}
-          onClose={handleCloseModal}
-          activityId={editingActivity?.id}
-          activityType={selectedActivity.id}
-          onSuccess={handleActivityCreated}
-          materiaId={materiaId}
-        />
-      )}
 
-      {viewingActivityId !== null && (
-        <ActivityViewerModal
-          key={viewingActivityId} // força remount a cada atividade
-          isOpen={true} // se está montado, está aberto
-          onClose={() => setViewingActivityId(null)}
-          activityId={viewingActivityId}
-          activityName={viewingActivityName}
-        />
-      )}
     </div>
   )
 }
