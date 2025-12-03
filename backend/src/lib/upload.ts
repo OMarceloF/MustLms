@@ -19,7 +19,19 @@ const MAX_DOC = Number(process.env.UPLOAD_DOC_MAX_MB || 40) * MB;
 // Decide pasta pelo mimetype
 function resolveSubdir(mime: string) {
   if (mime.startsWith('image/')) return 'images';
-  if (mime === 'application/pdf') return 'docs';
+  
+  // MODIFICADO: Agrupa PDFs e arquivos do Office na pasta 'docs'
+  if (
+    mime === 'application/pdf' || 
+    mime.includes('word') || 
+    mime.includes('sheet') || 
+    mime.includes('excel') || 
+    mime.includes('presentation') || 
+    mime.includes('powerpoint')
+  ) {
+    return 'docs';
+  }
+  
   return 'misc';
 }
 
@@ -46,17 +58,38 @@ const storage = multer.diskStorage({
   },
 });
 
+// MODIFICADO: Lista expandida para aceitar Docs, Planilhas, Slides e Texto
 const ACCEPTED = new Set([
+  // Imagens
   'image/png',
   'image/jpeg',
   'image/jpg',
   'image/webp',
+  'image/gif',
+  
+  // Documentos
   'application/pdf',
+  'application/msword', // .doc
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.ms-excel', // .xls
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-powerpoint', // .ppt
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  'text/plain', // .txt
+  'text/csv', // .csv
+  'application/zip', // .zip
+  'application/x-rar-compressed' // .rar
 ]);
 
 function fileFilter(req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
-  if (ACCEPTED.has(file.mimetype)) cb(null, true);
-  else cb(new Error('Tipo de arquivo não permitido.'));
+  // Verifica se o tipo está na lista aceita
+  if (ACCEPTED.has(file.mimetype)) {
+    cb(null, true);
+  } else {
+    // Opcional: Se quiser liberar QUALQUER arquivo, descomente a linha abaixo e comente a linha do erro
+    // cb(null, true); 
+    cb(new Error(`Tipo de arquivo não permitido: ${file.mimetype}`));
+  }
 }
 
 export const uploadAny = multer({

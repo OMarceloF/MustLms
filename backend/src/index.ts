@@ -15,7 +15,6 @@ import {
   lancamentoDePagamentos,
 } from './controllers/financeiroController';
 import { atualizarStatusAtrasados } from './models/financeiro';
-import fetch from 'node-fetch';
 import fs from 'fs';
 
 // =============================
@@ -27,14 +26,31 @@ const port = config.port;
 const FRONT_ORIGINS = [
   process.env.FRONT_URL || 'http://localhost:5173',
   'http://localhost:3001',
-  'http://ec2-52-67-126-32.sa-east-1.compute.amazonaws.com', // <-- ADICIONE ESTA LINHA
-  'http://52.67.126.32' // <-- E ESTA TAMBÉM, POR GARANTIA
+  'http://ec2-52-67-126-32.sa-east-1.compute.amazonaws.com',
+  'http://52.67.126.32'
 ];
 
 app.set('trust proxy', 1);
 
-// Middlewares Express
-app.use(helmet());
+// ====================================================================
+// >> CORREÇÃO DE SEGURANÇA (HELMET) <<
+// Configuramos o Helmet para permitir recursos cross-origin (imagens)
+// e permitir que o frontend coloque este backend em um iframe (PDFs)
+// ====================================================================
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Permite carregar imagens de outra porta
+    contentSecurityPolicy: {
+      directives: {
+        // Mantém as diretivas padrão
+        defaultSrc: ["'self'"],
+        // Permite que estes domínios coloquem o backend em um iframe
+        frameAncestors: ["'self'", ...FRONT_ORIGINS], 
+      },
+    },
+  })
+);
+
 app.use(
   cors({
     origin: FRONT_ORIGINS,
@@ -42,15 +58,12 @@ app.use(
   })
 );
 
-// ====================================================================
-// >> CORREÇÃO ADICIONADA AQUI <<
-// Middleware para permitir o carregamento de recursos (imagens) de outras origens
-// Isso corrige o erro 'net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin'.
+// O middleware manual abaixo torna-se redundante com a config correta do Helmet acima,
+// mas pode ser mantido como garantia extra sem problemas.
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
-// ====================================================================
 
 const BODY_LIMIT = `${process.env.BODY_MAX_MB || 50}mb`;
 
@@ -63,7 +76,8 @@ app.use(cookieParser());
 const uploadsBaseDir = path.resolve(__dirname, '..', '..', 'uploads');
 
 // Subpastas específicas
-const subPastas = ['contratos', 'comprovantes', 'aulas'];
+// Adicionei 'docs', 'images', 'misc' para alinhar com o novo upload.ts se necessário
+const subPastas = ['contratos', 'comprovantes', 'aulas', 'docs', 'images', 'misc'];
 
 for (const sub of subPastas) {
   const fullPath = path.join(uploadsBaseDir, sub);
@@ -73,7 +87,6 @@ for (const sub of subPastas) {
   }
 }
 
-
 app.use(
   '/uploads',
   express.static(path.resolve(process.cwd(), 'uploads'), {
@@ -81,6 +94,8 @@ app.use(
     index: false,
     setHeaders(res) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
+      // Garante que o navegador possa acessar os arquivos estáticos
+      res.setHeader('Access-Control-Allow-Origin', '*'); 
     },
   })
 );
