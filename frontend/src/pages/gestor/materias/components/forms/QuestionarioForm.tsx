@@ -1,13 +1,15 @@
 // app/producao-academica/components/forms/QuestionarioForm.tsx
 
 import React, { useEffect, useState } from "react";
+import { useFormContext } from "react-hook-form"; // Importado para gerenciar configurações globais
 import { Card, CardHeader, CardContent, CardTitle } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Textarea } from "../../../components/ui/textarea";
+import { Label } from "../../../components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../../components/ui/select";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Settings } from "lucide-react";
 
 // Tipos de pergunta suportados
 const TIPOS_PERGUNTA = [
@@ -24,6 +26,9 @@ interface QuestionarioFormProps {
 }
 
 export function QuestionarioForm({ initialData, onChange }: QuestionarioFormProps) {
+  // Hook do React Hook Form para acessar o estado do formulário pai (ActivityForm)
+  const { register, setValue } = useFormContext();
+
   const [perguntas, setPerguntas] = useState<any[]>(initialData?.estrutura?.perguntas ?? []);
 
   // Sincronizar com initialData se mudar (ex: carregamento)
@@ -33,10 +38,12 @@ export function QuestionarioForm({ initialData, onChange }: QuestionarioFormProp
     }
   }, [initialData]);
 
-  // Propagar mudanças para o pai
+  // Propagar mudanças das perguntas para o pai
   useEffect(() => {
     onChange({ perguntas });
   }, [perguntas, onChange]);
+
+  // --- LÓGICA DE PERGUNTAS ---
 
   // Criar nova pergunta
   const adicionarPergunta = () => {
@@ -64,7 +71,7 @@ export function QuestionarioForm({ initialData, onChange }: QuestionarioFormProp
     setPerguntas(novasPerguntas);
   };
 
-  // --- OPÇÕES ---
+  // --- LÓGICA DE OPÇÕES ---
 
   const adicionarOpcao = (pIndex: number) => {
     const novasPerguntas = [...perguntas];
@@ -89,7 +96,65 @@ export function QuestionarioForm({ initialData, onChange }: QuestionarioFormProp
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      
+      {/* --- SEÇÃO 1: CONFIGURAÇÕES DE EXECUÇÃO (NOVO) --- */}
+      <Card className="border-l-4 border-l-primary shadow-sm bg-muted/10">
+        <CardHeader className="pb-2 border-b mb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+                <Settings className="w-5 h-5 text-primary" />
+                Configurações de Execução
+            </CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Campo: Tentativas */}
+            <div className="space-y-2">
+                <Label htmlFor="tentativas">Tentativas permitidas</Label>
+                <Select 
+                    onValueChange={(val) => setValue("tentativas", val)}
+                    defaultValue={initialData?.config?.tentativas ? String(initialData.config.tentativas) : "unlimited"}
+                >
+                    <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="unlimited">Ilimitado</SelectItem>
+                        <SelectItem value="1">1 Tentativa</SelectItem>
+                        <SelectItem value="2">2 Tentativas</SelectItem>
+                        <SelectItem value="3">3 Tentativas</SelectItem>
+                        <SelectItem value="4">4 Tentativas</SelectItem>
+                        <SelectItem value="5">5 Tentativas</SelectItem>
+                        <SelectItem value="10">10 Tentativas</SelectItem>
+                    </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                    Defina quantas vezes o aluno poderá responder a este questionário.
+                </p>
+            </div>
+
+            {/* Campo: Nota de Aprovação */}
+            <div className="space-y-2">
+                <Label htmlFor="nota_aprovacao">Nota para aprovação</Label>
+                <div className="flex items-center gap-2">
+                    <Input 
+                        id="nota_aprovacao"
+                        type="number" 
+                        {...register("nota_aprovacao")} 
+                        placeholder="Ex: 60" 
+                        defaultValue={initialData?.config?.nota_aprovacao || 0}
+                        className="bg-background"
+                    />
+                    <span className="text-sm text-muted-foreground font-medium">pontos</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                    Nota mínima necessária para considerar a atividade como concluída com sucesso.
+                </p>
+            </div>
+        </CardContent>
+      </Card>
+
+      {/* --- SEÇÃO 2: GERENCIAMENTO DE PERGUNTAS --- */}
+      <div className="flex justify-between items-center mt-8 border-t pt-6">
         <h2 className="text-lg font-semibold">Perguntas do Questionário</h2>
         <Button onClick={adicionarPergunta} type="button" variant="outline">
           <Plus className="w-4 h-4 mr-2" />
@@ -98,7 +163,7 @@ export function QuestionarioForm({ initialData, onChange }: QuestionarioFormProp
       </div>
 
       {perguntas.length === 0 && (
-        <div className="text-center p-8 border-2 border-dashed rounded-lg text-muted-foreground">
+        <div className="text-center p-8 border-2 border-dashed rounded-lg text-muted-foreground bg-muted/5">
           Nenhuma pergunta adicionada. Clique em "Nova pergunta" para começar.
         </div>
       )}

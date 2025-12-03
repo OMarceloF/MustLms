@@ -505,3 +505,102 @@ export const deletarAtividade = async (req: Request, res: Response) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+/* ============================================================
+   LISTAR TENTATIVAS DO USUÁRIO NA ATIVIDADE
+============================================================ */
+export const listarTentativasUsuario = async (req: Request, res: Response) => {
+  try {
+    const atividadeId = Number(req.params.atividadeId);
+    const usuarioId = Number(req.params.usuarioId);
+
+    if (isNaN(atividadeId) || isNaN(usuarioId)) {
+        return res.status(400).json({ error: "IDs inválidos" });
+    }
+
+    const [tentativas] = await pool.query(
+      `SELECT id, nota, criado_em 
+       FROM quiz_tentativas 
+       WHERE atividade_id = ? AND usuario_id = ? 
+       ORDER BY criado_em DESC`,
+      [atividadeId, usuarioId]
+    );
+
+    return res.json(tentativas);
+  } catch (error: any) {
+    console.error("Erro ao listar tentativas:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+/* ============================================================
+   OBTER DETALHES DA TENTATIVA (PARA REVISÃO)
+============================================================ */
+export const obterDetalhesTentativa = async (req: Request, res: Response) => {
+  const conn = await pool.getConnection();
+  try {
+    const tentativaId = Number(req.params.tentativaId);
+
+    if (isNaN(tentativaId)) {
+        return res.status(400).json({ error: "ID da tentativa inválido" });
+    }
+
+    // 1. Buscar dados da tentativa
+    const [tentativaRows] = await conn.query(
+      `SELECT t.*, a.nome as atividade_nome 
+       FROM quiz_tentativas t
+       JOIN atividades a ON a.id = t.atividade_id
+       WHERE t.id = ?`,
+      [tentativaId]
+    );
+    
+    const rows = tentativaRows as any[];
+    const tentativa = rows.length > 0 ? rows[0] : null;
+
+    if (!tentativa) {
+        return res.status(404).json({ error: "Tentativa não encontrada" });
+    }
+
+    // 2. Buscar respostas e perguntas
+    const [respostasRows] = await conn.query(
+      `SELECT qr.pergunta_id, qr.resposta, qp.enunciado, qp.tipo, qp.ordem
+       FROM quiz_respostas qr
+       JOIN quiz_perguntas qp ON qp.id = qr.pergunta_id
+       WHERE qr.tentativa_id = ?
+       ORDER BY qp.ordem ASC`,
+      [tentativaId]
+    );
+
+    const respostas = respostasRows as any[];
+
+    // 3. Buscar opções e montar objeto
+    const detalhes = await Promise.all(respostas.map(async (resp) => {
+      const [opcoesRows] = await conn.query(
+        `SELECT id, texto, correta FROM quiz_opcoes WHERE pergunta_id = ?`,
+        [resp.pergunta_id]
+      );
+      
+      let respostaAluno = resp.resposta;
+      
+      // Tenta converter para número se for ID e a pergunta for de múltipla escolha
+      if ((resp.tipo === 'multipla' || resp.tipo === 'vf') && !isNaN(Number(resp.resposta))) {
+          respostaAluno = Number(resp.resposta);
+      }
+
+      return {
+        ...resp,
+        // CORREÇÃO AQUI: Mudado de optionsRows para opcoesRows
+        opcoes: opcoesRows as any[],
+        resposta_aluno: respostaAluno
+      };
+    }));
+
+    return res.json({ tentativa, questoes: detalhes });
+
+  } catch (error: any) {
+    console.error("Erro ao obter detalhes da tentativa:", error);
+    return res.status(500).json({ error: error.message || "Erro interno do servidor" });
+  } finally {
+    conn.release();
+  }
+};
