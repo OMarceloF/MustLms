@@ -21,12 +21,16 @@ interface PeriodoLetivo {
     data_fim: string;
 }
 
-export default function TurmasPage( ) {
+export default function TurmasPage() {
     const [turmas, setTurmas] = useState<Turma[]>([]);
-    const [periodosLetivos, setPeriodosLetivos] = useState<PeriodoLetivo[]>([]); // <-- NOVO ESTADO
+    const [periodosLetivos, setPeriodosLetivos] = useState<PeriodoLetivo[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedPeriodo, setSelectedPeriodo] = useState<string>("todos"); // <-- NOVO ESTADO
+    
+    // --- ESTADOS DOS FILTROS ---
+    const [selectedPeriodo, setSelectedPeriodo] = useState<string>("todos");
+    const [selectedStatus, setSelectedStatus] = useState<string>("todos"); // <--- NOVO ESTADO
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTurma, setEditingTurma] = useState<Turma | undefined>();
     const { toast } = useToast();
@@ -37,7 +41,7 @@ export default function TurmasPage( ) {
                 // Busca turmas e períodos letivos em paralelo
                 const [turmasResponse, periodosResponse] = await Promise.all([
                     fetch(`${API_BASE_URL}/turmas-novo`),
-                    fetch(`${API_BASE_URL}/periodos-letivos/todos`) // <-- USANDO A NOVA ROTA
+                    fetch(`${API_BASE_URL}/periodos-letivos/todos`)
                 ]);
 
                 if (!turmasResponse.ok) throw new Error('Falha ao buscar os dados das turmas.');
@@ -69,18 +73,23 @@ export default function TurmasPage( ) {
         const periodoMatch = selectedPeriodo === "todos" || turma.semestre === selectedPeriodo;
         if (!periodoMatch) return false;
 
-        // 2. Filtro por Termo de Busca
-        if (!searchTerm) return true; // Se não houver busca, retorna todos que passaram pelo filtro de período
+        // 2. Filtro por Status (NOVO)
+        // O backend retorna: 'Ativa', 'Em Planejamento', 'Encerrada'
+        const statusMatch = selectedStatus === "todos" || turma.status === selectedStatus;
+        if (!statusMatch) return false;
+
+        // 3. Filtro por Termo de Busca
+        if (!searchTerm) return true;
         
         const searchLower = searchTerm.toLowerCase();
         const nomeTurmaMatch = turma.nomeTurma.toLowerCase().includes(searchLower);
-        const statusMatch = turma.status.toLowerCase().includes(searchLower);
+        const statusTextMatch = turma.status.toLowerCase().includes(searchLower);
         const cursoMatch = turma.cursoNome?.toLowerCase().includes(searchLower) ?? false;
         const professorMatch = turma.responsavelNome?.toLowerCase().includes(searchLower) ?? false;
         const materiaMatch =
             turma.materiasNomes?.some(nome => nome.toLowerCase().includes(searchLower)) ?? false;
 
-        return nomeTurmaMatch || statusMatch || cursoMatch || professorMatch || materiaMatch;
+        return nomeTurmaMatch || statusTextMatch || cursoMatch || professorMatch || materiaMatch;
     });
 
     const refreshTurmas = async () => {
@@ -96,7 +105,6 @@ export default function TurmasPage( ) {
         }
     };
 
-    // ... (handleSaveTurma, handleDeleteTurma, openEditModal, closeModal permanecem os mesmos)
     const handleSaveTurma = async (turmaData: Turma) => {
         const isEditing = !!editingTurma;
         const { cursoNome, responsavelNome, materiasNomes, ...payload } = turmaData;
@@ -185,6 +193,7 @@ export default function TurmasPage( ) {
                     {/* Actions Bar */}
                     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:items-center">
+                            
                             {/* Campo de Busca */}
                             <div className="relative flex-1 sm:max-w-xs">
                                 <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -195,10 +204,24 @@ export default function TurmasPage( ) {
                                     className="pl-9"
                                 />
                             </div>
+
+                            {/* Seletor de Status (NOVO) */}
+                            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                                <SelectTrigger className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="todos">Todos os Status</SelectItem>
+                                    <SelectItem value="Ativa">Ativa</SelectItem>
+                                    <SelectItem value="Em Planejamento">Em Planejamento</SelectItem>
+                                    <SelectItem value="Encerrada">Encerrada</SelectItem>
+                                </SelectContent>
+                            </Select>
+
                             {/* Seletor de Período Letivo */}
                             <Select value={selectedPeriodo} onValueChange={setSelectedPeriodo}>
                                 <SelectTrigger className="w-full sm:w-[180px]">
-                                    <SelectValue placeholder="Filtrar por período" />
+                                    <SelectValue placeholder="Período" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="todos">Todos os Períodos</SelectItem>
@@ -209,6 +232,7 @@ export default function TurmasPage( ) {
                                     ))}
                                 </SelectContent>
                             </Select>
+
                         </div>
                         <Button onClick={() => setIsModalOpen(true)} className="gap-2">
                             <Plus className="size-4" />
