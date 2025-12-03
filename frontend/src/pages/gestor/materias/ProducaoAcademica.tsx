@@ -26,6 +26,12 @@ import { toast } from "sonner"
 
 type SortByType = "used" | "alpha" | "favorites";
 
+// Interface auxiliar para o Dropdown de turmas
+interface TurmaOption {
+  id: number;
+  nome: string;
+}
+
 export default function ProducaoAcademica() {
   // --- Estados do Componente ---
   const { id } = useParams<{ id: string }>();
@@ -38,9 +44,10 @@ export default function ProducaoAcademica() {
   const [sortBy, setSortBy] = useState<SortByType>("used");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
-  // const [editingActivity, setEditingActivity] = useState<Atividade | null>(null); // Não precisa mais de estado local para edição
-  // const [viewingActivityId, setViewingActivityId] = useState<number | null>(null); // Não precisa mais de estado local para visualização
-  // const [viewingActivityName, setViewingActivityName] = useState<string>("");
+  
+  // --- NOVOS ESTADOS PARA O FILTRO DE TURMAS ---
+  const [turmas, setTurmas] = useState<TurmaOption[]>([]);
+  const [selectedTurma, setSelectedTurma] = useState<string>("todas");
 
   // Estados de dados
   const [activities, setActivities] = useState<Atividade[]>([]);
@@ -65,6 +72,27 @@ export default function ProducaoAcademica() {
     }
   }, [materiaId]);
 
+  // --- NOVO EFFECT: Carregar Turmas Ativas para o Filtro ---
+  useEffect(() => {
+    const fetchTurmas = async () => {
+      if (!materiaId || isNaN(materiaId)) return;
+
+      try {
+        const response = await fetch(`http://localhost:3001/api/disciplinas/${materiaId}/turmas-ativas-para-aulas`);
+        if (response.ok) {
+          const data = await response.json();
+          setTurmas(data);
+        } else {
+            console.error("Falha ao buscar turmas");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar turmas para filtro:", error);
+      }
+    };
+
+    fetchTurmas();
+  }, [materiaId]);
+
   // Handlers
   const toggleFavorite = (activityId: string) => {
     setFavorites((prev) => {
@@ -82,11 +110,6 @@ export default function ProducaoAcademica() {
     // Navegar para a página de criação com o tipo selecionado
     navigate(`/gestor/materias/${materiaId}/atividades/nova?type=${activity.id}`);
   };
-
-  // const handleCloseModal = () => {
-  //   setSelectedActivity(null);
-  //   setEditingActivity(null);
-  // };
 
   const handleEdit = (activity: Atividade) => {
     navigate(`/gestor/materias/${materiaId}/atividades/${activity.id}/editar`);
@@ -109,19 +132,8 @@ export default function ProducaoAcademica() {
     navigate(`/gestor/materias/${materiaId}/atividades/${activity.id}`);
   };
 
-  // const handleActivityCreated = async () => {
-  //   // Recarregar lista de atividades
-  //   try {
-  //     const data = await producaoAcademicaService.listarPorMateria(materiaId);
-  //     setActivities(data);
-  //   } catch (error) {
-  //     console.error("Erro ao recarregar atividades:", error);
-  //   }
-  //   handleCloseModal();
-  // };
-
-  // Filtrar e ordenar atividades (cards de criação)
-  const sortedActivities = useMemo(() => {
+  // Filtrar e ordenar TIPOS de atividades (cards de criação - Seção 1)
+  const sortedActivityTypes = useMemo(() => {
     let filtered = ACTIVITY_TYPES.filter(
       (activity) =>
         activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -143,6 +155,18 @@ export default function ProducaoAcademica() {
     }
   }, [searchQuery, sortBy, favorites]);
 
+  // --- NOVA LÓGICA: Filtrar ATIVIDADES CRIADAS por Turma (Seção 2) ---
+  const filteredCreatedActivities = useMemo(() => {
+    if (selectedTurma === "todas") {
+      return activities;
+    }
+    return activities.filter((act) => {
+      // Obs: Assumindo que o objeto 'act' vindo do serviço possui a propriedade 'turma_id'.
+      // Usamos (act as any) caso a interface Atividade ainda não esteja atualizada no Frontend.
+      return String((act as any).turma_id) === selectedTurma;
+    });
+  }, [activities, selectedTurma]);
+
   return (
     <div className="w-full">
       {/* Cabeçalho da seção */}
@@ -155,19 +179,14 @@ export default function ProducaoAcademica() {
             Escolha um tipo de atividade ou recurso para criar um novo item no seu curso.
           </p>
         </div>
-
-
       </div>
 
       {/* Seção 1: Cards de tipos de atividades */}
       <div className="bg-background px-4 py-6 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-7xl">
-          {/* Toolbar responsiva de busca + ordenação */}
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          </div>
-
+          
           {/* Grid de Cards para Adicionar */}
-          {sortedActivities.length === 0 ? (
+          {sortedActivityTypes.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card/50 p-8 text-center sm:p-12">
               <Frown className="mb-4 h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" />
               <h2 className="text-lg font-semibold text-foreground sm:text-xl">
@@ -179,7 +198,7 @@ export default function ProducaoAcademica() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {sortedActivities.map((activity) => (
+              {sortedActivityTypes.map((activity) => (
                 <ActivityCard
                   key={activity.id}
                   activity={activity}
@@ -201,21 +220,46 @@ export default function ProducaoAcademica() {
       {/* Seção 2: Atividades já criadas no curso */}
       <div className="bg-background px-4 pb-20 sm:px-6 lg:px-8">
         <div className="mx-auto w-full max-w-7xl">
-          <h2 className="mb-4 text-xl font-bold text-foreground sm:text-2xl">
-            Atividades do Curso
-          </h2>
+          
+          {/* Header da lista com Filtro */}
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-bold text-foreground sm:text-2xl">
+              Atividades do Curso
+            </h2>
+
+            {/* --- DROPDOWN DE FILTRO --- */}
+            <div className="w-full sm:w-[280px]">
+              <Select value={selectedTurma} onValueChange={setSelectedTurma}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por turma" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as turmas</SelectItem>
+                  {turmas.map((turma) => (
+                    <SelectItem key={turma.id} value={String(turma.id)}>
+                      {turma.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           <div className="flex flex-col gap-4">
             {loading ? (
               <p className="text-sm text-muted-foreground sm:text-base">
                 Carregando atividades...
               </p>
-            ) : activities.length === 0 ? (
-              <p className="text-sm text-muted-foreground sm:text-base">
-                Nenhuma atividade criada neste curso ainda.
-              </p>
+            ) : filteredCreatedActivities.length === 0 ? (
+              <div className="py-8 text-center">
+                 <p className="text-sm text-muted-foreground sm:text-base">
+                    {activities.length > 0 
+                      ? "Nenhuma atividade encontrada para esta turma." 
+                      : "Nenhuma atividade criada neste curso ainda."}
+                 </p>
+              </div>
             ) : (
-              activities.map((activity) => (
+              filteredCreatedActivities.map((activity) => (
                 <CreatedActivityItem
                   key={activity.id}
                   activity={{
@@ -237,10 +281,6 @@ export default function ProducaoAcademica() {
           </div>
         </div>
       </div>
-
-      {/* Modais */}
-
-
     </div>
   )
 }
