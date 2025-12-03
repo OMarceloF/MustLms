@@ -604,3 +604,135 @@ export const obterDetalhesTentativa = async (req: Request, res: Response) => {
     conn.release();
   }
 };
+
+/* ============================================================
+   SALVAR CORREÇÃO DA PESQUISA
+============================================================ */
+export const salvarCorrecaoPesquisa = async (req: Request, res: Response) => {
+  const conn = await pool.getConnection();
+  try {
+    const { resposta_id, pergunta_id, status, feedback } = req.body;
+
+    // Garante que se existe uma entrada para aquela resposta/pergunta, ela é atualizada
+    await conn.query(
+      `INSERT INTO survey_correcoes (resposta_id, pergunta_id, status, feedback)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE status = VALUES(status), feedback = VALUES(feedback)`,
+      [resposta_id, pergunta_id, status, feedback]
+    );
+
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error("Erro ao salvar correção:", error);
+    return res.status(500).json({ error: error.message });
+  } finally {
+    conn.release();
+  }
+};
+
+/* ============================================================
+   LISTAR RESULTADOS DA PESQUISA (ATUALIZADO)
+============================================================ */
+export const listarResultadosPesquisa = async (req: Request, res: Response) => {
+  try {
+    const atividadeId = Number(req.params.atividadeId);
+
+    // 1. Buscar perguntas
+    const [perguntas] = await pool.query(
+      `SELECT * FROM survey_perguntas WHERE atividade_id = ? ORDER BY ordem ASC`,
+      [atividadeId]
+    );
+
+    // 2. Buscar respostas
+    const [respostasDb] = await pool.query(
+      `SELECT id, resposta, criado_em FROM survey_respostas WHERE atividade_id = ?`,
+      [atividadeId]
+    );
+
+    // 3. Buscar correções existentes
+    // Join para garantir que pegamos correções apenas das respostas desta atividade
+    const [correcoesDb] = await pool.query(
+      `SELECT sc.* FROM survey_correcoes sc
+       JOIN survey_respostas sr ON sc.resposta_id = sr.id
+       WHERE sr.atividade_id = ?`,
+      [atividadeId]
+    );
+
+    const perguntasList = perguntas as any[];
+    const respostasList = respostasDb as any[];
+    const correcoesList = correcoesDb as any[];
+
+    // Mapa auxiliar para acesso rápido às correções: chave = "respostaID_perguntaID"
+    const correcoesMap = new Map();
+    correcoesList.forEach((c) => {
+      correcoesMap.set(`${c.resposta_id}_${c.pergunta_id}`, c);
+    });
+
+    const resultados: any = {};
+
+    // Inicializa estrutura
+    perguntasList.forEach((p) => {
+      resultados[p.id] = {
+        enunciado: p.enunciado,
+        tipo: p.tipo,
+        total_respostas: 0,
+        analise: p.tipo === 'texto' || p.tipo === 'paragrafo' ? [] : {}
+      };
+    });
+
+    // Itera sobre as submissões
+    respostasList.forEach((row) => {
+      let respostaParsed: any; 
+      try {
+        respostaParsed = typeof row.resposta === 'string' ? JSON.parse(row.resposta) : row.resposta;
+      } catch (e) {
+        return;
+      }
+
+      if (!respostaParsed) return;
+
+      Object.keys(respostaParsed).forEach((perguntaId) => {
+        const valorResposta = respostaParsed[perguntaId];
+        const pId = Number(perguntaId);
+
+        if (resultados[pId]) {
+          resultados[pId].total_respostas++;
+
+          // Lógica para Texto/Parágrafo
+          if (resultados[pId].tipo === 'texto' || resultados[pId].tipo === 'paragrafo') {
+            if (valorResposta) {
+              // Verifica se tem correção salva no mapa
+              const correcao = correcoesMap.get(`${row.id}_${pId}`);
+              
+              resultados[pId].analise.push({
+                id: row.id, // ID da submissão (resposta_id)
+                texto: valorResposta,
+                correcao: correcao ? { status: correcao.status, feedback: correcao.feedback } : null
+              });
+            }
+          } 
+          // ... (Lógica de múltipla escolha e caixa permanece igual)
+          else if (resultados[pId].tipo === 'multipla') {
+             if (!resultados[pId].analise[valorResposta]) resultados[pId].analise[valorResposta] = 0;
+             resultados[pId].analise[valorResposta]++;
+          }
+          else if (resultados[pId].tipo === 'caixa' && Array.isArray(valorResposta)) {
+             valorResposta.forEach((item: string) => {
+               if (!resultados[pId].analise[item]) resultados[pId].analise[item] = 0;
+               resultados[pId].analise[item]++;
+             });
+          }
+        }
+      });
+    });
+
+    return res.json({
+      total_submissoes: respostasList.length,
+      resultados
+    });
+
+  } catch (error: any) {
+    console.error("Erro ao listar resultados:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};

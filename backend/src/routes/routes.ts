@@ -445,7 +445,9 @@ import {
   atualizarAtividade,
   deletarAtividade,
   listarTentativasUsuario, 
-  obterDetalhesTentativa
+  obterDetalhesTentativa,
+  listarResultadosPesquisa,
+  salvarCorrecaoPesquisa
 } from "../controllers/producaoAcademicaController";
 import pool from '../config/db';
 
@@ -1522,7 +1524,7 @@ router.put("/api/producao-academica/:id", atualizarAtividade);
 router.delete("/api/producao-academica/:id", deletarAtividade);
 router.get("/api/producao-academica/quiz/:atividadeId/tentativas/:usuarioId", listarTentativasUsuario);
 router.get("/api/producao-academica/quiz/tentativa/:tentativaId/detalhes", obterDetalhesTentativa);
-
-
+router.get("/api/producao-academica/survey/:atividadeId/resultados", listarResultadosPesquisa);
+router.post("/api/producao-academica/survey/correcao", salvarCorrecaoPesquisa);
 
 export default router;
