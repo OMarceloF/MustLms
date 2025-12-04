@@ -4,16 +4,15 @@ import { Loader2 } from 'lucide-react';
 
 // Importação dos componentes
 import { KpiCard } from './KpiCard';
-import { LineChartFrequencia } from './LineChartFrequencia';
+// LineChartFrequencia REMOVIDO
 import { BarChartDesempenho } from './BarChartDesempenho';
 import { DoughnutCiclos } from './DoughnutCiclos';
 import { MiniCalendar } from './MiniCalendar';
 import { AvisosPanel } from './AvisosPanel';
 import { AtividadesRecentes } from './AtividadesRecentes';
 
-// --- CORREÇÃO: Instância local do Axios apontando para a porta 3001 ---
 const apiLocal = axios.create({
-  baseURL: 'http://localhost:3001', // Garante que usa a porta onde o backend está rodando
+  baseURL: 'http://localhost:3001',
 });
 
 export default function HomeGestorNovo() {
@@ -62,17 +61,17 @@ export default function HomeGestorNovo() {
       <main className="max-w-[1800px] mx-auto px-6 lg:px-8 py-6">
         
         {/* 1. KPIs (Cards do Topo) */}
-        <section className="mb-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <section className="mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
             {dashboardData.kpiData.map((kpi: any) => (
               <KpiCard key={kpi.id} data={kpi} />
             ))}
           </div>
         </section>
 
-        {/* 2. Avisos e Calendário (MOVIDO PARA CIMA) */}
-        <section className="mb-5">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* 2. Avisos e Calendário */}
+        <section className="mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-2">
               <AvisosPanel data={dashboardData.comunicados || []} />
             </div>
@@ -82,8 +81,8 @@ export default function HomeGestorNovo() {
           </div>
         </section>
 
-        {/* 3. Gráfico Desempenho com Filtros (MOVIDO PARA BAIXO) */}
-        <section className="mb-5">
+        {/* 3. Gráfico Desempenho */}
+        <section className="mb-6">
              <BarChartDesempenho 
                 data={dashboardData.desempenhoTurmasData || []}
                 cursos={dashboardData.filtros?.cursos || []}
@@ -98,23 +97,15 @@ export default function HomeGestorNovo() {
              />
         </section>
 
-        {/* 4. Gráficos de Frequência e Ciclos */}
-        <section className="mb-5">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            <div className="lg:col-span-3">
-              <LineChartFrequencia data={dashboardData.frequenciaData || []} />
-            </div>
-            <div className="lg:col-span-1">
+        {/* 4. NOVA SEÇÃO: Alunos por Curso e Atividades Recentes Lado a Lado */}
+        {/* Removemos o gráfico de linha e colocamos estes dois dividindo o espaço */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+            <div className="h-full min-h-[400px]">
               <DoughnutCiclos data={dashboardData.ciclosData || []} />
             </div>
-          </div>
-        </section>
-
-        {/* 5. Atividades Recentes */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div>
-             <AtividadesRecentes data={dashboardData.atividadesRecentes || []} />
-          </div>
+            <div className="h-full min-h-[400px]">
+               <AtividadesRecentes data={dashboardData.atividadesRecentes || []} />
+            </div>
         </section>
 
       </main>
