@@ -95,29 +95,45 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
  */
 export const adicionarDisciplinaCurso = async (req: Request, res: Response) => {
   const { cursoId } = req.params;
-  // Adicione 'tipo' na desestruturação
   const { nome, codigo, carga_horaria, creditos, semestre, ementa, requisitos, tipo } = req.body; 
 
   if (!cursoId) return res.status(400).json({ message: "ID do curso obrigatório." });
-  // ... validações existentes ...
 
   const connection = await pool.getConnection();
   try {
+      // --- VALIDAÇÃO DE SEMESTRE ---
+      // Busca a duração do curso
+      const [cursoRows] = await connection.query<RowDataPacket[]>(
+          "SELECT duracao_semestres FROM cursos_posgraduacao WHERE id = ?", 
+          [cursoId]
+      );
+
+      if (cursoRows.length === 0) {
+          return res.status(404).json({ message: "Curso não encontrado." });
+      }
+
+      const duracaoCurso = cursoRows[0].duracao_semestres;
+
+      // Permite semestre 0 (optativas) até a duração máxima
+      if (semestre < 0 || semestre > duracaoCurso) {
+          return res.status(400).json({ 
+              message: `O semestre informado (${semestre}) é inválido. O curso possui duração de ${duracaoCurso} semestres.` 
+          });
+      }
+      // -----------------------------
+
       await connection.beginTransaction();
 
-      // Atualize a query de INSERT
       const query = `
         INSERT INTO cursos_disciplinas 
           (curso_id, nome, codigo, carga_horaria, creditos, semestre, ementa, tipo) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `;
-      // Adicione 'tipo' (ou um default) no array de valores
       const tipoFinal = tipo || 'obrigatoria';
       const [result] = await connection.query<ResultSetHeader>(query, [cursoId, nome, codigo, carga_horaria, creditos, semestre, ementa, tipoFinal]);
       
       const novoId = result.insertId;
 
-      // 2. Insere os pré-requisitos na tabela de junção
       if (requisitos && Array.isArray(requisitos) && requisitos.length > 0) {
           const valores = requisitos.map((reqId: number) => [novoId, reqId]);
           await connection.query(
@@ -143,16 +159,36 @@ export const adicionarDisciplinaCurso = async (req: Request, res: Response) => {
  */
 export const atualizarDisciplinaCurso = async (req: Request, res: Response) => {
   const { disciplinaId } = req.params;
-  // Adicione 'tipo' na desestruturação
   const { nome, codigo, carga_horaria, creditos, semestre, ementa, requisitos, tipo } = req.body;
 
   if (!disciplinaId) return res.status(400).json({ message: "ID da disciplina não fornecido." });
 
   const connection = await pool.getConnection();
   try {
+      // --- VALIDAÇÃO DE SEMESTRE ---
+      // Busca a duração do curso através da disciplina existente
+      const [checkRows] = await connection.query<RowDataPacket[]>(`
+          SELECT cp.duracao_semestres 
+          FROM cursos_disciplinas cd
+          JOIN cursos_posgraduacao cp ON cd.curso_id = cp.id
+          WHERE cd.id = ?
+      `, [disciplinaId]);
+
+      if (checkRows.length === 0) {
+          return res.status(404).json({ message: "Disciplina ou curso vinculado não encontrado." });
+      }
+
+      const duracaoCurso = checkRows[0].duracao_semestres;
+
+      if (semestre < 0 || semestre > duracaoCurso) {
+          return res.status(400).json({ 
+              message: `O semestre informado (${semestre}) é inválido. O curso possui duração de ${duracaoCurso} semestres.` 
+          });
+      }
+      // -----------------------------
+
       await connection.beginTransaction();
 
-      // Atualize a query de UPDATE
       const query = `
         UPDATE cursos_disciplinas SET 
           nome = ?, codigo = ?, carga_horaria = ?, creditos = ?, semestre = ?, ementa = ?, tipo = ?
@@ -161,13 +197,7 @@ export const atualizarDisciplinaCurso = async (req: Request, res: Response) => {
       const tipoFinal = tipo || 'obrigatoria';
       const [result] = await connection.query<ResultSetHeader>(query, [nome, codigo, carga_horaria, creditos, semestre, ementa, tipoFinal, disciplinaId]);
 
-      if (result.affectedRows === 0) {
-          await connection.rollback();
-          return res.status(404).json({ message: "Disciplina não encontrada." });
-      }
-
-      // 2. Atualiza Pré-requisitos:
-      // Estratégia: Remove todos os existentes para esta disciplina e insere os novos.
+      // ... resto do código (lógica de requisitos) permanece igual ...
       await connection.query(`DELETE FROM disciplina_requisitos WHERE disciplina_id = ?`, [disciplinaId]);
 
       if (requisitos && Array.isArray(requisitos) && requisitos.length > 0) {

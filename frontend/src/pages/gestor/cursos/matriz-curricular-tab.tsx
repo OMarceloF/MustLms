@@ -343,14 +343,27 @@ export function MatrizCurricularTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingDisciplina, setEditingDisciplina] = useState<DisciplinaFormData | null>(null)
   const [todasDisciplinas, setTodasDisciplinas] = useState<Disciplina[]>([]);
+  
+  // NOVO STATE: Duração máxima do curso em semestres
+  const [duracaoCurso, setDuracaoCurso] = useState<number>(10);
 
-  const semestres = [...new Set(disciplinas.map(d => d.semestre))].sort((a, b) => a - b);
+  // Função para buscar dados do curso (limite de semestres)
+  const fetchCursoDetails = async () => {
+    if (!cursoId) return;
+    try {
+      const response = await axios.get(`/api/cursos/${cursoId}`);
+      if (response.data && response.data.duracao_semestres) {
+        setDuracaoCurso(response.data.duracao_semestres);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar detalhes do curso:", error);
+    }
+  };
 
   const fetchDisciplinas = async () => {
     if (!cursoId) return;
     try {
       setIsLoading(true);
-      // Simulate fetching or use actual axios if backend is reachable
       const response = await axios.get<Disciplina[]>(`/api/cursos/${cursoId}/disciplinas`);
 
       setTodasDisciplinas(response.data);
@@ -358,10 +371,7 @@ export function MatrizCurricularTab() {
       const disciplinasComTurmas = await Promise.all(
         response.data.map(async (disciplina) => {
           try {
-            // Use the 'requisitos' from the initial fetch if available, or default to an empty array
             const requisitos = disciplina.requisitos || [];
-
-            // Simulação de busca de turmas
             const turmasResponse = await axios.get<Turma[]>(`/api/disciplinas/${disciplina.id}/turmas`);
             return { ...disciplina, turmas: turmasResponse.data, requisitos };
           } catch (error) {
@@ -381,6 +391,7 @@ export function MatrizCurricularTab() {
 
   useEffect(() => {
     fetchDisciplinas();
+    fetchCursoDetails(); // Chama busca da duração
   }, [cursoId]);
 
   const handleOpenDialog = (disciplina: Disciplina | null) => {
@@ -424,8 +435,20 @@ export function MatrizCurricularTab() {
     }
   }
 
-const handleSave = async () => {
+  const handleSave = async () => {
     if (!editingDisciplina) return;
+
+    // --- NOVA VALIDAÇÃO DE SEMESTRE ---
+    if (editingDisciplina.semestre > duracaoCurso) {
+      toast.error(`O semestre não pode ser maior que a duração do curso (${duracaoCurso} semestres).`);
+      return;
+    }
+    if (editingDisciplina.semestre < 0) {
+      toast.error(`O semestre não pode ser negativo.`);
+      return;
+    }
+    // ----------------------------------
+
     const payload = {
       nome: editingDisciplina.nome,
       codigo: editingDisciplina.codigo,
@@ -447,9 +470,13 @@ const handleSave = async () => {
       }
       setIsDialogOpen(false);
       setTimeout(() => fetchDisciplinas(), 100);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao salvar disciplina:", error);
-      toast.error("Ocorreu um erro ao salvar a disciplina.");
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Ocorreu um erro ao salvar a disciplina.");
+      }
     }
   }
 
@@ -464,22 +491,21 @@ const handleSave = async () => {
     navigate(`/gestor/gestao-turma/${turmaId}`);
   };
 
-  // 1. Função de mapeamento para os pré-requisitos
   const getRequisitoNames = (requisitoIds: number[] | undefined): string[] => {
     if (!requisitoIds || requisitoIds.length === 0) return [];
-
     return requisitoIds.map(id => {
       const req = todasDisciplinas.find(d => d.id === id);
       return req ? req.nome : `[Disciplina ID ${id} não encontrada]`;
     });
   }
 
-  // Prepare options for MultiSelect
   const opcoesRequisitos = useMemo(() => {
     return todasDisciplinas
       .filter(d => !editingDisciplina?.id || d.id !== editingDisciplina.id)
       .map(d => ({ id: d.id, label: d.nome }));
   }, [todasDisciplinas, editingDisciplina?.id]);
+
+  const semestres = [...new Set(disciplinas.map(d => d.semestre))].sort((a, b) => a - b);
 
   if (isLoading) {
     return <div className="flex justify-center items-center p-10"><IconLoader2 className="h-8 w-8 animate-spin" /></div>;
@@ -529,7 +555,6 @@ const handleSave = async () => {
                           <div className="text-left">
                             <p className="font-semibold flex items-center gap-2">
                               {disciplina.nome}
-                              {/* Badge visual */}
                               <Badge variant={disciplina.tipo === 'optativa' ? 'secondary' : 'default'} className="text-[10px] h-5">
                                 {disciplina.tipo === 'optativa' ? 'Optativa' : 'Obrigatória'}
                               </Badge>
@@ -554,7 +579,6 @@ const handleSave = async () => {
                             <h4 className="mb-2 font-semibold">Ementa:</h4>
                             <p className="text-sm leading-relaxed text-muted-foreground">{disciplina.ementa || "Nenhuma ementa cadastrada."}</p>
                           </div>
-                          {/* Início da nova visualização de Pré-requisitos */}
                           <div className="border-t border-border/50 pt-4">
                             <h4 className="mb-3 font-semibold flex items-center">
                               <IconListChecks className="mr-2 h-4 w-4 text-primary" />
@@ -572,7 +596,6 @@ const handleSave = async () => {
                               <p className="text-sm text-muted-foreground">Esta disciplina não possui pré-requisitos.</p>
                             )}
                           </div>
-                          {/* Fim da nova visualização de Pré-requisitos */}
                           <div className="border-t border-border/50 pt-4">
                             <h4 className="mb-3 font-semibold flex items-center">
                               <IconBookCopy className="mr-2 h-4 w-4" />
@@ -629,7 +652,7 @@ const handleSave = async () => {
                     <Label>Código</Label>
                     <Input className="rounded-lg bg-background mt-1" value={editingDisciplina.codigo} onChange={(e) => handleFormChange("codigo", e.target.value)} />
                   </div>
-                    <div className="grid grid-cols-4 gap-4"> {/* Mudei de grid-cols-3 para grid-cols-4 para caber o Tipo */}
+                    <div className="grid grid-cols-4 gap-4">
                     <div>
                       <Label>Carga Horária</Label>
                       <Input type="number" className="rounded-lg bg-background mt-1" value={editingDisciplina.cargaHoraria} onChange={(e) => handleFormChange("cargaHoraria", Number(e.target.value))} />
@@ -638,11 +661,21 @@ const handleSave = async () => {
                       <Label>Créditos</Label>
                       <Input type="number" className="rounded-lg bg-background mt-1" value={editingDisciplina.creditos} onChange={(e) => handleFormChange("creditos", Number(e.target.value))} />
                     </div>
+                    {/* INPUT SEMESTRE ATUALIZADO */}
                     <div>
                       <Label>Semestre</Label>
-                      <Input type="number" className="rounded-lg bg-background mt-1" value={editingDisciplina.semestre} onChange={(e) => handleFormChange("semestre", Number(e.target.value))} />
+                      <Input 
+                        type="number" 
+                        className="rounded-lg bg-background mt-1" 
+                        value={editingDisciplina.semestre} 
+                        min={0}
+                        max={duracaoCurso}
+                        onChange={(e) => handleFormChange("semestre", Number(e.target.value))} 
+                      />
+                       <p className="text-[10px] text-muted-foreground mt-1 leading-tight">
+                         Máx: {duracaoCurso} (0=Opt)
+                       </p>
                     </div>
-                    {/* NOVO CAMPO TIPO */}
                     <div>
                       <Label>Tipo</Label>
                       <select 
@@ -682,5 +715,3 @@ const handleSave = async () => {
     </div>
   );
 }
-
-export default MatrizCurricularTab;
