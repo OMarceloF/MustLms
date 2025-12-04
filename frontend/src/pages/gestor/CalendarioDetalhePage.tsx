@@ -279,12 +279,26 @@ const CalendarioDetalhePage: React.FC = (  ) => {
     }
     setIsSaving(true);
     const tipoInfo = tiposDeEvento.find((t) => t.tipo === eventoSelecionado.tipo);
+
+    // --- CORREÇÃO AQUI ---
+    // Garante que enviamos apenas YYYY-MM-DD, removendo a parte de tempo (T...) se existir
+    const dataFormatada = eventoSelecionado.start && typeof eventoSelecionado.start === 'string'
+        ? eventoSelecionado.start.slice(0, 10) 
+        : eventoSelecionado.start;
+
     const payload = {
-      calendario_id: id, data: eventoSelecionado.start, tipo: eventoSelecionado.tipo,
-      nome: eventoSelecionado.title, cor: tipoInfo?.cor || '#c56825', descricao: eventoSelecionado.descricao || '',
-      importancia: eventoSelecionado.importancia, recorrente: eventoSelecionado.recorrente || false,
-      roles: rolesSelecionadas, usuarios: usuariosSelecionados,
+      calendario_id: id, 
+      data: dataFormatada, // Usa a data formatada
+      tipo: eventoSelecionado.tipo,
+      nome: eventoSelecionado.title, 
+      cor: tipoInfo?.cor || '#c56825', 
+      descricao: eventoSelecionado.descricao || '',
+      importancia: eventoSelecionado.importancia, 
+      recorrente: eventoSelecionado.recorrente || false,
+      roles: rolesSelecionadas, 
+      usuarios: usuariosSelecionados,
     };
+
     try {
       if (eventoSelecionado.id) {
         await axios.put(`${API_URL}/evento/${eventoSelecionado.id}`, payload);
@@ -294,7 +308,10 @@ const CalendarioDetalhePage: React.FC = (  ) => {
         toast.success("Evento criado com sucesso!");
       }
       setModalAberto(false); setEventoSelecionado(null);
+      // Recarrega a página ou atualiza o estado para refletir a mudança
+      window.location.reload(); // Ou chame a função fetchAllData() se estiver acessível
     } catch (e) {
+      console.error(e); // Adicione isso para ver erros no console
       toast.error('Erro ao salvar evento.');
     } finally {
       setIsSaving(false);
