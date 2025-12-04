@@ -491,3 +491,31 @@ export const listarTurmasAtivasParaAulas = async (req: Request, res: Response) =
         res.status(500).json({ message: "Erro interno ao buscar as turmas." });
     }
 };
+
+/**
+ * @description Obtém os detalhes de um curso específico pelo ID.
+ * @route GET /api/cursos/:id
+ */
+export const obterCursoPorId = async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    if (!id) return res.status(400).json({ message: "ID do curso não fornecido." });
+
+    try {
+        const query = `
+            SELECT id, nome, duracao_semestres, tipo, modalidade 
+            FROM cursos_posgraduacao 
+            WHERE id = ?
+        `;
+        const [rows] = await pool.query<RowDataPacket[]>(query, [id]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: "Curso não encontrado." });
+        }
+
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        console.error("Erro ao buscar curso:", error);
+        res.status(500).json({ message: "Erro interno ao buscar detalhes do curso." });
+    }
+};
