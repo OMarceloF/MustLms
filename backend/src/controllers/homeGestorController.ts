@@ -174,7 +174,7 @@ export const getDashboardGestorData = async (req: Request, res: Response) => {
             FROM eventos_calendario ec
             INNER JOIN eventos_roles er ON ec.id = er.evento_id
             WHERE LOWER(er.role) = 'gestor' 
-            AND ec.data >= DATE_FORMAT(NOW(), '%Y-%m-01')
+            AND ec.data >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
             ORDER BY ec.data ASC 
             LIMIT 100
         `);
