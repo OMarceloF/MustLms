@@ -618,3 +618,267 @@ export const importarUsersLote = async (req: Request, res: Response) => res.stat
 export const updateAluno = async (req: Request, res: Response) => criarOuAtualizarAluno(req, res);
 export const getAlunoDashboardData = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });
 export const getPerfilUsuario = async (req: Request, res: Response) => res.status(501).json({ message: 'Funcionalidade não implementada.' });
+
+export const getProgressoMatriz = async (req: Request, res: Response) => {
+    const { alunoId } = req.params;
+
+    if (!alunoId) {
+        return res.status(400).json({ message: "ID do aluno é obrigatório." });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        const [vinculo]: any[] = await connection.query(`
+            SELECT grade_curricular_id, curso_posgraduacao_id 
+            FROM vincular_aluno_curso 
+            WHERE aluno_id = ? AND status_matricula IN ('Ativa', 'Concluída')
+            ORDER BY data_vinculo DESC
+            LIMIT 1
+        `, [alunoId]);
+
+        if (vinculo.length === 0) {
+            return res.status(404).json({ message: "Aluno não vinculado a nenhum curso ativo." });
+        }
+
+        const { grade_curricular_id, curso_posgraduacao_id } = vinculo[0];
+
+        let query = "";
+        let params: any[] = [];
+
+        // Adicionado d.tipo no SELECT e GROUP BY
+        if (grade_curricular_id) {
+            query = `
+                SELECT 
+                    d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
+                    gpd.periodo_numero as semestre,
+                    at.status_vinculo,
+                    (SELECT SUM(n.nota) FROM notas n WHERE n.materia_id = d.id AND n.aluno_id = ?) as nota_final
+                FROM grade_periodo_disciplinas gpd
+                JOIN cursos_disciplinas d ON gpd.disciplina_id = d.id
+                LEFT JOIN turmas t ON t.disciplina_id = d.id
+                LEFT JOIN alunos_turmas at ON at.turma_id = t.id AND at.aluno_id = ?
+                WHERE gpd.grade_id = ?
+                GROUP BY 
+                    d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
+                    gpd.periodo_numero, at.status_vinculo
+                ORDER BY gpd.periodo_numero ASC, d.nome ASC
+            `;
+            params = [alunoId, alunoId, grade_curricular_id];
+        } else {
+            query = `
+                SELECT 
+                    d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
+                    d.semestre,
+                    at.status_vinculo,
+                    (SELECT SUM(n.nota) FROM notas n WHERE n.materia_id = d.id AND n.aluno_id = ?) as nota_final
+                FROM cursos_disciplinas d
+                LEFT JOIN turmas t ON t.disciplina_id = d.id 
+                LEFT JOIN alunos_turmas at ON at.turma_id = t.id AND at.aluno_id = ?
+                WHERE d.curso_id = ?
+                GROUP BY 
+                    d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
+                    d.semestre, at.status_vinculo
+                ORDER BY d.semestre ASC, d.nome ASC
+            `;
+            params = [alunoId, alunoId, curso_posgraduacao_id];
+        }
+
+        const [rows] = await connection.query<RowDataPacket[]>(query, params);
+
+        const disciplinasMap = new Map();
+
+        rows.forEach((row) => {
+            if (disciplinasMap.has(row.id)) {
+                const existing = disciplinasMap.get(row.id);
+                if ((!existing.nota && row.nota_final) || (existing.status === 'Pendente' && row.status_vinculo)) {
+                    // Atualiza se encontrar um registro mais completo
+                } else {
+                    return;
+                }
+            }
+
+            let status = "Pendente";
+            const nota = row.nota_final ? Number(row.nota_final) : 0;
+            
+            if (row.status_vinculo === 'ativo') status = "Cursando";
+            else if (['concluido', 'aprovado'].includes(row.status_vinculo)) status = "Concluída";
+            
+            if (nota >= 60) status = "Concluída";
+
+            // LÓGICA DE CORREÇÃO:
+            // Se for optativa, força semestre = 0 para separar visualmente
+            const semestreFinal = row.tipo === 'optativa' ? 0 : (row.semestre || 1);
+
+            disciplinasMap.set(row.id, {
+                id: row.id.toString(),
+                nome: row.nome,
+                codigo: row.codigo || `DISC-${row.id}`,
+                creditos: row.creditos || 0,
+                cargaHoraria: row.carga_horaria || 0,
+                semestre: semestreFinal, 
+                status: status,
+                nota: nota > 0 ? nota.toFixed(1) : null,
+                ementa: row.ementa || "Ementa não disponível."
+            });
+        });
+
+        res.json(Array.from(disciplinasMap.values()));
+
+    } catch (error) {
+        console.error("Erro ao buscar progresso da matriz:", error);
+        res.status(500).json({ message: "Erro interno ao buscar progresso." });
+    } finally {
+        connection.release();
+    }
+};
+
+/**
+ * @description Retorna a lista de professores e turmas ativas vinculadas ao aluno.
+ * @route GET /api/alunos/:alunoId/professores-turmas
+ */
+export const getProfessoresTurmasAluno = async (req: Request, res: Response) => {
+    const { alunoId } = req.params;
+
+    if (!alunoId) {
+        return res.status(400).json({ message: "ID do aluno é obrigatório." });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        // QUERY CORRIGIDA:
+        // 1. Busca turmas ativas do aluno na tabela intermediária 'alunos_turmas'
+        // 2. Faz JOIN com 'turmas' para pegar detalhes
+        // 3. Faz JOIN com 'cursos_disciplinas' para pegar o nome da matéria
+        // 4. Faz JOIN com 'configuracoes_periodos_letivos' para pegar o semestre
+        // 5. Faz LEFT JOIN com 'funcionarios' e 'users' para pegar dados do professor responsável
+        const query = `
+            SELECT 
+                t.id AS turma_id,
+                t.nome_turma,
+                t.turno,
+                t.quantidade_alunos AS total_vagas,
+                cpl.nome AS semestre,
+                d.nome AS disciplina_nome,
+                
+                -- Dados do Professor (Responsável pela turma)
+                f.id AS professor_id,
+                u.nome AS professor_nome,
+                u.email AS professor_email,
+                
+                -- Contagem de alunos ativos na turma (subquery)
+                (SELECT COUNT(*) FROM alunos_turmas at2 WHERE at2.turma_id = t.id AND at2.status_vinculo = 'ativo') as alunos_matriculados
+
+            FROM alunos_turmas at
+            JOIN turmas t ON at.turma_id = t.id
+            LEFT JOIN configuracoes_periodos_letivos cpl ON t.semestre_id = cpl.id
+            JOIN cursos_disciplinas d ON t.disciplina_id = d.id
+            -- Join para pegar o professor. Se 'professor_responsavel' for NULL, a turma ainda vem.
+            LEFT JOIN funcionarios f ON t.professor_responsavel = f.id
+            LEFT JOIN users u ON f.id = u.id 
+            
+            WHERE at.aluno_id = ? 
+              AND at.status_vinculo = 'ativo' -- Apenas turmas ativas
+            ORDER BY cpl.data_inicio DESC, d.nome ASC
+        `;
+
+        const [rows]: any[] = await connection.query(query, [alunoId]);
+
+        const professoresMap = new Map();
+        const turmas: any[] = [];
+
+        rows.forEach((row: any) => {
+            // Formata o nome da turma para exibição
+            const nomeExibicao = `${row.disciplina_nome} - ${row.nome_turma}`;
+
+            turmas.push({
+                id: row.turma_id.toString(),
+                nome: nomeExibicao,
+                turno: row.turno || 'Não definido',
+                semestre: row.semestre || 'Semestre Atual',
+                orientador: row.professor_nome || 'A definir',
+                numeroAlunos: row.alunos_matriculados || 0
+            });
+
+            // Se houver professor, adiciona à lista de professores (sem duplicatas)
+            if (row.professor_id) {
+                if (!professoresMap.has(row.professor_id)) {
+                    professoresMap.set(row.professor_id, {
+                        id: row.professor_id.toString(),
+                        nome: row.professor_nome,
+                        disciplina: row.disciplina_nome,
+                        email: row.professor_email || 'Email não disponível',
+                        // Gera iniciais para o avatar
+                        iniciais: row.professor_nome 
+                            ? row.professor_nome.split(' ').map((n:string) => n[0]).join('').substring(0, 2).toUpperCase() 
+                            : 'PF'
+                    });
+                } else {
+                    // Se o professor dá mais de uma aula, adiciona a disciplina à string
+                    const prof = professoresMap.get(row.professor_id);
+                    if (!prof.disciplina.includes(row.disciplina_nome)) {
+                        prof.disciplina += `, ${row.disciplina_nome}`;
+                    }
+                }
+            }
+        });
+
+        res.json({
+            professores: Array.from(professoresMap.values()),
+            turmas: turmas
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar professores e turmas:", error);
+        res.status(500).json({ message: "Erro interno ao buscar dados." });
+    } finally {
+        connection.release();
+    }
+};
+
+export const getPPCDoAluno = async (req: Request, res: Response) => {
+    const { alunoId } = req.params;
+
+    if (!alunoId) {
+        return res.status(400).json({ message: "ID do aluno é obrigatório." });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        // 1. Descobrir qual curso de Pós-Graduação o aluno está vinculado e ativo
+        const [vinculo]: any[] = await connection.query(`
+            SELECT curso_posgraduacao_id 
+            FROM vincular_aluno_curso 
+            WHERE aluno_id = ? AND status_matricula IN ('Ativa', 'Concluída')
+            ORDER BY data_vinculo DESC
+            LIMIT 1
+        `, [alunoId]);
+
+        if (vinculo.length === 0) {
+            return res.status(404).json({ message: "Aluno não vinculado a nenhum curso ativo." });
+        }
+
+        const cursoId = vinculo[0].curso_posgraduacao_id;
+
+        // 2. Buscar o conteúdo do PPC na tabela cursos_ppc
+        const [ppcRows]: any[] = await connection.query(`
+            SELECT conteudo 
+            FROM cursos_ppc 
+            WHERE curso_id = ?
+        `, [cursoId]);
+
+        if (ppcRows.length === 0 || !ppcRows[0].conteudo) {
+            return res.json({ conteudo: "PPC não disponível para este curso." });
+        }
+
+        res.json({ conteudo: ppcRows[0].conteudo });
+
+    } catch (error) {
+        console.error("Erro ao buscar PPC do aluno:", error);
+        res.status(500).json({ message: "Erro interno ao buscar o PPC." });
+    } finally {
+        connection.release();
+    }
+};
