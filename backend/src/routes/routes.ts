@@ -39,6 +39,9 @@ import {
   buscarAlunoPorCPF,
   getDetalhesCompletosAluno,
   atualizarDocumentoAluno,
+  getProgressoMatriz,
+  getProfessoresTurmasAluno,
+  getPPCDoAluno,
 } from '../controllers/alunosControllerNovo';
 import { getDashboardGestorData } from '../controllers/homeGestorController';
 // import { criarAluno } from '../controllers/criarAlunoController';
@@ -671,6 +674,7 @@ router.get('/api/dashboard/contar-alunos', contarAlunos);
 router.get('/api/dashboard/contar-funcionarios', contarFuncionarios);
 router.get('/api/dashboard/contar-responsaveis', contarResponsaveis);
 router.get('/api/alunos/:id', getAlunoById);
+router.get('/api/alunos/:alunoId/progresso-matriz', getProgressoMatriz);
 // router.get('/user/:id', getUserAndAlunoById);
 router.get('/api/users/:id/basic', getUserBasic);
 router.get('/api/users/:id/profile', getUserProfile);
@@ -1526,5 +1530,10 @@ router.get("/api/producao-academica/quiz/:atividadeId/tentativas/:usuarioId", li
 router.get("/api/producao-academica/quiz/tentativa/:tentativaId/detalhes", obterDetalhesTentativa);
 router.get("/api/producao-academica/survey/:atividadeId/resultados", listarResultadosPesquisa);
 router.post("/api/producao-academica/survey/correcao", salvarCorrecaoPesquisa);
+router.get('/api/alunos/:alunoId/professores-turmas', getProfessoresTurmasAluno);
+router.get('/api/alunos/:alunoId/ppc', getPPCDoAluno);
+
+
+
 
 export default router;
