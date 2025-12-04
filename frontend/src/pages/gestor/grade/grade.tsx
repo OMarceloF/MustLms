@@ -34,6 +34,7 @@ type Materia = {
     nome: string
     codigo: string
     cargaHoraria: number
+    tipo: 'obrigatoria' | 'optativa'
 }
 
 type Periodo = {

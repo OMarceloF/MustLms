@@ -19,14 +19,10 @@ interface DisciplinaFromDB extends RowDataPacket {
     codigo: string;
     carga_horaria: number;
     periodo_numero: number;
+    tipo: 'obrigatoria' | 'optativa';
 }
 
-// --- FUNÇÕES DO CONTROLLER ---
-
-/**
- * @description Cria uma nova grade curricular e suas associações.
- * @route POST /api/grades
- */
+// ... (manter a função createGrade como estava) ...
 export const createGrade = async (req: Request, res: Response) => {
     const { curso, periodoAcademico, periodos } = req.body;
 
@@ -81,6 +77,7 @@ export const createGrade = async (req: Request, res: Response) => {
 export const getGrades = async (req: Request, res: Response) => {
     const { curso, periodo } = req.query;
 
+    // --- CORREÇÃO DO ERRO: Declaração das variáveis aqui ---
     let query = `
         SELECT 
             g.id,
@@ -103,15 +100,16 @@ export const getGrades = async (req: Request, res: Response) => {
         params.push(periodo as string);
     }
     query += ' ORDER BY g.id DESC';
+    // -------------------------------------------------------
 
     try {
         const [grades] = await pool.query<GradeFromDB[]>(query, params);
 
-        // Para cada grade, buscar suas disciplinas
         const gradesCompletas = await Promise.all(grades.map(async (grade) => {
             const [disciplinas] = await pool.query<DisciplinaFromDB[]>(`
                 SELECT 
                     d.id, d.nome, d.codigo, d.carga_horaria AS cargaHoraria,
+                    d.tipo, 
                     gpd.periodo_numero
                 FROM grade_periodo_disciplinas gpd
                 JOIN cursos_disciplinas d ON gpd.disciplina_id = d.id
@@ -125,7 +123,13 @@ export const getGrades = async (req: Request, res: Response) => {
                     periodo = { id: disc.periodo_numero, nome: `${disc.periodo_numero}º Período`, materias: [] };
                     acc.push(periodo);
                 }
-                periodo.materias.push({ id: disc.id, nome: disc.nome, codigo: disc.codigo, cargaHoraria: disc.cargaHoraria });
+                periodo.materias.push({ 
+                    id: disc.id, 
+                    nome: disc.nome, 
+                    codigo: disc.codigo, 
+                    cargaHoraria: disc.cargaHoraria,
+                    tipo: disc.tipo // Tipo incluído
+                });
                 return acc;
             }, [] as { id: number; nome: string; materias: any[] }[]);
 
@@ -144,10 +148,7 @@ export const getGrades = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * @description Atualiza uma grade curricular.
- * @route PUT /api/grades/:id
- */
+// ... (manter updateGrade, deleteGrade, getMateriasForGradeForm, getPeriodosLetivosForForm iguais) ...
 export const updateGrade = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { curso, periodoAcademico, periodos } = req.body;
@@ -198,10 +199,6 @@ export const updateGrade = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * @description Deleta uma grade curricular.
- * @route DELETE /api/grades/:id
- */
 export const deleteGrade = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
@@ -217,10 +214,6 @@ export const deleteGrade = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * @description Obtém a lista de matérias para os formulários.
- * @route GET /api/grades/form-data/materias
- */
 export const getMateriasForGradeForm = async (req: Request, res: Response) => {
     try {
         const [materias] = await pool.query<RowDataPacket[]>(
@@ -232,10 +225,7 @@ export const getMateriasForGradeForm = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Erro interno ao buscar matérias.' });
     }
 };
-/**
- * @description Obtém todos os períodos letivos para formulários.
- * @route GET /api/grades/form-data/periodos-letivos
- */
+
 export const getPeriodosLetivosForForm = async (req: Request, res: Response) => {
     try {
         const [periodos] = await pool.query<RowDataPacket[]>(
@@ -248,11 +238,7 @@ export const getPeriodosLetivosForForm = async (req: Request, res: Response) => 
     }
 };
 
-// NOVA FUNÇÃO: Buscar disciplinas de um curso, agrupadas por semestre
-/**
- * @description Obtém as disciplinas de um curso, agrupadas por semestre.
- * @route GET /api/grades/form-data/disciplinas-por-curso/:cursoId
- */
+// --- FUNÇÃO ATUALIZADA: Buscar disciplinas com TIPO ---
 export const getDisciplinasByCursoGrouped = async (req: Request, res: Response) => {
     const { cursoId } = req.params;
     if (!cursoId) {
@@ -261,16 +247,14 @@ export const getDisciplinasByCursoGrouped = async (req: Request, res: Response) 
 
     try {
         const [disciplinas] = await pool.query<RowDataPacket[]>(`
-            SELECT id, nome, codigo, carga_horaria AS cargaHoraria, semestre 
+            SELECT id, nome, codigo, carga_horaria AS cargaHoraria, semestre, tipo 
             FROM cursos_disciplinas 
             WHERE curso_id = ? 
             ORDER BY semestre, nome
         `, [cursoId]);
 
-        // Agrupa as disciplinas por semestre no backend
         const periodosAgrupados = disciplinas.reduce((acc, disciplina) => {
             const semestre = disciplina.semestre;
-            // Garante que o semestre exista no acumulador
             if (!acc[semestre]) {
                 acc[semestre] = {
                     id: semestre,
@@ -278,17 +262,16 @@ export const getDisciplinasByCursoGrouped = async (req: Request, res: Response) 
                     materias: []
                 };
             }
-            // Adiciona a disciplina ao semestre correspondente
             acc[semestre].materias.push({
                 id: disciplina.id,
                 nome: disciplina.nome,
                 codigo: disciplina.codigo,
-                cargaHoraria: disciplina.cargaHoraria
+                cargaHoraria: disciplina.cargaHoraria,
+                tipo: disciplina.tipo
             });
             return acc;
         }, {} as Record<number, { id: number; nome: string; materias: any[] }>);
 
-        // Converte o objeto em um array e ordena pela chave (número do semestre)
         const resultadoFinal = Object.values(periodosAgrupados).sort((a, b) => a.id - b.id);
 
         res.status(200).json(resultadoFinal);
@@ -298,10 +281,7 @@ export const getDisciplinasByCursoGrouped = async (req: Request, res: Response) 
     }
 };
 
-/**
- * @description Obtém as grades curriculares de um curso específico.
- * @route GET /api/grades/por-curso/:cursoId
- */
+// ... (manter getGradesByCurso igual) ...
 export const getGradesByCurso = async (req: Request, res: Response) => {
     const { cursoId } = req.params;
     if (!cursoId) {

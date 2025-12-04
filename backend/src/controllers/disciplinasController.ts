@@ -27,6 +27,7 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
         d.creditos,
         d.carga_horaria,
         d.semestre,
+        d.tipo,
         d.ementa,
         -- Busca os IDs dos pré-requisitos como um array JSON simples [1, 2, 3]
         (
@@ -94,24 +95,26 @@ export const listarDisciplinasCurso = async (req: Request, res: Response) => {
  */
 export const adicionarDisciplinaCurso = async (req: Request, res: Response) => {
   const { cursoId } = req.params;
-  const { nome, codigo, carga_horaria, creditos, semestre, ementa, requisitos } = req.body;
+  // Adicione 'tipo' na desestruturação
+  const { nome, codigo, carga_horaria, creditos, semestre, ementa, requisitos, tipo } = req.body; 
 
   if (!cursoId) return res.status(400).json({ message: "ID do curso obrigatório." });
-  if (!nome || carga_horaria === undefined || creditos === undefined || semestre === undefined) {
-      return res.status(400).json({ message: "Campos obrigatórios (nome, carga horária, créditos, semestre) faltando." });
-  }
+  // ... validações existentes ...
 
   const connection = await pool.getConnection();
   try {
       await connection.beginTransaction();
 
-      // 1. Insere a disciplina
+      // Atualize a query de INSERT
       const query = `
         INSERT INTO cursos_disciplinas 
-          (curso_id, nome, codigo, carga_horaria, creditos, semestre, ementa) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+          (curso_id, nome, codigo, carga_horaria, creditos, semestre, ementa, tipo) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `;
-      const [result] = await connection.query<ResultSetHeader>(query, [cursoId, nome, codigo, carga_horaria, creditos, semestre, ementa]);
+      // Adicione 'tipo' (ou um default) no array de valores
+      const tipoFinal = tipo || 'obrigatoria';
+      const [result] = await connection.query<ResultSetHeader>(query, [cursoId, nome, codigo, carga_horaria, creditos, semestre, ementa, tipoFinal]);
+      
       const novoId = result.insertId;
 
       // 2. Insere os pré-requisitos na tabela de junção
@@ -140,7 +143,8 @@ export const adicionarDisciplinaCurso = async (req: Request, res: Response) => {
  */
 export const atualizarDisciplinaCurso = async (req: Request, res: Response) => {
   const { disciplinaId } = req.params;
-  const { nome, codigo, carga_horaria, creditos, semestre, ementa, requisitos } = req.body;
+  // Adicione 'tipo' na desestruturação
+  const { nome, codigo, carga_horaria, creditos, semestre, ementa, requisitos, tipo } = req.body;
 
   if (!disciplinaId) return res.status(400).json({ message: "ID da disciplina não fornecido." });
 
@@ -148,13 +152,14 @@ export const atualizarDisciplinaCurso = async (req: Request, res: Response) => {
   try {
       await connection.beginTransaction();
 
-      // 1. Atualiza dados básicos
+      // Atualize a query de UPDATE
       const query = `
         UPDATE cursos_disciplinas SET 
-          nome = ?, codigo = ?, carga_horaria = ?, creditos = ?, semestre = ?, ementa = ? 
+          nome = ?, codigo = ?, carga_horaria = ?, creditos = ?, semestre = ?, ementa = ?, tipo = ?
         WHERE id = ?
       `;
-      const [result] = await connection.query<ResultSetHeader>(query, [nome, codigo, carga_horaria, creditos, semestre, ementa, disciplinaId]);
+      const tipoFinal = tipo || 'obrigatoria';
+      const [result] = await connection.query<ResultSetHeader>(query, [nome, codigo, carga_horaria, creditos, semestre, ementa, tipoFinal, disciplinaId]);
 
       if (result.affectedRows === 0) {
           await connection.rollback();

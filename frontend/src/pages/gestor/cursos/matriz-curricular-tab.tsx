@@ -316,6 +316,7 @@ interface Disciplina {
   creditos: number
   carga_horaria: number
   semestre: number
+  tipo: 'obrigatoria' | 'optativa'
   ementa: string
   requisitos?: number[]
   turmas?: Turma[]
@@ -328,6 +329,7 @@ interface DisciplinaFormData {
   creditos: number
   cargaHoraria: number
   semestre: number
+  tipo: 'obrigatoria' | 'optativa'
   ementa: string
   requisitos: number[]
 }
@@ -390,6 +392,7 @@ export function MatrizCurricularTab() {
         creditos: disciplina.creditos,
         cargaHoraria: disciplina.carga_horaria,
         semestre: disciplina.semestre,
+        tipo: disciplina.tipo || 'obrigatoria',
         ementa: disciplina.ementa,
         requisitos: disciplina.requisitos || []
       })
@@ -400,6 +403,7 @@ export function MatrizCurricularTab() {
         creditos: 0,
         cargaHoraria: 0,
         semestre: 1,
+        tipo: 'obrigatoria',
         ementa: "",
         requisitos: []
       })
@@ -420,7 +424,7 @@ export function MatrizCurricularTab() {
     }
   }
 
-  const handleSave = async () => {
+const handleSave = async () => {
     if (!editingDisciplina) return;
     const payload = {
       nome: editingDisciplina.nome,
@@ -428,9 +432,11 @@ export function MatrizCurricularTab() {
       carga_horaria: editingDisciplina.cargaHoraria,
       creditos: editingDisciplina.creditos,
       semestre: editingDisciplina.semestre,
+      tipo: editingDisciplina.tipo,
       ementa: editingDisciplina.ementa,
       requisitos: editingDisciplina.requisitos || [],
     };
+    
     try {
       if (editingDisciplina.id) {
         await axios.put(`/api/cursos/disciplinas/${editingDisciplina.id}`, payload);
@@ -509,7 +515,11 @@ export function MatrizCurricularTab() {
 
           return (
             <Card key={semestre}>
-              <CardHeader><CardTitle>{semestre}º Semestre</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>
+                    {semestre === 0 ? "Disciplinas Optativas (0º Semestre)" : `${semestre}º Semestre`}
+                </CardTitle>
+              </CardHeader>
               <CardContent>
                 <Accordion type="single" collapsible className="w-full">
                   {disciplinasSemestre.map((disciplina) => (
@@ -517,7 +527,13 @@ export function MatrizCurricularTab() {
                       <AccordionTrigger className="hover:no-underline">
                         <div className="flex w-full items-center justify-between pr-4">
                           <div className="text-left">
-                            <p className="font-semibold">{disciplina.nome}</p>
+                            <p className="font-semibold flex items-center gap-2">
+                              {disciplina.nome}
+                              {/* Badge visual */}
+                              <Badge variant={disciplina.tipo === 'optativa' ? 'secondary' : 'default'} className="text-[10px] h-5">
+                                {disciplina.tipo === 'optativa' ? 'Optativa' : 'Obrigatória'}
+                              </Badge>
+                            </p>
                             <p className="text-sm text-muted-foreground">
                               {disciplina.codigo} • {disciplina.creditos} créditos • {disciplina.carga_horaria}h
                             </p>
@@ -613,7 +629,7 @@ export function MatrizCurricularTab() {
                     <Label>Código</Label>
                     <Input className="rounded-lg bg-background mt-1" value={editingDisciplina.codigo} onChange={(e) => handleFormChange("codigo", e.target.value)} />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4"> {/* Mudei de grid-cols-3 para grid-cols-4 para caber o Tipo */}
                     <div>
                       <Label>Carga Horária</Label>
                       <Input type="number" className="rounded-lg bg-background mt-1" value={editingDisciplina.cargaHoraria} onChange={(e) => handleFormChange("cargaHoraria", Number(e.target.value))} />
@@ -625,6 +641,18 @@ export function MatrizCurricularTab() {
                     <div>
                       <Label>Semestre</Label>
                       <Input type="number" className="rounded-lg bg-background mt-1" value={editingDisciplina.semestre} onChange={(e) => handleFormChange("semestre", Number(e.target.value))} />
+                    </div>
+                    {/* NOVO CAMPO TIPO */}
+                    <div>
+                      <Label>Tipo</Label>
+                      <select 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 mt-1"
+                        value={editingDisciplina.tipo}
+                        onChange={(e) => handleFormChange("tipo", e.target.value)}
+                      >
+                        <option value="obrigatoria">Obrigatória</option>
+                        <option value="optativa">Optativa</option>
+                      </select>
                     </div>
                   </div>
                 </div>
