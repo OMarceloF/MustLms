@@ -21,6 +21,7 @@ import TopbarGestorAuto from './gestor/components/TopbarGestorAuto';
 import HomeAluno from './aluno/HomeAluno';
 import EnviosdeProfessoresPage from './aluno/EnviosdeProfessoresPage';
 // import ChatBox from "../components/ChatBox";
+import Homepage from './aluno/homepage/homepage';
 
 export default function AlunoDashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -113,7 +114,7 @@ export default function AlunoDashboard() {
         <TopbarGestorAuto activePage={activePage} setActivePage={setActivePage} isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
 
         <main className="p-5 bg-gray-100 flex-1 mt-[60px]">
-          {activePage === 'home' && <HomeAluno />}
+          {activePage === 'home' && <Homepage />}
           {activePage === 'ia' && <IaPage />}
           {activePage === 'envio' && <EnviosdeProfessoresPage />}
           {activePage === 'horarios' && <HorariosPage />}
