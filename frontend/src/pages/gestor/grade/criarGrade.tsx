@@ -10,6 +10,7 @@ import { Checkbox } from "../components/ui/checkbox"
 import { useToast } from "../hooks/use-toast"
 import SidebarGestor from "../components/Sidebar";
 import TopbarGestorAuto from "../components/TopbarGestorAuto";
+import { Badge } from "../components/ui/badge"
 
 // --- CONSTANTES E TIPAGEM ---
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -27,6 +28,7 @@ type Materia = {
     nome: string
     codigo: string
     cargaHoraria: number
+    tipo: 'obrigatoria' | 'optativa'
 }
 
 type Periodo = {
@@ -314,11 +316,16 @@ export default function NovaGradePage() {
                                                                                 disabled={saving}
                                                                             />
                                                                             <label htmlFor={`chk-${periodoBase.id}-${materia.id}`} className="flex-1 cursor-pointer">
+                                                                            <div className="flex items-center gap-2">
                                                                                 <p className="font-medium">{materia.nome}</p>
-                                                                                <p className="text-sm text-muted-foreground">
-                                                                                    {materia.codigo} • {materia.cargaHoraria}h
-                                                                                </p>
-                                                                            </label>
+                                                                                <Badge variant={materia.tipo === 'optativa' ? 'secondary' : 'outline'} className="text-[10px] h-5 px-1">
+                                                                                    {materia.tipo === 'optativa' ? 'Optativa' : 'Obrigatória'}
+                                                                                </Badge>
+                                                                            </div>
+                                                                            <p className="text-sm text-muted-foreground">
+                                                                                {materia.codigo} • {materia.cargaHoraria}h
+                                                                            </p>
+                                                                        </label>
                                                                         </div>
                                                                     );
                                                                 })}

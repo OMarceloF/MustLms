@@ -1,11 +1,13 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion"
+import { Badge } from "../components/ui/badge"
 
 type Materia = {
   id: number
   nome: string
   codigo: string
   cargaHoraria: number
+  tipo: 'obrigatoria' | 'optativa'
 }
 
 type Periodo = {
@@ -34,10 +36,26 @@ interface ViewGradeModalProps {
 }
 
 export function ViewGradeModal({ grade, open, onClose }: ViewGradeModalProps) {
+  
+  // Função auxiliar para pegar todas as matérias flat
+  const getAllMaterias = () => {
+    return grade.periodos.flatMap(p => p.materias);
+  }
+
   const getTotalCargaHoraria = () => {
-    return grade.periodos.reduce((total, periodo) => {
-      return total + periodo.materias.reduce((sum, materia) => sum + materia.cargaHoraria, 0)
-    }, 0)
+    return getAllMaterias().reduce((sum, m) => sum + m.cargaHoraria, 0)
+  }
+
+  const getCargaHorariaObrigatoria = () => {
+    return getAllMaterias()
+      .filter(m => m.tipo === 'obrigatoria' || !m.tipo) // Assume obrigatória se null
+      .reduce((sum, m) => sum + m.cargaHoraria, 0)
+  }
+
+  const getCargaHorariaOptativa = () => {
+    return getAllMaterias()
+      .filter(m => m.tipo === 'optativa')
+      .reduce((sum, m) => sum + m.cargaHoraria, 0)
   }
 
   const getPeriodoCargaHoraria = (periodoId: number) => {
@@ -55,7 +73,7 @@ export function ViewGradeModal({ grade, open, onClose }: ViewGradeModalProps) {
 
         <div className="space-y-6">
           {/* Header Info */}
-          <div className="bg-slate-50 rounded-lg p-4 space-y-2">
+          <div className="bg-slate-50 rounded-lg p-4 space-y-4">
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="font-semibold text-lg">{grade.curso.nome}</h3>
@@ -66,10 +84,21 @@ export function ViewGradeModal({ grade, open, onClose }: ViewGradeModalProps) {
                 <p className="text-lg font-bold">{grade.periodoAcademico}</p>
               </div>
             </div>
-            <div className="pt-2 border-t">
-              <p className="text-sm font-medium">
-                Carga Horária Total: <span className="text-lg font-bold">{getTotalCargaHoraria()}h</span>
-              </p>
+            
+            {/* Seção de Carga Horária Detalhada */}
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+               <div>
+                 <p className="text-xs font-medium text-muted-foreground uppercase">Obrigatórias</p>
+                 <p className="text-lg font-bold">{getCargaHorariaObrigatoria()}h</p>
+               </div>
+               <div>
+                 <p className="text-xs font-medium text-muted-foreground uppercase">Optativas</p>
+                 <p className="text-lg font-bold">{getCargaHorariaOptativa()}h</p>
+               </div>
+               <div className="text-right">
+                 <p className="text-xs font-medium text-muted-foreground uppercase">Total Geral</p>
+                 <p className="text-xl font-black text-primary">{getTotalCargaHoraria()}h</p>
+               </div>
             </div>
           </div>
 
@@ -99,8 +128,13 @@ export function ViewGradeModal({ grade, open, onClose }: ViewGradeModalProps) {
                             key={materia.id}
                             className="flex justify-between items-center p-3 bg-slate-50 rounded-md"
                           >
-                            <div>
-                              <p className="font-medium">{materia.nome}</p>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{materia.nome}</p>
+                                <Badge variant={materia.tipo === 'optativa' ? 'secondary' : 'default'} className="text-[10px] h-5 px-1.5">
+                                    {materia.tipo === 'optativa' ? 'Optativa' : 'Obrigatória'}
+                                </Badge>
+                              </div>
                               <p className="text-sm text-muted-foreground">Código: {materia.codigo}</p>
                             </div>
                             <div className="text-right">

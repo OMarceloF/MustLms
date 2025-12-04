@@ -9,6 +9,7 @@ import { Checkbox } from "../components/ui/checkbox"
 import { useToast } from "../hooks/use-toast"
 import type { GradeCurricular } from "./grade" // Importando o tipo do componente principal
 import { Loader2 } from "lucide-react"
+import { Badge } from "../components/ui/badge"
 
 // --- CONSTANTES E TIPAGEM ---
 const API_BASE_URL = 'http://localhost:3001/api';
@@ -26,6 +27,7 @@ type Materia = {
   nome: string
   codigo: string
   cargaHoraria: number
+  tipo: 'obrigatoria' | 'optativa'
 }
 
 type Periodo = {
@@ -231,11 +233,16 @@ export function EditGradeModal({ grade, open, onClose, onSuccess }: EditGradeMod
                                     disabled={saving}
                                     />
                                     <label htmlFor={`edit-chk-${periodoBase.id}-${materia.id}`} className="flex-1 cursor-pointer">
-                                    <p className="font-medium">{materia.nome}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-medium">{materia.nome}</p>
+                                        <Badge variant={materia.tipo === 'optativa' ? 'secondary' : 'outline'} className="text-[10px] h-5 px-1">
+                                            {materia.tipo === 'optativa' ? 'Optativa' : 'Obrigatória'}
+                                        </Badge>
+                                    </div>
                                     <p className="text-sm text-muted-foreground">
                                         {materia.codigo} • {materia.cargaHoraria}h
                                     </p>
-                                    </label>
+                                </label>
                                 </div>
                                 );
                             })}
