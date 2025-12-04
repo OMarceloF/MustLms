@@ -12,27 +12,20 @@ import { Label } from "../components/ui/label"
 import { Textarea } from "../components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { useToast } from "../hooks/use-toast"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import TopbarGestorAuto from '../components/TopbarGestorAuto';
 import SidebarGestor from "../components/Sidebar";
 import { useAuth } from "../../../hooks/useAuth";
 
-// Interfaces e Mocks
-interface Professor { id: string; nome: string; }
-interface Unidade { id: string; nome: string; }
-
-// Interface do formulário atualizada com o campo 'sigla'
+// Interface do formulário atualizada (sem coordenador/unidade)
 interface CursoFormData {
     nome: string;
-    sigla: string; // <-- CAMPO ADICIONADO
+    sigla: string;
     tipo: string;
     area: string;
     cargaHoraria: string;
     duracao: string;
     modalidade: string;
-    coordenador: string;
-    viceCoordenador: string;
-    unidade: string;
     objetivos: string;
     perfilEgresso: string;
     justificativa: string;
@@ -40,17 +33,6 @@ interface CursoFormData {
     status: string;
     linkDivulgacao: string;
 }
-
-const mockProfessores: Professor[] = [
-    { id: "1", nome: "Dr. João Silva" },
-    { id: "2", nome: "Dra. Maria Santos" },
-    { id: "3", nome: "Dr. Pedro Costa" },
-];
-const mockUnidades: Unidade[] = [
-    { id: "1", nome: "Instituto de Ciências Exatas" },
-    { id: "2", nome: "Faculdade de Ciências Humanas" },
-    { id: "3", nome: "Centro de Ciências Biológicas" },
-];
 
 export default function AdicionarCursoPage() {
     const { id } = useParams<{ id?: string }>();
@@ -63,18 +45,15 @@ export default function AdicionarCursoPage() {
     const [isLoading, setIsLoading] = useState(isEditMode);
     const [errors, setErrors] = useState<Partial<Record<keyof CursoFormData, string>>>({});
 
-    // Estado inicial do formulário atualizado com 'sigla'
+    // Estado inicial do formulário (sem coordenador/unidade)
     const [formData, setFormData] = useState<CursoFormData>({
         nome: "",
-        sigla: "", // <-- CAMPO ADICIONADO
+        sigla: "",
         tipo: "",
         area: "",
         cargaHoraria: "",
         duracao: "",
         modalidade: "",
-        coordenador: "",
-        viceCoordenador: "",
-        unidade: "",
         objetivos: "",
         perfilEgresso: "",
         justificativa: "",
@@ -94,18 +73,15 @@ export default function AdicionarCursoPage() {
                     const response = await axios.get(`/api/cursos/${id}`);
                     const curso = response.data;
 
-                    // Mapeia os dados do backend para o estado do formulário, incluindo 'sigla'
+                    // Mapeia os dados do backend para o estado do formulário
                     setFormData({
                         nome: curso.nome || "",
-                        sigla: curso.sigla || "", // <-- CAMPO ADICIONADO
+                        sigla: curso.sigla || "",
                         tipo: curso.tipo || "",
                         area: curso.area_conhecimento || "",
                         cargaHoraria: String(curso.carga_horaria || ""),
                         duracao: String(curso.duracao_semestres || ""),
                         modalidade: curso.modalidade || "",
-                        coordenador: String(curso.coordenador_id || ""),
-                        viceCoordenador: String(curso.vice_coordenador_id || ""),
-                        unidade: String(curso.unidade_id || ""),
                         objetivos: curso.objetivos || "",
                         perfilEgresso: curso.perfil_egresso || "",
                         justificativa: curso.justificativa || "",
@@ -135,15 +111,14 @@ export default function AdicionarCursoPage() {
     const validateForm = (): boolean => {
         const newErrors: Partial<Record<keyof CursoFormData, string>> = {};
         if (!formData.nome.trim()) newErrors.nome = "Nome do curso é obrigatório";
-        if (!formData.sigla.trim()) newErrors.sigla = "A sigla do curso é obrigatória"; // <-- VALIDAÇÃO ADICIONADA
-        // Adicione outras validações essenciais aqui
+        if (!formData.sigla.trim()) newErrors.sigla = "A sigla do curso é obrigatória";
+        
         if (!formData.tipo) newErrors.tipo = "O tipo de curso é obrigatório";
         if (!formData.area) newErrors.area = "A área de conhecimento é obrigatória";
         if (!formData.cargaHoraria) newErrors.cargaHoraria = "A carga horária é obrigatória";
         if (!formData.duracao) newErrors.duracao = "A duração é obrigatória";
         if (!formData.modalidade) newErrors.modalidade = "A modalidade é obrigatória";
-        if (!formData.coordenador) newErrors.coordenador = "O coordenador é obrigatório";
-        if (!formData.unidade) newErrors.unidade = "A unidade é obrigatória";
+        // Validações de coordenador e unidade removidas
         if (!formData.objetivos) newErrors.objetivos = "Os objetivos são obrigatórios";
         if (!formData.perfilEgresso) newErrors.perfilEgresso = "O perfil do egresso é obrigatório";
         if (!formData.justificativa) newErrors.justificativa = "A justificativa é obrigatória";
@@ -165,18 +140,16 @@ export default function AdicionarCursoPage() {
             return;
         }
 
-        // Payload para a API, incluindo 'sigla'
+        // Payload para a API (Campos de coordenação removidos ou enviados como null se necessário, mas aqui removemos do envio)
         const apiPayload = {
             nome: formData.nome,
-            sigla: formData.sigla, // <-- CAMPO ADICIONADO
+            sigla: formData.sigla,
             tipo: formData.tipo,
             area_conhecimento: formData.area,
             carga_horaria: Number(formData.cargaHoraria),
             duracao_semestres: Number(formData.duracao),
             modalidade: formData.modalidade,
-            coordenador_id: Number(formData.coordenador),
-            vice_coordenador_id: formData.viceCoordenador ? Number(formData.viceCoordenador) : null,
-            unidade_id: Number(formData.unidade),
+            // Coordenadores e Unidade removidos do payload do frontend
             objetivos: formData.objetivos,
             perfil_egresso: formData.perfilEgresso,
             justificativa: formData.justificativa,
@@ -258,7 +231,6 @@ export default function AdicionarCursoPage() {
                                         <div className="mb-8">
                                             <h2 className="mb-6 text-2xl font-semibold text-foreground">Informações Básicas</h2>
                                             <div className="grid gap-6">
-                                                {/* Layout atualizado para Nome e Sigla */}
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                     <div className="md:col-span-2 grid gap-2">
                                                         <Label htmlFor="nome" className="text-foreground">Nome do Curso <span className="text-destructive">*</span></Label>
@@ -327,46 +299,6 @@ export default function AdicionarCursoPage() {
                                                         </Select>
                                                         {errors.modalidade && <p className="text-sm text-destructive">{errors.modalidade}</p>}
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Coordenação e Vínculos */}
-                                        <div className="mb-8">
-                                            <h2 className="mb-6 text-2xl font-semibold text-foreground">Coordenação e Vínculos</h2>
-                                            <div className="grid gap-6">
-                                                <div className="grid gap-4 md:grid-cols-2">
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="coordenador" className="text-foreground">Coordenador do Curso <span className="text-destructive">*</span></Label>
-                                                        <Select value={formData.coordenador} onValueChange={(value) => handleInputChange("coordenador", value)}>
-                                                            <SelectTrigger id="coordenador" className="bg-background"><SelectValue placeholder="Selecione o coordenador" /></SelectTrigger>
-                                                            <SelectContent>
-                                                                {mockProfessores.map((prof) => (<SelectItem key={prof.id} value={prof.id}>{prof.nome}</SelectItem>))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                        {errors.coordenador && <p className="text-sm text-destructive">{errors.coordenador}</p>}
-                                                    </div>
-
-                                                    <div className="grid gap-2">
-                                                        <Label htmlFor="viceCoordenador" className="text-foreground">Vice-Coordenador (opcional)</Label>
-                                                        <Select value={formData.viceCoordenador} onValueChange={(value) => handleInputChange("viceCoordenador", value)}>
-                                                            <SelectTrigger id="viceCoordenador" className="bg-background"><SelectValue placeholder="Selecione o vice-coordenador" /></SelectTrigger>
-                                                            <SelectContent>
-                                                                {mockProfessores.map((prof) => (<SelectItem key={prof.id} value={prof.id}>{prof.nome}</SelectItem>))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="unidade" className="text-foreground">Unidade/Instituto Vinculado <span className="text-destructive">*</span></Label>
-                                                    <Select value={formData.unidade} onValueChange={(value) => handleInputChange("unidade", value)}>
-                                                        <SelectTrigger id="unidade" className="bg-background"><SelectValue placeholder="Selecione a unidade" /></SelectTrigger>
-                                                        <SelectContent>
-                                                            {mockUnidades.map((unidade) => (<SelectItem key={unidade.id} value={unidade.id}>{unidade.nome}</SelectItem>))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    {errors.unidade && <p className="text-sm text-destructive">{errors.unidade}</p>}
                                                 </div>
                                             </div>
                                         </div>

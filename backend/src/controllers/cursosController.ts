@@ -18,10 +18,10 @@ interface ICursoEvento extends RowDataPacket {
  * @route POST /api/cursos/adicionar
  */
 export const adicionarCurso = async (req: Request, res: Response) => {
+    // Coordenador e Unidade removidos do destructuring pois não vêm mais do front
     const {
         nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
-        coordenador_id, vice_coordenador_id, unidade_id, objetivos, perfil_egresso,
-        justificativa, ano_inicio, status, link_divulgacao
+        objetivos, perfil_egresso, justificativa, ano_inicio, status, link_divulgacao
     } = req.body;
 
     try {
@@ -32,9 +32,11 @@ export const adicionarCurso = async (req: Request, res: Response) => {
                 justificativa, ano_inicio, status, link_divulgacao
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
+        
+        // Passando null para coordenador, vice e unidade
         const values = [
             nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
-            coordenador_id, vice_coordenador_id || null, unidade_id, objetivos, perfil_egresso,
+            null, null, null, objetivos, perfil_egresso,
             justificativa, ano_inicio, status, link_divulgacao
         ];
 
@@ -170,8 +172,7 @@ export const atualizarCurso = async (req: Request, res: Response) => {
     const { id } = req.params;
     const {
         nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
-        coordenador_id, vice_coordenador_id, unidade_id, objetivos, perfil_egresso,
-        justificativa, ano_inicio, status, link_divulgacao
+        objetivos, perfil_egresso, justificativa, ano_inicio, status, link_divulgacao
     } = req.body;
 
     try {
@@ -183,9 +184,11 @@ export const atualizarCurso = async (req: Request, res: Response) => {
                 status = ?, link_divulgacao = ?
             WHERE id = ?;
         `;
+        
+        // Passando null para coordenador, vice e unidade
         const values = [
             nome, sigla, tipo, area_conhecimento, carga_horaria, duracao_semestres, modalidade,
-            coordenador_id, vice_coordenador_id || null, unidade_id, objetivos, perfil_egresso,
+            null, null, null, objetivos, perfil_egresso,
             justificativa, ano_inicio, status, link_divulgacao, id
         ];
 
@@ -340,7 +343,7 @@ export const salvarPPC = async (req: Request, res: Response) => {
 
 /**
  * @description Lista todas as turmas vinculadas a uma disciplina específica,
- *              opcionalmente filtrando por período letivo.
+ * opcionalmente filtrando por período letivo.
  * @route GET /api/disciplinas/:disciplinaId/turmas
  */
 export const listarTurmasPorDisciplina = async (req: Request, res: Response) => {
@@ -352,7 +355,6 @@ export const listarTurmasPorDisciplina = async (req: Request, res: Response) => 
     }
 
     try {
-        // *** CORREÇÃO: Adicionado t.semestre_id ao SELECT ***
         let query = `
             SELECT 
                 t.id, 
