@@ -646,13 +646,23 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
         let query = "";
         let params: any[] = [];
 
-        // Adicionado d.tipo no SELECT e GROUP BY
+        // Subquery para buscar pré-requisitos concatenados
+        const subQueryRequisitos = `
+            (SELECT GROUP_CONCAT(cd_req.nome SEPARATOR ', ')
+             FROM disciplina_requisitos dr
+             JOIN cursos_disciplinas cd_req ON dr.requisito_id = cd_req.id
+             WHERE dr.disciplina_id = d.id
+            ) as requisitos_nomes
+        `;
+
         if (grade_curricular_id) {
             query = `
                 SELECT 
                     d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
                     gpd.periodo_numero as semestre,
                     at.status_vinculo,
+                    t.nome_turma,
+                    ${subQueryRequisitos},
                     (SELECT SUM(n.nota) FROM notas n WHERE n.materia_id = d.id AND n.aluno_id = ?) as nota_final
                 FROM grade_periodo_disciplinas gpd
                 JOIN cursos_disciplinas d ON gpd.disciplina_id = d.id
@@ -661,7 +671,7 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
                 WHERE gpd.grade_id = ?
                 GROUP BY 
                     d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
-                    gpd.periodo_numero, at.status_vinculo
+                    gpd.periodo_numero, at.status_vinculo, t.nome_turma
                 ORDER BY gpd.periodo_numero ASC, d.nome ASC
             `;
             params = [alunoId, alunoId, grade_curricular_id];
@@ -671,6 +681,8 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
                     d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
                     d.semestre,
                     at.status_vinculo,
+                    t.nome_turma,
+                    ${subQueryRequisitos},
                     (SELECT SUM(n.nota) FROM notas n WHERE n.materia_id = d.id AND n.aluno_id = ?) as nota_final
                 FROM cursos_disciplinas d
                 LEFT JOIN turmas t ON t.disciplina_id = d.id 
@@ -678,7 +690,7 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
                 WHERE d.curso_id = ?
                 GROUP BY 
                     d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
-                    d.semestre, at.status_vinculo
+                    d.semestre, at.status_vinculo, t.nome_turma
                 ORDER BY d.semestre ASC, d.nome ASC
             `;
             params = [alunoId, alunoId, curso_posgraduacao_id];
@@ -691,8 +703,9 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
         rows.forEach((row) => {
             if (disciplinasMap.has(row.id)) {
                 const existing = disciplinasMap.get(row.id);
+                // Prioriza se tiver nota ou vinculo ativo
                 if ((!existing.nota && row.nota_final) || (existing.status === 'Pendente' && row.status_vinculo)) {
-                    // Atualiza se encontrar um registro mais completo
+                    // Substitui pelo registro mais completo
                 } else {
                     return;
                 }
@@ -706,8 +719,7 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
             
             if (nota >= 60) status = "Concluída";
 
-            // LÓGICA DE CORREÇÃO:
-            // Se for optativa, força semestre = 0 para separar visualmente
+            // Se for optativa, força semestre 0 para separar visualmente
             const semestreFinal = row.tipo === 'optativa' ? 0 : (row.semestre || 1);
 
             disciplinasMap.set(row.id, {
@@ -719,7 +731,10 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
                 semestre: semestreFinal, 
                 status: status,
                 nota: nota > 0 ? nota.toFixed(1) : null,
-                ementa: row.ementa || "Ementa não disponível."
+                ementa: row.ementa || "Ementa não disponível.",
+                // Novos campos
+                turma: row.nome_turma || null, 
+                requisitos: row.requisitos_nomes ? row.requisitos_nomes.split(', ') : []
             });
         });
 
