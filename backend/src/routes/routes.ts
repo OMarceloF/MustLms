@@ -42,7 +42,8 @@ import {
   getProgressoMatriz,
   getProfessoresTurmasAluno,
   getPPCDoAluno,
-  getEvolucaoCurso
+  getEvolucaoCurso,
+  getRelatoriosAluno,
 } from '../controllers/alunosControllerNovo';
 import { getDashboardGestorData } from '../controllers/homeGestorController';
 // import { criarAluno } from '../controllers/criarAlunoController';
@@ -1536,7 +1537,7 @@ router.get('/api/alunos/:alunoId/professores-turmas', getProfessoresTurmasAluno)
 router.get('/api/alunos/:alunoId/ppc', getPPCDoAluno);
 router.get('/api/alunos/:alunoId/evolucao', getEvolucaoCurso);
 router.get('/api/disciplinas/:id/aulas', listarAulasPorDisciplina);
-
+router.get('/api/alunos/:alunoId/relatorios-academicos', getRelatoriosAluno);
 
 
 
