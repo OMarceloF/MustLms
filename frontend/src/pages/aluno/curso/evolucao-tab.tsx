@@ -7,7 +7,8 @@ import axios from "axios"
 import { Card, CardContent, CardHeader, CardTitle } from "../../gestor/components/ui/card"
 import { Progress } from "../../gestor/components/ui/progress"
 import { Badge } from "../../gestor/components/ui/badge"
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis } from "recharts"
+// Import LabelList para exibir valores nas barras
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis, LabelList } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../../gestor/components/ui/chart"
 import { useAuth } from "../../../hooks/useAuth"
 import { AlertCircle, Loader2 } from "lucide-react"
@@ -78,7 +79,7 @@ export function EvolucaoCursoTab() {
 
   if (!overview) return null
 
-  // Garante conversão para número
+  // Normalização para o gráfico
   const chartPerformance = performance.map(p => ({
     ...p,
     student: Number(p.student),
@@ -87,8 +88,10 @@ export function EvolucaoCursoTab() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Cards de Status e Progresso */}
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Status */}
+        
+        {/* CARD 1: Status */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold text-slate-800">Status do Curso</CardTitle>
@@ -103,7 +106,7 @@ export function EvolucaoCursoTab() {
           </CardContent>
         </Card>
 
-        {/* Progresso */}
+        {/* CARD 2: Progresso Individual */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold text-slate-800">Progresso Individual</CardTitle>
@@ -121,7 +124,7 @@ export function EvolucaoCursoTab() {
           </CardContent>
         </Card>
 
-        {/* Créditos */}
+        {/* CARD 3: Créditos Concluídos */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold text-slate-800">Créditos Concluídos</CardTitle>
@@ -143,7 +146,7 @@ export function EvolucaoCursoTab() {
         </Card>
       </div>
 
-      {/* Gráfico de Desempenho (Sua Média vs Média da Turma) */}
+      {/* Gráfico de Desempenho */}
       <div className="grid gap-6 md:grid-cols-1">
         <Card className="border-slate-200 shadow-sm">
             <CardHeader>
@@ -156,10 +159,10 @@ export function EvolucaoCursoTab() {
                     student: { label: "Sua Média", color: "#2563eb" }, 
                     class: { label: "Média da Turma", color: "#94a3b8" }, 
                     }}
-                    className="h-[350px] w-full"
+                    className="h-[400px] w-full"
                 >
                     <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartPerformance} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                    <BarChart data={chartPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200" />
                         <XAxis 
                             dataKey="semester" 
@@ -180,9 +183,16 @@ export function EvolucaoCursoTab() {
                             cursor={{ fill: '#f1f5f9' }}
                         />
                         <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                        <Bar dataKey="student" fill="#2563eb" name="Sua Média" radius={[4, 4, 0, 0]} barSize={50} />
-                        {/* Agora a barra da turma será renderizada com dados reais */}
-                        <Bar dataKey="class" fill="#94a3b8" name="Média da Turma" radius={[4, 4, 0, 0]} barSize={50} />
+                        
+                        {/* Barra do Aluno com Label */}
+                        <Bar dataKey="student" fill="#2563eb" name="Sua Média" radius={[4, 4, 0, 0]} barSize={50}>
+                            <LabelList dataKey="student" position="top" className="text-xs font-bold fill-slate-700" formatter={(val: number) => val > 0 ? val : ''} />
+                        </Bar>
+
+                        {/* Barra da Turma com Label */}
+                        <Bar dataKey="class" fill="#94a3b8" name="Média da Turma" radius={[4, 4, 0, 0]} barSize={50}>
+                            <LabelList dataKey="class" position="top" className="text-xs font-bold fill-slate-700" formatter={(val: number) => val > 0 ? val : ''} />
+                        </Bar>
                     </BarChart>
                     </ResponsiveContainer>
                 </ChartContainer>

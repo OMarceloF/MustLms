@@ -908,7 +908,7 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
     const connection = await pool.getConnection();
 
     try {
-        // 1. Buscar vínculo para saber Grade, Curso e Turma de Ingresso
+        // 1. Buscar dados do vínculo (incluindo a turma de ingresso)
         const [vinculo]: any[] = await connection.query(`
             SELECT grade_curricular_id, curso_posgraduacao_id, turmas_ingresso_id, status_matricula
             FROM vincular_aluno_curso 
@@ -923,7 +923,7 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
 
         const { grade_curricular_id, curso_posgraduacao_id, turmas_ingresso_id, status_matricula } = vinculo[0];
 
-        // 2. Calcular TOTAIS (Disciplinas e Créditos) - Mantido igual
+        // 2. Calcular TOTAIS (Lógica mantida da versão anterior)
         let queryTotais = "";
         let paramsTotais: any[] = [];
 
@@ -943,11 +943,10 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
             `;
             paramsTotais = [curso_posgraduacao_id];
         }
-        
         const [rowsTotais]: any[] = await connection.query(queryTotais, paramsTotais);
         const totais = rowsTotais[0];
 
-        // 3. Calcular CONCLUÍDOS - Mantido igual
+        // 3. Calcular CONCLUÍDOS (Lógica mantida)
         const queryConcluidas = `
             SELECT 
                 COUNT(*) as disciplinas_concluidas,
@@ -966,11 +965,10 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
                 HAVING nota_final >= 60
             ) as materias_aprovadas
         `;
-        
         const [rowsConcluidas]: any[] = await connection.query(queryConcluidas, [alunoId, grade_curricular_id, curso_posgraduacao_id]);
         const concluidas = rowsConcluidas[0] || { disciplinas_concluidas: 0, creditos_concluidos: 0 };
 
-        // 4. Calcular MÉDIA DO ALUNO por Semestre
+        // 4. Calcular MÉDIA DO ALUNO (Sua Média)
         const queryStudentPerformance = `
             SELECT 
                 cpl.nome as semester,
@@ -992,7 +990,8 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
         `;
         const [rowsStudentPerf]: any[] = await connection.query(queryStudentPerformance, [alunoId]);
 
-        // 5. Calcular MÉDIA DA TURMA DE INGRESSO por Semestre (NOVA LÓGICA)
+        // 5. Calcular MÉDIA DA TURMA DE INGRESSO (Média da Turma)
+        // Busca notas de todos os alunos que pertencem à mesma turma_ingresso_id
         let rowsClassPerf: any[] = [];
         if (turmas_ingresso_id) {
             const queryClassPerformance = `
@@ -1000,7 +999,6 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
                     cpl.nome as semester,
                     AVG(sub.nota_final_materia) as class_avg
                 FROM (
-                    -- Soma notas por aluno/matéria para todos os alunos da mesma turma de ingresso
                     SELECT 
                         n.aluno_id,
                         t.semestre_id,
@@ -1009,8 +1007,7 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
                     FROM notas n
                     JOIN turmas t ON n.turma_id = t.id
                     JOIN vincular_aluno_curso vac ON n.aluno_id = vac.aluno_id
-                    WHERE vac.turmas_ingresso_id = ? 
-                      AND vac.status_matricula IN ('Ativa', 'Concluída') -- Filtra apenas alunos ativos/concluintes na média
+                    WHERE vac.turmas_ingresso_id = ?
                     GROUP BY n.aluno_id, t.semestre_id, n.materia_id
                 ) as sub
                 JOIN configuracoes_periodos_letivos cpl ON sub.semestre_id = cpl.id
@@ -1020,26 +1017,25 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
             rowsClassPerf = rowsClass;
         }
 
-        // 6. Mesclar dados de Aluno e Turma para o gráfico
-        // Cria um mapa com todos os semestres encontrados
+        // 6. Mesclar dados para o gráfico
         const performanceMap = new Map();
 
-        // Adiciona dados do aluno
+        // Insere dados do aluno
         rowsStudentPerf.forEach((row: any) => {
             performanceMap.set(row.semester, {
                 semester: row.semester,
                 student: Number(row.student_avg || 0).toFixed(1),
-                class: 0 
+                class: 0
             });
         });
 
-        // Adiciona/Atualiza dados da turma
+        // Insere/Atualiza dados da turma
         rowsClassPerf.forEach((row: any) => {
             if (performanceMap.has(row.semester)) {
                 const existing = performanceMap.get(row.semester);
                 existing.class = Number(row.class_avg || 0).toFixed(1);
             } else {
-                // Se o aluno não tem nota no semestre, mas a turma tem (raro na visualização do aluno, mas possível)
+                // Caso existam dados da turma em um semestre que o aluno ainda não cursou
                 performanceMap.set(row.semester, {
                     semester: row.semester,
                     student: 0,
@@ -1048,8 +1044,8 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
             }
         });
 
-        // Converte mapa para array ordenado (a query já ordenou por data, mas o map pode perder ordem de inserção dependendo do JS runtime, melhor garantir no front ou aqui)
-        // Como o rowsStudentPerf já vem ordenado por data, a ordem de inserção do Map tende a ser respeitada.
+        // Ordenar (O Map preserva inserção, mas para garantir, podemos ordenar se necessário)
+        // Como o aluno dita a ordem cronológica principal, geralmente o Array.from já resolve.
         const performanceData = Array.from(performanceMap.values());
 
         // 7. Montar Resposta Final
