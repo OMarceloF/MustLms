@@ -41,7 +41,7 @@ export function EvolucaoCursoTab() {
       if (!usuarioId) return
 
       try {
-        const apiUrl = 'http://localhost:3001' // Porta correta
+        const apiUrl = 'http://localhost:3001'
         const response = await axios.get(`${apiUrl}/api/alunos/${usuarioId}/evolucao`)
         
         setOverview(response.data.overview)
@@ -58,10 +58,27 @@ export function EvolucaoCursoTab() {
     fetchData()
   }, [usuarioId])
 
-  if (loading) return <div className="p-8 text-center text-slate-500">Carregando...</div>
-  if (error) return <div className="p-8 text-center text-red-500">{error}</div>
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-slate-500">
+        <Loader2 className="h-8 w-8 animate-spin mb-2" />
+        <p>Carregando dados de evolução...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center flex flex-col items-center gap-2 text-red-500">
+        <AlertCircle className="h-8 w-8" />
+        <p>{error}</p>
+      </div>
+    )
+  }
+
   if (!overview) return null
 
+  // Garante conversão para número
   const chartPerformance = performance.map(p => ({
     ...p,
     student: Number(p.student),
@@ -86,7 +103,7 @@ export function EvolucaoCursoTab() {
           </CardContent>
         </Card>
 
-        {/* Progresso Individual */}
+        {/* Progresso */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold text-slate-800">Progresso Individual</CardTitle>
@@ -104,7 +121,7 @@ export function EvolucaoCursoTab() {
           </CardContent>
         </Card>
 
-        {/* Créditos Concluídos */}
+        {/* Créditos */}
         <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-bold text-slate-800">Créditos Concluídos</CardTitle>
@@ -126,7 +143,7 @@ export function EvolucaoCursoTab() {
         </Card>
       </div>
 
-      {/* Gráfico */}
+      {/* Gráfico de Desempenho (Sua Média vs Média da Turma) */}
       <div className="grid gap-6 md:grid-cols-1">
         <Card className="border-slate-200 shadow-sm">
             <CardHeader>
@@ -137,25 +154,41 @@ export function EvolucaoCursoTab() {
                 <ChartContainer
                     config={{
                     student: { label: "Sua Média", color: "#2563eb" }, 
-                    class: { label: "Turma", color: "#94a3b8" }, 
+                    class: { label: "Média da Turma", color: "#94a3b8" }, 
                     }}
                     className="h-[350px] w-full"
                 >
                     <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartPerformance} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200" />
-                        <XAxis dataKey="semester" className="text-xs font-medium" tickLine={false} axisLine={false} />
-                        <YAxis className="text-xs font-medium" tickLine={false} axisLine={false} domain={[0, 100]} />
-                        <ChartTooltip content={<ChartTooltipContent />} cursor={{ fill: '#f1f5f9' }} />
+                        <XAxis 
+                            dataKey="semester" 
+                            className="text-xs font-medium" 
+                            tickLine={false} 
+                            axisLine={false}
+                            tick={{ fill: '#64748b' }}
+                        />
+                        <YAxis 
+                            className="text-xs font-medium" 
+                            tickLine={false} 
+                            axisLine={false} 
+                            tick={{ fill: '#64748b' }}
+                            domain={[0, 100]} 
+                        />
+                        <ChartTooltip 
+                            content={<ChartTooltipContent />} 
+                            cursor={{ fill: '#f1f5f9' }}
+                        />
                         <Legend wrapperStyle={{ paddingTop: '20px' }} />
                         <Bar dataKey="student" fill="#2563eb" name="Sua Média" radius={[4, 4, 0, 0]} barSize={50} />
+                        {/* Agora a barra da turma será renderizada com dados reais */}
                         <Bar dataKey="class" fill="#94a3b8" name="Média da Turma" radius={[4, 4, 0, 0]} barSize={50} />
                     </BarChart>
                     </ResponsiveContainer>
                 </ChartContainer>
             ) : (
                 <div className="h-[300px] flex items-center justify-center text-slate-400 border border-dashed rounded-lg bg-slate-50">
-                    Sem dados de notas suficientes.
+                    Sem dados de notas suficientes para gerar o gráfico.
                 </div>
             )}
             </CardContent>
