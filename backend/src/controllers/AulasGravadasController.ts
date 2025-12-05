@@ -160,3 +160,35 @@ export const excluirAulaGravada = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erro ao excluir aula gravada." })
   }
 }
+
+// ============================================================================
+// 🔹 LISTAR AULAS POR DISCIPLINA (PARA O ALUNO)
+// ============================================================================
+export const listarAulasPorDisciplina = async (req: Request, res: Response) => {
+  const { id } = req.params; // ID da disciplina
+
+  if (!id) {
+    return res.status(400).json({ error: "ID da disciplina é obrigatório." });
+  }
+
+  try {
+    // Busca apenas as aulas da disciplina específica
+    const [rows] = await db.query<RowDataPacket[]>(`
+      SELECT 
+        id,
+        titulo,
+        descricao,
+        data,
+        link,
+        arquivo
+      FROM aulas_gravadas
+      WHERE disciplina_id = ?
+      ORDER BY data ASC
+    `, [id]);
+
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar aulas da disciplina:", error);
+    res.status(500).json({ error: "Erro interno ao buscar aulas." });
+  }
+}

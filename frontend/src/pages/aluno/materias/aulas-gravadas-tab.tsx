@@ -1,145 +1,175 @@
+// frontend/src/pages/aluno/curso/aulas-gravadas-tab.tsx
+
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Button } from "../components/ui/button"
-import { Badge } from "../components/ui/badge"
-import { Play, Clock, Calendar, ExternalLink, CheckCircle2, Circle } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useParams } from "react-router-dom"
+import axios from "axios"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../gestor/components/ui/card"
+import { Button } from "../../gestor/components/ui/button"
+import { Badge } from "../../gestor/components/ui/badge"
+import { Play, Clock, Calendar, ExternalLink, CheckCircle2, Circle, Video, AlertCircle, Loader2 } from "lucide-react"
 
 interface AulaGravada {
   id: string
   titulo: string
   data: string
-  duracao: string
   link: string
-  assistida: boolean
   descricao?: string
+  // Campos calculados/padrão (já que não existem no banco ainda)
+  duracao?: string 
+  assistida: boolean
 }
 
-const aulasGravadas: AulaGravada[] = [
-  {
-    id: "1",
-    titulo: "Introdução à Inteligência Artificial",
-    data: "05/03/2025",
-    duracao: "1h 45min",
-    link: "https://youtube.com/watch?v=example1",
-    assistida: true,
-    descricao: "Conceitos fundamentais, história e aplicações da IA",
-  },
-  {
-    id: "2",
-    titulo: "Agentes Inteligentes e Ambientes",
-    data: "12/03/2025",
-    duracao: "2h 10min",
-    link: "https://youtube.com/watch?v=example2",
-    assistida: true,
-    descricao: "Tipos de agentes, racionalidade e estrutura de ambientes",
-  },
-  {
-    id: "3",
-    titulo: "Algoritmos de Busca - Parte 1",
-    data: "19/03/2025",
-    duracao: "1h 55min",
-    link: "https://youtube.com/watch?v=example3",
-    assistida: true,
-    descricao: "Busca não informada: BFS, DFS, UCS",
-  },
-  {
-    id: "4",
-    titulo: "Algoritmos de Busca - Parte 2",
-    data: "26/03/2025",
-    duracao: "2h 00min",
-    link: "https://youtube.com/watch?v=example4",
-    assistida: false,
-    descricao: "Busca informada: A*, heurísticas e otimizações",
-  },
-  {
-    id: "5",
-    titulo: "Introdução ao Machine Learning",
-    data: "02/04/2025",
-    duracao: "2h 15min",
-    link: "https://youtube.com/watch?v=example5",
-    assistida: false,
-    descricao: "Conceitos básicos, tipos de aprendizado e aplicações",
-  },
-  {
-    id: "6",
-    titulo: "Redes Neurais Artificiais",
-    data: "09/04/2025",
-    duracao: "2h 30min",
-    link: "https://youtube.com/watch?v=example6",
-    assistida: false,
-    descricao: "Perceptron, backpropagation e arquiteturas básicas",
-  },
-]
-
 export function AulasGravadasTab() {
-  const assistidas = aulasGravadas.filter((aula) => aula.assistida).length
-  const total = aulasGravadas.length
+  const { id } = useParams() // Pega o ID da disciplina da URL (/aluno/materias/:id)
+  const [aulas, setAulas] = useState<AulaGravada[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    const fetchAulas = async () => {
+      if (!id) return;
+
+      try {
+        const apiUrl = 'http://localhost:3001'; // Ajuste conforme a porta do seu backend
+        const response = await axios.get(`${apiUrl}/api/disciplinas/${id}/aulas`)
+        
+        // Mapeia os dados do banco para o formato da interface
+        const aulasFormatadas = response.data.map((aula: any) => ({
+          id: String(aula.id),
+          titulo: aula.titulo,
+          // Formata a data para PT-BR
+          data: new Date(aula.data).toLocaleDateString('pt-BR'),
+          link: aula.link,
+          descricao: aula.descricao,
+          assistida: false, // Default: o banco ainda não tem controle de visualização
+          duracao: "N/A"    // Default: o banco não tem duração
+        }))
+
+        setAulas(aulasFormatadas)
+        setError("")
+      } catch (err) {
+        console.error("Erro ao buscar aulas:", err)
+        setError("Não foi possível carregar as aulas gravadas.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAulas()
+  }, [id])
+
+  // Cálculos de progresso (Mockado em 0% até haver backend para isso)
+  const assistidas = aulas.filter((aula) => aula.assistida).length
+  const total = aulas.length
+  const progresso = total > 0 ? (assistidas / total) * 100 : 0
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-slate-500">
+        <Loader2 className="h-8 w-8 animate-spin mb-2" />
+        <p>Carregando aulas...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-red-500 gap-2">
+        <AlertCircle className="h-8 w-8" />
+        <p>{error}</p>
+      </div>
+    )
+  }
+
+  if (aulas.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-lg border border-dashed border-slate-200 text-slate-500 mt-4">
+        <Video className="h-10 w-10 mb-2 opacity-20" />
+        <p>Nenhuma aula gravada disponível para esta disciplina.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Summary Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Progresso de Visualização</CardTitle>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      
+      {/* Card de Progresso */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg font-bold text-slate-800">Progresso de Visualização</CardTitle>
           <CardDescription>
             {assistidas} de {total} aulas assistidas
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
-              <div className="h-full bg-primary transition-all" style={{ width: `${(assistidas / total) * 100}%` }} />
+          <div className="flex items-center gap-3">
+            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+              <div 
+                className="h-full bg-green-600 transition-all duration-500" 
+                style={{ width: `${progresso}%` }} 
+              />
             </div>
-            <span className="text-sm font-medium">{Math.round((assistidas / total) * 100)}%</span>
+            <span className="text-sm font-bold text-slate-700 w-10 text-right">{Math.round(progresso)}%</span>
           </div>
         </CardContent>
       </Card>
 
-      {/* Classes List */}
-      <div className="space-y-3">
-        {aulasGravadas.map((aula) => (
-          <Card key={aula.id} className={aula.assistida ? "bg-muted/30" : ""}>
-            <CardHeader>
+      {/* Lista de Aulas */}
+      <div className="space-y-4">
+        {aulas.map((aula) => (
+          <Card key={aula.id} className={`border-slate-200 shadow-sm transition-colors ${aula.assistida ? "bg-slate-50/50" : "hover:border-blue-200"}`}>
+            <CardHeader className="pb-3">
               <div className="flex items-start gap-4">
-                <div className="mt-1">
+                <div className="mt-1 shrink-0">
                   {aula.assistida ? (
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
+                    <CheckCircle2 className="h-5 w-5 text-green-600" />
                   ) : (
-                    <Circle className="h-5 w-5 text-muted-foreground" />
+                    <Circle className="h-5 w-5 text-slate-300" />
                   )}
                 </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <CardTitle className="text-base leading-tight">{aula.titulo}</CardTitle>
-                      {aula.descricao && <CardDescription className="mt-1.5">{aula.descricao}</CardDescription>}
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base font-semibold text-slate-800 leading-tight">
+                        {aula.titulo}
+                      </CardTitle>
+                      {aula.descricao && (
+                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                          {aula.descricao}
+                        </p>
+                      )}
                     </div>
                     {aula.assistida && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-200 border-none shrink-0">
                         Assistida
                       </Badge>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                  
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-3 text-xs text-slate-500 font-medium">
                     <span className="flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5" />
                       {aula.data}
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
-                      {aula.duracao}
-                    </span>
+                    {/* Exibe duração apenas se disponível */}
+                    {aula.duracao !== "N/A" && (
+                        <span className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
+                        {aula.duracao}
+                        </span>
+                    )}
                   </div>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="border-t pt-4">
-              <Button variant="default" size="sm" asChild>
+            <CardContent className="border-t border-slate-100 pt-4 bg-slate-50/30">
+              <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white" size="sm" asChild>
                 <a href={aula.link} target="_blank" rel="noopener noreferrer">
-                  <Play className="mr-2 h-4 w-4" />
+                  <Play className="mr-2 h-3.5 w-3.5 fill-current" />
                   Assistir Aula
-                  <ExternalLink className="ml-2 h-3 w-3" />
+                  <ExternalLink className="ml-2 h-3 w-3 opacity-70" />
                 </a>
               </Button>
             </CardContent>

@@ -908,7 +908,7 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
     const connection = await pool.getConnection();
 
     try {
-        // 1. Buscar vínculo para saber Grade, Curso e Turma de Ingresso
+        // 1. Buscar dados do vínculo (incluindo a turma de ingresso)
         const [vinculo]: any[] = await connection.query(`
             SELECT grade_curricular_id, curso_posgraduacao_id, turmas_ingresso_id, status_matricula
             FROM vincular_aluno_curso 
@@ -923,7 +923,7 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
 
         const { grade_curricular_id, curso_posgraduacao_id, turmas_ingresso_id, status_matricula } = vinculo[0];
 
-        // 2. Calcular TOTAIS (Disciplinas e Créditos) - Mantido igual
+        // 2. Calcular TOTAIS (Lógica mantida da versão anterior)
         let queryTotais = "";
         let paramsTotais: any[] = [];
 
@@ -943,11 +943,10 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
             `;
             paramsTotais = [curso_posgraduacao_id];
         }
-        
         const [rowsTotais]: any[] = await connection.query(queryTotais, paramsTotais);
         const totais = rowsTotais[0];
 
-        // 3. Calcular CONCLUÍDOS - Mantido igual
+        // 3. Calcular CONCLUÍDOS (Lógica mantida)
         const queryConcluidas = `
             SELECT 
                 COUNT(*) as disciplinas_concluidas,
@@ -966,11 +965,10 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
                 HAVING nota_final >= 60
             ) as materias_aprovadas
         `;
-        
         const [rowsConcluidas]: any[] = await connection.query(queryConcluidas, [alunoId, grade_curricular_id, curso_posgraduacao_id]);
         const concluidas = rowsConcluidas[0] || { disciplinas_concluidas: 0, creditos_concluidos: 0 };
 
-        // 4. Calcular MÉDIA DO ALUNO por Semestre
+        // 4. Calcular MÉDIA DO ALUNO (Sua Média)
         const queryStudentPerformance = `
             SELECT 
                 cpl.nome as semester,
@@ -992,7 +990,8 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
         `;
         const [rowsStudentPerf]: any[] = await connection.query(queryStudentPerformance, [alunoId]);
 
-        // 5. Calcular MÉDIA DA TURMA DE INGRESSO por Semestre (NOVA LÓGICA)
+        // 5. Calcular MÉDIA DA TURMA DE INGRESSO (Média da Turma)
+        // Busca notas de todos os alunos que pertencem à mesma turma_ingresso_id
         let rowsClassPerf: any[] = [];
         if (turmas_ingresso_id) {
             const queryClassPerformance = `
@@ -1000,7 +999,6 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
                     cpl.nome as semester,
                     AVG(sub.nota_final_materia) as class_avg
                 FROM (
-                    -- Soma notas por aluno/matéria para todos os alunos da mesma turma de ingresso
                     SELECT 
                         n.aluno_id,
                         t.semestre_id,
@@ -1009,8 +1007,7 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
                     FROM notas n
                     JOIN turmas t ON n.turma_id = t.id
                     JOIN vincular_aluno_curso vac ON n.aluno_id = vac.aluno_id
-                    WHERE vac.turmas_ingresso_id = ? 
-                      AND vac.status_matricula IN ('Ativa', 'Concluída') -- Filtra apenas alunos ativos/concluintes na média
+                    WHERE vac.turmas_ingresso_id = ?
                     GROUP BY n.aluno_id, t.semestre_id, n.materia_id
                 ) as sub
                 JOIN configuracoes_periodos_letivos cpl ON sub.semestre_id = cpl.id
@@ -1020,26 +1017,25 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
             rowsClassPerf = rowsClass;
         }
 
-        // 6. Mesclar dados de Aluno e Turma para o gráfico
-        // Cria um mapa com todos os semestres encontrados
+        // 6. Mesclar dados para o gráfico
         const performanceMap = new Map();
 
-        // Adiciona dados do aluno
+        // Insere dados do aluno
         rowsStudentPerf.forEach((row: any) => {
             performanceMap.set(row.semester, {
                 semester: row.semester,
                 student: Number(row.student_avg || 0).toFixed(1),
-                class: 0 
+                class: 0
             });
         });
 
-        // Adiciona/Atualiza dados da turma
+        // Insere/Atualiza dados da turma
         rowsClassPerf.forEach((row: any) => {
             if (performanceMap.has(row.semester)) {
                 const existing = performanceMap.get(row.semester);
                 existing.class = Number(row.class_avg || 0).toFixed(1);
             } else {
-                // Se o aluno não tem nota no semestre, mas a turma tem (raro na visualização do aluno, mas possível)
+                // Caso existam dados da turma em um semestre que o aluno ainda não cursou
                 performanceMap.set(row.semester, {
                     semester: row.semester,
                     student: 0,
@@ -1048,8 +1044,8 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
             }
         });
 
-        // Converte mapa para array ordenado (a query já ordenou por data, mas o map pode perder ordem de inserção dependendo do JS runtime, melhor garantir no front ou aqui)
-        // Como o rowsStudentPerf já vem ordenado por data, a ordem de inserção do Map tende a ser respeitada.
+        // Ordenar (O Map preserva inserção, mas para garantir, podemos ordenar se necessário)
+        // Como o aluno dita a ordem cronológica principal, geralmente o Array.from já resolve.
         const performanceData = Array.from(performanceMap.values());
 
         // 7. Montar Resposta Final
@@ -1076,6 +1072,220 @@ export const getEvolucaoCurso = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Erro ao buscar evolução:", error);
         res.status(500).json({ message: "Erro interno ao buscar evolução." });
+    } finally {
+        connection.release();
+    }
+};
+
+
+export const getRelatoriosAluno = async (req: Request, res: Response) => {
+    const { alunoId } = req.params;
+
+    if (!alunoId) {
+        return res.status(400).json({ message: "ID do aluno é obrigatório." });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        // 1. Identificar vínculo
+        const [vinculo]: any[] = await connection.query(`
+            SELECT grade_curricular_id, curso_posgraduacao_id, turmas_ingresso_id 
+            FROM vincular_aluno_curso 
+            WHERE aluno_id = ? AND status_matricula IN ('Ativa', 'Concluída')
+            ORDER BY data_vinculo DESC 
+            LIMIT 1
+        `, [alunoId]);
+
+        if (vinculo.length === 0) {
+            return res.status(404).json({ message: "Vínculo não encontrado." });
+        }
+
+        const { grade_curricular_id, curso_posgraduacao_id, turmas_ingresso_id } = vinculo[0];
+
+        // 2. Calcular Métricas Gerais
+        
+        // Total de disciplinas concluídas (Nota Final >= 60)
+        // CORREÇÃO: Soma as notas da matéria antes de verificar
+        const [aprovadas]: any[] = await connection.query(`
+            SELECT COUNT(*) as qtd, SUM(nota_final) as soma_notas 
+            FROM (
+                SELECT materia_id, SUM(nota) as nota_final
+                FROM notas 
+                WHERE aluno_id = ?
+                GROUP BY materia_id
+                HAVING nota_final >= 60
+            ) as sub
+        `, [alunoId]);
+
+        // Total de disciplinas tentadas (com alguma nota lançada)
+        const [tentadas]: any[] = await connection.query(`SELECT COUNT(DISTINCT materia_id) as qtd FROM notas WHERE aluno_id = ?`, [alunoId]);
+        
+        // Créditos
+        let totalCreditosCurso = 0;
+        if (grade_curricular_id) {
+            const [rowsCred]: any[] = await connection.query(`SELECT SUM(d.creditos) as total FROM grade_periodo_disciplinas gpd JOIN cursos_disciplinas d ON gpd.disciplina_id = d.id WHERE gpd.grade_id = ?`, [grade_curricular_id]);
+            totalCreditosCurso = Number(rowsCred[0].total) || 0;
+        } else {
+            const [rowsCred]: any[] = await connection.query(`SELECT SUM(creditos) as total FROM cursos_disciplinas WHERE curso_id = ?`, [curso_posgraduacao_id]);
+            totalCreditosCurso = Number(rowsCred[0].total) || 0;
+        }
+
+        // Créditos Concluídos (Baseado na nota final >= 60)
+        const [creditosConcluidos]: any[] = await connection.query(`
+            SELECT SUM(d.creditos) as total 
+            FROM (
+                SELECT materia_id, SUM(nota) as nota_final
+                FROM notas
+                WHERE aluno_id = ?
+                GROUP BY materia_id
+                HAVING nota_final >= 60
+            ) as n_aprov
+            JOIN cursos_disciplinas d ON n_aprov.materia_id = d.id
+        `, [alunoId]);
+
+        const qtdAprovadas = aprovadas[0].qtd || 0;
+        const qtdTentadas = tentadas[0].qtd || 0;
+        const somaNotasFinais = aprovadas[0].soma_notas || 0;
+        const creditosFeitos = Number(creditosConcluidos[0].total) || 0;
+
+        const taxaAprovacao = qtdTentadas > 0 ? Math.round((qtdAprovadas / qtdTentadas) * 100) : 0;
+        const taxaConclusao = totalCreditosCurso > 0 ? Math.round((creditosFeitos / totalCreditosCurso) * 100) : 0;
+        
+        // CORREÇÃO: Média Geral é a média das NOTAS FINAIS das disciplinas, não das provinhas individuais
+        const mediaGeral = qtdAprovadas > 0 ? (somaNotasFinais / qtdAprovadas) : 0;
+
+        // 3. Posição na Turma
+        let posicaoNaTurma = "-";
+        if (turmas_ingresso_id) {
+            const [ranking]: any[] = await connection.query(`
+                SELECT 
+                    vac.aluno_id, 
+                    AVG(sub.nota_final) as media_geral_aluno
+                FROM vincular_aluno_curso vac
+                JOIN (
+                    SELECT aluno_id, materia_id, SUM(nota) as nota_final
+                    FROM notas
+                    GROUP BY aluno_id, materia_id
+                ) sub ON vac.aluno_id = sub.aluno_id
+                WHERE vac.turmas_ingresso_id = ?
+                GROUP BY vac.aluno_id
+                ORDER BY media_geral_aluno DESC
+            `, [turmas_ingresso_id]);
+            
+            const index = ranking.findIndex((r: any) => r.aluno_id == alunoId);
+            if (index !== -1) posicaoNaTurma = `${index + 1}º de ${ranking.length}`;
+        }
+
+        // =====================================================================
+        // 4. EVOLUÇÃO TEMPORAL (CORRIGIDA)
+        // =====================================================================
+        
+        // A. Média do ALUNO por semestre (Baseada na nota final da matéria)
+        const [evolucaoAluno]: any[] = await connection.query(`
+            SELECT 
+                cpl.nome as periodo,
+                AVG(sub.nota_final_materia) as media
+            FROM (
+                SELECT 
+                    n.aluno_id,
+                    t.semestre_id,
+                    n.materia_id,
+                    SUM(n.nota) as nota_final_materia
+                FROM notas n
+                JOIN turmas t ON n.turma_id = t.id
+                WHERE n.aluno_id = ?
+                GROUP BY n.aluno_id, t.semestre_id, n.materia_id
+            ) as sub
+            JOIN configuracoes_periodos_letivos cpl ON sub.semestre_id = cpl.id
+            GROUP BY cpl.id, cpl.nome, cpl.data_inicio
+            ORDER BY cpl.data_inicio ASC
+        `, [alunoId]);
+
+        // B. Média da TURMA DE INGRESSO por semestre
+        // CORREÇÃO DO ERRO DE TIPO: Declaramos explicitamente o tipo do array
+        let evolucaoTurma: RowDataPacket[] = [];
+        
+        if (turmas_ingresso_id) {
+            // Essa query:
+            // 1. Soma notas por aluno/matéria (subquery 'sub')
+            // 2. Filtra alunos da mesma turma de ingresso
+            // 3. Tira a média de TODAS as notas finais de TODAS as matérias daquele semestre
+            const [rows] = await connection.query<RowDataPacket[]>(`
+                SELECT 
+                    cpl.nome as periodo,
+                    AVG(sub.nota_final_materia) as media
+                FROM (
+                    SELECT 
+                        n.aluno_id,
+                        t.semestre_id,
+                        n.materia_id,
+                        SUM(n.nota) as nota_final_materia
+                    FROM notas n
+                    JOIN turmas t ON n.turma_id = t.id
+                    JOIN vincular_aluno_curso vac ON n.aluno_id = vac.aluno_id
+                    WHERE vac.turmas_ingresso_id = ? 
+                      AND vac.status_matricula IN ('Ativa', 'Concluída')
+                    GROUP BY n.aluno_id, t.semestre_id, n.materia_id
+                ) as sub
+                JOIN configuracoes_periodos_letivos cpl ON sub.semestre_id = cpl.id
+                GROUP BY cpl.id, cpl.nome, cpl.data_inicio
+                ORDER BY cpl.data_inicio ASC
+            `, [turmas_ingresso_id]);
+            
+            evolucaoTurma = rows;
+        }
+
+        // C. Unificar dados
+        const evolucaoMap = new Map();
+
+        evolucaoAluno.forEach((item: any) => {
+            evolucaoMap.set(item.periodo, {
+                periodo: item.periodo,
+                mediaAluno: Number(item.media).toFixed(1),
+                mediaTurma: 0 
+            });
+        });
+
+        evolucaoTurma.forEach((item: any) => {
+            if (evolucaoMap.has(item.periodo)) {
+                const existing = evolucaoMap.get(item.periodo);
+                existing.mediaTurma = Number(item.media).toFixed(1);
+            } else {
+                evolucaoMap.set(item.periodo, {
+                    periodo: item.periodo,
+                    mediaAluno: null, 
+                    mediaTurma: Number(item.media).toFixed(1)
+                });
+            }
+        });
+
+        const evolucaoFinal = Array.from(evolucaoMap.values());
+
+        // 5. Desempenho por Disciplina (Soma total das notas)
+        const [disciplinas]: any[] = await connection.query(`
+            SELECT d.nome as disciplina, SUM(n.nota) as nota
+            FROM notas n JOIN cursos_disciplinas d ON n.materia_id = d.id
+            WHERE n.aluno_id = ? GROUP BY d.id, d.nome ORDER BY d.nome ASC
+        `, [alunoId]);
+
+        res.json({
+            metrics: {
+                taxaAprovacao,
+                posicaoNaTurma,
+                taxaConclusao,
+                mediaGeral: Number(mediaGeral.toFixed(1))
+            },
+            evolution: evolucaoFinal,
+            disciplinePerformance: disciplinas.map((d: any) => ({
+                disciplina: d.disciplina,
+                nota: Number(d.nota)
+            }))
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar relatórios do aluno:", error);
+        res.status(500).json({ message: "Erro interno ao buscar relatórios." });
     } finally {
         connection.release();
     }
