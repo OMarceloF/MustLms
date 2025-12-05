@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 import { Badge } from "../../gestor/components/ui/badge"
 import { Progress } from "../../gestor/components/ui/progress"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../gestor/components/ui/accordion"
-import { CheckCircle2, Circle, Clock, BookOpen, AlertCircle, Star } from "lucide-react"
+import { CheckCircle2, Circle, Clock, BookOpen, AlertCircle, Star, Users, Link as LinkIcon } from "lucide-react"
 import { useAuth } from "../../../hooks/useAuth"
 
 interface Disciplina {
@@ -21,6 +21,8 @@ interface Disciplina {
   status: "Concluída" | "Cursando" | "Pendente"
   nota?: string | number
   ementa: string
+  turma?: string | null
+  requisitos?: string[]
 }
 
 export function MatrizCurricularTab() {
@@ -70,14 +72,15 @@ export function MatrizCurricularTab() {
     }
   }
 
-  // Cálculos
+  // --- CÁLCULOS CORRIGIDOS ---
   const concluidas = disciplinas.filter((d) => d.status === "Concluída").length
-  const total = disciplinas.filter((d) => Number(d.semestre) !== 0).length // Total sem contar optativas na contagem base (opcional) ou remover filtro para contar tudo
-  // Se quiser contar optativas no progresso, use: const total = disciplinas.length;
   
-  const progressPercentage = total > 0 ? (concluidas / total) * 100 : 0
+  // Total considera TODAS as disciplinas listadas na grade (incluindo optativas se estiverem na lista)
+  const total = disciplinas.length; 
+  
+  const progressPercentage = total > 0 ? Math.round((concluidas / total) * 100) : 0
 
-  // ORDENAÇÃO: Ordenação numérica simples. 0 vem antes de 1.
+  // ORDENAÇÃO
   const semestresUnicos = Array.from(new Set(disciplinas.map(d => Number(d.semestre))))
     .sort((a, b) => a - b);
 
@@ -90,12 +93,14 @@ export function MatrizCurricularTab() {
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-bold text-slate-800">Progresso da Grade Curricular</CardTitle>
-          <CardDescription>{concluidas} disciplinas concluídas</CardDescription>
+          <CardDescription>
+            {concluidas} de {total} disciplinas concluídas
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
             <Progress value={progressPercentage} className="h-3 flex-1 bg-slate-100" />
-            <span className="text-sm font-bold text-slate-700 w-12 text-right">{progressPercentage.toFixed(0)}%</span>
+            <span className="text-sm font-bold text-slate-700 w-12 text-right">{progressPercentage}%</span>
           </div>
         </CardContent>
       </Card>
@@ -103,11 +108,8 @@ export function MatrizCurricularTab() {
       {semestresUnicos.map((semestre) => {
         const disciplinasSemestre = disciplinas.filter((d) => Number(d.semestre) === semestre)
         
-        // Formatação especial para Optativas (Semestre 0)
         const isOptativa = semestre === 0;
         const tituloHeader = isOptativa ? "Disciplinas Optativas" : `${semestre}º Período`;
-        
-        // Optativas (0) terão destaque amarelo, os demais seguem o padrão
         const corHeader = isOptativa ? "bg-amber-50/50 border-amber-100" : "bg-slate-50/50 border-slate-100";
         const iconHeader = isOptativa ? <Star className="h-4 w-4 text-amber-500 mr-2" /> : null;
 
@@ -150,12 +152,43 @@ export function MatrizCurricularTab() {
                         </div>
                       </div>
                     </AccordionTrigger>
+                    
                     <AccordionContent>
-                      <div className="pb-4 pl-8 text-sm">
+                      <div className="pb-4 pl-8 text-sm space-y-3">
+                        
                         <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
-                          <span className="font-semibold text-slate-700 block mb-1">Ementa:</span>
+                          <span className="font-semibold text-slate-700 block mb-1 text-xs uppercase">Ementa</span>
                           <p className="text-slate-600 leading-relaxed">{disciplina.ementa}</p>
                         </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {disciplina.turma && (
+                                <div className="flex items-start gap-2 bg-blue-50/50 p-2 rounded-md border border-blue-100">
+                                    <Users className="h-4 w-4 text-blue-500 mt-0.5" />
+                                    <div>
+                                        <span className="font-semibold text-slate-700 block text-xs uppercase">Turma Vinculada</span>
+                                        <p className="text-slate-600">{disciplina.turma}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {disciplina.requisitos && disciplina.requisitos.length > 0 && (
+                                <div className="flex items-start gap-2 bg-amber-50/50 p-2 rounded-md border border-amber-100">
+                                    <LinkIcon className="h-4 w-4 text-amber-500 mt-0.5" />
+                                    <div>
+                                        <span className="font-semibold text-slate-700 block text-xs uppercase">Pré-requisitos</span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {disciplina.requisitos.map((req, idx) => (
+                                                <Badge key={idx} variant="outline" className="bg-white text-slate-600 border-amber-200">
+                                                    {req}
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                       </div>
                     </AccordionContent>
                   </AccordionItem>
