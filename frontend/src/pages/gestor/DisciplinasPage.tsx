@@ -16,6 +16,7 @@ import { Input } from "./components/ui/input"
 import { Label } from "./components/ui/label"
 import { Textarea } from "./components/ui/textarea"
 
+
 // Interfaces
 interface Turma {
   id: number;
@@ -68,6 +69,15 @@ const GestaoEscolarPage: React.FC = () => {
 
   // <<--- PASSO 2: Adicionar estado para o termo de busca --->>
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Função utilitária para definir a rota conforme o papel do usuário
+  const getDisciplinaRoute = (id: number) => {
+    if (user?.role?.toLowerCase() === 'aluno') {
+      return `/aluno/disciplinas/${id}`;
+    }
+    return `/gestor/materiasgestor/${id}`;
+  };
+
 
   // Efeito para carregar as disciplinas da API
   useEffect(() => {
@@ -235,7 +245,8 @@ const GestaoEscolarPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredDisciplinas.length > 0 ? (
           filteredDisciplinas.map((d) => (
-            <Link key={d.id} to={`/gestor/materiasgestor/${d.id}`} className="block">
+            <Link to={getDisciplinaRoute(d.id)}>
+
               <div
                 className="relative transform transition-transform hover:scale-105 border rounded-lg shadow-sm bg-white h-full flex flex-col"
               >

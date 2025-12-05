@@ -104,6 +104,7 @@ import GestaoTurma from './pages/gestor/gestaoturma/GestaoTurma';
 import Trancamento from './pages/gestor/Trancamento';
 import ActivityDetailsPage from './pages/gestor/materias/ActivityDetailsPage';
 import ActivityEditorPage from './pages/gestor/materias/ActivityEditorPage';
+import DisciplinasAlunoPage from './pages/aluno/DisciplinasAlunoPage';
 
 const queryClient = new QueryClient();
 
@@ -199,12 +200,13 @@ const App: React.FC = () => {
 
             {/* Rotas do Aluno */}
             <Route element={<ProtectedRoute allowedRoles={['aluno']} />}>
+              <Route path="/aluno/disciplinas" element={<DisciplinasAlunoPage />} />
               <Route path="/aluno" element={<Aluno />} />
               <Route path="/aluno/configuracoes" element={<ConfiguracoesAlunoPage />} />
               <Route path="/aluno/simulados" element={<Simulados />} />
               <Route path="/aluno/ia" element={<IaAlunoPage />} />
               <Route path="/aluno/curso" element={<GraduateCoursePage />} />
-              <Route path="/aluno/materias/:id" element={<MateriaVisualizacaoPage />} />
+              <Route path="/aluno/disciplinas/:id" element={<MateriaVisualizacaoPage />} />
             </Route>
 
 

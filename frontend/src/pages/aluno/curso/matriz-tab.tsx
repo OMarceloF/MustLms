@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 import { Badge } from "../../gestor/components/ui/badge"
 import { Progress } from "../../gestor/components/ui/progress"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../gestor/components/ui/accordion"
-import { CheckCircle2, Circle, Clock, BookOpen, AlertCircle, Star, Users, Link as LinkIcon } from "lucide-react"
+import { Button } from "../../gestor/components/ui/button"
+import { CheckCircle2, Circle, Clock, BookOpen, AlertCircle, Star, Users, Link as LinkIcon, Plus, Lock, ArrowRight } from "lucide-react"
 import { useAuth } from "../../../hooks/useAuth"
 
 interface Disciplina {
@@ -29,8 +30,11 @@ export function MatrizCurricularTab() {
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  
-  const { user } = useAuth() 
+  const [showOptativasModal, setShowOptativasModal] = useState(false)
+  const [showTrancamentoModal, setShowTrancamentoModal] = useState(false)
+  const [showPuxarMateriaModal, setShowPuxarMateriaModal] = useState(false)
+
+  const { user } = useAuth()
   const usuarioId = user?.id || (localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') as string).id : null);
 
   useEffect(() => {
@@ -38,7 +42,7 @@ export function MatrizCurricularTab() {
       if (!usuarioId) return;
 
       try {
-        const apiUrl = 'http://localhost:3001'; 
+        const apiUrl = 'http://localhost:3001';
         const response = await axios.get(`${apiUrl}/api/alunos/${usuarioId}/progresso-matriz`)
         setDisciplinas(response.data)
         setError("")
@@ -74,130 +78,209 @@ export function MatrizCurricularTab() {
 
   // --- CÁLCULOS CORRIGIDOS ---
   const concluidas = disciplinas.filter((d) => d.status === "Concluída").length
-  
+
   // Total considera TODAS as disciplinas listadas na grade (incluindo optativas se estiverem na lista)
-  const total = disciplinas.length; 
-  
+  const total = disciplinas.length;
+
   const progressPercentage = total > 0 ? Math.round((concluidas / total) * 100) : 0
 
   // ORDENAÇÃO
   const semestresUnicos = Array.from(new Set(disciplinas.map(d => Number(d.semestre))))
     .sort((a, b) => a - b);
 
+  // Helper functions and derived state
+  const getMateriasCursando = () => disciplinas.filter(d => d.status === "Cursando")
+  const getCargaHorariaConcluida = () => disciplinas.filter(d => d.status === "Concluída").reduce((acc, d) => acc + d.cargaHoraria, 0)
+  const getCargaHorariaTotal = () => disciplinas.reduce((acc, d) => acc + d.cargaHoraria, 0)
+
+  const optativas = disciplinas.filter(d => d.semestre === 0)
+  const cargaHorariaOptativaConcluida = optativas.filter(d => d.status === "Concluída").reduce((acc, d) => acc + d.cargaHoraria, 0)
+  const getCargaHorariaOptativaConcluida = () => cargaHorariaOptativaConcluida
+
+  const grade = { cargaHorariaOptativaMinima: 360 } // Valor simulado
+  const progressoOptativa = grade.cargaHorariaOptativaMinima > 0 ? Math.round((cargaHorariaOptativaConcluida / grade.cargaHorariaOptativaMinima) * 100) : 0
+  const progressoTotal = progressPercentage
+
   if (loading) return <div className="p-8 text-center text-slate-500">Carregando grade curricular...</div>
   if (error) return <div className="p-8 text-center text-red-500 flex flex-col items-center gap-2"><AlertCircle /><p>{error}</p></div>
   if (disciplinas.length === 0) return <div className="p-8 text-center text-slate-500 flex flex-col items-center"><BookOpen className="h-10 w-10 mb-2 opacity-20" /><p>Nenhuma disciplina encontrada.</p></div>
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-bold text-slate-800">Progresso da Grade Curricular</CardTitle>
-          <CardDescription>
-            {concluidas} de {total} disciplinas concluídas
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Progress value={progressPercentage} className="h-3 flex-1 bg-slate-100" />
-            <span className="text-sm font-bold text-slate-700 w-12 text-right">{progressPercentage}%</span>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Progresso Geral</CardDescription>
+            <CardTitle className="text-2xl">{progressoTotal}%</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full bg-slate-200 rounded-full h-2">
+              <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${progressoTotal}%` }} />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {getCargaHorariaConcluida()}h / {getCargaHorariaTotal()}h
+            </p>
+          </CardContent>
+        </Card>
 
-      {semestresUnicos.map((semestre) => {
-        const disciplinasSemestre = disciplinas.filter((d) => Number(d.semestre) === semestre)
-        
-        const isOptativa = semestre === 0;
-        const tituloHeader = isOptativa ? "Disciplinas Optativas" : `${semestre}º Período`;
-        const corHeader = isOptativa ? "bg-amber-50/50 border-amber-100" : "bg-slate-50/50 border-slate-100";
-        const iconHeader = isOptativa ? <Star className="h-4 w-4 text-amber-500 mr-2" /> : null;
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Carga Horária Optativa</CardDescription>
+            <CardTitle className="text-2xl">{Math.min(progressoOptativa, 100)}%</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full bg-slate-200 rounded-full h-2">
+              <div
+                className="bg-green-500 h-2 rounded-full transition-all"
+                style={{ width: `${Math.min(progressoOptativa, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {getCargaHorariaOptativaConcluida()}h / {grade.cargaHorariaOptativaMinima}h mínimo
+            </p>
+          </CardContent>
+        </Card>
 
-        return (
-          <Card key={semestre} className="border-slate-200 shadow-sm overflow-hidden">
-            <CardHeader className={`py-3 px-4 border-b ${corHeader}`}>
-              <CardTitle className="text-base font-semibold text-slate-700 flex items-center">
-                {iconHeader} {tituloHeader}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Accordion type="single" collapsible className="w-full">
-                {disciplinasSemestre.map((disciplina) => (
-                  <AccordionItem key={disciplina.id} value={disciplina.id} className="border-b last:border-0 px-4">
-                    <AccordionTrigger className="hover:no-underline py-4 group">
-                      <div className="flex w-full items-center justify-between pr-2 gap-4">
-                        <div className="flex items-center gap-3 overflow-hidden text-left">
-                          <div className="mt-0.5 shrink-0">{getStatusIcon(disciplina.status)}</div>
-                          <div>
-                            <p className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors truncate">
-                              {disciplina.nome}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
-                              <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-medium">
-                                {disciplina.codigo}
-                              </span>
-                              <span>• {disciplina.creditos} créditos</span>
-                              <span>• {disciplina.cargaHoraria}h</span>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Matérias Cursando</CardDescription>
+            <CardTitle className="text-2xl">{getMateriasCursando().length}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <BookOpen className="h-4 w-4" />
+              <span>{getMateriasCursando().reduce((sum, m) => sum + m.cargaHoraria, 0)}h neste período</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Ações do Aluno */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <Button onClick={() => setShowOptativasModal(true)} variant="outline">
+          <Plus className="mr-2 h-4 w-4" />
+          Adicionar Optativas
+        </Button>
+        <Button onClick={() => setShowTrancamentoModal(true)} variant="outline">
+          <Lock className="mr-2 h-4 w-4" />
+          Solicitar Trancamento
+        </Button>
+        <Button onClick={() => setShowPuxarMateriaModal(true)} variant="outline">
+          <ArrowRight className="mr-2 h-4 w-4" />
+          Puxar Matérias
+        </Button>
+      </div>
+
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-slate-800">Progresso da Grade Curricular</CardTitle>
+            <CardDescription>
+              {concluidas} de {total} disciplinas concluídas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Progress value={progressPercentage} className="h-3 flex-1 bg-slate-100" />
+              <span className="text-sm font-bold text-slate-700 w-12 text-right">{progressPercentage}%</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {semestresUnicos.map((semestre) => {
+          const disciplinasSemestre = disciplinas.filter((d) => Number(d.semestre) === semestre)
+
+          const isOptativa = semestre === 0;
+          const tituloHeader = isOptativa ? "Disciplinas Optativas" : `${semestre}º Período`;
+          const corHeader = isOptativa ? "bg-amber-50/50 border-amber-100" : "bg-slate-50/50 border-slate-100";
+          const iconHeader = isOptativa ? <Star className="h-4 w-4 text-amber-500 mr-2" /> : null;
+
+          return (
+            <Card key={semestre} className="border-slate-200 shadow-sm overflow-hidden">
+              <CardHeader className={`py-3 px-4 border-b ${corHeader}`}>
+                <CardTitle className="text-base font-semibold text-slate-700 flex items-center">
+                  {iconHeader} {tituloHeader}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Accordion type="single" collapsible className="w-full">
+                  {disciplinasSemestre.map((disciplina) => (
+                    <AccordionItem key={disciplina.id} value={disciplina.id} className="border-b last:border-0 px-4">
+                      <AccordionTrigger className="hover:no-underline py-4 group">
+                        <div className="flex w-full items-center justify-between pr-2 gap-4">
+                          <div className="flex items-center gap-3 overflow-hidden text-left">
+                            <div className="mt-0.5 shrink-0">{getStatusIcon(disciplina.status)}</div>
+                            <div>
+                              <p className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors truncate">
+                                {disciplina.nome}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                                <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-medium">
+                                  {disciplina.codigo}
+                                </span>
+                                <span>• {disciplina.creditos} créditos</span>
+                                <span>• {disciplina.cargaHoraria}h</span>
+                              </div>
                             </div>
                           </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            {disciplina.nota && (
+                              <div className="text-right hidden sm:block">
+                                <span className="text-[10px] uppercase text-slate-400 font-bold block">Nota Final</span>
+                                <span className="text-sm font-bold text-slate-700">{disciplina.nota}</span>
+                              </div>
+                            )}
+                            {getStatusBadge(disciplina.status)}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          {disciplina.nota && (
-                            <div className="text-right hidden sm:block">
-                              <span className="text-[10px] uppercase text-slate-400 font-bold block">Nota Final</span>
-                              <span className="text-sm font-bold text-slate-700">{disciplina.nota}</span>
-                            </div>
-                          )}
-                          {getStatusBadge(disciplina.status)}
-                        </div>
-                      </div>
-                    </AccordionTrigger>
-                    
-                    <AccordionContent>
-                      <div className="pb-4 pl-8 text-sm space-y-3">
-                        
-                        <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
-                          <span className="font-semibold text-slate-700 block mb-1 text-xs uppercase">Ementa</span>
-                          <p className="text-slate-600 leading-relaxed">{disciplina.ementa}</p>
-                        </div>
+                      </AccordionTrigger>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <AccordionContent>
+                        <div className="pb-4 pl-8 text-sm space-y-3">
+
+                          <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
+                            <span className="font-semibold text-slate-700 block mb-1 text-xs uppercase">Ementa</span>
+                            <p className="text-slate-600 leading-relaxed">{disciplina.ementa}</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {disciplina.turma && (
-                                <div className="flex items-start gap-2 bg-blue-50/50 p-2 rounded-md border border-blue-100">
-                                    <Users className="h-4 w-4 text-blue-500 mt-0.5" />
-                                    <div>
-                                        <span className="font-semibold text-slate-700 block text-xs uppercase">Turma Vinculada</span>
-                                        <p className="text-slate-600">{disciplina.turma}</p>
-                                    </div>
+                              <div className="flex items-start gap-2 bg-blue-50/50 p-2 rounded-md border border-blue-100">
+                                <Users className="h-4 w-4 text-blue-500 mt-0.5" />
+                                <div>
+                                  <span className="font-semibold text-slate-700 block text-xs uppercase">Turma Vinculada</span>
+                                  <p className="text-slate-600">{disciplina.turma}</p>
                                 </div>
+                              </div>
                             )}
 
                             {disciplina.requisitos && disciplina.requisitos.length > 0 && (
-                                <div className="flex items-start gap-2 bg-amber-50/50 p-2 rounded-md border border-amber-100">
-                                    <LinkIcon className="h-4 w-4 text-amber-500 mt-0.5" />
-                                    <div>
-                                        <span className="font-semibold text-slate-700 block text-xs uppercase">Pré-requisitos</span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                            {disciplina.requisitos.map((req, idx) => (
-                                                <Badge key={idx} variant="outline" className="bg-white text-slate-600 border-amber-200">
-                                                    {req}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </div>
+                              <div className="flex items-start gap-2 bg-amber-50/50 p-2 rounded-md border border-amber-100">
+                                <LinkIcon className="h-4 w-4 text-amber-500 mt-0.5" />
+                                <div>
+                                  <span className="font-semibold text-slate-700 block text-xs uppercase">Pré-requisitos</span>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {disciplina.requisitos.map((req, idx) => (
+                                      <Badge key={idx} variant="outline" className="bg-white text-slate-600 border-amber-200">
+                                        {req}
+                                      </Badge>
+                                    ))}
+                                  </div>
                                 </div>
+                              </div>
                             )}
-                        </div>
+                          </div>
 
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </CardContent>
-          </Card>
-        )
-      })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
     </div>
   )
 }
