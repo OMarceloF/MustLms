@@ -323,22 +323,54 @@ export const getAlunosDisponiveisParaTurma = async (req: Request, res: Response)
     if (!turmaId) return res.status(400).json({ message: 'O ID da turma é obrigatório.' });
 
     try {
+        // PASSO 1: Obter o ID do curso da turma atual para filtrar os alunos que pertencem a ele
+        const [turmaInfo] = await pool.query<RowDataPacket[]>(
+            `SELECT curso_id, disciplina_id FROM turmas WHERE id = ?`, 
+            [turmaId]
+        );
+        
+        if (turmaInfo.length === 0 || !turmaInfo[0].curso_id) {
+            return res.json([]); 
+        }
+
+        const cursoId = turmaInfo[0].curso_id;
+        const disciplinaId = turmaInfo[0].disciplina_id; // Manter a disciplina ID para uma futura correção de escopo
+
+        // PASSO 2: Modificar a query para excluir alunos que JÁ ESTÃO na turma e 
+        // alunos que JÁ ESTÃO em outra turma da mesma disciplina (melhor prática)
+
         const [alunos] = await pool.query<RowDataPacket[]>(`
             SELECT DISTINCT u.id, u.nome, u.foto_url 
             FROM users u
+            INNER JOIN alunos a ON u.id = a.id
             INNER JOIN vincular_aluno_curso vac ON u.id = vac.aluno_id
-            INNER JOIN turmas t ON t.curso_id = vac.curso_posgraduacao_id
-            WHERE t.id = ? 
-              AND u.role = 'aluno' 
-              AND u.status = 'ativo'
-              AND vac.status_matricula = 'Ativa' -- Opcional: Garante que só traga alunos com matrícula ativa no curso
-              AND u.id NOT IN (
-                  SELECT aluno_id 
-                  FROM alunos_turmas 
-                  WHERE turma_id = ?
-              )
+            WHERE 
+                -- 1. Aluno deve estar ativo no curso da turma
+                vac.curso_posgraduacao_id = ? 
+                AND u.role = 'aluno' 
+                AND u.status = 'ativo'
+                AND vac.status_matricula = 'Ativa' 
+                
+                -- 2. EXCLUSÃO DA TURMA ATUAL: O aluno NÃO pode estar nesta turma (ID: ${turmaId})
+                AND u.id NOT IN (
+                    SELECT aluno_id 
+                    FROM alunos_turmas 
+                    WHERE turma_id = ?
+                )
+
+                -- 3. EXCLUSÃO POR DISCIPLINA (Garante que não haja duplicação em disciplinas iguais em turmas diferentes)
+                ${disciplinaId ? `
+                AND u.id NOT IN (
+                    SELECT at.aluno_id 
+                    FROM alunos_turmas at
+                    JOIN turmas t ON at.turma_id = t.id
+                    WHERE t.disciplina_id = ? 
+                    AND at.turma_id != ? 
+                )
+                ` : ''}
+
             ORDER BY u.nome ASC;
-        `, [turmaId, turmaId]);
+        `, [cursoId, turmaId, ...(disciplinaId ? [disciplinaId, turmaId] : [])]);
 
         res.json(alunos);
     } catch (error) {
