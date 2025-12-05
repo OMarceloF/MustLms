@@ -44,6 +44,7 @@ import {
   getPPCDoAluno,
   getEvolucaoCurso,
   getRelatoriosAluno,
+  getDisciplinasDoAluno,
 } from '../controllers/alunosControllerNovo';
 import { getDashboardGestorData } from '../controllers/homeGestorController';
 // import { criarAluno } from '../controllers/criarAlunoController';
@@ -1538,7 +1539,7 @@ router.get('/api/alunos/:alunoId/ppc', getPPCDoAluno);
 router.get('/api/alunos/:alunoId/evolucao', getEvolucaoCurso);
 router.get('/api/disciplinas/:id/aulas', listarAulasPorDisciplina);
 router.get('/api/alunos/:alunoId/relatorios-academicos', getRelatoriosAluno);
-
+router.get('/api/alunos/:alunoId/disciplinas-vinculadas', getDisciplinasDoAluno);
 
 
 export default router;

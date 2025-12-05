@@ -646,7 +646,6 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
         let query = "";
         let params: any[] = [];
 
-        // Subquery para buscar pré-requisitos concatenados
         const subQueryRequisitos = `
             (SELECT GROUP_CONCAT(cd_req.nome SEPARATOR ', ')
              FROM disciplina_requisitos dr
@@ -655,24 +654,32 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
             ) as requisitos_nomes
         `;
 
+        // Join para pegar APENAS a turma onde ESTE aluno está matriculado
+        const joinTurmasAluno = `
+            LEFT JOIN (
+                SELECT t.disciplina_id, t.nome_turma, at.status_vinculo
+                FROM turmas t
+                JOIN alunos_turmas at ON t.id = at.turma_id
+                WHERE at.aluno_id = ?
+            ) student_class ON student_class.disciplina_id = d.id
+        `;
+
         if (grade_curricular_id) {
+            // CORREÇÃO: GROUP BY d.id obrigatório e uso de d.semestre
             query = `
                 SELECT 
                     d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
-                    gpd.periodo_numero as semestre,
-                    at.status_vinculo,
-                    t.nome_turma,
+                    d.semestre, -- Alterado de gpd.periodo_numero para d.semestre
+                    MAX(student_class.status_vinculo) as status_vinculo, -- MAX para resolver conflito se houver duplicidade
+                    MAX(student_class.nome_turma) as nome_turma,
                     ${subQueryRequisitos},
                     (SELECT SUM(n.nota) FROM notas n WHERE n.materia_id = d.id AND n.aluno_id = ?) as nota_final
                 FROM grade_periodo_disciplinas gpd
                 JOIN cursos_disciplinas d ON gpd.disciplina_id = d.id
-                LEFT JOIN turmas t ON t.disciplina_id = d.id
-                LEFT JOIN alunos_turmas at ON at.turma_id = t.id AND at.aluno_id = ?
+                ${joinTurmasAluno}
                 WHERE gpd.grade_id = ?
-                GROUP BY 
-                    d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
-                    gpd.periodo_numero, at.status_vinculo, t.nome_turma
-                ORDER BY gpd.periodo_numero ASC, d.nome ASC
+                GROUP BY d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo, d.semestre
+                ORDER BY d.semestre ASC, d.nome ASC
             `;
             params = [alunoId, alunoId, grade_curricular_id];
         } else {
@@ -680,17 +687,14 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
                 SELECT 
                     d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
                     d.semestre,
-                    at.status_vinculo,
-                    t.nome_turma,
+                    MAX(student_class.status_vinculo) as status_vinculo,
+                    MAX(student_class.nome_turma) as nome_turma,
                     ${subQueryRequisitos},
                     (SELECT SUM(n.nota) FROM notas n WHERE n.materia_id = d.id AND n.aluno_id = ?) as nota_final
                 FROM cursos_disciplinas d
-                LEFT JOIN turmas t ON t.disciplina_id = d.id 
-                LEFT JOIN alunos_turmas at ON at.turma_id = t.id AND at.aluno_id = ?
+                ${joinTurmasAluno}
                 WHERE d.curso_id = ?
-                GROUP BY 
-                    d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo,
-                    d.semestre, at.status_vinculo, t.nome_turma
+                GROUP BY d.id, d.nome, d.codigo, d.creditos, d.carga_horaria, d.ementa, d.tipo, d.semestre
                 ORDER BY d.semestre ASC, d.nome ASC
             `;
             params = [alunoId, alunoId, curso_posgraduacao_id];
@@ -698,19 +702,8 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
 
         const [rows] = await connection.query<RowDataPacket[]>(query, params);
 
-        const disciplinasMap = new Map();
-
-        rows.forEach((row) => {
-            if (disciplinasMap.has(row.id)) {
-                const existing = disciplinasMap.get(row.id);
-                // Prioriza se tiver nota ou vinculo ativo
-                if ((!existing.nota && row.nota_final) || (existing.status === 'Pendente' && row.status_vinculo)) {
-                    // Substitui pelo registro mais completo
-                } else {
-                    return;
-                }
-            }
-
+        // Processamento final
+        const disciplinasProcessadas = rows.map((row) => {
             let status = "Pendente";
             const nota = row.nota_final ? Number(row.nota_final) : 0;
             
@@ -719,10 +712,10 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
             
             if (nota >= 60) status = "Concluída";
 
-            // Se for optativa, força semestre 0 para separar visualmente
+            // Garante que optativa vá para o grupo 0
             const semestreFinal = row.tipo === 'optativa' ? 0 : (row.semestre || 1);
 
-            disciplinasMap.set(row.id, {
+            return {
                 id: row.id.toString(),
                 nome: row.nome,
                 codigo: row.codigo || `DISC-${row.id}`,
@@ -732,13 +725,12 @@ export const getProgressoMatriz = async (req: Request, res: Response) => {
                 status: status,
                 nota: nota > 0 ? nota.toFixed(1) : null,
                 ementa: row.ementa || "Ementa não disponível.",
-                // Novos campos
                 turma: row.nome_turma || null, 
                 requisitos: row.requisitos_nomes ? row.requisitos_nomes.split(', ') : []
-            });
+            };
         });
 
-        res.json(Array.from(disciplinasMap.values()));
+        res.json(disciplinasProcessadas);
 
     } catch (error) {
         console.error("Erro ao buscar progresso da matriz:", error);
@@ -762,12 +754,6 @@ export const getProfessoresTurmasAluno = async (req: Request, res: Response) => 
     const connection = await pool.getConnection();
 
     try {
-        // QUERY CORRIGIDA:
-        // 1. Busca turmas ativas do aluno na tabela intermediária 'alunos_turmas'
-        // 2. Faz JOIN com 'turmas' para pegar detalhes
-        // 3. Faz JOIN com 'cursos_disciplinas' para pegar o nome da matéria
-        // 4. Faz JOIN com 'configuracoes_periodos_letivos' para pegar o semestre
-        // 5. Faz LEFT JOIN com 'funcionarios' e 'users' para pegar dados do professor responsável
         const query = `
             SELECT 
                 t.id AS turma_id,
@@ -1103,10 +1089,6 @@ export const getRelatoriosAluno = async (req: Request, res: Response) => {
 
         const { grade_curricular_id, curso_posgraduacao_id, turmas_ingresso_id } = vinculo[0];
 
-        // 2. Calcular Métricas Gerais
-        
-        // Total de disciplinas concluídas (Nota Final >= 60)
-        // CORREÇÃO: Soma as notas da matéria antes de verificar
         const [aprovadas]: any[] = await connection.query(`
             SELECT COUNT(*) as qtd, SUM(nota_final) as soma_notas 
             FROM (
@@ -1180,8 +1162,7 @@ export const getRelatoriosAluno = async (req: Request, res: Response) => {
         // =====================================================================
         // 4. EVOLUÇÃO TEMPORAL (CORRIGIDA)
         // =====================================================================
-        
-        // A. Média do ALUNO por semestre (Baseada na nota final da matéria)
+
         const [evolucaoAluno]: any[] = await connection.query(`
             SELECT 
                 cpl.nome as periodo,
@@ -1202,15 +1183,9 @@ export const getRelatoriosAluno = async (req: Request, res: Response) => {
             ORDER BY cpl.data_inicio ASC
         `, [alunoId]);
 
-        // B. Média da TURMA DE INGRESSO por semestre
-        // CORREÇÃO DO ERRO DE TIPO: Declaramos explicitamente o tipo do array
         let evolucaoTurma: RowDataPacket[] = [];
         
         if (turmas_ingresso_id) {
-            // Essa query:
-            // 1. Soma notas por aluno/matéria (subquery 'sub')
-            // 2. Filtra alunos da mesma turma de ingresso
-            // 3. Tira a média de TODAS as notas finais de TODAS as matérias daquele semestre
             const [rows] = await connection.query<RowDataPacket[]>(`
                 SELECT 
                     cpl.nome as periodo,
@@ -1286,6 +1261,52 @@ export const getRelatoriosAluno = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Erro ao buscar relatórios do aluno:", error);
         res.status(500).json({ message: "Erro interno ao buscar relatórios." });
+    } finally {
+        connection.release();
+    }
+};
+
+/**
+ * @description Retorna as disciplinas vinculadas ao curso/grade ativa do aluno
+ * @route GET /api/alunos/:alunoId/disciplinas-vinculadas
+ */
+export const getDisciplinasDoAluno = async (req: Request, res: Response) => {
+    const { alunoId } = req.params;
+
+    if (!alunoId) {
+        return res.status(400).json({ message: "ID do aluno é obrigatório." });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        const query = `
+            SELECT 
+                d.id, 
+                d.nome, 
+                d.codigo, 
+                d.creditos, 
+                d.carga_horaria, 
+                d.semestre, -- Usa o semestre definido na disciplina
+                d.ementa,
+                cp.nome AS breve_descricao -- Nome do curso
+            FROM alunos_turmas at
+            JOIN turmas t ON at.turma_id = t.id
+            JOIN cursos_disciplinas d ON t.disciplina_id = d.id
+            JOIN cursos_posgraduacao cp ON d.curso_id = cp.id
+            WHERE at.aluno_id = ?
+              AND at.status_vinculo IN ('ativo', 'concluido', 'aprovado')
+            GROUP BY d.id
+            ORDER BY d.semestre ASC, d.nome ASC
+        `;
+
+        const [rows] = await connection.query<RowDataPacket[]>(query, [alunoId]);
+
+        res.json(rows);
+
+    } catch (error) {
+        console.error("Erro ao buscar disciplinas vinculadas do aluno:", error);
+        res.status(500).json({ message: "Erro interno ao buscar disciplinas." });
     } finally {
         connection.release();
     }
