@@ -897,3 +897,134 @@ export const getPPCDoAluno = async (req: Request, res: Response) => {
         connection.release();
     }
 };
+
+export const getEvolucaoCurso = async (req: Request, res: Response) => {
+    const { alunoId } = req.params;
+
+    if (!alunoId) {
+        return res.status(400).json({ message: "ID do aluno é obrigatório." });
+    }
+
+    const connection = await pool.getConnection();
+
+    try {
+        // 1. Buscar vínculo
+        const [vinculo]: any[] = await connection.query(`
+            SELECT grade_curricular_id, curso_posgraduacao_id, status_matricula
+            FROM vincular_aluno_curso 
+            WHERE aluno_id = ? AND status_matricula IN ('Ativa', 'Concluída')
+            ORDER BY data_vinculo DESC
+            LIMIT 1
+        `, [alunoId]);
+
+        if (vinculo.length === 0) {
+            return res.status(404).json({ message: "Vínculo não encontrado." });
+        }
+
+        const { grade_curricular_id, curso_posgraduacao_id, status_matricula } = vinculo[0];
+
+        // 2. Calcular TOTAIS (Disciplinas e Créditos da Grade ou Curso)
+        let queryTotais = "";
+        let paramsTotais: any[] = [];
+
+        if (grade_curricular_id) {
+            queryTotais = `
+                SELECT COUNT(DISTINCT d.id) as total_disciplinas, COALESCE(SUM(d.creditos), 0) as total_creditos
+                FROM grade_periodo_disciplinas gpd
+                JOIN cursos_disciplinas d ON gpd.disciplina_id = d.id
+                WHERE gpd.grade_id = ?
+            `;
+            paramsTotais = [grade_curricular_id];
+        } else {
+            queryTotais = `
+                SELECT COUNT(DISTINCT id) as total_disciplinas, COALESCE(SUM(creditos), 0) as total_creditos
+                FROM cursos_disciplinas
+                WHERE curso_id = ?
+            `;
+            paramsTotais = [curso_posgraduacao_id];
+        }
+        
+        const [rowsTotais]: any[] = await connection.query(queryTotais, paramsTotais);
+        const totais = rowsTotais[0];
+
+        // 3. Calcular CONCLUÍDOS (CORREÇÃO DE LÓGICA)
+        // Agrupa as notas por matéria, soma tudo e SÓ DEPOIS verifica se é >= 60.
+        const queryConcluidas = `
+            SELECT 
+                COUNT(*) as disciplinas_concluidas,
+                COALESCE(SUM(creditos), 0) as creditos_concluidos
+            FROM (
+                SELECT n.materia_id, d.creditos, SUM(n.nota) as nota_final
+                FROM notas n
+                JOIN cursos_disciplinas d ON n.materia_id = d.id
+                WHERE n.aluno_id = ?
+                -- Filtro: garante que a matéria faz parte do curso/grade do aluno
+                AND d.id IN (
+                    SELECT disciplina_id FROM grade_periodo_disciplinas WHERE grade_id = ?
+                    UNION
+                    SELECT id FROM cursos_disciplinas WHERE curso_id = ?
+                )
+                GROUP BY n.materia_id, d.creditos
+                HAVING nota_final >= 60
+            ) as materias_aprovadas
+        `;
+        
+        // Passa os IDs para os filtros (se grade for null, o UNION com curso garante o funcionamento)
+        const [rowsConcluidas]: any[] = await connection.query(queryConcluidas, [alunoId, grade_curricular_id, curso_posgraduacao_id]);
+        const concluidas = rowsConcluidas[0] || { disciplinas_concluidas: 0, creditos_concluidos: 0 };
+
+        // 4. Calcular DESEMPENHO POR SEMESTRE (Gráfico)
+        // Primeiro soma as notas de cada matéria, depois faz a média das matérias do semestre
+        const queryPerformance = `
+            SELECT 
+                cpl.nome as semester,
+                AVG(sub.nota_final_materia) as student_avg
+            FROM (
+                SELECT 
+                    n.aluno_id,
+                    t.semestre_id,
+                    n.materia_id,
+                    SUM(n.nota) as nota_final_materia
+                FROM notas n
+                JOIN turmas t ON n.turma_id = t.id
+                WHERE n.aluno_id = ?
+                GROUP BY n.aluno_id, t.semestre_id, n.materia_id
+            ) as sub
+            JOIN configuracoes_periodos_letivos cpl ON sub.semestre_id = cpl.id
+            GROUP BY cpl.id, cpl.nome, cpl.data_inicio
+            ORDER BY cpl.data_inicio ASC
+        `;
+        const [rowsPerformance]: any[] = await connection.query(queryPerformance, [alunoId]);
+
+        // 5. Montar Resposta
+        const totalDisc = Number(totais.total_disciplinas) || 0;
+        const totalCred = Number(totais.total_creditos) || 0;
+        const concDisc = Number(concluidas.disciplinas_concluidas) || 0;
+        const concCred = Number(concluidas.creditos_concluidos) || 0;
+        
+        const percentual = totalDisc > 0 ? Math.round((concDisc / totalDisc) * 100) : 0;
+
+        res.json({
+            overview: {
+                studentProgress: percentual,
+                status: status_matricula || "Ativo",
+                completedCredits: concCred,
+                totalCredits: totalCred,
+                completedDisciplines: concDisc,
+                totalDisciplines: totalDisc,
+            },
+            performance: rowsPerformance.map((row: any) => ({
+                semester: row.semester,
+                student: Number(row.student_avg || 0).toFixed(1),
+                class: 0 // Mantido 0 para otimização por enquanto
+            })),
+            attendance: [] 
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar evolução:", error);
+        res.status(500).json({ message: "Erro interno ao buscar evolução." });
+    } finally {
+        connection.release();
+    }
+};

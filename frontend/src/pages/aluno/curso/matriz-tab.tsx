@@ -21,8 +21,8 @@ interface Disciplina {
   status: "Concluída" | "Cursando" | "Pendente"
   nota?: string | number
   ementa: string
-  turma?: string | null // Novo campo
-  requisitos?: string[] // Novo campo
+  turma?: string | null
+  requisitos?: string[]
 }
 
 export function MatrizCurricularTab() {
@@ -72,10 +72,13 @@ export function MatrizCurricularTab() {
     }
   }
 
-  // Cálculos
+  // --- CÁLCULOS CORRIGIDOS ---
   const concluidas = disciplinas.filter((d) => d.status === "Concluída").length
-  const total = disciplinas.filter((d) => Number(d.semestre) !== 0).length 
-  const progressPercentage = total > 0 ? (concluidas / total) * 100 : 0
+  
+  // Total considera TODAS as disciplinas listadas na grade (incluindo optativas se estiverem na lista)
+  const total = disciplinas.length; 
+  
+  const progressPercentage = total > 0 ? Math.round((concluidas / total) * 100) : 0
 
   // ORDENAÇÃO
   const semestresUnicos = Array.from(new Set(disciplinas.map(d => Number(d.semestre))))
@@ -90,12 +93,14 @@ export function MatrizCurricularTab() {
       <Card className="border-slate-200 shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-bold text-slate-800">Progresso da Grade Curricular</CardTitle>
-          <CardDescription>{concluidas} disciplinas concluídas</CardDescription>
+          <CardDescription>
+            {concluidas} de {total} disciplinas concluídas
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
             <Progress value={progressPercentage} className="h-3 flex-1 bg-slate-100" />
-            <span className="text-sm font-bold text-slate-700 w-12 text-right">{progressPercentage.toFixed(0)}%</span>
+            <span className="text-sm font-bold text-slate-700 w-12 text-right">{progressPercentage}%</span>
           </div>
         </CardContent>
       </Card>
@@ -151,14 +156,12 @@ export function MatrizCurricularTab() {
                     <AccordionContent>
                       <div className="pb-4 pl-8 text-sm space-y-3">
                         
-                        {/* Seção de Ementa */}
                         <div className="bg-slate-50 p-3 rounded-md border border-slate-100">
                           <span className="font-semibold text-slate-700 block mb-1 text-xs uppercase">Ementa</span>
                           <p className="text-slate-600 leading-relaxed">{disciplina.ementa}</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {/* Seção da Turma (se houver) */}
                             {disciplina.turma && (
                                 <div className="flex items-start gap-2 bg-blue-50/50 p-2 rounded-md border border-blue-100">
                                     <Users className="h-4 w-4 text-blue-500 mt-0.5" />
@@ -169,7 +172,6 @@ export function MatrizCurricularTab() {
                                 </div>
                             )}
 
-                            {/* Seção de Pré-requisitos (se houver) */}
                             {disciplina.requisitos && disciplina.requisitos.length > 0 && (
                                 <div className="flex items-start gap-2 bg-amber-50/50 p-2 rounded-md border border-amber-100">
                                     <LinkIcon className="h-4 w-4 text-amber-500 mt-0.5" />

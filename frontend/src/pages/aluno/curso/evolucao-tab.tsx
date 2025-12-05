@@ -1,160 +1,166 @@
-//file: frontend/src/pages/aluno/curso/evolucao-tab.tsx
+// frontend/src/pages/aluno/curso/evolucao-tab.tsx
 
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../gestor/components/ui/card"
+import { useEffect, useState } from "react"
+import axios from "axios"
+import { Card, CardContent, CardHeader, CardTitle } from "../../gestor/components/ui/card"
 import { Progress } from "../../gestor/components/ui/progress"
 import { Badge } from "../../gestor/components/ui/badge"
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "../../gestor/components/ui/chart"
+import { useAuth } from "../../../hooks/useAuth"
+import { AlertCircle, Loader2 } from "lucide-react"
 
-// Mock data
-const progressData = {
-  studentProgress: 65,
-  classAverage: 58,
-  status: "Ativo",
-  completedCredits: 39,
-  totalCredits: 60,
-  completedDisciplines: 13,
-  totalDisciplines: 20,
+interface OverviewData {
+  studentProgress: number
+  status: string
+  completedCredits: number
+  totalCredits: number
+  completedDisciplines: number
+  totalDisciplines: number
 }
 
-const performanceComparison = [
-  { semester: "2023.1", student: 8.5, class: 7.8 },
-  { semester: "2023.2", student: 9.0, class: 8.1 },
-  { semester: "2024.1", student: 8.8, class: 7.9 },
-  { semester: "2024.2", student: 9.2, class: 8.3 },
-]
-
-const attendanceData = [
-  { semester: "2023.1", attendance: 95 },
-  { semester: "2023.2", attendance: 98 },
-  { semester: "2024.1", attendance: 92 },
-  { semester: "2024.2", attendance: 96 },
-]
+interface PerformanceData {
+  semester: string
+  student: number
+  class: number
+}
 
 export function EvolucaoCursoTab() {
+  const [overview, setOverview] = useState<OverviewData | null>(null)
+  const [performance, setPerformance] = useState<PerformanceData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  const { user } = useAuth()
+  const usuarioId = user?.id || (localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') as string).id : null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!usuarioId) return
+
+      try {
+        const apiUrl = 'http://localhost:3001' // Porta correta
+        const response = await axios.get(`${apiUrl}/api/alunos/${usuarioId}/evolucao`)
+        
+        setOverview(response.data.overview)
+        setPerformance(response.data.performance)
+        setError("")
+      } catch (err) {
+        console.error("Erro ao buscar dados de evolução:", err)
+        setError("Não foi possível carregar os dados de evolução.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [usuarioId])
+
+  if (loading) return <div className="p-8 text-center text-slate-500">Carregando...</div>
+  if (error) return <div className="p-8 text-center text-red-500">{error}</div>
+  if (!overview) return null
+
+  const chartPerformance = performance.map(p => ({
+    ...p,
+    student: Number(p.student),
+    class: Number(p.class)
+  }))
+
   return (
-    <div className="space-y-6">
-      {/* Status and Progress Overview */}
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Status do Curso</CardTitle>
+        {/* Status */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-slate-800">Status do Curso</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold">{progressData.status}</span>
-              <Badge variant="default" className="bg-academic text-academic-foreground">
-                Em andamento
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-2xl font-bold text-slate-900 capitalize">{overview.status}</span>
+              <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-none px-3 py-1">
+                {overview.status === 'Ativa' ? 'Em andamento' : overview.status}
               </Badge>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Progresso Individual</CardTitle>
+        {/* Progresso Individual */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-slate-800">Progresso Individual</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3 mt-1">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">{progressData.studentProgress}%</span>
-                <span className="text-sm text-muted-foreground">
-                  {progressData.completedDisciplines}/{progressData.totalDisciplines} disciplinas
+                <span className="text-3xl font-bold text-slate-900">{overview.studentProgress}%</span>
+                <span className="text-sm font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                  {overview.completedDisciplines} de {overview.totalDisciplines} disciplinas
                 </span>
               </div>
-              <Progress value={progressData.studentProgress} className="h-2" />
+              <Progress value={overview.studentProgress} className="h-2.5 bg-slate-100" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Créditos Concluídos</CardTitle>
+        {/* Créditos Concluídos */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-slate-800">Créditos Concluídos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3 mt-1">
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-bold">{progressData.completedCredits}</span>
-                <span className="text-sm text-muted-foreground">de {progressData.totalCredits} créditos</span>
+                <span className="text-3xl font-bold text-slate-900">{overview.completedCredits}</span>
+                <span className="text-sm font-medium text-slate-500">
+                  de {overview.totalCredits} créditos
+                </span>
               </div>
-              <Progress value={(progressData.completedCredits / progressData.totalCredits) * 100} className="h-2" />
+              <Progress 
+                value={overview.totalCredits > 0 ? (overview.completedCredits / overview.totalCredits) * 100 : 0} 
+                className="h-2.5 bg-slate-100" 
+              />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Performance Comparison Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Comparativo de Desempenho</CardTitle>
-          <CardDescription>Suas notas médias comparadas com a média da turma</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              student: {
-                label: "Você",
-                color: "hsl(var(--academic))",
-              },
-              class: {
-                label: "Média da Turma",
-                color: "hsl(var(--muted-foreground))",
-              },
-            }}
-            className="h-[300px]"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={performanceComparison}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="semester" className="text-xs" />
-                <YAxis domain={[0, 10]} className="text-xs" />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="student" fill="hsl(var(--academic))" name="Você" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="class" fill="hsl(var(--muted-foreground))" name="Média da Turma" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
-      {/* Attendance History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Frequência</CardTitle>
-          <CardDescription>Sua frequência ao longo dos semestres</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              attendance: {
-                label: "Frequência (%)",
-                color: "hsl(var(--academic))",
-              },
-            }}
-            className="h-[250px]"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={attendanceData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="semester" className="text-xs" />
-                <YAxis domain={[0, 100]} className="text-xs" />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="attendance"
-                  stroke="hsl(var(--academic))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--academic))" }}
-                  name="Frequência (%)"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      {/* Gráfico */}
+      <div className="grid gap-6 md:grid-cols-1">
+        <Card className="border-slate-200 shadow-sm">
+            <CardHeader>
+            <CardTitle className="text-lg font-bold text-slate-800">Comparativo de Desempenho</CardTitle>
+            </CardHeader>
+            <CardContent>
+            {chartPerformance.length > 0 ? (
+                <ChartContainer
+                    config={{
+                    student: { label: "Sua Média", color: "#2563eb" }, 
+                    class: { label: "Turma", color: "#94a3b8" }, 
+                    }}
+                    className="h-[350px] w-full"
+                >
+                    <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartPerformance} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-slate-200" />
+                        <XAxis dataKey="semester" className="text-xs font-medium" tickLine={false} axisLine={false} />
+                        <YAxis className="text-xs font-medium" tickLine={false} axisLine={false} domain={[0, 100]} />
+                        <ChartTooltip content={<ChartTooltipContent />} cursor={{ fill: '#f1f5f9' }} />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        <Bar dataKey="student" fill="#2563eb" name="Sua Média" radius={[4, 4, 0, 0]} barSize={50} />
+                        <Bar dataKey="class" fill="#94a3b8" name="Média da Turma" radius={[4, 4, 0, 0]} barSize={50} />
+                    </BarChart>
+                    </ResponsiveContainer>
+                </ChartContainer>
+            ) : (
+                <div className="h-[300px] flex items-center justify-center text-slate-400 border border-dashed rounded-lg bg-slate-50">
+                    Sem dados de notas suficientes.
+                </div>
+            )}
+            </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
