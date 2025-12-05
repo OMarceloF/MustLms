@@ -122,7 +122,7 @@ export function GraduateCoursePage() {
                         <Tabs defaultValue="evolucao" className="w-full">
                             <TabsList className="mb-8 grid w-full grid-cols-2 gap-2 bg-muted/50 p-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
                                 <TabsTrigger value="evolucao" className="text-sm">Evolução</TabsTrigger>
-                                <TabsTrigger value="matriz" className="text-sm">Matriz Curricular</TabsTrigger>
+                                <TabsTrigger value="matriz" className="text-sm">Grade Curricular</TabsTrigger>
                                 <TabsTrigger value="professores" className="text-sm">Professores</TabsTrigger>
                                 <TabsTrigger value="ppc" className="text-sm">PPC</TabsTrigger>
                                 <TabsTrigger value="calendario" className="text-sm">Calendário</TabsTrigger>

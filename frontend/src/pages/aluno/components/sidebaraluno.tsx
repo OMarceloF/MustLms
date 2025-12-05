@@ -72,7 +72,7 @@ export default function SidebarGestor({
                     text="Disciplinas"
                     isExpanded={isMenuOpen}
                     // Exemplo de navegação para a primeira matéria (id=1)
-                    onClick={() => navigate('/aluno/materias/1')}
+                    onClick={() => navigate('/aluno/disciplinas')}
                 />
 
                 <NavItem
