@@ -437,7 +437,8 @@ import {
   listarAulasGravadas,
   criarAulaGravada,
   atualizarAulaGravada,
-  excluirAulaGravada
+  excluirAulaGravada,
+  listarAulasPorDisciplina,
 } from '../controllers/AulasGravadasController';
 
 // Produção Acadêmica
@@ -1534,6 +1535,7 @@ router.post("/api/producao-academica/survey/correcao", salvarCorrecaoPesquisa);
 router.get('/api/alunos/:alunoId/professores-turmas', getProfessoresTurmasAluno);
 router.get('/api/alunos/:alunoId/ppc', getPPCDoAluno);
 router.get('/api/alunos/:alunoId/evolucao', getEvolucaoCurso);
+router.get('/api/disciplinas/:id/aulas', listarAulasPorDisciplina);
 
 
 
